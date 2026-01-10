@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Platforms Tracker v24</title>
+    <title>Server Platforms Tracker v24.1</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -245,7 +245,7 @@
         .type-option.active { background: var(--accent); color: #000; border-color: var(--accent); }
 
         /* Series input container for scrolling */
-        #seriesContainer, #barSeriesContainer {
+        #seriesContainer, #barSeriesContainer, #lineSeriesContainer {
             max-height: 300px;
             overflow-y: auto;
             padding-right: 5px;
@@ -293,15 +293,20 @@
         .ryg-red { background: var(--g-red); box-shadow: 0 0 15px var(--g-red); }
         .ryg-grey { background: var(--g-grey); box-shadow: none; color: #fff; }
 
-        .waffle-grid {
-            display: grid; grid-template-columns: repeat(10, 1fr); gap: 4px; width: 140px; margin: 0 auto;
+        /* WAFFLE PREVIEW FIX */
+        #wafflePreview {
+            display: grid; 
+            grid-template-columns: repeat(10, 1fr); 
+            gap: 1px; 
+            width: 60px; /* Smaller width */
+            margin: 10px auto;
         }
         .waffle-cell {
-            aspect-ratio: 1; background: #333; border-radius: 2px;
+            aspect-ratio: 1; background: #333; border-radius: 1px;
         }
         .waffle-active {
             background-color: var(--accent);
-            box-shadow: 0 0 5px var(--accent);
+            box-shadow: 0 0 2px var(--accent);
         }
 
         /* --- PUBLISH MODE STYLES --- */
@@ -561,6 +566,10 @@
                         <label>Y-Axis Label</label>
                         <input type="text" id="tkBarYLabel">
                     </div>
+                    <div class="input-group">
+                        <label>X-Axis Labels (Up to 10)</label>
+                        <div id="barLabelsContainer" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;"></div>
+                    </div>
                     <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                             <label style="margin:0;">Data Series (Up to 10)</label>
@@ -646,7 +655,7 @@
                     </div>
                     <div style="margin-top:20px; padding:10px; border:1px dashed #444; border-radius:4px; text-align:center;">
                         <label style="font-size:0.7rem; text-transform:uppercase; color:#aaa;">Preview</label>
-                        <div id="wafflePreview" style="display:grid; grid-template-columns: repeat(10, 1fr); gap: 2px; width: 100px; margin: 10px auto;">
+                        <div id="wafflePreview">
                             <!-- JS fills this -->
                         </div>
                     </div>
@@ -724,15 +733,17 @@
             return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/><text transform="rotate(-90 ${pSide/2},${h/2})" x="${pSide/2}" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>${bars}</svg>`;
         };
         
-        // NEW: Multi-series Bar Chart
+        // Multi-series Bar Chart
         const createMultiBarChartSVG = (labels, series) => {
             let max = 0;
             series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
             if(max === 0) max = 10;
 
             const w=300, h=180, pTop=20, pBot=50, pSide=30;
+            // Calculate available width per label group
             const groupWidth = (w-(pSide*2)) / labels.length;
-            const barWidth = (groupWidth * 0.8) / series.length; // 80% of space, split by series count
+            // Calculate width of each bar within the group
+            const barWidth = (groupWidth * 0.8) / series.length; 
             const uh = h-pTop-pBot;
 
             let rects = '';
@@ -740,13 +751,14 @@
             series.forEach((s, si) => {
                 s.values.forEach((v, i) => {
                     const bh = (v/max) * uh;
-                    // Center bar within the group slot
+                    // X Position: Padding Left + Group Index * Group Width + Group Margin(10%) + Series Index * Bar Width
                     const x = pSide + (i * groupWidth) + (groupWidth * 0.1) + (si * barWidth); 
                     const y = h-pBot-bh;
-                    rects += `<rect x="${x}" y="${y}" width="${barWidth-1}" height="${bh}" fill="${s.color}" rx="2"/>`;
+                    rects += `<rect x="${x}" y="${y}" width="${barWidth-1}" height="${bh}" fill="${s.color}" rx="1"/>`;
                 });
             });
 
+            // Labels
             let lbls = '';
             labels.forEach((l, i) => {
                 const x = pSide + (i * groupWidth) + (groupWidth/2);
@@ -812,12 +824,11 @@
         };
 
         const createWaffleHTML = (total, active, color) => {
-            // 10x10 grid = 100 max
             const maxCells = 100;
-            let html = '<div class="waffle-grid">';
+            let html = '<div style="display:grid; grid-template-columns: repeat(10, 1fr); gap: 2px; width: 140px; margin: 0 auto;">';
             for(let i=0; i<maxCells; i++) {
                 const isActive = i < active;
-                html += `<div class="waffle-cell ${isActive ? 'waffle-active' : ''}" style="${isActive ? `background-color:${color}; box-shadow: 0 0 5px ${color}` : ''}"></div>`;
+                html += `<div class="waffle-cell" style="${isActive ? `background-color:${color}; box-shadow: 0 0 5px ${color}` : ''}"></div>`;
             }
             html += '</div>';
             return html;
@@ -828,7 +839,6 @@
             let h = t.replace(/&/g,"&amp;").replace(/</g,"&lt;")
                      .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
                      .replace(/\*(.*?)\*/g,'<i>$1</i>')
-                     // Fix: Ensure link has https if missing
                      .replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => {
                          let finalUrl = url;
                          if(!/^https?:\/\//i.test(url)) finalUrl = 'https://' + url;
@@ -854,10 +864,8 @@
                 card.onclick = () => handleTrackerClick(i);
 
                 let visualHTML = '', statsHTML = '';
-
-                // Support legacy types
                 const isLegacyLine = (t.type === 'line1' || t.type === 'line2');
-                const isLegacyBar = (t.type === 'bar' && !t.series); // Old bar had simple data array
+                const isLegacyBar = (t.type === 'bar' && !t.series);
 
                 if (t.type === 'counter') {
                     visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
@@ -887,10 +895,8 @@
                 }
                 else if(t.type === 'bar') {
                     if (isLegacyBar) {
-                        // Old simple bar
                         visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createBarChartSVG(t.data, t.yLabel, t.color1)}</div>`;
                     } else {
-                        // New Multi-series Bar
                         visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createMultiBarChartSVG(t.labels, t.series)}</div>`;
                     }
                 }
@@ -1038,7 +1044,7 @@
             document.getElementById('globalColorGroup').style.display = (t === 'ryg') ? 'none' : 'block';
         }
 
-        function createSeriesInputRow(type, name='', color='#03dac6', vals=[]) {
+        function createSeriesInputRow(name='', color='#03dac6', vals=[]) {
             const div = document.createElement('div');
             div.style.marginBottom = '1rem';
             div.style.border = '1px solid #444';
@@ -1082,43 +1088,26 @@
                 const rows = text.split('\n').map(r => r.trim()).filter(r => r);
                 
                 if(type === 'counter') {
-                    // Expect 1 column of numbers. Sum them up? Or take the last one?
-                    // Let's assume a list of values, and we sum them, or just take the first one.
-                    // Let's sum all valid numbers found.
-                    let sum = 0;
-                    let count = 0;
-                    rows.forEach(r => {
-                        const val = parseFloat(r);
-                        if(!isNaN(val)) { sum += val; count++; }
-                    });
+                    let sum = 0; let count = 0;
+                    rows.forEach(r => { const val = parseFloat(r); if(!isNaN(val)) { sum += val; count++; } });
                     if(count > 0) {
                         document.getElementById('tkCounterVal').value = sum;
                         document.getElementById('csvCounterStatus').innerText = `Loaded ${count} items. Sum: ${sum}`;
-                    } else {
-                        openAlert('No valid numbers found in CSV.');
-                    }
+                    } else { openAlert('No valid numbers found in CSV.'); }
                 } else if (type === 'waffle') {
-                    // Expect 2 columns: Total, Active
-                    // We take the first valid row.
                     const cols = rows[0].split(',');
                     if(cols.length >= 2) {
-                        const total = parseFloat(cols[0]);
-                        const active = parseFloat(cols[1]);
+                        const total = parseFloat(cols[0]); const active = parseFloat(cols[1]);
                         if(!isNaN(total) && !isNaN(active)) {
                             document.getElementById('tkWaffleTotal').value = total;
                             document.getElementById('tkWaffleActive').value = active;
                             updateWafflePreview();
                             document.getElementById('csvWaffleStatus').innerText = `Loaded: Total=${total}, Active=${active}`;
-                        } else {
-                            openAlert('Invalid number format in CSV columns.');
-                        }
-                    } else {
-                        openAlert('CSV must have 2 columns (Total, Active).');
-                    }
+                        } else { openAlert('Invalid number format in CSV columns.'); }
+                    } else { openAlert('CSV must have 2 columns (Total, Active).'); }
                 }
             };
             reader.readAsText(file);
-            // Reset input
             input.value = '';
         }
 
@@ -1127,7 +1116,14 @@
             const active = parseInt(document.getElementById('tkWaffleActive').value) || 0;
             const color = document.getElementById('tkColor1').value;
             const p = document.getElementById('wafflePreview');
-            p.innerHTML = createWaffleHTML(total, active, color).replace('<div class="waffle-grid">', '').replace('</div>', '');
+            
+            // Build mini waffle
+            let html = '';
+            for(let i=0; i<100; i++) {
+                const isActive = i < active;
+                html += `<div class="waffle-cell" style="${isActive ? `background-color:${color}; box-shadow: 0 0 2px ${color}` : ''}"></div>`;
+            }
+            p.innerHTML = html;
         }
 
         function openTrackerModal(i=-1){
@@ -1139,8 +1135,12 @@
             // Reset containers
             document.getElementById('barSeriesContainer').innerHTML = '';
             document.getElementById('lineSeriesContainer').innerHTML = '';
+            document.getElementById('barLabelsContainer').innerHTML = ''; // Added reset for bar labels
             document.getElementById('lineLabelsContainer').innerHTML = '';
-            for(let k=0; k<10; k++) document.getElementById('lineLabelsContainer').innerHTML += `<input type="text" id="axLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+            for(let k=0; k<10; k++) {
+                document.getElementById('barLabelsContainer').innerHTML += `<input type="text" id="bLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+                document.getElementById('lineLabelsContainer').innerHTML += `<input type="text" id="lLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+            }
 
             // Reset CSV status
             document.getElementById('csvCounterStatus').innerText = '';
@@ -1164,23 +1164,20 @@
             // Load Specific Data
             if(t && (t.type === 'line1' || t.type === 'line2')) {
                 const labels = t.data.map(d => d.label);
-                labels.forEach((l, k) => { if(k<10) document.getElementById(`axLbl${k}`).value = l; });
+                labels.forEach((l, k) => { if(k<10) document.getElementById(`lLbl${k}`).value = l; });
                 addLineSeries(t.y1Leg || 'Series 1', t.color1 || '#03dac6', t.data.map(d => d.y1));
                 if(t.type === 'line2') addLineSeries(t.y2Leg || 'Series 2', t.color2 || '#ff4081', t.data.map(d => d.y2));
             } else if(t && t.type === 'line') {
-                (t.labels||[]).forEach((l, k) => { if(k<10) document.getElementById(`axLbl${k}`).value = l; });
+                (t.labels||[]).forEach((l, k) => { if(k<10) document.getElementById(`lLbl${k}`).value = l; });
                 (t.series||[]).forEach(s => addLineSeries(s.name, s.color, s.values));
             } else if(t && t.type === 'bar') {
                  document.getElementById('tkBarYLabel').value = t.yLabel || '';
                  if(t.series) {
-                     // Multi-series Bar
-                     (t.labels||[]).forEach((l, k) => { if(k<10) document.getElementById(`axLbl${k}`).value = l; }); // Reuse labels container for simplicity
+                     (t.labels||[]).forEach((l, k) => { if(k<10) document.getElementById(`bLbl${k}`).value = l; });
                      (t.series||[]).forEach(s => addBarSeries(s.name, s.color, s.values));
                  } else {
-                     // Legacy Simple Bar - Convert to Multi-series format for UI, or handle legacy
-                     // To support legacy, we load it into the old structure if we kept it, 
-                     // but since we updated UI to Multi, let's auto-convert legacy to new Series 1
-                     (t.data||[]).forEach((d,k)=>{if(k<10)document.getElementById(`axLbl${k}`).value=d.label;});
+                     // Legacy Simple Bar -> Convert to Series 1
+                     (t.data||[]).forEach((d,k)=>{if(k<10)document.getElementById(`bLbl${k}`).value=d.label;});
                      if(t.data && t.data.length > 0) {
                          const vals = t.data.map(d => d.val);
                          addBarSeries('Series 1', t.color1 || '#03dac6', vals);
@@ -1218,11 +1215,10 @@
                 if(t<=0)return openAlert("Total > 0 required"); if(c>t)return openAlert("Completed value cannot exceed Total value.");
                 nt.metric=m;nt.completed=c;nt.total=t;
             } else if(currentTrackerType==='bar'){
-                // NEW: Multi-Series Bar Logic
                 const y=document.getElementById('tkBarYLabel').value;
                 const labels = [];
                 for(let k=0; k<10; k++) {
-                    const l = document.getElementById(`axLbl${k}`).value;
+                    const l = document.getElementById(`bLbl${k}`).value;
                     if(l) labels.push(l);
                 }
                 const series = [];
@@ -1241,7 +1237,7 @@
             } else if(currentTrackerType==='line') {
                 const labels = [];
                 for(let k=0; k<10; k++) {
-                    const l = document.getElementById(`axLbl${k}`).value;
+                    const l = document.getElementById(`lLbl${k}`).value;
                     if(l) labels.push(l);
                 }
                 if(labels.length < 2) return openAlert("Add at least 2 X-Axis labels");
@@ -1280,8 +1276,7 @@
 
         function exportCSV() {
             let csvContent = "data:text/csv;charset=utf-8,";
-            csvContent += "Section,Title,Data1,Data2\n"; // Simple header
-
+            csvContent += "Section,Title,Data1,Data2\n";
             teamData.trackers.forEach(t => {
                 let row = `Tracker,"${t.desc}",`;
                 if(t.type === 'counter') row += `${t.value},"${t.subtitle}"`;
@@ -1290,13 +1285,11 @@
                 else row += "Complex Data,See JSON";
                 csvContent += row + "\n";
             });
-            
             teamData.members.forEach(m => {
                 let lwLoad = m.lastWeek.load.join('');
                 let row = `Member,"${m.name}","Load: ${lwLoad}","Successes: ${m.lastWeek.tasks.filter(t=>t.isTeamSuccess).length}"`;
                 csvContent += row + "\n";
             });
-
             const a = document.createElement('a');
             a.href = encodeURI(csvContent);
             a.download = "team_data_export.csv";
