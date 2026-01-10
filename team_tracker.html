@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Platforms Tracker v22</title>
+    <title>Server Platforms Tracker v23</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -240,9 +240,22 @@
             background: transparent; font-weight: bold; font-size: 0.9rem; flex:1;
         }
         .type-option.active { background: var(--accent); color: #000; border-color: var(--accent); }
+        
+        /* Multi-series Input Grid */
         .graph-input-grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 5px; }
         .graph-input-grid { display: grid; grid-template-columns: 1fr 80px; gap: 10px; margin-bottom: 5px; }
         .graph-header-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 5px; font-size: 0.7rem; color: var(--text-muted); }
+
+        /* Series input container for scrolling */
+        #seriesContainer {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 5px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+        }
 
         /* --- PUBLISH MODE STYLES --- */
         body.publishing .header-actions,
@@ -455,7 +468,7 @@
     </div>
 
     <div class="modal-overlay" id="trackerModal">
-        <div class="modal-content" style="max-width:500px;">
+        <div class="modal-content" style="max-width:600px;">
             <div class="modal-header">
                 <h3 id="trackerModalTitle">Add Progress Tracker</h3>
                 <button class="btn" onclick="closeModal('trackerModal')">&times;</button>
@@ -464,7 +477,7 @@
                 <input type="hidden" id="editTrackerIndex" value="-1">
                 <div class="type-selector">
                     <button class="type-option active" id="typeGaugeBtn" onclick="setTrackerType('gauge')">Gauge (Pie)</button>
-                    <button class="type-option" id="typeBarBtn" onclick="setTrackerType('bar')">Bar Graph (1 Y-Axis)</button>
+                    <button class="type-option" id="typeBarBtn" onclick="setTrackerType('bar')">Bar Graph</button>
                     <button class="type-option" id="typeLineBtn" onclick="setTrackerType('line')">Line Graph (Multi)</button>
                 </div>
                 <div class="input-group">
@@ -510,7 +523,9 @@
                             <label style="margin:0;">Data Series (Up to 10)</label>
                             <button class="btn" style="padding:2px 8px; font-size:0.7rem;" onclick="addSeries()">+ Add Series</button>
                         </div>
-                        <div id="seriesContainer" style="max-height:300px; overflow-y:auto; padding-right:5px;"></div>
+                        <div id="seriesContainer">
+                            <!-- Series inputs go here -->
+                        </div>
                     </div>
                 </div>
 
@@ -663,30 +678,40 @@
 
                 let visualHTML = '', statsHTML = '';
 
-                // Convert legacy line types to new format for rendering
-                if(t.type === 'line1' || t.type === 'line2') {
-                    const labels = t.data.map(d => d.label);
-                    const series = [];
-                    // Series 1
-                    series.push({
-                        name: t.y1Leg || 'Series 1',
-                        color: t.color1 || 'var(--chart-1)',
-                        values: t.data.map(d => d.y1 || 0)
-                    });
-                    // Series 2 (only if line2)
-                    if(t.type === 'line2') {
+                // Support legacy types
+                const isLegacyLine = (t.type === 'line1' || t.type === 'line2');
+                
+                // RENDER LOGIC
+                if (t.type === 'line' || isLegacyLine) {
+                    // Normalize data structure for rendering
+                    let labels = [];
+                    let series = [];
+
+                    if (isLegacyLine) {
+                        // Convert legacy structure to new structure
+                        labels = t.data.map(d => d.label);
                         series.push({
-                            name: t.y2Leg || 'Series 2',
-                            color: t.color2 || 'var(--chart-2)',
-                            values: t.data.map(d => d.y2 || 0)
+                            name: t.y1Leg || 'Series 1',
+                            color: t.color1 || 'var(--chart-1)',
+                            values: t.data.map(d => d.y1 || 0)
                         });
+                        if (t.type === 'line2') {
+                            series.push({
+                                name: t.y2Leg || 'Series 2',
+                                color: t.color2 || 'var(--chart-2)',
+                                values: t.data.map(d => d.y2 || 0)
+                            });
+                        }
+                    } else {
+                        // New structure
+                        labels = t.labels || [];
+                        series = t.series || [];
                     }
                     visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createLineChartSVG(labels, series)}</div>`;
                 }
-                else if(t.type === 'line') {
-                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createLineChartSVG(t.labels, t.series)}</div>`;
+                else if(t.type === 'bar') {
+                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createBarChartSVG(t.data, t.yLabel, t.color1)}</div>`;
                 }
-                else if(t.type === 'bar') visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createBarChartSVG(t.data, t.yLabel, t.color1)}</div>`;
                 else {
                     const pct=t.total>0?Math.round((t.completed/t.total)*100):0;
                     const c1 = t.color1 || '#00e676'; const c2 = t.color2 || '#ff1744';
@@ -750,14 +775,21 @@
             document.getElementById('zoomTitle').innerText = t.desc;
             let content = '';
             // NATIVE SCALING IN MODAL
-            if(t.type === 'line1' || t.type === 'line2') {
-                 const labels = t.data.map(d => d.label);
-                 const series = [];
-                 series.push({ name: t.y1Leg||'Series 1', color: t.color1||'#03dac6', values: t.data.map(d=>d.y1||0) });
-                 if(t.type === 'line2') series.push({ name: t.y2Leg||'Series 2', color: t.color2||'#ff4081', values: t.data.map(d=>d.y2||0) });
-                 content = createLineChartSVG(labels, series);
+            const isLegacyLine = (t.type === 'line1' || t.type === 'line2');
+            
+            if (t.type === 'line' || isLegacyLine) {
+                let labels = [];
+                let series = [];
+                if (isLegacyLine) {
+                    labels = t.data.map(d => d.label);
+                    series.push({ name: t.y1Leg||'Series 1', color: t.color1||'#03dac6', values: t.data.map(d=>d.y1||0) });
+                    if(t.type === 'line2') series.push({ name: t.y2Leg||'Series 2', color: t.color2||'#ff4081', values: t.data.map(d=>d.y2||0) });
+                } else {
+                    labels = t.labels;
+                    series = t.series;
+                }
+                content = createLineChartSVG(labels, series);
             }
-            else if(t.type === 'line') content = createLineChartSVG(t.labels, t.series);
             else if(t.type === 'bar') content = createBarChartSVG(t.data, t.yLabel, t.color1);
             else {
                 const pct=t.total>0?Math.round((t.completed/t.total)*100):0;
@@ -818,6 +850,7 @@
             div.style.padding = '0.5rem';
             div.style.borderRadius = '4px';
 
+            // Create 10 value inputs
             let valInputs = '';
             for(let k=0; k<10; k++) {
                 valInputs += `<input type="number" class="sv-input" data-idx="${k}" value="${vals[k]||''}" placeholder="${k+1}" style="width:100%; text-align:center;">`;
@@ -873,6 +906,7 @@
                     addSeries(t.y2Leg || 'Series 2', t.color2 || '#ff4081', t.data.map(d => d.y2));
                 }
             } else if(t && t.type === 'line') {
+                // Load new format
                 (t.labels||[]).forEach((l, k) => { if(k<10) document.getElementById(`axLbl${k}`).value = l; });
                 (t.series||[]).forEach(s => addSeries(s.name, s.color, s.values));
             } else if(t && t.type === 'bar'){
@@ -937,8 +971,23 @@
 
         function saveData(){const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(teamData));const a=document.createElement('a');a.href=d;a.download="team_tracker.json";document.body.appendChild(a);a.click();a.remove();}
         function loadFromFile(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{
-            const l=JSON.parse(e.target.result); if(l.members){l.members.forEach(m=>{if(typeof m.nextWeek.tasks[0]==='string')m.nextWeek.tasks=m.nextWeek.tasks.map(t=>({text:t,isTeamActivity:false}))})}
-            teamData=l;renderBoard();openAlert('Data loaded!');}catch(x){openAlert('Error reading file');}};r.readAsText(f);inp.value='';}
+            const l=JSON.parse(e.target.result); 
+            if(l.members){
+                // Legacy Member task migration
+                l.members.forEach(m=>{
+                    if(typeof m.nextWeek.tasks[0]==='string')m.nextWeek.tasks=m.nextWeek.tasks.map(t=>({text:t,isTeamActivity:false}))
+                    if(typeof m.lastWeek.tasks[0]==='string')m.lastWeek.tasks=m.lastWeek.tasks.map(t=>({text:t,isTeamSuccess:false}))
+                })
+            }
+            // Legacy Line Chart migration (if user loads old file)
+            if(l.trackers) {
+                l.trackers.forEach(t => {
+                    if(t.type === 'line1' || t.type === 'line2') {
+                        // Keep legacy structure, render logic handles it
+                    }
+                });
+            }
+            teamData=l;renderBoard();openAlert('Data loaded!');}catch(x){console.error(x);openAlert('Error reading file');}};r.readAsText(f);inp.value='';}
 
         renderBoard();
     </script>
