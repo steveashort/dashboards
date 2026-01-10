@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Platforms Tracker v24.1</title>
+    <title>Server Platforms Tracker v24.2</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -18,7 +18,7 @@
 
             /* Status Colors */
             --g-green: #00e676;
-            --g-yellow: #ffea00;
+            --g-amber: #ffb300;
             --g-red: #ff1744;
             --g-grey: #666666;
             /* Chart Colors */
@@ -168,7 +168,7 @@
         .dm-box { text-align: center; background: var(--input-bg); padding: 4px 2px; border-radius: 2px; }
         .dm-day { font-size: 0.55rem; color: var(--text-muted); display: block; }
         .dm-val { font-size: 0.75rem; font-weight: bold; }
-        .val-H { color: var(--g-red); } .val-M { color: var(--g-yellow); }
+        .val-H { color: var(--g-red); } .val-M { color: var(--g-amber); }
         .val-L { color: var(--g-green); } .val-X { color: var(--g-grey); opacity: 0.7; font-weight: normal; }
 
         /* --- GLOBAL TOOLTIP --- */
@@ -191,7 +191,7 @@
         }
         .modal-overlay.active { display: flex; }
         .modal-content {
-            background: var(--modal-bg); width: 95%; max-width: 750px; max-height: 90vh;
+            background: var(--modal-bg); width: 95%; max-width: 900px; /* Wider for 24 inputs */ max-height: 90vh;
             border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column;
             box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
@@ -199,27 +199,8 @@
         .modal-large { width: 90%; height: 85%; max-width: 1200px; }
 
         .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        /* Default modal body */
         .modal-body { padding: 2rem; overflow-y: auto; flex-grow: 1; }
         .modal-footer { padding: 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; }
-
-        /* Zoom Modal Specifics */
-        .zoom-body-text {
-            padding: 3rem;
-            display: block;
-            width: 100%;
-            height: 100%;
-            text-align: left; /* LEFT JUSTIFIED */
-            overflow-y: auto;
-        }
-        .zoom-body-chart {
-            padding: 3rem;
-            display: flex;
-            justify-content: center; /* CENTERED */
-            align-items: center;
-            width: 100%;
-            height: 100%;
-        }
 
         .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
         .form-section-title { color: var(--accent); font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1rem; border-bottom: 1px solid #444; padding-bottom: 0.5rem; }
@@ -245,7 +226,7 @@
         .type-option.active { background: var(--accent); color: #000; border-color: var(--accent); }
 
         /* Series input container for scrolling */
-        #seriesContainer, #barSeriesContainer, #lineSeriesContainer {
+        #barSeriesContainer, #lineSeriesContainer {
             max-height: 300px;
             overflow-y: auto;
             padding-right: 5px;
@@ -253,6 +234,11 @@
             border-radius: 4px;
             padding: 10px;
             background: rgba(0,0,0,0.2);
+        }
+
+        /* 24-value Grid Layouts */
+        .grid-24 {
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px;
         }
 
         /* Color Input Custom Styling */
@@ -264,6 +250,7 @@
             cursor: pointer;
             background: none;
             padding: 0;
+            vertical-align: middle;
         }
         input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
         input[type="color"]::-webkit-color-swatch { 
@@ -289,24 +276,39 @@
             font-size: 1.5rem; font-weight: bold; color: #000;
         }
         .ryg-green { background: var(--g-green); box-shadow: 0 0 15px var(--g-green); }
-        .ryg-yellow { background: var(--g-yellow); box-shadow: 0 0 15px var(--g-yellow); }
+        .ryg-amber { background: var(--g-amber); box-shadow: 0 0 15px var(--g-amber); }
         .ryg-red { background: var(--g-red); box-shadow: 0 0 15px var(--g-red); }
         .ryg-grey { background: var(--g-grey); box-shadow: none; color: #fff; }
+
+        /* RAG Pills */
+        .rag-selector { display: flex; gap: 10px; margin-top: 5px; }
+        .rag-pill {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+        .rag-pill.selected { opacity: 1; transform: scale(1.05); }
+        .rag-pill[data-val="green"] { background: var(--g-green); color: #000; }
+        .rag-pill[data-val="amber"] { background: var(--g-amber); color: #000; }
+        .rag-pill[data-val="red"] { background: var(--g-red); color: #000; }
+        .rag-pill[data-val="grey"] { background: var(--g-grey); color: #fff; }
 
         /* WAFFLE PREVIEW FIX */
         #wafflePreview {
             display: grid; 
             grid-template-columns: repeat(10, 1fr); 
             gap: 1px; 
-            width: 60px; /* Smaller width */
+            width: 60px; 
             margin: 10px auto;
         }
         .waffle-cell {
             aspect-ratio: 1; background: #333; border-radius: 1px;
-        }
-        .waffle-active {
-            background-color: var(--accent);
-            box-shadow: 0 0 2px var(--accent);
         }
 
         /* --- PUBLISH MODE STYLES --- */
@@ -449,7 +451,7 @@
             <div class="modal-body">
                 <input type="hidden" id="editIndex" value="-1">
                 <div class="input-group">
-                    <label>Team Member Name <span class="help-icon" data-text="Enter the full name of the team member.">?</span></label>
+                    <label>Team Member Name <span class="help-icon" data-text="Enter full name of team member.">?</span></label>
                     <input type="text" id="mName" placeholder="e.g. Alex Chen">
                 </div>
                 <div class="form-row">
@@ -517,7 +519,7 @@
     </div>
 
     <div class="modal-overlay" id="trackerModal">
-        <div class="modal-content" style="max-width:700px;">
+        <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
                 <h3 id="trackerModalTitle">Add Progress Tracker</h3>
                 <button class="btn" onclick="closeModal('trackerModal')">&times;</button>
@@ -529,26 +531,12 @@
                     <button class="type-option" id="typeBarBtn" onclick="setTrackerType('bar')">Bar Graph</button>
                     <button class="type-option" id="typeLineBtn" onclick="setTrackerType('line')">Line Graph</button>
                     <button class="type-option" id="typeCounterBtn" onclick="setTrackerType('counter')">Counter</button>
-                    <button class="type-option" id="typeRygBtn" onclick="setTrackerType('ryg')">RYG Status</button>
+                    <button class="type-option" id="typeRygBtn" onclick="setTrackerType('ryg')">RAG Status</button>
                     <button class="type-option" id="typeWaffleBtn" onclick="setTrackerType('waffle')">Waffle Chart</button>
                 </div>
                 <div class="input-group">
                     <label>Tracker Title</label>
                     <input type="text" id="tkDesc">
-                </div>
-
-                <div class="input-group" id="globalColorGroup">
-                    <label>Tracker Colors</label>
-                    <div style="display: flex; gap: 1rem;">
-                        <div>
-                            <label style="font-size: 0.7rem; color:#aaa; display:block; margin-bottom:2px;">Primary</label>
-                            <input type="color" id="tkColor1" value="#03dac6">
-                        </div>
-                        <div id="tkColor2Container" style="display:none;">
-                            <label style="font-size: 0.7rem; color:#aaa; display:block; margin-bottom:2px;">Secondary</label>
-                            <input type="color" id="tkColor2" value="#ff4081">
-                        </div>
-                    </div>
                 </div>
 
                 <!-- GAUGE INPUTS -->
@@ -557,6 +545,11 @@
                     <div class="form-row" style="margin-bottom:0; gap:1rem;">
                         <div class="input-group"><label>Completed</label><input type="number" id="tkComp"></div>
                         <div class="input-group"><label>Total</label><input type="number" id="tkTotal"></div>
+                    </div>
+                    <!-- Color moved under values -->
+                    <div class="input-group">
+                        <label>Color</label>
+                        <input type="color" id="tkPieColor" value="#03dac6">
                     </div>
                 </div>
 
@@ -567,8 +560,8 @@
                         <input type="text" id="tkBarYLabel">
                     </div>
                     <div class="input-group">
-                        <label>X-Axis Labels (Up to 10)</label>
-                        <div id="barLabelsContainer" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;"></div>
+                        <label>X-Axis Labels (Up to 24)</label>
+                        <div id="barLabelsContainer" class="grid-24"></div>
                     </div>
                     <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -584,8 +577,8 @@
                 <!-- LINE INPUTS -->
                  <div id="lineInputs" style="display:none;">
                     <div class="input-group">
-                        <label>X-Axis Labels (Up to 10)</label>
-                        <div id="lineLabelsContainer" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;"></div>
+                        <label>X-Axis Labels (Up to 24)</label>
+                        <div id="lineLabelsContainer" class="grid-24"></div>
                     </div>
                     <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
@@ -618,20 +611,21 @@
                     </div>
                 </div>
 
-                <!-- RYG INPUTS -->
+                <!-- RAG INPUTS -->
                 <div id="rygInputs" style="display:none;">
                     <div class="input-group">
                         <label>Status</label>
-                        <select id="tkRygStatus">
-                            <option value="green">Green (Good)</option>
-                            <option value="yellow">Yellow (Warning)</option>
-                            <option value="red">Red (Critical)</option>
-                            <option value="grey">Grey (Unknown/N/A)</option>
-                        </select>
+                        <div class="rag-selector">
+                            <div class="rag-pill" data-val="green" onclick="selectRag('green')">Green</div>
+                            <div class="rag-pill" data-val="amber" onclick="selectRag('amber')">Amber</div>
+                            <div class="rag-pill" data-val="red" onclick="selectRag('red')">Red</div>
+                            <div class="rag-pill" data-val="grey" onclick="selectRag('grey')">Unknown</div>
+                        </div>
+                        <input type="hidden" id="tkRagStatus">
                     </div>
                     <div class="input-group">
                         <label>Status Message</label>
-                        <input type="text" id="tkRygMsg" placeholder="e.g. All Systems Operational">
+                        <input type="text" id="tkRagMsg" placeholder="e.g. All Systems Operational">
                     </div>
                 </div>
 
@@ -645,7 +639,18 @@
                         <label>Completed / Active Count</label>
                         <input type="number" id="tkWaffleActive" oninput="updateWafflePreview()">
                     </div>
-                     <div class="input-group">
+                     <!-- Two color pickers -->
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Value Color</label>
+                            <input type="color" id="tkWaffleColorVal" value="#03dac6" oninput="updateWafflePreview()">
+                        </div>
+                        <div class="input-group">
+                            <label>Background Color</label>
+                            <input type="color" id="tkWaffleColorBg" value="#333333" oninput="updateWafflePreview()">
+                        </div>
+                    </div>
+                    <div class="input-group">
                         <label>Import CSV (2 Columns: Total, Active)</label>
                         <div style="display:flex; gap:10px;">
                             <button class="btn btn-sm" onclick="document.getElementById('csvWaffleInput').click()">Select CSV</button>
@@ -711,7 +716,7 @@
         document.body.addEventListener('mousemove', (e) => { if(e.target.classList.contains('help-icon')) showTooltip(e, e.target.getAttribute('data-text')); else hideTooltip(); });
 
         // --- VISUALIZATIONS ---
-        const getColor = (s) => s >= 90 ? '#ff1744' : s >= 51 ? '#ffea00' : '#00e676';
+        const getColor = (s) => s >= 90 ? '#ff1744' : s >= 51 ? '#ffb300' : '#00e676';
         const createGauge = (loadArr) => {
             let t=0; let c=0; loadArr.forEach(v => { if(v==='H'){t+=100;c++}else if(v==='M'){t+=70;c++}else if(v==='L'){t+=30;c++} });
             const s = c===0?0:Math.round(t/c); const r=15, cx=30, cy=30; const rad=(Math.min(s,100)/100)*180*Math.PI/180;
@@ -728,53 +733,49 @@
             const fill = color || 'var(--chart-1)';
             data.forEach((d, i) => {
                 const bh=(d.val/max)*uh; const x=pSide+(i*bw)+5; const y=h-pBot-bh;
-                bars+=`<rect x="${x}" y="${y}" width="${bw-10}" height="${bh}" fill="${fill}" rx="2"/><text x="${x+(bw-10)/2}" y="${y-5}" text-anchor="middle" fill="#fff" font-size="10">${d.val}</text><text x="${x+(bw-10)/2}" y="${h-15}" text-anchor="middle" fill="#aaa" font-size="10">${d.label.substring(0,6)}</text>`;
+                bars+=`<rect x="${x}" y="${y}" width="${bw-10}" height="${bh}" fill="${fill}" rx="2"/><text x="${x+(bw-10)/2}" y="${y-5}" text-anchor="middle" fill="#fff" font-size="10">${d.val}</text><text x="${x+(bw-10)/2}" y="${h-15}" text-anchor="middle" fill="#aaa" font-size="10">${d.label.substring(0,5)}</text>`;
             });
             return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/><text transform="rotate(-90 ${pSide/2},${h/2})" x="${pSide/2}" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>${bars}</svg>`;
         };
         
-        // Multi-series Bar Chart
+        // Multi-series Bar Chart (Fixed Logic)
         const createMultiBarChartSVG = (labels, series) => {
             let max = 0;
             series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
             if(max === 0) max = 10;
 
             const w=300, h=180, pTop=20, pBot=50, pSide=30;
-            // Calculate available width per label group
             const groupWidth = (w-(pSide*2)) / labels.length;
-            // Calculate width of each bar within the group
             const barWidth = (groupWidth * 0.8) / series.length; 
             const uh = h-pTop-pBot;
 
             let rects = '';
-
             series.forEach((s, si) => {
                 s.values.forEach((v, i) => {
                     const bh = (v/max) * uh;
-                    // X Position: Padding Left + Group Index * Group Width + Group Margin(10%) + Series Index * Bar Width
+                    // Fixed X Calculation: Padding Left + (Group Index * Group Width) + (10% Margin) + (Series Index * Bar Width)
                     const x = pSide + (i * groupWidth) + (groupWidth * 0.1) + (si * barWidth); 
                     const y = h-pBot-bh;
                     rects += `<rect x="${x}" y="${y}" width="${barWidth-1}" height="${bh}" fill="${s.color}" rx="1"/>`;
                 });
             });
 
-            // Labels
             let lbls = '';
             labels.forEach((l, i) => {
                 const x = pSide + (i * groupWidth) + (groupWidth/2);
-                lbls += `<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="10">${l.substring(0,5)}</text>`;
+                lbls += `<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
             });
 
-             // Legend
+            // Legend
             let legHTML = '';
             const legY = h - 10;
-            const legItemW = 60;
+            const legItemW = 50;
             const totalLegW = series.length * legItemW;
             const startX = (w - totalLegW) / 2;
 
             series.forEach((s, i) => {
                 const lx = startX + (i * legItemW);
-                legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="9" text-anchor="start">${s.name.substring(0,8)}</text>`;
+                legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
             });
 
             return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${rects}${lbls}${legHTML}<text x="${pSide-5}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-5}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
@@ -805,30 +806,30 @@
             let lbls = '';
             labels.forEach((l, i) => {
                 const x = pSide + (i*gw);
-                lbls += `<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="10">${l.substring(0,5)}</text>`;
+                lbls += `<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
             });
 
             // Legend
             let legHTML = '';
             const legY = h - 10;
-            const legItemW = 60;
+            const legItemW = 50;
             const totalLegW = series.length * legItemW;
             const startX = (w - totalLegW) / 2;
 
             series.forEach((s, i) => {
                 const lx = startX + (i * legItemW);
-                legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="9" text-anchor="start">${s.name.substring(0,8)}</text>`;
+                legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
             });
 
             return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${paths}${points}${lbls}${legHTML}<text x="${pSide-5}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-5}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
         };
 
-        const createWaffleHTML = (total, active, color) => {
+        const createWaffleHTML = (total, active, colorVal, colorBg) => {
             const maxCells = 100;
             let html = '<div style="display:grid; grid-template-columns: repeat(10, 1fr); gap: 2px; width: 140px; margin: 0 auto;">';
             for(let i=0; i<maxCells; i++) {
                 const isActive = i < active;
-                html += `<div class="waffle-cell" style="${isActive ? `background-color:${color}; box-shadow: 0 0 5px ${color}` : ''}"></div>`;
+                html += `<div class="waffle-cell" style="${isActive ? `background-color:${colorVal}; box-shadow: 0 0 5px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
             }
             html += '</div>';
             return html;
@@ -871,15 +872,17 @@
                     visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
                     statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
                 }
-                else if (t.type === 'ryg') {
+                else if (t.type === 'ryg' || t.type === 'rag') { // Support old RYG name
                     const statusClass = `ryg-${t.status || 'grey'}`;
-                    const icon = t.status === 'red' ? '!' : (t.status === 'yellow' ? '⚠' : (t.status === 'green' ? '✓' : '?'));
+                    const icon = t.status === 'red' ? '!' : (t.status === 'amber' ? '⚠' : (t.status === 'green' ? '✓' : '?'));
                     visualHTML = `<div class="ryg-indicator ${statusClass}">${icon}</div>`;
                     statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
                 }
                 else if (t.type === 'waffle') {
                     const active = t.active || 0;
-                    visualHTML = createWaffleHTML(100, active, t.color1);
+                    const cVal = t.colorVal || '#03dac6';
+                    const cBg = t.colorBg || '#333333';
+                    visualHTML = createWaffleHTML(100, active, cVal, cBg);
                     statsHTML = `<div class="tracker-stats">${active} / ${t.total}</div>`;
                 }
                 else if (t.type === 'line' || isLegacyLine) {
@@ -902,7 +905,8 @@
                 }
                 else {
                     const pct=t.total>0?Math.round((t.completed/t.total)*100):0;
-                    const c1 = t.color1 || '#00e676'; const c2 = t.color2 || '#ff1744';
+                    const c1 = t.colorVal || t.color1 || '#00e676'; // Use colorVal for new, color1 for old
+                    const c2 = t.color2 || '#ff1744';
                     const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
                     visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
                     statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
@@ -968,13 +972,16 @@
             if (t.type === 'counter') {
                 content = `<div style="font-size: 6rem; font-weight:300; color:${t.color1}; text-shadow:0 0 20px ${t.color1}">${t.value}</div><div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${t.subtitle}</div>`;
             }
-            else if (t.type === 'ryg') {
+            else if (t.type === 'ryg' || t.type === 'rag') {
                 const statusClass = `ryg-${t.status || 'grey'}`;
-                const icon = t.status === 'red' ? 'CRITICAL' : (t.status === 'yellow' ? 'WARNING' : (t.status === 'green' ? 'GOOD' : 'UNKNOWN'));
+                const icon = t.status === 'red' ? 'CRITICAL' : (t.status === 'amber' ? 'WARNING' : (t.status === 'green' ? 'GOOD' : 'UNKNOWN'));
                 content = `<div class="ryg-indicator ${statusClass}" style="width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message}</div>`;
             }
             else if (t.type === 'waffle') {
-                content = createWaffleHTML(100, t.active, t.color1);
+                const active = t.active || 0;
+                const cVal = t.colorVal || '#03dac6';
+                const cBg = t.colorBg || '#333333';
+                content = createWaffleHTML(100, active, cVal, cBg);
             }
             else if (t.type === 'line' || isLegacyLine) {
                 let labels = []; let series = [];
@@ -996,7 +1003,8 @@
             }
             else {
                 const pct=t.total>0?Math.round((t.completed/t.total)*100):0;
-                const c1 = t.color1 || '#00e676'; const c2 = t.color2 || '#ff1744';
+                const c1 = t.colorVal || t.color1 || '#00e676'; 
+                const c2 = t.color2 || '#ff1744';
                 const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
                 content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
             }
@@ -1029,40 +1037,44 @@
 // --- TRACKER MODAL ---
         function setTrackerType(t) {
             currentTrackerType = t;
-            const types = ['Gauge','Bar','Line','Counter','Ryg','Waffle'];
+            const types = ['Gauge','Bar','Line','Counter','Ryg','Waffle']; // Keep Ryg internal ID for compat, but rename UI
             types.forEach(x => {
                 const btn = document.getElementById(`type${x}Btn`);
                 if(btn) btn.className = t === x.toLowerCase() ? 'type-option active' : 'type-option';
                 const div = document.getElementById(`${x.toLowerCase()}Inputs`);
                 if(div) div.style.display = t === x.toLowerCase() ? 'block' : 'none';
             });
-            
-            // Show secondary color ONLY for gauge
-            const showSec = (t === 'gauge');
-            document.getElementById('tkColor2Container').style.display = showSec ? 'block' : 'none';
-            // Hide all colors for RYG
-            document.getElementById('globalColorGroup').style.display = (t === 'ryg') ? 'none' : 'block';
         }
 
-        function createSeriesInputRow(name='', color='#03dac6', vals=[]) {
+        function selectRag(val) {
+            document.getElementById('tkRagStatus').value = val;
+            document.querySelectorAll('.rag-pill').forEach(p => p.classList.remove('selected'));
+            document.querySelector(`.rag-pill[data-val="${val}"]`).classList.add('selected');
+        }
+
+        function createSeriesInputRow(type, name='', color='#03dac6', vals=[]) {
             const div = document.createElement('div');
             div.style.marginBottom = '1rem';
             div.style.border = '1px solid #444';
             div.style.padding = '0.5rem';
             div.style.borderRadius = '4px';
 
+            // 24 inputs for values
             let valInputs = '';
-            for(let k=0; k<10; k++) {
+            for(let k=0; k<24; k++) {
                 valInputs += `<input type="number" class="sv-input" data-idx="${k}" value="${vals[k]||''}" placeholder="${k+1}" style="width:100%; text-align:center;">`;
             }
 
             div.innerHTML = `
-                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-                    <input type="text" class="s-name" value="${name}" placeholder="Series Name" style="width:60%;">
-                    <input type="color" class="s-color" value="${color}" style="width:30px; height:30px; padding:0; border:none; cursor:pointer;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <input type="text" class="s-name" value="${name}" placeholder="Series Name" style="width:50%;">
+                    <div style="display:flex; gap:5px; align-items:center;">
+                        <label style="font-size:0.7rem; color:#aaa;">Color:</label>
+                        <input type="color" class="s-color" value="${color}" style="width:30px; height:30px; padding:0; border:none; cursor:pointer;">
+                    </div>
                     <button class="btn-reset" style="color:red; border-color:red;" onclick="this.parentElement.parentElement.remove()">Del</button>
                 </div>
-                <div style="display:grid; grid-template-columns:repeat(10, 1fr); gap:2px;">${valInputs}</div>
+                <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:2px;">${valInputs}</div>
             `;
             return div;
         }
@@ -1114,14 +1126,14 @@
         function updateWafflePreview() {
             const total = parseInt(document.getElementById('tkWaffleTotal').value) || 0;
             const active = parseInt(document.getElementById('tkWaffleActive').value) || 0;
-            const color = document.getElementById('tkColor1').value;
+            const colorVal = document.getElementById('tkWaffleColorVal').value;
+            const colorBg = document.getElementById('tkWaffleColorBg').value;
             const p = document.getElementById('wafflePreview');
             
-            // Build mini waffle
             let html = '';
             for(let i=0; i<100; i++) {
                 const isActive = i < active;
-                html += `<div class="waffle-cell" style="${isActive ? `background-color:${color}; box-shadow: 0 0 2px ${color}` : ''}"></div>`;
+                html += `<div class="waffle-cell" style="${isActive ? `background-color:${colorVal}; box-shadow: 0 0 2px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
             }
             p.innerHTML = html;
         }
@@ -1135,9 +1147,11 @@
             // Reset containers
             document.getElementById('barSeriesContainer').innerHTML = '';
             document.getElementById('lineSeriesContainer').innerHTML = '';
-            document.getElementById('barLabelsContainer').innerHTML = ''; // Added reset for bar labels
+            document.getElementById('barLabelsContainer').innerHTML = ''; 
             document.getElementById('lineLabelsContainer').innerHTML = '';
-            for(let k=0; k<10; k++) {
+            
+            // Fill 24 inputs
+            for(let k=0; k<24; k++) {
                 document.getElementById('barLabelsContainer').innerHTML += `<input type="text" id="bLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
                 document.getElementById('lineLabelsContainer').innerHTML += `<input type="text" id="lLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
             }
@@ -1148,76 +1162,84 @@
 
             const t=i>-1?teamData.trackers[i]:null;
 
-            // Determine type (convert legacy)
+            // Determine type
             let type = t ? t.type : 'gauge';
+            // Handle legacy type names
             if(type === 'line1' || type === 'line2') type = 'line';
+            if(type === 'ryg') type = 'rag'; // Normalize UI label logic
+            
             setTrackerType(type);
-
-            // Set global colors
-            const defC1 = (t && t.type === 'gauge') ? '#00e676' : '#03dac6';
-            const defC2 = (t && t.type === 'gauge') ? '#ff1744' : '#ff4081';
-            document.getElementById('tkColor1').value = t ? (t.color1 || defC1) : '#03dac6';
-            document.getElementById('tkColor2').value = t ? (t.color2 || defC2) : '#ff4081';
 
             document.getElementById('tkDesc').value=t?t.desc:'';
 
             // Load Specific Data
             if(t && (t.type === 'line1' || t.type === 'line2')) {
                 const labels = t.data.map(d => d.label);
-                labels.forEach((l, k) => { if(k<10) document.getElementById(`lLbl${k}`).value = l; });
+                labels.forEach((l, k) => { if(k<24) document.getElementById(`lLbl${k}`).value = l; });
                 addLineSeries(t.y1Leg || 'Series 1', t.color1 || '#03dac6', t.data.map(d => d.y1));
                 if(t.type === 'line2') addLineSeries(t.y2Leg || 'Series 2', t.color2 || '#ff4081', t.data.map(d => d.y2));
             } else if(t && t.type === 'line') {
-                (t.labels||[]).forEach((l, k) => { if(k<10) document.getElementById(`lLbl${k}`).value = l; });
+                (t.labels||[]).forEach((l, k) => { if(k<24) document.getElementById(`lLbl${k}`).value = l; });
                 (t.series||[]).forEach(s => addLineSeries(s.name, s.color, s.values));
             } else if(t && t.type === 'bar') {
                  document.getElementById('tkBarYLabel').value = t.yLabel || '';
                  if(t.series) {
-                     (t.labels||[]).forEach((l, k) => { if(k<10) document.getElementById(`bLbl${k}`).value = l; });
+                     (t.labels||[]).forEach((l, k) => { if(k<24) document.getElementById(`bLbl${k}`).value = l; });
                      (t.series||[]).forEach(s => addBarSeries(s.name, s.color, s.values));
                  } else {
-                     // Legacy Simple Bar -> Convert to Series 1
-                     (t.data||[]).forEach((d,k)=>{if(k<10)document.getElementById(`bLbl${k}`).value=d.label;});
+                     // Legacy Simple Bar -> Series 1
+                     (t.data||[]).forEach((d,k)=>{if(k<24)document.getElementById(`bLbl${k}`).value=d.label;});
                      if(t.data && t.data.length > 0) {
                          const vals = t.data.map(d => d.val);
                          addBarSeries('Series 1', t.color1 || '#03dac6', vals);
                      }
                  }
             } else if(t && t.type === 'gauge'){
-                document.getElementById('tkMetric').value=t?t.metric:''; document.getElementById('tkComp').value=t?t.completed:''; document.getElementById('tkTotal').value=t?t.total:'';
+                document.getElementById('tkMetric').value=t?t.metric:''; 
+                document.getElementById('tkComp').value=t?t.completed:''; 
+                document.getElementById('tkTotal').value=t?t.total:'';
+                document.getElementById('tkPieColor').value = t.colorVal || t.color1 || '#00e676';
             } else if(t && t.type === 'counter') {
                 document.getElementById('tkCounterVal').value = t.value || 0;
                 document.getElementById('tkCounterSub').value = t.subtitle || '';
-            } else if(t && t.type === 'ryg') {
-                document.getElementById('tkRygStatus').value = t.status || 'grey';
-                document.getElementById('tkRygMsg').value = t.message || '';
+            } else if(t && t.type === 'rag' || t.type === 'ryg') {
+                selectRag(t.status || 'grey');
+                document.getElementById('tkRagMsg').value = t.message || '';
             } else if(t && t.type === 'waffle') {
                 document.getElementById('tkWaffleTotal').value = t.total || 100;
                 document.getElementById('tkWaffleActive').value = t.active || 0;
+                document.getElementById('tkWaffleColorVal').value = t.colorVal || '#03dac6';
+                document.getElementById('tkWaffleColorBg').value = t.colorBg || '#333333';
                 updateWafflePreview();
             }
 
             // Defaults
             if(!t && type === 'line' && document.getElementById('lineSeriesContainer').children.length === 0) addLineSeries('Series 1', '#03dac6');
             if(!t && type === 'bar' && document.getElementById('barSeriesContainer').children.length === 0) addBarSeries('Series 1', '#03dac6');
+            if(!t && type === 'gauge') document.getElementById('tkPieColor').value = '#00e676';
+            if(!t && type === 'rag') selectRag('green');
+            if(!t && type === 'waffle') {
+                document.getElementById('tkWaffleColorVal').value = '#03dac6';
+                document.getElementById('tkWaffleColorBg').value = '#333333';
+                updateWafflePreview();
+            }
 
             document.getElementById('trackerModal').classList.add('active');
         }
 
         function submitTracker(){
             const i=parseInt(document.getElementById('editTrackerIndex').value); const desc=document.getElementById('tkDesc').value; if(!desc)return openAlert("Title required");
-            const c1 = document.getElementById('tkColor1').value;
-            const c2 = document.getElementById('tkColor2').value;
-            let nt={desc,type:currentTrackerType,color1:c1,color2:c2};
+            let nt={desc,type:currentTrackerType};
 
             if(currentTrackerType==='gauge'){
                 const m=document.getElementById('tkMetric').value, c=parseFloat(document.getElementById('tkComp').value)||0, t=parseFloat(document.getElementById('tkTotal').value)||0;
                 if(t<=0)return openAlert("Total > 0 required"); if(c>t)return openAlert("Completed value cannot exceed Total value.");
                 nt.metric=m;nt.completed=c;nt.total=t;
+                nt.colorVal = document.getElementById('tkPieColor').value; // Save new color
             } else if(currentTrackerType==='bar'){
                 const y=document.getElementById('tkBarYLabel').value;
                 const labels = [];
-                for(let k=0; k<10; k++) {
+                for(let k=0; k<24; k++) {
                     const l = document.getElementById(`bLbl${k}`).value;
                     if(l) labels.push(l);
                 }
@@ -1236,7 +1258,7 @@
                 nt.yLabel=y;nt.labels=labels;nt.series=series;
             } else if(currentTrackerType==='line') {
                 const labels = [];
-                for(let k=0; k<10; k++) {
+                for(let k=0; k<24; k++) {
                     const l = document.getElementById(`lLbl${k}`).value;
                     if(l) labels.push(l);
                 }
@@ -1254,18 +1276,20 @@
                     series.push({name, color, values: vals});
                 }
                 if(series.length === 0) return openAlert("Add at least one series");
-
                 nt.labels = labels;
                 nt.series = series;
             } else if (currentTrackerType === 'counter') {
                 nt.value = parseFloat(document.getElementById('tkCounterVal').value) || 0;
                 nt.subtitle = document.getElementById('tkCounterSub').value;
             } else if (currentTrackerType === 'ryg') {
-                nt.status = document.getElementById('tkRygStatus').value;
-                nt.message = document.getElementById('tkRygMsg').value;
+                nt.type = 'rag'; // Normalize to rag
+                nt.status = document.getElementById('tkRagStatus').value;
+                nt.message = document.getElementById('tkRagMsg').value;
             } else if (currentTrackerType === 'waffle') {
                 nt.total = parseInt(document.getElementById('tkWaffleTotal').value) || 100;
                 nt.active = parseInt(document.getElementById('tkWaffleActive').value) || 0;
+                nt.colorVal = document.getElementById('tkWaffleColorVal').value;
+                nt.colorBg = document.getElementById('tkWaffleColorBg').value;
             }
 
             if(!teamData.trackers)teamData.trackers=[]; if(i>-1)teamData.trackers[i]=nt;else teamData.trackers.push(nt); closeModal('trackerModal'); renderBoard();
