@@ -465,8 +465,7 @@
                 <div class="type-selector">
                     <button class="type-option active" id="typeGaugeBtn" onclick="setTrackerType('gauge')">Gauge (Pie)</button>
                     <button class="type-option" id="typeBarBtn" onclick="setTrackerType('bar')">Bar Graph (1 Y-Axis)</button>
-                    <button class="type-option" id="typeLine1Btn" onclick="setTrackerType('line1')">Line Graph (1 Y-Axis)</button>
-                    <button class="type-option" id="typeLine2Btn" onclick="setTrackerType('line2')">Line Graph (2 Y-Axis)</button>
+                    <button class="type-option" id="typeLineBtn" onclick="setTrackerType('line')">Line Graph (Multi)</button>
                 </div>
                 <div class="input-group">
                     <label>Tracker Title</label>
@@ -501,19 +500,18 @@
                     <div id="barPointsContainer" style="max-height: 250px; overflow-y:auto; padding-right:5px;"></div>
                 </div>
 
-                 <div id="line1Inputs" style="display:none;">
-                    <div class="input-group"><label style="color:var(--chart-1);">Y-Axis Legend</label><input type="text" id="tkLine1YLegend" placeholder="e.g. Values"></div>
-                    <div class="graph-header-grid" style="grid-template-columns: 2fr 2fr;"><span>X Label</span><span>Y Val</span></div>
-                    <div id="line1PointsContainer" style="max-height: 200px; overflow-y:auto; padding-right:5px;"></div>
-                </div>
-
-                 <div id="line2Inputs" style="display:none;">
-                    <div class="form-row" style="margin-bottom:1rem; gap:1rem;">
-                        <div class="input-group"><label style="color:var(--chart-1);">Y1 Legend</label><input type="text" id="tkLine2Y1Legend" placeholder="e.g. Planned"></div>
-                        <div class="input-group"><label style="color:var(--chart-2);">Y2 Legend</label><input type="text" id="tkLine2Y2Legend" placeholder="e.g. Actual"></div>
+                 <div id="lineInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>X-Axis Labels (Up to 10)</label>
+                        <div id="lineLabelsContainer" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;"></div>
                     </div>
-                    <div class="graph-header-grid"><span>X Label</span><span>Y1 Val</span><span>Y2 Val</span></div>
-                    <div id="line2PointsContainer" style="max-height: 200px; overflow-y:auto; padding-right:5px;"></div>
+                    <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <label style="margin:0;">Data Series (Up to 10)</label>
+                            <button class="btn" style="padding:2px 8px; font-size:0.7rem;" onclick="addSeries()">+ Add Series</button>
+                        </div>
+                        <div id="seriesContainer" style="max-height:300px; overflow-y:auto; padding-right:5px;"></div>
+                    </div>
                 </div>
 
             </div>
@@ -590,32 +588,47 @@
             return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/><text transform="rotate(-90 ${pSide/2},${h/2})" x="${pSide/2}" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>${bars}</svg>`;
         };
 
-        const createLineChartSVG = (data, y1Leg, y2Leg, c1, c2) => {
-            const isSingle = !y2Leg;
-            const col1 = c1 || 'var(--chart-1)';
-            const col2 = c2 || 'var(--chart-2)';
-            let max = 0; data.forEach(d => { max = Math.max(max, d.y1 || 0, d.y2 || 0); }); if(max===0) max=10;
-            // INCREASED HEIGHT, PADDING FOR LEGEND
-            const w=300, h=180, pTop=30, pBot=50, pSide=30;
-            const gw=(w-(pSide*2))/(data.length-1||1), uh=h-pTop-pBot;
-            let p1='', p2='', lbls='', pts1='', pts2='';
-            data.forEach((d, i) => {
-                const x = pSide + (i*gw); const y1 = h-pBot - ((d.y1||0)/max)*uh;
-                p1+=(i===0?'M':'L')+`${x},${y1} `; pts1+=`<circle cx="${x}" cy="${y1}" r="3" fill="${col1}"/>`;
-                if(!isSingle) {
-                    const y2 = h-pBot - ((d.y2||0)/max)*uh; p2+=(i===0?'M':'L')+`${x},${y2} `; pts2+=`<circle cx="${x}" cy="${y2}" r="3" fill="${col2}"/>`;
-                }
-                lbls+=`<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="10">${d.label.substring(0,5)}</text>`;
-            });
-            const legY = h - 10;
-            let legendHTML = '';
-            if(isSingle) {
-                legendHTML = `<circle cx="${w/2 - 10}" cy="${legY}" r="3" fill="${col1}"/><text x="${w/2}" y="${legY+3}" fill="#aaa" font-size="9" text-anchor="start">${y1Leg}</text>`;
-            } else {
-                legendHTML = `<circle cx="${w/2 - 60}" cy="${legY}" r="3" fill="${col1}"/><text x="${w/2 - 50}" y="${legY+3}" fill="#aaa" font-size="9" text-anchor="start">${y1Leg}</text><circle cx="${w/2 + 40}" cy="${legY}" r="3" fill="${col2}"/><text x="${w/2 + 50}" y="${legY+3}" fill="#aaa" font-size="9" text-anchor="start">${y2Leg}</text>`;
-            }
+        const createLineChartSVG = (labels, series) => {
+            let max = 0;
+            series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
+            if(max===0) max=10;
 
-            return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/><path d="${p1}" fill="none" stroke="${col1}" stroke-width="2"/>${!isSingle ? `<path d="${p2}" fill="none" stroke="${col2}" stroke-width="2"/>` : ''}${pts1}${pts2}${lbls}${legendHTML}<text x="${pSide-5}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-5}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
+            const w=300, h=180, pTop=30, pBot=50, pSide=30;
+            const gw=(w-(pSide*2))/(labels.length-1||1), uh=h-pTop-pBot;
+
+            let paths = '';
+            let points = '';
+
+            series.forEach((s, si) => {
+                let p = '';
+                s.values.forEach((v, i) => {
+                    const x = pSide + (i*gw);
+                    const y = h-pBot - (v/max)*uh;
+                    p += (i===0?'M':'L') + `${x},${y} `;
+                    points += `<circle cx="${x}" cy="${y}" r="3" fill="${s.color}"/>`;
+                });
+                paths += `<path d="${p}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
+            });
+
+            let lbls = '';
+            labels.forEach((l, i) => {
+                const x = pSide + (i*gw);
+                lbls += `<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="10">${l.substring(0,5)}</text>`;
+            });
+
+            // Legend
+            let legHTML = '';
+            const legY = h - 10;
+            const legItemW = 60;
+            const totalLegW = series.length * legItemW;
+            const startX = (w - totalLegW) / 2;
+
+            series.forEach((s, i) => {
+                const lx = startX + (i * legItemW);
+                legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="9" text-anchor="start">${s.name.substring(0,8)}</text>`;
+            });
+
+            return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${paths}${points}${lbls}${legHTML}<text x="${pSide-5}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-5}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
         };
 
         // --- RENDER ---
@@ -649,8 +662,30 @@
                 card.onclick = () => handleTrackerClick(i);
 
                 let visualHTML = '', statsHTML = '';
-                if(t.type === 'line1') visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createLineChartSVG(t.data, t.y1Leg, null, t.color1, t.color2)}</div>`;
-                else if(t.type === 'line2') visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createLineChartSVG(t.data, t.y1Leg, t.y2Leg, t.color1, t.color2)}</div>`;
+
+                // Convert legacy line types to new format for rendering
+                if(t.type === 'line1' || t.type === 'line2') {
+                    const labels = t.data.map(d => d.label);
+                    const series = [];
+                    // Series 1
+                    series.push({
+                        name: t.y1Leg || 'Series 1',
+                        color: t.color1 || 'var(--chart-1)',
+                        values: t.data.map(d => d.y1 || 0)
+                    });
+                    // Series 2 (only if line2)
+                    if(t.type === 'line2') {
+                        series.push({
+                            name: t.y2Leg || 'Series 2',
+                            color: t.color2 || 'var(--chart-2)',
+                            values: t.data.map(d => d.y2 || 0)
+                        });
+                    }
+                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createLineChartSVG(labels, series)}</div>`;
+                }
+                else if(t.type === 'line') {
+                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createLineChartSVG(t.labels, t.series)}</div>`;
+                }
                 else if(t.type === 'bar') visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createBarChartSVG(t.data, t.yLabel, t.color1)}</div>`;
                 else {
                     const pct=t.total>0?Math.round((t.completed/t.total)*100):0;
@@ -715,8 +750,14 @@
             document.getElementById('zoomTitle').innerText = t.desc;
             let content = '';
             // NATIVE SCALING IN MODAL
-            if(t.type === 'line1') content = createLineChartSVG(t.data, t.y1Leg, null, t.color1, t.color2);
-            else if(t.type === 'line2') content = createLineChartSVG(t.data, t.y1Leg, t.y2Leg, t.color1, t.color2);
+            if(t.type === 'line1' || t.type === 'line2') {
+                 const labels = t.data.map(d => d.label);
+                 const series = [];
+                 series.push({ name: t.y1Leg||'Series 1', color: t.color1||'#03dac6', values: t.data.map(d=>d.y1||0) });
+                 if(t.type === 'line2') series.push({ name: t.y2Leg||'Series 2', color: t.color2||'#ff4081', values: t.data.map(d=>d.y2||0) });
+                 content = createLineChartSVG(labels, series);
+            }
+            else if(t.type === 'line') content = createLineChartSVG(t.labels, t.series);
             else if(t.type === 'bar') content = createBarChartSVG(t.data, t.yLabel, t.color1);
             else {
                 const pct=t.total>0?Math.round((t.completed/t.total)*100):0;
@@ -750,39 +791,112 @@
         function openInfoModal(){document.getElementById('additionalInfoInput').value=teamData.additionalInfo||'';document.getElementById('infoModal').classList.add('active');}
         function saveAdditionalInfo(){teamData.additionalInfo=document.getElementById('additionalInfoInput').value;closeModal('infoModal');renderBoard();}
 
-        // --- TRACKER MODAL ---
+// --- TRACKER MODAL ---
         function setTrackerType(t) {
             currentTrackerType = t;
-            ['Gauge','Bar','Line1','Line2'].forEach(x => { document.getElementById(`type${x}Btn`).className = t === x.toLowerCase() ? 'type-option active' : 'type-option'; document.getElementById(`${x.toLowerCase()}Inputs`).style.display = t === x.toLowerCase() ? 'block' : 'none'; });
-            // Show secondary color for gauge and line2
-            const showSec = (t === 'gauge' || t === 'line2');
+            ['Gauge','Bar','Line'].forEach(x => {
+                const btn = document.getElementById(`type${x}Btn`);
+                if(btn) btn.className = t === x.toLowerCase() ? 'type-option active' : 'type-option';
+                const div = document.getElementById(`${x.toLowerCase()}Inputs`);
+                if(div) div.style.display = t === x.toLowerCase() ? 'block' : 'none';
+            });
+            // Show secondary color ONLY for gauge (Line uses individual series colors)
+            const showSec = (t === 'gauge');
             document.getElementById('tkColor2Container').style.display = showSec ? 'block' : 'none';
+            // Hide main colors for Line (handled in series)
+            document.getElementById('tkColor1').closest('.input-group').style.display = (t === 'line') ? 'none' : 'block';
         }
+
+        // Helper to add series inputs
+        function addSeries(name='', color='#03dac6', vals=[]) {
+            const c = document.getElementById('seriesContainer');
+            if(c.children.length >= 10) return openAlert("Max 10 series.");
+            const idx = c.children.length;
+            const div = document.createElement('div');
+            div.style.marginBottom = '1rem';
+            div.style.border = '1px solid #444';
+            div.style.padding = '0.5rem';
+            div.style.borderRadius = '4px';
+
+            let valInputs = '';
+            for(let k=0; k<10; k++) {
+                valInputs += `<input type="number" class="sv-input" data-idx="${k}" value="${vals[k]||''}" placeholder="${k+1}" style="width:100%; text-align:center;">`;
+            }
+
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                    <input type="text" class="s-name" value="${name}" placeholder="Series Name" style="width:60%;">
+                    <input type="color" class="s-color" value="${color}" style="width:30px; height:30px; padding:0; border:none; cursor:pointer;">
+                    <button class="btn-reset" style="color:red; border-color:red;" onclick="this.parentElement.parentElement.remove()">Del</button>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(10, 1fr); gap:2px;">${valInputs}</div>
+            `;
+            c.appendChild(div);
+        }
+
         function openTrackerModal(i=-1){
             document.getElementById('editTrackerIndex').value=i; document.getElementById('trackerModalTitle').innerText=i===-1?'Add Progress Tracker':'Edit Tracker';
-            const bc=document.getElementById('barPointsContainer'); bc.innerHTML=''; for(let k=0;k<10;k++)bc.innerHTML+=`<div class="graph-input-grid"><input type="text" id="bLbl${k}"><input type="number" id="bVal${k}"></div>`;
-            const lc1=document.getElementById('line1PointsContainer'); lc1.innerHTML=''; for(let k=0;k<10;k++)lc1.innerHTML+=`<div class="graph-input-grid"><input type="text" id="l1Lbl${k}"><input type="number" id="l1Val1${k}"></div>`;
-            const lc2=document.getElementById('line2PointsContainer'); lc2.innerHTML=''; for(let k=0;k<10;k++)lc2.innerHTML+=`<div class="graph-input-grid-3"><input type="text" id="l2Lbl${k}"><input type="number" id="l2Val1${k}"><input type="number" id="l2Val2${k}"></div>`;
-            const t=i>-1?teamData.trackers[i]:null; setTrackerType(t?(t.type||'gauge'):'gauge');
 
-            // Set colors
+            // Bar inputs reset
+            const bc=document.getElementById('barPointsContainer'); bc.innerHTML=''; for(let k=0;k<10;k++)bc.innerHTML+=`<div class="graph-input-grid"><input type="text" id="bLbl${k}"><input type="number" id="bVal${k}"></div>`;
+
+            // Line inputs reset
+            const lLbls = document.getElementById('lineLabelsContainer'); lLbls.innerHTML = '';
+            for(let k=0; k<10; k++) lLbls.innerHTML += `<input type="text" id="axLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+            document.getElementById('seriesContainer').innerHTML = '';
+
+            const t=i>-1?teamData.trackers[i]:null;
+
+            // Determine type (convert legacy line1/line2 to line)
+            let type = t ? t.type : 'gauge';
+            if(type === 'line1' || type === 'line2') type = 'line';
+            setTrackerType(type);
+
+            // Set global colors (Gauge/Bar)
             const defC1 = (t && t.type === 'gauge') ? '#00e676' : '#03dac6';
             const defC2 = (t && t.type === 'gauge') ? '#ff1744' : '#ff4081';
             document.getElementById('tkColor1').value = t ? (t.color1 || defC1) : '#03dac6';
             document.getElementById('tkColor2').value = t ? (t.color2 || defC2) : '#ff4081';
 
             document.getElementById('tkDesc').value=t?t.desc:'';
-            if(t&&t.type==='line1'){ document.getElementById('tkLine1YLegend').value=t.y1Leg||''; (t.data||[]).forEach((d,k)=>{if(k<10){document.getElementById(`l1Lbl${k}`).value=d.label;document.getElementById(`l1Val1${k}`).value=d.y1;}});}
-            else if(t&&t.type==='line2'){ document.getElementById('tkLine2Y1Legend').value=t.y1Leg||''; document.getElementById('tkLine2Y2Legend').value=t.y2Leg||''; (t.data||[]).forEach((d,k)=>{if(k<10){document.getElementById(`l2Lbl${k}`).value=d.label;document.getElementById(`l2Val1${k}`).value=d.y1;document.getElementById(`l2Val2${k}`).value=d.y2;}});}
-            else if(t&&t.type==='bar'){ document.getElementById('tkBarYLabel').value=t.yLabel||''; (t.data||[]).forEach((d,k)=>{if(k<10){document.getElementById(`bLbl${k}`).value=d.label;document.getElementById(`bVal${k}`).value=d.val;}});}
-            else { document.getElementById('tkMetric').value=t?t.metric:''; document.getElementById('tkComp').value=t?t.completed:''; document.getElementById('tkTotal').value=t?t.total:''; }
+
+            if(t && (t.type === 'line1' || t.type === 'line2')) {
+                // Convert legacy data to inputs
+                const labels = t.data.map(d => d.label);
+                labels.forEach((l, k) => { if(k<10) document.getElementById(`axLbl${k}`).value = l; });
+
+                // Add Series 1
+                addSeries(t.y1Leg || 'Series 1', t.color1 || '#03dac6', t.data.map(d => d.y1));
+
+                // Add Series 2 if exists
+                if(t.type === 'line2') {
+                    addSeries(t.y2Leg || 'Series 2', t.color2 || '#ff4081', t.data.map(d => d.y2));
+                }
+            } else if(t && t.type === 'line') {
+                (t.labels||[]).forEach((l, k) => { if(k<10) document.getElementById(`axLbl${k}`).value = l; });
+                (t.series||[]).forEach(s => addSeries(s.name, s.color, s.values));
+            } else if(t && t.type === 'bar'){
+                document.getElementById('tkBarYLabel').value=t.yLabel||'';
+                (t.data||[]).forEach((d,k)=>{if(k<10){document.getElementById(`bLbl${k}`).value=d.label;document.getElementById(`bVal${k}`).value=d.val;}});
+            } else {
+                // Gauge defaults
+                document.getElementById('tkMetric').value=t?t.metric:''; document.getElementById('tkComp').value=t?t.completed:''; document.getElementById('tkTotal').value=t?t.total:'';
+            }
+
+            // If new line chart, add 1 default series
+            if((!t || type !== 'line') && currentTrackerType === 'line' && document.getElementById('seriesContainer').children.length === 0) {
+                 addSeries('Series 1', '#03dac6');
+            }
+
             document.getElementById('trackerModal').classList.add('active');
         }
+
         function submitTracker(){
             const i=parseInt(document.getElementById('editTrackerIndex').value); const desc=document.getElementById('tkDesc').value; if(!desc)return openAlert("Title required");
             const c1 = document.getElementById('tkColor1').value;
             const c2 = document.getElementById('tkColor2').value;
             let nt={desc,type:currentTrackerType,color1:c1,color2:c2};
+
             if(currentTrackerType==='gauge'){
                 const m=document.getElementById('tkMetric').value, c=parseFloat(document.getElementById('tkComp').value)||0, t=parseFloat(document.getElementById('tkTotal').value)||0;
                 if(t<=0)return openAlert("Total > 0 required"); if(c>t)return openAlert("Completed value cannot exceed Total value.");
@@ -790,16 +904,36 @@
             } else if(currentTrackerType==='bar'){
                 const y=document.getElementById('tkBarYLabel').value, d=[]; for(let k=0;k<10;k++){const l=document.getElementById(`bLbl${k}`).value, v=document.getElementById(`bVal${k}`).value;if(l&&v)d.push({label:l,val:parseFloat(v)})}
                 if(d.length===0)return openAlert("Add data"); nt.yLabel=y;nt.data=d;
-            } else if(currentTrackerType==='line1') {
-                const y1=document.getElementById('tkLine1YLegend').value, d=[]; for(let k=0;k<10;k++){const l=document.getElementById(`l1Lbl${k}`).value, v1=document.getElementById(`l1Val1${k}`).value;if(l&&v1)d.push({label:l,y1:parseFloat(v1)||0})}
-                if(d.length<2)return openAlert("Add 2+ points"); nt.y1Leg=y1;nt.data=d;
-            } else {
-                const y1=document.getElementById('tkLine2Y1Legend').value, y2=document.getElementById('tkLine2Y2Legend').value, d=[]; for(let k=0;k<10;k++){const l=document.getElementById(`l2Lbl${k}`).value, v1=document.getElementById(`l2Val1${k}`).value, v2=document.getElementById(`l2Val2${k}`).value;if(l&&(v1||v2))d.push({label:l,y1:parseFloat(v1)||0,y2:parseFloat(v2)||0})}
-                if(d.length<2)return openAlert("Add 2+ points"); nt.y1Leg=y1;nt.y2Leg=y2;nt.data=d;
+            } else if(currentTrackerType==='line') {
+                // Collect labels
+                const labels = [];
+                for(let k=0; k<10; k++) {
+                    const l = document.getElementById(`axLbl${k}`).value;
+                    if(l) labels.push(l);
+                }
+                if(labels.length < 2) return openAlert("Add at least 2 X-Axis labels");
+
+                // Collect series
+                const series = [];
+                const sDivs = document.getElementById('seriesContainer').children;
+                for(let s of sDivs) {
+                    const name = s.querySelector('.s-name').value;
+                    const color = s.querySelector('.s-color').value;
+                    const vals = [];
+                    s.querySelectorAll('.sv-input').forEach((inp, k) => {
+                        if(k < labels.length) vals.push(parseFloat(inp.value)||0);
+                    });
+                    series.push({name, color, values: vals});
+                }
+                if(series.length === 0) return openAlert("Add at least one series");
+
+                nt.labels = labels;
+                nt.series = series;
             }
+
             if(!teamData.trackers)teamData.trackers=[]; if(i>-1)teamData.trackers[i]=nt;else teamData.trackers.push(nt); closeModal('trackerModal'); renderBoard();
         }
-        function deleteTracker(i){openConfirm("Delete tracker?",()=>{teamData.trackers.splice(i,1);renderBoard();});}
+                function deleteTracker(i){openConfirm("Delete tracker?",()=>{teamData.trackers.splice(i,1);renderBoard();});}
 
         function saveData(){const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(teamData));const a=document.createElement('a');a.href=d;a.download="team_tracker.json";document.body.appendChild(a);a.click();a.remove();}
         function loadFromFile(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{
