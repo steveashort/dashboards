@@ -294,13 +294,17 @@ export const renderBoard = () => {
         c.className = 'member-card';
         c.onclick = () => UserManager.openUserModal(i);
         
+        // Status Pill Logic
+        const statusMap = { 'under': 'Underutilised', 'busy': 'Busy', 'over': 'Overloaded' };
+        const statusVal = m.lastWeek.status || 'busy';
+        const statusText = statusMap[statusVal] || 'Busy';
+        const pillHTML = `<div class="status-pill status-${statusVal}">${statusText}</div>`;
+
         c.innerHTML = `<div class="member-name-row">${m.name}</div>`;
         c.innerHTML += `<div class="card-half card-top">`;
-        c.innerHTML += `<div class="half-header"><span class="half-label">Last Week (Successes)</span>`;
-        c.innerHTML += `<div class="gauge-container">${createGaugeSVG(m.lastWeek.load)}</div>`;
-        c.innerHTML += `</div>`;
+        c.innerHTML += `<div class="half-header"><span class="half-label">Last Week (Status)</span></div>`;
+        c.innerHTML += `<div style="margin-top: 10px; margin-bottom: 10px;">${pillHTML}</div>`;
         c.innerHTML += `<ul class="card-task-list">${lw || '<li>No tasks</li>'}</ul>`;
-        c.innerHTML += `<div class="daily-mini-grid">${mg(m.lastWeek.load)}</div>`;
         c.innerHTML += `</div>`;
         
         c.innerHTML += `<div class="card-half card-bottom">`;
@@ -721,8 +725,11 @@ export const UserManager = {
             getEl(tid).value = val;
         });
 
+        // Set Last Week Status
+        getEl('lwStatus').value = member ? (member.lastWeek.status || 'busy') : 'busy';
+
+        // Set Next Week Load (Keep as is)
         for(let j=0; j<5; j++) {
-            getEl(`lw${j}`).value = member ? member.lastWeek.load[j] : 'L';
             getEl(`nw${j}`).value = member ? member.nextWeek.load[j] : 'L';
         }
 
@@ -746,7 +753,8 @@ export const UserManager = {
         const newUser = {
             id: Date.now(),
             name: n,
-            lastWeek: { tasks: getTasks('lw'), load: getLoad('lw') },
+            // Updated Last Week Structure
+            lastWeek: { tasks: getTasks('lw'), status: getEl('lwStatus').value },
             nextWeek: { tasks: getTasks('nw'), load: getLoad('nw') }
         };
 
@@ -921,8 +929,8 @@ export const DataExporter = {
             csvContent += row + "\n";
         });
         State.members.forEach(m => {
-            let lwLoad = m.lastWeek.load.join('');
-            let row = `Member,"${m.name}","Load: ${lwLoad}","Successes: ${m.lastWeek.tasks.filter(t=>t.isTeamSuccess).length}"`;
+            let status = m.lastWeek.status || 'busy';
+            let row = `Member,"${m.name}","Status: ${status}","Successes: ${m.lastWeek.tasks.filter(t=>t.isTeamSuccess).length}"`;
             csvContent += row + "\n";
         });
         const a = document.createElement('a');

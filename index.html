@@ -128,14 +128,12 @@
                             <input type="text" class="mb-2" id="lwTask3" style="margin-top:5px" placeholder="3. Bug fix...">
                         </div>
                         <div class="input-group">
-                            <label>Workload <span class="help-icon" data-text="Daily workload intensity. L=Low, M=Medium, H=High, X=Absence.">?</span></label>
-                            <div class="load-select-row">
-                                <div class="ls-box"><label>M</label><select id="lw0"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                                <div class="ls-box"><label>T</label><select id="lw1"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                                <div class="ls-box"><label>W</label><select id="lw2"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                                <div class="ls-box"><label>T</label><select id="lw3"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                                <div class="ls-box"><label>F</label><select id="lw4"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                            </div>
+                            <label>Status (Last Week) <span class="help-icon" data-text="Overall status for the previous week.">?</span></label>
+                            <select id="lwStatus" style="width: 100%; padding: 8px;">
+                                <option value="busy">Busy (Green)</option>
+                                <option value="under">Underutilised (Yellow)</option>
+                                <option value="over">Overloaded (Red)</option>
+                            </select>
                         </div>
                     </div>
                     <div class="half-form">
