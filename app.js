@@ -71,7 +71,7 @@ const parseMarkdown = (t) => {
     let h = t.replace(/&/g,"&amp;").replace(/</g,"&lt;")
              .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
              .replace(/\*(.*?)\*/g,'<i>$1</i>')
-             .replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => {
+             .replace(/\((.*?)\)\((.*?)\)/g, (match, text, url) => {
                  let finalUrl = url;
                  if(!/^https?:\/\//i.test(url)) finalUrl = 'https://' + url;
                  return `<a href="${finalUrl}" target="_blank">${text}</a>`;
@@ -199,6 +199,7 @@ export const renderBoard = () => {
     let sc = 0, ac = 0;
 
     State.members.forEach(m => {
+        // Achievements: Last Week + This Week
         if(m.lastWeek && m.lastWeek.tasks) {
             m.lastWeek.tasks.forEach(t => {
                 if(t.isTeamSuccess && t.text.trim()) { 
@@ -208,6 +209,14 @@ export const renderBoard = () => {
         }
         if(m.thisWeek && m.thisWeek.tasks) {
             m.thisWeek.tasks.forEach(t => {
+                if(t.isTeamSuccess && t.text.trim()) { 
+                    sc++; sL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
+                }
+            });
+        }
+        // Activities: Next Week
+        if(m.nextWeek && m.nextWeek.tasks) {
+            m.nextWeek.tasks.forEach(t => {
                 if(t.isTeamActivity && t.text.trim()) { 
                     ac++; aL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
                 }
@@ -329,14 +338,14 @@ export const renderBoard = () => {
         const getAvgPill = (loadArr) => {
             let score = 0; let count = 0;
             (loadArr||[]).forEach(v => {
-                if(v === 'L') { score += 1; count++; }
-                else if(v === 'N') { score += 2; count++; }
-                else if(v === 'R') { score += 3; count++; }
+                if(v === 'L') { score += 1; count++; } 
+                else if(v === 'N') { score += 2; count++; } 
+                else if(v === 'R') { score += 3; count++; } 
             });
             const avg = count === 0 ? 0 : score / count;
             let text = 'Medium'; let cls = 'status-busy';
-            if(avg > 0 && avg < 1.6) { text = 'Low'; cls = 'status-under'; }
-            else if(avg > 2.4) { text = 'High'; cls = 'status-over'; }
+            if(avg > 0 && avg < 1.6) { text = 'Low'; cls = 'status-under'; } 
+            else if(avg > 2.4) { text = 'High'; cls = 'status-over'; } 
             else if(avg === 0) { text = 'None'; cls = 'status-under'; } 
             return `<div class="status-pill ${cls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${text}</div>`;
         };
@@ -346,14 +355,19 @@ export const renderBoard = () => {
         c.onclick = () => UserManager.openUserModal(i);
         
         // Status Pill Logic (Last Week)
-        const statusMap = { 'under': 'Low', 'busy': 'Medium', 'over': 'High' };
+        const statusMap = { 'under': 'Low', 'busy': 'Medium', 'over': 'High', 'absent': 'Absent' };
         const statusVal = (m.lastWeek && m.lastWeek.status) ? m.lastWeek.status : 'busy';
         const statusText = statusMap[statusVal] || 'Medium';
-        const pillHTML = `<div class="status-pill status-${statusVal}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${statusText}</div>`;
+        const statusCls = statusVal === 'absent' ? 'status-absent' : `status-${statusVal}`;
+        const pillHTML = `<div class="status-pill ${statusCls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${statusText}</div>`;
 
         // This Week Grid
         const thisLoad = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N'];
-        const mg = thisLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
+        const mgThis = thisLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
+
+        // Next Week Grid
+        const nextLoad = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N'];
+        const mgNext = nextLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
 
         c.innerHTML = `<div class="member-header">${m.name}</div>`;
         
@@ -369,13 +383,10 @@ export const renderBoard = () => {
         content += `<div class="card-col"><div class="col-header">This Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().current.split(' - ')[0]})</span></div>`;
         content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.thisWeek ? m.thisWeek.load : [])}</div>`;
         content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${tw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
-        content += `<div class="daily-mini-grid" style="margin-top:auto;">${mg}</div>`;
+        content += `<div class="daily-mini-grid" style="margin-top:auto;">${mgThis}</div>`;
         content += `</div>`;
 
         // Col 3: Next Week
-        const nextLoad = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N'];
-        const mgNext = nextLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
-
         content += `<div class="card-col"><div class="col-header">Next Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().next.split(' - ')[0]})</span></div>`;
         content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.nextWeek ? m.nextWeek.load : [])}</div>`;
         content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${nw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
@@ -419,7 +430,7 @@ export const ZoomManager = {
             } else {
                 labels = t.labels; series = t.series;
             }
-            content = Visuals.createLineChartSVG(labels, series);
+            content = Visuals.createLineChartSVG(labels, series, t.yLabel);
         } else if (renderType === 'bar') {
             if (t.series) content = Visuals.createMultiBarChartSVG(t.labels, t.series);
             else content = Visuals.createBarChartSVG(t.data, t.yLabel, t.color1);
@@ -513,7 +524,7 @@ export const TrackerManager = {
                 getEl('tkCounterVal').value = tracker.value || 0;
                 getEl('tkCounterSub').value = tracker.subtitle || '';
                 getEl('tkCounterColor').value = tracker.color1 || '#bb86fc';
-            } else if (type === 'rag' || type === 'ryg') {
+            } else if (type === 'rag') {
                 this.selectRag(tracker.status || 'grey');
                 getEl('tkRagMsg').value = tracker.message || '';
             } else if (type === 'waffle') {
@@ -731,7 +742,6 @@ export const TrackerManager = {
                 series.push({name, color, values: vals});
             }
             if(series.length === 0) return App.alert("Add at least one series");
-            newTracker.yLabel = y;
             newTracker.labels = labels;
             newTracker.series = series;
         } else if (type === 'counter') {
