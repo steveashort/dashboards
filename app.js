@@ -29,11 +29,22 @@ export const initApp = () => {
         cm.setDate(today.getDate() + diff);
         const cf = new Date(cm);
         cf.setDate(cm.getDate() + 4);
+        
         const nm = new Date(cm);
         nm.setDate(cm.getDate() + 7);
         const nf = new Date(nm);
         nf.setDate(nm.getDate() + 4);
-        return { current: `${formatDate(cm)} - ${formatDate(cf)}`, next: `${formatDate(nm)} - ${formatDate(nf)}` };
+        
+        const lm = new Date(cm);
+        lm.setDate(cm.getDate() - 7);
+        const lf = new Date(lm);
+        lf.setDate(lm.getDate() + 4);
+
+        return { 
+            current: `${formatDate(cm)} - ${formatDate(cf)}`, 
+            next: `${formatDate(nm)} - ${formatDate(nf)}`,
+            last: `${formatDate(lm)} - ${formatDate(lf)}`
+        };
     };
     
     const updateDateUI = () => {
@@ -43,6 +54,7 @@ export const initApp = () => {
         getEl('overviewTitleNext').innerHTML = `Top 5 Activities Next Week <span class="date-suffix">${r.next}</span>`;
         
         // Update Modal Headers
+        if(getEl('lastWeekTitle')) getEl('lastWeekTitle').innerText = `Last Week (${r.last})`;
         if(getEl('thisWeekTitle')) getEl('thisWeekTitle').innerText = `This Week (${r.current})`;
         if(getEl('nextWeekTitle')) getEl('nextWeekTitle').innerText = `Next Week (${r.next})`;
     };
