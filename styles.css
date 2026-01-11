@@ -167,29 +167,40 @@ header {
 .card-bottom { background: transparent; }
 
 /* Modal Pills */
-.pill-group { display: flex; gap: 5px; justify-content: center; margin-top: 5px; }
+.pill-group { display: flex; flex-direction: column; gap: 5px; margin-top: 5px; }
 .w-pill {
-    width: 24px; height: 24px; border-radius: 50%; font-size: 0.7rem; font-weight: bold;
+    width: 100%; height: 24px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;
     display: flex; align-items: center; justify-content: center; cursor: pointer;
-    border: 2px solid transparent; color: #000; opacity: 0.4; transition: all 0.2s;
+    border: 1px solid #444; color: #000; opacity: 0.4; transition: all 0.2s;
 }
 .w-pill:hover { opacity: 0.8; }
-.w-pill.selected { opacity: 1; transform: scale(1.1); border-color: #fff; }
+.w-pill.selected { opacity: 1; border-color: #fff; box-shadow: 0 0 5px rgba(255,255,255,0.2); }
 
 .wp-l { background-color: var(--g-amber); } /* Yellow */
 .wp-n { background-color: var(--g-green); } /* Green */
 .wp-r { background-color: var(--g-red); color: #fff; }   /* Red */
 .wp-x { background-color: var(--accent); }  /* Purple */
 
-.status-select-row { display: flex; gap: 10px; }
+.status-select-col { display: flex; flex-direction: column; gap: 5px; }
 .status-option {
-    flex: 1; padding: 10px; border-radius: 4px; text-align: center; cursor: pointer;
-    font-weight: bold; font-size: 0.8rem; opacity: 0.5; border: 2px solid transparent; color: #000;
+    width: 100%; padding: 8px; border-radius: 4px; text-align: center; cursor: pointer;
+    font-weight: bold; font-size: 0.8rem; opacity: 0.5; border: 1px solid #444; color: #000;
 }
 .status-option.selected { opacity: 1; border-color: #fff; }
 .so-busy { background-color: var(--g-green); }
 .so-under { background-color: var(--g-amber); }
 .so-over { background-color: var(--g-red); color: #fff; }
+
+.daily-mini-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 15px; padding: 0 10px; }
+.dm-box { text-align: center; background: var(--input-bg); padding: 6px 2px; border-radius: 4px; }
+.dm-day { font-size: 0.65rem; color: var(--text-muted); display: block; margin-bottom: 2px; }
+.dm-val { font-size: 0.85rem; font-weight: bold; }
+
+/* Status Pill Rendering */
+.status-pill {
+    padding: 8px 12px; border-radius: 20px; font-size: 0.9rem; font-weight: bold;
+    text-align: center; color: #000; display: inline-block; width: 80%; margin: 0 auto;
+}
 
 .val-L { color: var(--g-amber); } 
 .val-N { color: var(--g-green); } 

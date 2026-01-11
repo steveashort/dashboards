@@ -296,21 +296,21 @@ export const renderBoard = () => {
         c.onclick = () => UserManager.openUserModal(i);
         
         // Status Pill Logic
-        const statusMap = { 'under': 'Underutilised', 'busy': 'Busy', 'over': 'Overloaded' };
+        const statusMap = { 'under': 'Low', 'busy': 'Medium', 'over': 'High' };
         const statusVal = m.lastWeek.status || 'busy';
-        const statusText = statusMap[statusVal] || 'Busy';
+        const statusText = statusMap[statusVal] || 'Medium';
         const pillHTML = `<div class="status-pill status-${statusVal}">${statusText}</div>`;
 
         c.innerHTML = `<div class="member-name-row">${m.name}</div>`;
         c.innerHTML += `<div class="card-half card-top">`;
-        c.innerHTML += `<div class="half-header"><span class="half-label">Last Week (Status)</span></div>`;
-        c.innerHTML += `<div style="margin-top: 10px; margin-bottom: 10px;">${pillHTML}</div>`;
-        c.innerHTML += `<ul class="card-task-list">${lw || '<li>No tasks</li>'}</ul>`;
+        c.innerHTML += `<div class="half-header"><span class="half-label">Last Week (Utilisation)</span></div>`;
+        c.innerHTML += `<div style="margin-top: 15px; margin-bottom: 15px; padding: 0 10px;">${pillHTML}</div>`;
+        c.innerHTML += `<ul class="card-task-list" style="padding-left: 10px;">${lw || '<li style="padding-left:0;">No tasks</li>'}</ul>`;
         c.innerHTML += `</div>`;
         
         c.innerHTML += `<div class="card-half card-bottom">`;
         c.innerHTML += `<div class="half-header"><span class="half-label">Next Week (Priorities)</span></div>`;
-        c.innerHTML += `<ul class="card-task-list">${nw || '<li>No tasks</li>'}</ul>`;
+        c.innerHTML += `<ul class="card-task-list" style="padding-left: 10px;">${nw || '<li style="padding-left:0;">No tasks</li>'}</ul>`;
         c.innerHTML += `<div class="daily-mini-grid">${mg(m.nextWeek.load)}</div>`;
         c.innerHTML += `</div>`;
 

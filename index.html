@@ -128,12 +128,12 @@
                             <input type="text" class="mb-2" id="lwTask3" style="margin-top:5px" placeholder="3. Bug fix...">
                         </div>
                         <div class="input-group">
-                            <label>Status (Last Week) <span class="help-icon" data-text="Overall status for the previous week.">?</span></label>
+                            <label>Utilisation (Last Week) <span class="help-icon" data-text="Overall status for the previous week.">?</span></label>
                             <input type="hidden" id="lwStatus">
-                            <div class="status-select-row">
-                                <div class="status-option so-busy" onclick="UserManager.setStatus('busy')">Busy</div>
-                                <div class="status-option so-under" onclick="UserManager.setStatus('under')">Underutilised</div>
-                                <div class="status-option so-over" onclick="UserManager.setStatus('over')">Overloaded</div>
+                            <div class="status-select-col">
+                                <div class="status-option so-under" onclick="UserManager.setStatus('under')">Low</div>
+                                <div class="status-option so-busy" onclick="UserManager.setStatus('busy')">Medium</div>
+                                <div class="status-option so-over" onclick="UserManager.setStatus('over')">High</div>
                             </div>
                         </div>
                     </div>
@@ -146,51 +146,51 @@
                             <input type="text" class="mb-2" id="nwTask3" style="margin-top:5px" placeholder="3. Code Review...">
                         </div>
                         <div class="input-group">
-                            <label>Workload (L=Low, N=Normal, R=High, X=Absent)</label>
+                            <label>Workload</label>
                             <div class="load-select-row">
                                 <div class="ls-box">
                                     <label>M</label><input type="hidden" id="nw0" value="N">
                                     <div class="pill-group">
-                                        <div class="w-pill wp-l" onclick="UserManager.setLoad(0,'L')">L</div>
-                                        <div class="w-pill wp-n" onclick="UserManager.setLoad(0,'N')">N</div>
-                                        <div class="w-pill wp-r" onclick="UserManager.setLoad(0,'R')">R</div>
-                                        <div class="w-pill wp-x" onclick="UserManager.setLoad(0,'X')">X</div>
+                                        <div class="w-pill wp-l" onclick="UserManager.setLoad(0,'L')">Low</div>
+                                        <div class="w-pill wp-n" onclick="UserManager.setLoad(0,'N')">Med</div>
+                                        <div class="w-pill wp-r" onclick="UserManager.setLoad(0,'R')">High</div>
+                                        <div class="w-pill wp-x" onclick="UserManager.setLoad(0,'X')">Abs</div>
                                     </div>
                                 </div>
                                 <div class="ls-box">
                                     <label>T</label><input type="hidden" id="nw1" value="N">
                                     <div class="pill-group">
-                                        <div class="w-pill wp-l" onclick="UserManager.setLoad(1,'L')">L</div>
-                                        <div class="w-pill wp-n" onclick="UserManager.setLoad(1,'N')">N</div>
-                                        <div class="w-pill wp-r" onclick="UserManager.setLoad(1,'R')">R</div>
-                                        <div class="w-pill wp-x" onclick="UserManager.setLoad(1,'X')">X</div>
+                                        <div class="w-pill wp-l" onclick="UserManager.setLoad(1,'L')">Low</div>
+                                        <div class="w-pill wp-n" onclick="UserManager.setLoad(1,'N')">Med</div>
+                                        <div class="w-pill wp-r" onclick="UserManager.setLoad(1,'R')">High</div>
+                                        <div class="w-pill wp-x" onclick="UserManager.setLoad(1,'X')">Abs</div>
                                     </div>
                                 </div>
                                 <div class="ls-box">
                                     <label>W</label><input type="hidden" id="nw2" value="N">
                                     <div class="pill-group">
-                                        <div class="w-pill wp-l" onclick="UserManager.setLoad(2,'L')">L</div>
-                                        <div class="w-pill wp-n" onclick="UserManager.setLoad(2,'N')">N</div>
-                                        <div class="w-pill wp-r" onclick="UserManager.setLoad(2,'R')">R</div>
-                                        <div class="w-pill wp-x" onclick="UserManager.setLoad(2,'X')">X</div>
+                                        <div class="w-pill wp-l" onclick="UserManager.setLoad(2,'L')">Low</div>
+                                        <div class="w-pill wp-n" onclick="UserManager.setLoad(2,'N')">Med</div>
+                                        <div class="w-pill wp-r" onclick="UserManager.setLoad(2,'R')">High</div>
+                                        <div class="w-pill wp-x" onclick="UserManager.setLoad(2,'X')">Abs</div>
                                     </div>
                                 </div>
                                 <div class="ls-box">
                                     <label>T</label><input type="hidden" id="nw3" value="N">
                                     <div class="pill-group">
-                                        <div class="w-pill wp-l" onclick="UserManager.setLoad(3,'L')">L</div>
-                                        <div class="w-pill wp-n" onclick="UserManager.setLoad(3,'N')">N</div>
-                                        <div class="w-pill wp-r" onclick="UserManager.setLoad(3,'R')">R</div>
-                                        <div class="w-pill wp-x" onclick="UserManager.setLoad(3,'X')">X</div>
+                                        <div class="w-pill wp-l" onclick="UserManager.setLoad(3,'L')">Low</div>
+                                        <div class="w-pill wp-n" onclick="UserManager.setLoad(3,'N')">Med</div>
+                                        <div class="w-pill wp-r" onclick="UserManager.setLoad(3,'R')">High</div>
+                                        <div class="w-pill wp-x" onclick="UserManager.setLoad(3,'X')">Abs</div>
                                     </div>
                                 </div>
                                 <div class="ls-box">
                                     <label>F</label><input type="hidden" id="nw4" value="N">
                                     <div class="pill-group">
-                                        <div class="w-pill wp-l" onclick="UserManager.setLoad(4,'L')">L</div>
-                                        <div class="w-pill wp-n" onclick="UserManager.setLoad(4,'N')">N</div>
-                                        <div class="w-pill wp-r" onclick="UserManager.setLoad(4,'R')">R</div>
-                                        <div class="w-pill wp-x" onclick="UserManager.setLoad(4,'X')">X</div>
+                                        <div class="w-pill wp-l" onclick="UserManager.setLoad(4,'L')">Low</div>
+                                        <div class="w-pill wp-n" onclick="UserManager.setLoad(4,'N')">Med</div>
+                                        <div class="w-pill wp-r" onclick="UserManager.setLoad(4,'R')">High</div>
+                                        <div class="w-pill wp-x" onclick="UserManager.setLoad(4,'X')">Abs</div>
                                     </div>
                                 </div>
                             </div>
