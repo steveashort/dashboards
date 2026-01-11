@@ -371,9 +371,13 @@ export const renderBoard = () => {
         content += `</div>`;
 
         // Col 3: Next Week
+        const nextLoad = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N'];
+        const mgNext = nextLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
+
         content += `<div class="card-col"><div class="col-header">Next Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().next.split(' - ')[0]})</span></div>`;
         content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.nextWeek ? m.nextWeek.load : [])}</div>`;
         content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${nw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
+        content += `<div class="daily-mini-grid" style="margin-top:auto;">${mgNext}</div>`;
         content += `</div>`;
 
         content += `</div>`; // End content
@@ -930,10 +934,10 @@ export const OverviewManager = {
             const title = type === 'success' ? `Top 5 Achievements (${r.current})` : `Top 5 Activities Next Week (${r.next})`;
             const containerId = type === 'success' ? 'teamSuccessList' : 'teamActivityList';
             
-            getEl('zoomTitle').innerText = title;
+            getEl('zoomTitle').innerText = State.title;
             getEl('zoomBody').className = 'zoom-body-text';
             const content = getEl(containerId).innerHTML;
-            getEl('zoomBody').innerHTML = `<div class="zoomed-content"><ul>${content}</ul></div>`;
+            getEl('zoomBody').innerHTML = `<div class="zoomed-content"><h3>${title}</h3><ul>${content}</ul></div>`;
             ModalManager.openModal('zoomModal');
         }
     },
