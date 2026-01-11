@@ -162,23 +162,39 @@ header {
     display: flex; flex-direction: column;
 }
 .member-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-.card-half { padding: 1.2rem; display: flex; flex-direction: column; gap: 1rem; }
+.card-half { padding: 1.5rem; display: flex; flex-direction: column; gap: 1rem; }
 .card-top { background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); }
 .card-bottom { background: transparent; }
-.half-header { display: flex; justify-content: space-between; align-items: center; }
-.half-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: bold; letter-spacing: 1px; }
-.member-name-row { padding: 1rem 1.2rem 0; font-size: 1.4rem; font-weight: bold; color: var(--text-main); }
-.card-task-list { list-style: none; font-size: 0.9rem; color: #ddd; }
-.card-task-li { margin-bottom: 0.4rem; display: flex; gap: 8px; align-items: flex-start; }
-.card-task-li input[type="checkbox"] { margin-top: 4px; accent-color: var(--accent); cursor: pointer; }
-.gauge-container { width: 60px; height: 35px; position: relative; text-align: center; }
-.gauge-val { position: absolute; bottom: -5px; width: 100%; text-align: center; font-size: 0.75rem; font-weight: bold; }
-.daily-mini-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin-top: auto; }
-.dm-box { text-align: center; background: var(--input-bg); padding: 4px 2px; border-radius: 2px; }
-.dm-day { font-size: 0.55rem; color: var(--text-muted); display: block; }
-.dm-val { font-size: 0.75rem; font-weight: bold; }
-.val-H { color: var(--g-red); } .val-M { color: var(--g-amber); }
-.val-L { color: var(--g-green); } .val-X { color: var(--g-grey); opacity: 0.7; font-weight: normal; }
+
+/* Modal Pills */
+.pill-group { display: flex; gap: 5px; justify-content: center; margin-top: 5px; }
+.w-pill {
+    width: 24px; height: 24px; border-radius: 50%; font-size: 0.7rem; font-weight: bold;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+    border: 2px solid transparent; color: #000; opacity: 0.4; transition: all 0.2s;
+}
+.w-pill:hover { opacity: 0.8; }
+.w-pill.selected { opacity: 1; transform: scale(1.1); border-color: #fff; }
+
+.wp-l { background-color: var(--g-amber); } /* Yellow */
+.wp-n { background-color: var(--g-green); } /* Green */
+.wp-r { background-color: var(--g-red); color: #fff; }   /* Red */
+.wp-x { background-color: var(--accent); }  /* Purple */
+
+.status-select-row { display: flex; gap: 10px; }
+.status-option {
+    flex: 1; padding: 10px; border-radius: 4px; text-align: center; cursor: pointer;
+    font-weight: bold; font-size: 0.8rem; opacity: 0.5; border: 2px solid transparent; color: #000;
+}
+.status-option.selected { opacity: 1; border-color: #fff; }
+.so-busy { background-color: var(--g-green); }
+.so-under { background-color: var(--g-amber); }
+.so-over { background-color: var(--g-red); color: #fff; }
+
+.val-L { color: var(--g-amber); } 
+.val-N { color: var(--g-green); } 
+.val-R { color: var(--g-red); } 
+.val-X { color: var(--accent); opacity: 0.7; font-weight: normal; }
 #globalTooltip {
     position: fixed; background: #222; color: #fff; padding: 10px; border: 1px solid #555;
     border-radius: 4px; font-size: 0.8rem; white-space: pre-wrap; width: 220px;

@@ -288,6 +288,9 @@ export const renderBoard = () => {
             if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleActivity(${i},${x})"><span>${t.text}</span></li>`;
         });
         
+        });
+        
+        // Next Week Grid
         const mg = (a) => a.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
         
         const c = document.createElement('div');
@@ -308,9 +311,7 @@ export const renderBoard = () => {
         c.innerHTML += `</div>`;
         
         c.innerHTML += `<div class="card-half card-bottom">`;
-        c.innerHTML += `<div class="half-header"><span class="half-label">Next Week (Priorities)</span>`;
-        c.innerHTML += `<div class="gauge-container">${createGaugeSVG(m.nextWeek.load)}</div>`;
-        c.innerHTML += `</div>`;
+        c.innerHTML += `<div class="half-header"><span class="half-label">Next Week (Priorities)</span></div>`;
         c.innerHTML += `<ul class="card-task-list">${nw || '<li>No tasks</li>'}</ul>`;
         c.innerHTML += `<div class="daily-mini-grid">${mg(m.nextWeek.load)}</div>`;
         c.innerHTML += `</div>`;
@@ -726,14 +727,35 @@ export const UserManager = {
         });
 
         // Set Last Week Status
-        getEl('lwStatus').value = member ? (member.lastWeek.status || 'busy') : 'busy';
+        const status = member ? (member.lastWeek.status || 'busy') : 'busy';
+        this.setStatus(status);
 
-        // Set Next Week Load (Keep as is)
+        // Set Next Week Load
         for(let j=0; j<5; j++) {
-            getEl(`nw${j}`).value = member ? member.nextWeek.load[j] : 'L';
+            const val = member ? member.nextWeek.load[j] : 'N';
+            this.setLoad(j, val);
         }
 
         ModalManager.openModal('userModal');
+    },
+
+    setStatus(val) {
+        getEl('lwStatus').value = val;
+        document.querySelectorAll('.status-option').forEach(el => el.classList.remove('selected'));
+        const target = document.querySelector(`.status-option.so-${val}`);
+        if(target) target.classList.add('selected');
+    },
+
+    setLoad(dayIdx, val) {
+        getEl(`nw${dayIdx}`).value = val;
+        // Find the pill group for this day
+        const boxes = document.querySelectorAll('.ls-box');
+        if (boxes[dayIdx]) {
+            const pills = boxes[dayIdx].querySelectorAll('.w-pill');
+            pills.forEach(p => p.classList.remove('selected'));
+            const target = boxes[dayIdx].querySelector(`.wp-${val.toLowerCase()}`);
+            if(target) target.classList.add('selected');
+        }
     },
 
     submitUser() {
