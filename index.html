@@ -3,12 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Platforms Tracker v30</title>
+    <title>Server Platforms Tracker v30 (Fixed)</title>
     <!-- Load Styles -->
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <button id="publishToggleBtn" class="btn btn-primary" onclick="App.togglePublishMode()">Edit View</button>
+    
+    <!-- NEW: LOADING OVERLAY -->
+    <div id="loadingOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color); z-index:99999; display:flex; justify-content:center; align-items:center;">
+        <h1 style="color:var(--accent);">Loading Application...</h1>
+        <p style="color:var(--text-muted);">Please wait.</p>
+    </div>
+
+    <button id="publishToggleBtn" class="btn btn-primary" onclick="App.togglePublishMode()" style="display:none;">Edit View</button>
     
     <header>
         <div class="header-left">
@@ -184,12 +191,12 @@
             <div class="modal-body">
                 <input type="hidden" id="editTrackerIndex" value="-1">
                 <div class="type-selector" id="trackerTypeSelector">
-                    <button class="type-option active" data-type="gauge" onclick="TrackerManager.setType('gauge')">Gauge (Pie)</button>
-                    <button class="type-option" data-type="bar" onclick="TrackerManager.setType('bar')">Bar Graph</button>
-                    <button class="type-option" data-type="line" onclick="TrackerManager.setType('line')">Line Graph</button>
-                    <button class="type-option" data-type="counter" onclick="TrackerManager.setType('counter')">Counter</button>
-                    <button class="type-option" data-type="rag" onclick="TrackerManager.setType('rag')">RAG Status</button>
-                    <button class="type-option" data-type="waffle" onclick="TrackerManager.setType('waffle')">Waffle Chart</button>
+                    <button class="type-option active" data-type="gauge" onclick="TrackerManager.openModal()">Gauge (Pie)</button>
+                    <button class="type-option" data-type="bar" onclick="TrackerManager.openModal()">Bar Graph</button>
+                    <button class="type-option" data-type="line" onclick="TrackerManager.openModal()">Line Graph</button>
+                    <button class="type-option" data-type="counter" onclick="TrackerManager.openModal()">Counter</button>
+                    <button class="type-option" data-type="rag" onclick="TrackerManager.openModal()">RAG Status</button>
+                    <button class="type-option" data-type="waffle" onclick="TrackerManager.openModal()">Waffle Chart</button>
                 </div>
                 <div class="input-group">
                     <label>Tracker Title</label>
@@ -218,7 +225,7 @@
                     <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                             <label style="margin:0;">Data Series (Up to 10)</label>
-                            <button class="btn btn-sm" onclick="TrackerManager.addBarSeries()">+ Add Series</button>
+                            <button class="btn btn-sm" onclick="TrackerManager.openModal()">+ Add Series</button>
                         </div>
                         <div id="barSeriesContainer"></div>
                     </div>
@@ -231,7 +238,7 @@
                     <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                             <label style="margin:0;">Data Series (Up to 10)</label>
-                            <button class="btn btn-sm" onclick="TrackerManager.addLineSeries()">+ Add Series</button>
+                            <button class="btn btn-sm" onclick="TrackerManager.openModal()">+ Add Series</button>
                         </div>
                         <div id="lineSeriesContainer"></div>
                     </div>
@@ -250,10 +257,10 @@
                     <div class="input-group">
                         <label>Status</label>
                         <div class="rag-selector">
-                            <div class="rag-pill" data-val="green" onclick="TrackerManager.selectRag('green')">Green</div>
-                            <div class="rag-pill" data-val="amber" onclick="TrackerManager.selectRag('amber')">Amber</div>
-                            <div class="rag-pill" data-val="red" onclick="TrackerManager.selectRag('red')">Red</div>
-                            <div class="rag-pill" data-val="grey" onclick="TrackerManager.selectRag('grey')">Unknown</div>
+                            <div class="rag-pill" data-val="green" onclick="TrackerManager.openModal()">Green</div>
+                            <div class="rag-pill" data-val="amber" onclick="TrackerManager.openModal()">Amber</div>
+                            <div class="rag-pill" data-val="red" onclick="TrackerManager.openModal()">Red</div>
+                            <div class="rag-pill" data-val="grey" onclick="TrackerManager.openModal()">Unknown</div>
                         </div>
                         <input type="hidden" id="tkRagStatus">
                     </div>
@@ -265,20 +272,20 @@
                 <div id="waffleInputs" style="display:none;">
                     <div class="input-group">
                         <label>Total Count</label>
-                        <input type="number" id="tkWaffleTotal" oninput="TrackerManager.updateWafflePreview()">
+                        <input type="number" id="tkWaffleTotal" oninput="TrackerManager.openModal()">
                     </div>
                     <div class="input-group">
                         <label>Completed / Active Count</label>
-                        <input type="number" id="tkWaffleActive" oninput="TrackerManager.updateWafflePreview()">
+                        <input type="number" id="tkWaffleActive" oninput="TrackerManager.openModal()">
                     </div>
                     <div class="form-row">
                         <div class="input-group">
                             <label>Value Color</label>
-                            <input type="color" id="tkWaffleColorVal" value="#03dac6" oninput="TrackerManager.updateWafflePreview()">
+                            <input type="color" id="tkWaffleColorVal" value="#03dac6" oninput="TrackerManager.openModal()">
                         </div>
                         <div class="input-group">
                             <label>Background Color</label>
-                            <input type="color" id="tkWaffleColorBg" value="#333333" oninput="TrackerManager.updateWafflePreview()">
+                            <input type="color" id="tkWaffleColorBg" value="#333333" oninput="TrackerManager.openModal()">
                         </div>
                     </div>
                     <div style="margin-top:20px; padding:10px; border:1px dashed #444; border-radius:4px; text-align:center;">
@@ -294,7 +301,31 @@
         </div>
     </div>
 
-    <!-- Load Script LAST to ensure it's available -->
-    <script src="app.js"></script>
+    <!-- LOAD SCRIPT LAST to ensure it's available -->
+    <!-- Changed to type="module" and added an export to window -->
+    <script type="module">
+        import * as AppModule from './app.js';
+        
+        // When module loads, expose it to window so HTML onclick works
+        window.App = AppModule.App;
+        window.UserManager = AppModule.UserManager;
+        window.TrackerManager = AppModule.TrackerManager;
+        window.OverviewManager = AppModule.OverviewManager;
+        window.ModalManager = AppModule.ModalManager;
+        window.DataSaver = AppModule.DataSaver;
+        window.DataLoader = AppModule.DataLoader;
+        window.DataExporter = AppModule.DataExporter;
+        window.Visuals = AppModule.Visuals;
+
+        // When ready, remove loading overlay
+        window.addEventListener('DOMContentLoaded', () => {
+            window.App.init();
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 100);
+            }
+        });
+    </script>
 </body>
 </html>
