@@ -248,7 +248,7 @@ export const renderBoard = () => {
             } else {
                 labels = t.labels; series = t.series;
             }
-            visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createLineChartSVG(labels, series)}</div>`;
+            visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createLineChartSVG(labels, series, t.yLabel)}</div>`;
         } else if (renderType === 'bar') {
             if (t.series) {
                 visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createMultiBarChartSVG(t.labels, t.series)}</div>`;
@@ -407,11 +407,13 @@ export const TrackerManager = {
         // Load Specific Data
         if (tracker) {
             if (type === 'line1' || type === 'line2') {
+                getEl('tkLineYLabel').value = tracker.yLabel || '';
                 const labels = tracker.data.map(d => d.label);
                 labels.forEach((l, k) => { if(k<24) getEl(`lLbl${k}`).value = l; });
                 this.addLineSeries(tracker.y1Leg || 'Series 1', tracker.color1 || '#03dac6', tracker.data.map(d => d.y1));
                 if (type === 'line2') this.addLineSeries(tracker.y2Leg || 'Series 2', tracker.color2 || '#ff4081', tracker.data.map(d => d.y2));
             } else if (type === 'line') {
+                getEl('tkLineYLabel').value = tracker.yLabel || '';
                 tracker.labels.forEach((l, k) => { if(k<24) getEl(`lLbl${k}`).value = l; });
                 tracker.series.forEach(s => this.addLineSeries(s.name, s.color, s.values));
             } else if (type === 'bar') {
@@ -635,6 +637,7 @@ export const TrackerManager = {
             newTracker.labels = labels;
             newTracker.series = series;
         } else if (type === 'line') {
+            const y = getEl('tkLineYLabel').value;
             const labels = [];
             for(let k=0; k<24; k++) {
                 const l = getEl(`lLbl${k}`).value;
@@ -654,6 +657,7 @@ export const TrackerManager = {
                 series.push({name, color, values: vals});
             }
             if(series.length === 0) return App.alert("Add at least one series");
+            newTracker.yLabel = y;
             newTracker.labels = labels;
             newTracker.series = series;
         } else if (type === 'counter') {

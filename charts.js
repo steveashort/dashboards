@@ -33,11 +33,11 @@ export const createWaffleHTML = (total, active, colorVal, colorBg) => {
 };
 
 export const Visuals = {
-    createLineChartSVG: (labels, series) => {
+    createLineChartSVG: (labels, series, yLabel) => {
         let max = 0;
         series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
         if(max===0) max=10;
-        const w=300; const h=180; const pTop=30; const pBot=50; const pSide=30;
+        const w=300; const h=180; const pTop=30; const pBot=40; const pSide=10;
         const gw=(w-(pSide*2))/(labels.length-1||1), uh=h-pTop-pBot;
 
         let paths = '';
@@ -57,7 +57,7 @@ export const Visuals = {
         let lbls = '';
         labels.forEach((l, i) => {
             const x = pSide + (i*gw);
-            lbls += `<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
+            lbls += `<text x="${x}" y="${h-25}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
         });
 
         let legHTML = '';
@@ -70,8 +70,10 @@ export const Visuals = {
             const lx = startX + (i * legItemW);
             legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
         });
+        
+        const yAxisLabel = yLabel ? `<text transform="rotate(-90 ${pSide/2},${h/2})" x="${pSide/2}" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>` : '';
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${paths}${points}${lbls}${legHTML}<text x="${pSide-5}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-5}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yAxisLabel}${paths}${points}${lbls}${legHTML}<text x="${pSide}" y="${pTop+10}" text-anchor="start" fill="#aaa" font-size="10">${max}</text><text x="${pSide}" y="${h-pBot}" text-anchor="start" fill="#aaa" font-size="10">0</text></svg>`;
     },
 
     createMultiBarChartSVG: (labels, series) => {
@@ -79,7 +81,7 @@ export const Visuals = {
         series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
         if(max === 0) max = 10;
 
-        const w=300; const h=180; const pTop=20; const pBot=50; const pSide=30;
+        const w=300; const h=180; const pTop=20; const pBot=40; const pSide=10;
         const groupWidth = (w-(pSide*2)) / labels.length;
         const barWidth = (groupWidth * 0.8) / series.length; 
         const uh = h-pTop-pBot;
@@ -97,7 +99,7 @@ export const Visuals = {
         let lbls = '';
         labels.forEach((l, i) => {
             const x = pSide + (i * groupWidth) + (groupWidth/2);
-            lbls += `<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
+            lbls += `<text x="${x}" y="${h-25}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
         });
 
         let legHTML = '';
@@ -111,14 +113,14 @@ export const Visuals = {
             legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
         });
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${rects}${lbls}${legHTML}<text x="${pSide-5}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-5}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${rects}${lbls}${legHTML}<text x="${pSide}" y="${pTop+10}" text-anchor="start" fill="#aaa" font-size="10">${max}</text><text x="${pSide}" y="${h-pBot}" text-anchor="start" fill="#aaa" font-size="10">0</text></svg>`;
     },
 
     createBarChartSVG: (data, yLabel, color) => {
         let max = 0; 
         data.forEach(d => { if(d.val > max) max = d.val; }); 
         if(max === 0) max = 10;
-        const w=300; const h=180; const pTop=20; const pBot=50; const pSide=25;
+        const w=300; const h=180; const pTop=20; const pBot=40; const pSide=10;
         const bw=(w-(pSide*2))/data.length, uh=h-pTop-pBot;
         let bars='';
         const fill = color || 'var(--chart-1)';
