@@ -22,7 +22,10 @@ export const createWaffleHTML = (total, active, colorVal, colorBg) => {
     const maxCells = 100;
     let html = '<div style="display:grid; grid-template-columns: repeat(10, 1fr); gap: 2px; width: 140px; margin: 0 auto;">';
     for(let i=0; i<maxCells; i++) {
-        const isActive = i < active;
+        const row = Math.floor(i / 10);
+        const col = i % 10;
+        const logicalIndex = ((9 - row) * 10) + col;
+        const isActive = logicalIndex < active;
         html += `<div class="waffle-cell" style="${isActive ? `background-color:${colorVal}; box-shadow: 0 0 5px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
     }
     html += '</div>';

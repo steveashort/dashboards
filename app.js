@@ -144,7 +144,13 @@ export const renderBoard = () => {
     State.trackers.forEach((t, i) => {
         const card = document.createElement('div');
         card.className = 'tracker-card';
-        card.onclick = () => ZoomManager.openChartModal(i);
+        card.onclick = () => {
+             if (document.body.classList.contains('publishing')) {
+                 ZoomManager.openChartModal(i);
+             } else {
+                 TrackerManager.openModal(i);
+             }
+        };
 
         let visualHTML = '';
         let statsHTML = '';
@@ -451,13 +457,7 @@ export const TrackerManager = {
         const colorVal = getEl('tkWaffleColorVal').value;
         const colorBg = getEl('tkWaffleColorBg').value;
         
-        const p = getEl('wafflePreview');
-        let html = '';
-        for(let i=0; i<100; i++) {
-            const isActive = i < active;
-            html += `<div class="waffle-cell" style="${isActive ? `background-color:${colorVal}; box-shadow: 0 0 2px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
-        }
-        p.innerHTML = html;
+        getEl('wafflePreview').innerHTML = createWaffleHTML(100, active, colorVal, colorBg);
     },
 
     submitTracker() {
