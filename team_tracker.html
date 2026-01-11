@@ -3,8 +3,351 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Platforms Tracker v22</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Server Platforms Tracker v24.3</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --input-bg: #2d2d2d;
+            --modal-bg: #252525;
+            --text-main: #e0e0e0;
+            --text-muted: #a0a0a0;
+            --accent: #bb86fc;
+            --accent-hover: #9965f4;
+            --border: #333;
+
+            /* Status Colors */
+            --g-green: #00e676;
+            --g-amber: #ffb300;
+            --g-red: #ff1744;
+            --g-grey: #666666;
+            /* Chart Colors */
+            --chart-1: #03dac6; /* Cyan */
+            --chart-2: #ff4081; /* Pink */
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding: 2rem;
+            min-height: 100vh;
+            padding-bottom: 4rem;
+        }
+
+        /* --- HEADER --- */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem;
+            gap: 1.5rem; flex-wrap: wrap;
+        }
+
+        .header-left { display: flex; align-items: center; gap: 15px; }
+        .header-logo-img { width: 48px; height: 48px; object-fit: contain; }
+
+        #appTitle {
+            font-weight: 300; letter-spacing: 1px; color: var(--accent); margin: 0;
+            border-bottom: 1px dashed transparent; cursor: text; transition: border 0.2s;
+        }
+        #appTitle:hover { border-bottom-color: var(--accent); }
+        #appTitle:focus { outline: none; border-bottom: 1px solid var(--accent); }
+
+        .date-display { color: var(--text-muted); font-size: 0.9rem; font-family: monospace; margin-top: 5px; }
+        .header-actions { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
+
+        .btn {
+            background: var(--input-bg); border: 1px solid var(--accent); color: var(--accent);
+            padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
+            transition: all 0.2s; font-weight: 600;
+        }
+        .btn:hover { background: var(--accent); color: #000; }
+        .btn-primary { background: var(--accent); color: #000; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+
+        .btn-reset {
+            background: transparent; border: 1px solid #444; color: var(--text-muted);
+            padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 0.7rem;
+            margin-top: 0.8rem; width: auto; display: inline-block; transition: all 0.2s;
+        }
+        .btn-reset:hover { border-color: var(--g-red); color: var(--g-red); }
+
+        /* --- OVERVIEW --- */
+        .team-overview-panel {
+            background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 1.5rem; margin-bottom: 2rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;
+        }
+        .overview-col h4 {
+            color: var(--accent); font-size: 0.85rem; text-transform: uppercase;
+            border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.5rem;
+        }
+        .date-suffix { color: var(--text-muted); font-weight: normal; font-size: 0.8em; margin-left: 8px; text-transform: none; }
+        .edit-hint { font-size: 0.7rem; color: #666; font-style: italic; margin-bottom: 1rem; display: block; }
+
+        .overview-list { list-style: none; font-size: 0.9rem; line-height:1.4; color: var(--text-main); }
+        .overview-list li { margin-bottom: 0.5rem; position: relative; padding-left: 1rem; }
+        .overview-list li::before { content: "•"; position: absolute; left: 0; color: #fff; }
+        .auto-item { color: var(--text-main); }
+        .auto-item b { color: var(--text-muted); margin-right: 5px; }
+
+        .overview-col.interactive {
+            cursor: pointer; position: relative; transition: background 0.2s; border-radius: 4px; padding: 0.5rem; margin: -0.5rem;
+        }
+        .overview-col.interactive:hover { background: rgba(255,255,255,0.05); }
+        .overview-col.interactive::after {
+            content: "✎"; position: absolute; top: 0.5rem; right: 0.5rem; color: var(--text-muted); opacity: 0; transition: opacity 0.2s;
+        }
+        .overview-col.interactive:hover::after { opacity: 1; }
+
+        #additionalInfoPreview { font-size: 0.9rem; line-height: 1.5; color: var(--text-main); pointer-events: none; }
+        #additionalInfoPreview ul { padding-left: 1.2rem; margin-bottom: 0.5rem; }
+        #additionalInfoPreview li { margin-bottom: 0.2rem; }
+        #additionalInfoPreview b { color: #fff; }
+        #additionalInfoPreview a { color: var(--chart-1); text-decoration: none; border-bottom: 1px dashed var(--chart-1); cursor: pointer; pointer-events: auto; }
+        #additionalInfoPreview a:hover { border-bottom-style: solid; }
+
+        /* --- TRACKERS --- */
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;
+        }
+        .section-header.first { border-top: none; padding-top: 0; }
+        .tracker-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;
+        }
+        .tracker-card {
+            background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+            padding: 1.5rem; text-align: center; position: relative; cursor: pointer; transition: transform 0.2s;
+            min-height: 280px; display: flex; flex-direction: column; justify-content: space-between;
+        }
+        .tracker-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .tracker-desc { font-weight: bold; margin-bottom: 1rem; color: var(--text-main); height: 30px; display: flex; align-items: center; justify-content: center;}
+        .tracker-viz-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 160px; overflow: hidden; }
+
+        .pie-chart {
+            width: 120px; height: 120px; border-radius: 50%; margin: 0 auto;
+            background: conic-gradient(var(--g-green) 0% 0%, var(--g-red) 0% 100%);
+            position: relative; box-shadow: 0 0 10px rgba(0,0,0,0.5);
+        }
+        .pie-overlay {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: var(--card-bg); width: 96px; height: 96px; border-radius: 50%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .pie-pct { font-size: 1.4rem; font-weight: bold; color: var(--text-main); }
+        .tracker-stats { font-size: 0.8rem; color: var(--text-muted); margin-top: auto; padding-top:1rem; }
+
+        .btn-del-tracker {
+            position: absolute; top: 10px; right: 10px; color: #666; background: none; border: none; cursor: pointer; font-size: 1.2rem; z-index: 2;
+        }
+        .btn-del-tracker:hover { color: var(--g-red); }
+
+        /* --- USERS --- */
+        .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
+        .member-card {
+            background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+            transition: transform 0.2s; position: relative; cursor: pointer; overflow: hidden;
+            display: flex; flex-direction: column;
+        }
+        .member-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+        .card-half { padding: 1.2rem; display: flex; flex-direction: column; gap: 1rem; }
+        .card-top { background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); }
+        .card-bottom { background: transparent; }
+        .half-header { display: flex; justify-content: space-between; align-items: center; }
+        .half-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: bold; letter-spacing: 1px; }
+        .member-name-row { padding: 1rem 1.2rem 0; font-size: 1.4rem; font-weight: bold; color: var(--text-main); }
+        .card-task-list { list-style: none; font-size: 0.9rem; color: #ddd; }
+        .card-task-li { margin-bottom: 0.4rem; display: flex; gap: 8px; align-items: flex-start; }
+        .card-task-li input[type="checkbox"] { margin-top: 4px; accent-color: var(--accent); cursor: pointer; }
+
+        .gauge-container { width: 60px; height: 35px; position: relative; text-align: center; }
+        .gauge-val { position: absolute; bottom: -5px; width: 100%; text-align: center; font-size: 0.75rem; font-weight: bold; }
+
+        .daily-mini-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin-top: auto; }
+        .dm-box { text-align: center; background: var(--input-bg); padding: 4px 2px; border-radius: 2px; }
+        .dm-day { font-size: 0.55rem; color: var(--text-muted); display: block; }
+        .dm-val { font-size: 0.75rem; font-weight: bold; }
+        .val-H { color: var(--g-red); } .val-M { color: var(--g-amber); }
+        .val-L { color: var(--g-green); } .val-X { color: var(--g-grey); opacity: 0.7; font-weight: normal; }
+
+        /* --- GLOBAL TOOLTIP --- */
+        #globalTooltip {
+            position: fixed; background: #222; color: #fff; padding: 10px; border: 1px solid #555;
+            border-radius: 4px; font-size: 0.8rem; white-space: pre-wrap; width: 220px;
+            z-index: 99999; box-shadow: 0 4px 15px rgba(0,0,0,0.8); pointer-events: none; display: none; line-height: 1.4;
+        }
+        .help-icon {
+            display: inline-block; width: 16px; height: 16px; background: #444; color: #aaa;
+            border-radius: 50%; text-align: center; line-height: 16px; font-size: 11px; font-weight: bold;
+            cursor: help; margin-left: 6px; vertical-align: middle;
+        }
+        .help-icon:hover { background: var(--accent); color: #000; }
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal-content {
+            background: var(--modal-bg); width: 95%; max-width: 900px; max-height: 90vh;
+            border-radius: 8px; border:1px solid var(--border); display: flex; flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
+        }
+        .modal-mini { max-width: 400px; text-align: center; }
+        .modal-large { width: 90%; height: 85%; max-width: 1200px; }
+
+        .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 2rem; overflow-y: auto; flex-grow: 1; }
+        .modal-footer { padding: 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; }
+
+        .form-row { display: grid; grid-template-columns:1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+        .form-section-title { color: var(--accent); font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1rem; border-bottom:1px solid #444; padding-bottom: 0.5rem; }
+        .input-group { margin-bottom: 1rem; }
+        .input-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem; }
+        input[type="text"], input[type="number"], textarea {
+            width: 100%; padding: 0.6rem; background: var(--input-bg); border:1px solid var(--border);
+            color: #fff; border-radius: 4px; font-size: 0.9rem;
+        }
+        input:focus, textarea:focus { border-color: var(--accent); outline: none; }
+        .load-select-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+        .ls-box { text-align: center; } .ls-box label { font-size: 0.7rem; margin-bottom: 2px; }
+        select { width: 100%; padding: 4px; background: var(--input-bg); color: #fff; border:1px solid var(--border); text-align: center; border-radius: 4px; cursor: pointer; }
+        option { background: var(--input-bg); color: #fff; }
+
+        /* Type Selector Grid */
+        .type-selector { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
+        .type-option {
+            padding: 0.8rem; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; color: var(--text-muted);
+            background: transparent; font-weight: bold; font-size: 0.8rem; text-align: center;
+        }
+        .type-option:hover { background: rgba(255,255,255,0.05); }
+        .type-option.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+        /* Series input container for scrolling */
+        #barSeriesContainer, #lineSeriesContainer {
+            max-height: 300px;
+            overflow-y: auto;
+            padding-right: 5px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 10px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        /* 24-value Grid Layouts */
+        .grid-24 {
+            display: grid; grid-template-columns: repeat(6, 1fr); gap: 5px;
+        }
+
+        /* Color Input Custom Styling */
+        input[type="color"] {
+            -webkit-appearance: none;
+            border: 1px solid #444;
+            width: 40px;
+            height: 40px;
+            cursor: pointer;
+            background: none;
+            padding: 0;
+            vertical-align: middle;
+        }
+        input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
+        input[type="color"]::-webkit-color-swatch { 
+            border: none; 
+            border-radius: 4px; 
+        }
+        input[type="color"]::-moz-color-swatch {
+            border: none;
+            border-radius: 4px;
+        }
+
+        /* New Metric Styles */
+        .counter-display {
+            font-size: 3rem; font-weight: 300; color: var(--accent); line-height: 1;
+            text-shadow: 0 0 20px rgba(187, 134, 252, 0.3);
+        }
+        .counter-sub { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; }
+
+        .ryg-indicator {
+            width: 80px; height: 80px; border-radius: 50%;
+            margin: 0 auto; transition: background 0.3s, box-shadow 0.3s;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; font-weight: bold; color: #000;
+        }
+        .ryg-green { background: var(--g-green); box-shadow: 0 0 15px var(--g-green); }
+        .ryg-amber { background: var(--g-amber); box-shadow: 0 0 15px var(--g-amber); }
+        .ryg-red { background: var(--g-red); box-shadow: 0 0 15px var(--g-red); }
+        .ryg-grey { background: var(--g-grey); box-shadow: none; color: #fff; }
+
+        /* RAG Pills */
+        .rag-selector { display: flex; gap: 10px; margin-top: 5px; }
+        .rag-pill {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid transparent;
+            border-radius: 20px;
+            text-align: center;
+            font-weight: bold;
+            cursor: pointer;
+            opacity: 0.5;
+            transition: all 0.2s;
+        }
+        .rag-pill.selected { opacity: 1; transform: scale(1.05); }
+        .rag-pill[data-val="green"] { background: var(--g-green); color: #000; }
+        .rag-pill[data-val="amber"] { background: var(--g-amber); color: #000; }
+        .rag-pill[data-val="red"] { background: var(--g-red); color: #000; }
+        .rag-pill[data-val="grey"] { background: var(--g-grey); color: #fff; }
+
+        /* WAFFLE PREVIEW FIX */
+        #wafflePreview {
+            display: grid; 
+            grid-template-columns: repeat(10, 1fr); 
+            gap:1px; 
+            width: 60px; 
+            margin: 10px auto;
+        }
+        .waffle-cell {
+            aspect-ratio: 1; background: #333; border-radius: 1px;
+        }
+
+        /* --- PUBLISH MODE STYLES --- */
+        body.publishing .header-actions,
+        body.publishing .btn-del-tracker,
+        body.publishing .section-header button,
+        body.publishing .overview-col.interactive::after,
+        body.publishing .edit-hint,
+        body.publishing .help-icon,
+        body.publishing .btn-reset { display: none !important; }
+        body.publishing #publishToggleBtn { display: block !important; position: fixed; top: 20px; right: 20px; z-index: 9999; }
+        
+        body.publishing .auto-item b { display: none; }
+        body.publishing .tracker-card { cursor: zoom-in; }
+        body.publishing .member-card { cursor: default; }
+        body.publishing #appTitle { pointer-events: none; border-bottom: none; }
+        body.publishing .overview-col.interactive { pointer-events: auto; }
+        body.publishing .overview-col { cursor: zoom-in; }
+        body.publishing .overview-col:hover { background: rgba(255,255,255,0.05); }
+
+        body.publishing #additionalInfoPreview { pointer-events: auto; }
+        #publishToggleBtn { display: none; }
+
+        /* Zoomed Content Styles */
+        .zoomed-content ul { font-size: 1.5rem; line-height: 2; padding-left: 2rem; }
+        .zoomed-content li { margin-bottom: 1rem; }
+        .zoomed-content p { font-size: 1.2rem; line-height: 1.6; }
+        .zoomed-content b { color: #fff; }
+        .zoomed-content a { color: var(--chart-1); text-decoration: none; border-bottom: 1px dashed var(--chart-1); }
+
+        @media print {
+            body { background: #121212 !important; color: #e0e0e0 !important; -webkit-print-color-adjust: exact; }
+            .header-actions, .modal-overlay, .btn, .btn-del-tracker, #publishToggleBtn, .btn-reset { display: none !important; }
+            .member-card, .team-overview-panel, .tracker-card { break-inside: avoid; border: 1px solid #444 !important; }
+            .card-top { background: #1a1a1a !important; }
+            .section-header button { display: none; }
+            body.publishing .auto-item b { display: none; }
+        }
+    </style>
 </head>
 <body>
 
@@ -12,16 +355,17 @@
 
     <header>
         <div class="header-left">
-            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmI4NmZjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjIwIiBoZWlnaHQ9IjgiIHJ4PSIyIiByeT0iMiI+PC9yZWN0PjxyZWN0IHg9IjIiIHk9IjE0IiB3aWR0aD0iMjAiIGhlaWdodD0iOCIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PGxpbmUgeDE9IjYiIHkxPSI2IiB4Mj0iNi4wMSIgeTI9IjYiPjwvbGluZT48bGluZSB4MT0iNiIgeTE9IjE4IiB4Mj0iNi4wMSIgeTI9IjE4Ij48L2xpbmU+PC9zdmc+" alt="Logo" class="header-logo-img">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmI4NmZjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjAiIGhlaWdodD0iOCIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PHJlY3QgeD0iMiIgeT0iMTQiIHdpZHRoPSIyMCIgaGVpZ2h0PSI4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48bGluZSB4MT0iNiIgeTE9IjYiIHgyPSI2LjAxIiB5Mj0iNiI+PC9saW5lPjxsaW5lIHgxPSI2IiB5MT0iMTgiIHgyPSI2LjAxIiB5Mj0iMTgiPjwvbGluZT48L3N2Z+" alt="Logo" class="header-logo-img">
             <div>
                 <h1 id="appTitle" contenteditable="true" spellcheck="false" onblur="saveTitle()">Server Platforms</h1>
                 <div class="date-display" id="dateRangeDisplay">...</div>
             </div>
         </div>
         <div class="header-actions">
-            <input type="file" id="fileInput" style="display: none;" accept=".json" onchange="loadFromFile(this)">
+            <input type="file" id="fileInput" style="display: none;" accept=".json,.csv" onchange="loadFromFile(this)">
             <button class="btn" onclick="document.getElementById('fileInput').click()">Load Data</button>
-            <button class="btn" onclick="saveData()">Save Data</button>
+            <button class="btn" onclick="saveData()">Save JSON</button>
+            <button class="btn" onclick="exportCSV()">Export CSV</button>
             <button class="btn" onclick="togglePublishMode()">Publish View</button>
             <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
         </div>
@@ -107,7 +451,7 @@
             <div class="modal-body">
                 <input type="hidden" id="editIndex" value="-1">
                 <div class="input-group">
-                    <label>Team Member Name <span class="help-icon" data-text="Enter the full name of the team member.">?</span></label>
+                    <label>Team Member Name <span class="help-icon" data-text="Enter full name of team member.">?</span></label>
                     <input type="text" id="mName" placeholder="e.g. Alex Chen">
                 </div>
                 <div class="form-row">
@@ -175,7 +519,7 @@
     </div>
 
     <div class="modal-overlay" id="trackerModal">
-        <div class="modal-content" style="max-width:500px;">
+        <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
                 <h3 id="trackerModalTitle">Add Progress Tracker</h3>
                 <button class="btn" onclick="closeModal('trackerModal')">&times;</button>
@@ -184,53 +528,141 @@
                 <input type="hidden" id="editTrackerIndex" value="-1">
                 <div class="type-selector">
                     <button class="type-option active" id="typeGaugeBtn" onclick="setTrackerType('gauge')">Gauge (Pie)</button>
-                    <button class="type-option" id="typeBarBtn" onclick="setTrackerType('bar')">Bar Graph (1 Y-Axis)</button>
-                    <button class="type-option" id="typeLineBtn" onclick="setTrackerType('line')">Line Graph (Multi)</button>
+                    <button class="type-option" id="typeBarBtn" onclick="setTrackerType('bar')">Bar Graph</button>
+                    <button class="type-option" id="typeLineBtn" onclick="setTrackerType('line')">Line Graph</button>
+                    <button class="type-option" id="typeCounterBtn" onclick="setTrackerType('counter')">Counter</button>
+                    <button class="type-option" id="typeRagBtn" onclick="setTrackerType('rag')">RAG Status</button>
+                    <button class="type-option" id="typeWaffleBtn" onclick="setTrackerType('waffle')">Waffle Chart</button>
                 </div>
                 <div class="input-group">
                     <label>Tracker Title</label>
                     <input type="text" id="tkDesc">
                 </div>
 
-                <div class="input-group">
-                    <label>Tracker Colors</label>
-                    <div style="display: flex; gap: 1rem;">
-                        <div>
-                            <label style="font-size: 0.7rem; color:#aaa; display:block; margin-bottom:2px;">Primary / Progress</label>
-                            <input type="color" id="tkColor1" value="#03dac6" style="width:50px; padding:0; height:30px; border:none; cursor:pointer;">
-                        </div>
-                        <div id="tkColor2Container" style="display:none;">
-                            <label style="font-size: 0.7rem; color:#aaa; display:block; margin-bottom:2px;">Secondary / Background</label>
-                            <input type="color" id="tkColor2" value="#ff4081" style="width:50px; padding:0; height:30px; border:none; cursor:pointer;">
-                        </div>
-                    </div>
-                </div>
-
+                <!-- GAUGE INPUTS -->
                 <div id="gaugeInputs">
                     <div class="input-group"><label>Metric Name</label><input type="text" id="tkMetric"></div>
                     <div class="form-row" style="margin-bottom:0; gap:1rem;">
                         <div class="input-group"><label>Completed</label><input type="number" id="tkComp"></div>
                         <div class="input-group"><label>Total</label><input type="number" id="tkTotal"></div>
                     </div>
-                </div>
-
-                <div id="barInputs" style="display:none;">
-                    <div class="input-group"><label>Y-Axis Label</label><input type="text" id="tkBarYLabel"></div>
-                    <label style="font-size:0.8rem; color:var(--text-muted); margin-bottom:5px; display:block;">Data Points (Label vs Value) - Up to 10</label>
-                    <div id="barPointsContainer" style="max-height: 250px; overflow-y:auto; padding-right:5px;"></div>
-                </div>
-
-                 <div id="lineInputs" style="display:none;">
+                    <!-- Color moved under values -->
                     <div class="input-group">
-                        <label>X-Axis Labels (Up to 10)</label>
-                        <div id="lineLabelsContainer" style="display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;"></div>
+                        <label>Color</label>
+                        <input type="color" id="tkPieColor" value="#03dac6">
+                    </div>
+                </div>
+
+                <!-- BAR INPUTS -->
+                <div id="barInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Y-Axis Label</label>
+                        <input type="text" id="tkBarYLabel">
+                    </div>
+                    <div class="input-group">
+                        <label>X-Axis Labels (Up to 24)</label>
+                        <div id="barLabelsContainer" class="grid-24"></div>
                     </div>
                     <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                             <label style="margin:0;">Data Series (Up to 10)</label>
-                            <button class="btn" style="padding:2px 8px; font-size:0.7rem;" onclick="addSeries()">+ Add Series</button>
+                            <button class="btn btn-sm" onclick="addBarSeries()">+ Add Series</button>
                         </div>
-                        <div id="seriesContainer" style="max-height:300px; overflow-y:auto; padding-right:5px;"></div>
+                        <div id="barSeriesContainer">
+                            <!-- Series inputs go here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- LINE INPUTS -->
+                 <div id="lineInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>X-Axis Labels (Up to 24)</label>
+                        <div id="lineLabelsContainer" class="grid-24"></div>
+                    </div>
+                    <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <label style="margin:0;">Data Series (Up to 10)</label>
+                            <button class="btn btn-sm" onclick="addLineSeries()">+ Add Series</button>
+                        </div>
+                        <div id="lineSeriesContainer">
+                            <!-- Series inputs go here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- COUNTER INPUTS -->
+                <div id="counterInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Counter Value</label>
+                        <input type="number" id="tkCounterVal">
+                    </div>
+                    <div class="input-group">
+                        <label>Subtitle / Description</label>
+                        <input type="text" id="tkCounterSub" placeholder="e.g. Active Incidents">
+                    </div>
+                    <div class="input-group">
+                        <label>Import CSV (Single Column)</label>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-sm" onclick="document.getElementById('csvCounterInput').click()">Select CSV</button>
+                            <input type="file" id="csvCounterInput" accept=".csv" style="display:none" onchange="handleCSVImport(this, 'counter')">
+                            <span id="csvCounterStatus" style="font-size:0.8rem; color:#888;"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- RAG INPUTS -->
+                <div id="ragInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Status</label>
+                        <div class="rag-selector">
+                            <div class="rag-pill" data-val="green" onclick="selectRag('green')">Green</div>
+                            <div class="rag-pill" data-val="amber" onclick="selectRag('amber')">Amber</div>
+                            <div class="rag-pill" data-val="red" onclick="selectRag('red')">Red</div>
+                            <div class="rag-pill" data-val="grey" onclick="selectRag('grey')">Unknown</div>
+                        </div>
+                        <input type="hidden" id="tkRagStatus">
+                    </div>
+                    <div class="input-group">
+                        <label>Status Message</label>
+                        <input type="text" id="tkRagMsg" placeholder="e.g. All Systems Operational">
+                    </div>
+                </div>
+
+                <!-- WAFFLE INPUTS -->
+                <div id="waffleInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Total Count</label>
+                        <input type="number" id="tkWaffleTotal" oninput="updateWafflePreview()">
+                    </div>
+                    <div class="input-group">
+                        <label>Completed / Active Count</label>
+                        <input type="number" id="tkWaffleActive" oninput="updateWafflePreview()">
+                    </div>
+                     <!-- Two color pickers -->
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Value Color</label>
+                            <input type="color" id="tkWaffleColorVal" value="#03dac6" oninput="updateWafflePreview()">
+                        </div>
+                        <div class="input-group">
+                            <label>Background Color</label>
+                            <input type="color" id="tkWaffleColorBg" value="#333333" oninput="updateWafflePreview()">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Import CSV (2 Columns: Total, Active)</label>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-sm" onclick="document.getElementById('csvWaffleInput').click()">Select CSV</button>
+                            <input type="file" id="csvWaffleInput" accept=".csv" style="display:none" onchange="handleCSVImport(this, 'waffle')">
+                            <span id="csvWaffleStatus" style="font-size:0.8rem; color:#888;"></span>
+                        </div>
+                    </div>
+                    <div style="margin-top:20px; padding:10px; border:1px dashed #444; border-radius:4px; text-align:center;">
+                        <label style="font-size:0.7rem; text-transform:uppercase; color:#aaa;">Preview</label>
+                        <div id="wafflePreview">
+                            <!-- JS fills this -->
+                        </div>
                     </div>
                 </div>
 
@@ -241,7 +673,680 @@
         </div>
     </div>
 
-    <script src="charts.js"></script>
-    <script src="app.js"></script>
+    <script>
+        // --- STATE ---
+        let teamData = { title: "Server Platforms", additionalInfo: "", trackers: [], members: [] };
+        let currentTrackerType = 'gauge';
+        let confirmCallback = null;
+
+        // --- DATES ---
+        const formatDate = (date) => date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        const getRanges = () => {
+            const today = new Date(); const d = today.getDay(); const diff = d === 0 ? -6 : 1 - d;
+            const cm = new Date(today); cm.setDate(today.getDate() + diff); const cf = new Date(cm); cf.setDate(cm.getDate() + 4);
+            const nm = new Date(cm); nm.setDate(cm.getDate() + 7); const nf = new Date(nm); nf.setDate(nm.getDate() + 4);
+            return { current: `${formatDate(cm)} - ${formatDate(cf)}`, next: `${formatDate(nm)} - ${formatDate(nf)}` };
+        };
+        const initDates = () => {
+            const r = getRanges();
+            document.getElementById('dateRangeDisplay').innerText = `Current: ${r.current} | Next: ${r.next}`;
+            document.getElementById('overviewTitleCurrent').innerHTML = `Top 5 Team Achievements <span class="date-suffix">${r.current}</span>`;
+            document.getElementById('overviewTitleNext').innerHTML = `Top 5 Activities Next Week <span class="date-suffix">${r.next}</span>`;
+        };
+        initDates();
+
+        // --- CUSTOM ALERTS ---
+        const openAlert = (msg) => { document.getElementById('alertMessage').innerText = msg; document.getElementById('alertModal').classList.add('active'); };
+        const openConfirm = (msg, callback) => { document.getElementById('confirmMessage').innerText = msg; confirmCallback = callback; document.getElementById('confirmModal').classList.add('active'); };
+        document.getElementById('confirmYesBtn').addEventListener('click', () => { if (confirmCallback) confirmCallback(); closeModal('confirmModal'); });
+
+        // --- TITLE & PUBLISH ---
+        const saveTitle = () => { teamData.title = document.getElementById('appTitle').innerText; };
+        function togglePublishMode() { document.body.classList.toggle('publishing'); }
+
+        // --- TOOLTIP ---
+        const tooltip = document.getElementById('globalTooltip');
+        const showTooltip = (e, text) => { if(!text)return; tooltip.innerText=text; tooltip.style.display='block'; positionTooltip(e); };
+        const hideTooltip = () => { tooltip.style.display='none'; };
+        const positionTooltip = (e) => {
+            const m = 15; let l = e.pageX + m; let t = e.pageY + m; const r = tooltip.getBoundingClientRect();
+            if(l+r.width > window.innerWidth) l=e.pageX-r.width-m; if(t+r.height > window.innerHeight) t=e.pageY-r.height-m;
+            tooltip.style.left=l+'px'; tooltip.style.top=t+'px';
+        };
+        document.body.addEventListener('mousemove', (e) => { if(e.target.classList.contains('help-icon')) showTooltip(e, e.target.getAttribute('data-text')); else hideTooltip(); });
+
+        // --- VISUALIZATIONS ---
+        const getColor = (s) => s >= 90 ? '#ff1744' : s >= 51 ? '#ffb300' : '#00e676';
+        const createGauge = (loadArr) => {
+            let t=0; let c=0; loadArr.forEach(v => { if(v==='H'){t+=100;c++}else if(v==='M'){t+=70;c++}else if(v==='L'){t+=30;c++} });
+            const s = c===0?0:Math.round(t/c); const r=15, cx=30, cy=30; const rad=(Math.min(s,100)/100)*180*Math.PI/180;
+            const bg=`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`;
+            const val=s>0?`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r*Math.cos(rad-Math.PI)} ${cy+r*Math.sin(rad-Math.PI)}`:'';
+            return `<svg width="60" height="35" viewBox="0 0 60 35"><path d="${bg}" fill="none" stroke="#333" stroke-width="4" stroke-linecap="round"/><path d="${val}" fill="none" stroke="${getColor(s)}" stroke-width="4" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="2" fill="#fff"/></svg><div class="gauge-val" style="color:${getColor(s)}">${s}%</div>`;
+        };
+
+        const createBarChartSVG = (data, yLabel, color) => {
+            let max = 0; data.forEach(d => { if(d.val > max) max = d.val; }); if(max === 0) max = 10;
+            const w=300, h=180, pTop=20, pBot=50, pSide=25;
+            const bw=(w-(pSide*2))/data.length, uh=h-pTop-pBot;
+            let bars='';
+            const fill = color || 'var(--chart-1)';
+            data.forEach((d, i) => {
+                const bh=(d.val/max)*uh; const x=pSide+(i*bw)+5; const y=h-pBot-bh;
+                bars+=`<rect x="${x}" y="${y}" width="${bw-10}" height="${bh}" fill="${fill}" rx="2"/><text x="${x+(bw-10)/2}" y="${y-5}" text-anchor="middle" fill="#fff" font-size="10">${d.val}</text><text x="${x+(bw-10)/2}" y="${h-15}" text-anchor="middle" fill="#aaa" font-size="10">${d.label.substring(0,5)}</text>`;
+            });
+            return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/><text transform="rotate(-90 ${pSide/2},${h/2})" x="${pSide/2}" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>${bars}</svg>`;
+        };
+        
+        // Multi-series Bar Chart
+        const createMultiBarChartSVG = (labels, series) => {
+            let max = 0;
+            series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
+            if(max === 0) max = 10;
+
+            const w=300, h=180, pTop=20, pBot=50, pSide=30;
+            const groupWidth = (w-(pSide*2)) / labels.length;
+            const barWidth = (groupWidth * 0.8) / series.length; 
+            const uh = h-pTop-pBot;
+
+            let rects = '';
+            series.forEach((s, si) => {
+                s.values.forEach((v, i) => {
+                    const bh = (v/max) * uh;
+                    const x = pSide + (i * groupWidth) + (groupWidth * 0.1) + (si * barWidth); 
+                    const y = h-pBot-bh;
+                    rects += `<rect x="${x}" y="${y}" width="${barWidth-1}" height="${bh}" fill="${s.color}" rx="1"/>`;
+                });
+            });
+
+            let lbls = '';
+            labels.forEach((l, i) => {
+                const x = pSide + (i * groupWidth) + (groupWidth/2);
+                lbls += `<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
+            });
+
+             // Legend
+            let legHTML = '';
+            const legY = h - 10;
+            const legItemW = 50;
+            const totalLegW = series.length * legItemW;
+            const startX = (w - totalLegW) / 2;
+
+            series.forEach((s, i) => {
+                const lx = startX + (i * legItemW);
+                legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
+            });
+
+            return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${rects}${lbls}${legHTML}<text x="${pSide-5}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-5}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
+        };
+
+        const createLineChartSVG = (labels, series) => {
+            let max = 0;
+            series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
+            if(max===0) max=10;
+
+            const w=300, h=180, pTop=30, pBot=50, pSide=30;
+            const gw=(w-(pSide*2))/(labels.length-1||1), uh=h-pTop-pBot;
+
+            let paths = '';
+            let points = '';
+
+            series.forEach((s, si) => {
+                let p = '';
+                s.values.forEach((v, i) => {
+                    const x = pSide + (i*gw);
+                    const y = h-pBot - (v/max)*uh;
+                    p += (i===0?'M':'L') + `${x},${y} `;
+                    points += `<circle cx="${x}" cy="${y}" r="3" fill="${s.color}"/>`;
+                });
+                paths += `<path d="${p}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
+            });
+
+            let lbls = '';
+            labels.forEach((l, i) => {
+                const x = pSide + (i*gw);
+                lbls += `<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
+            });
+
+            // Legend
+            let legHTML = '';
+            const legY = h - 10;
+            const legItemW = 50;
+            const totalLegW = series.length * legItemW;
+            const startX = (w - totalLegW) / 2;
+
+            series.forEach((s, i) => {
+                const lx = startX + (i * legItemW);
+                legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
+            });
+
+            return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${paths}${points}${lbls}${legHTML}<text x="${pSide-5}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-5}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
+        };
+
+        const createWaffleHTML = (total, active, colorVal, colorBg) => {
+            const maxCells = 100;
+            let html = '<div style="display:grid; grid-template-columns: repeat(10, 1fr); gap: 2px; width: 140px; margin: 0 auto;">';
+            for(let i=0; i<maxCells; i++) {
+                const isActive = i < active;
+                html += `<div class="waffle-cell" style="${isActive ? `background-color:${colorVal}; box-shadow: 0 0 5px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
+            }
+            html += '</div>';
+            return html;
+        };
+
+        // --- RENDER ---
+        const parseMd = (t) => { if(!t)return'';
+            let h = t.replace(/&/g,"&amp;").replace(/</g,"&lt;")
+                     .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
+                     .replace(/\*(.*?)\*/g,'<i>$1</i>')
+                     .replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => {
+                         let finalUrl = url;
+                         if(!/^https?:\/\//i.test(url)) finalUrl = 'https://' + url;
+                         return `<a href="${finalUrl}" target="_blank">${text}</a>`;
+                     });
+            return h.split('\n').map(l=>l.trim().startsWith('- ')?`<li>${l.substring(2)}</li>`:l+'<br>').join('').replace(/<\/li><br><li>/g,'</li><li>').replace(/<br><li>/g,'<ul><li>').replace(/<\/li><br>/g,'</li></ul>');
+        };
+
+        const renderBoard = () => {
+            document.getElementById('appTitle').innerText = teamData.title || "Server Platforms";
+            const sL = document.getElementById('teamSuccessList'); const aL = document.getElementById('teamActivityList');
+            sL.innerHTML=''; aL.innerHTML=''; let sc=0, ac=0;
+            teamData.members.forEach(m => {
+                m.lastWeek.tasks.forEach(t=>{if(t.isTeamSuccess&&t.text.trim()){sc++;sL.innerHTML+=`<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`}});
+                m.nextWeek.tasks.forEach(t=>{if(t.isTeamActivity&&t.text.trim()){ac++;aL.innerHTML+=`<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`}});
+            });
+            if(sc===0) sL.innerHTML='<li>No items selected.</li>'; if(ac===0) aL.innerHTML='<li>No items selected.</li>';
+            document.getElementById('additionalInfoPreview').innerHTML = parseMd(teamData.additionalInfo) || "No additional info.";
+
+            const tGrid = document.getElementById('trackerGrid'); tGrid.innerHTML='';
+            (teamData.trackers || []).forEach((t, i) => {
+                const card = document.createElement('div'); card.className='tracker-card';
+                card.onclick = () => handleTrackerClick(i);
+
+                let visualHTML = '', statsHTML = '';
+                const isLegacyLine = (t.type === 'line1' || t.type === 'line2');
+                const isLegacyBar = (t.type === 'bar' && !t.series);
+
+                if (t.type === 'counter') {
+                    visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
+                    statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
+                }
+                else if (t.type === 'rag' || t.type === 'ryg') { 
+                    const statusClass = `ryg-${t.status || 'grey'}`;
+                    const icon = t.status === 'red' ? '!' : (t.status === 'amber' ? '⚠' : (t.status === 'green' ? '✓' : '?'));
+                    visualHTML = `<div class="ryg-indicator ${statusClass}">${icon}</div>`;
+                    statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
+                }
+                else if (t.type === 'waffle') {
+                    const active = t.active || 0;
+                    const cVal = t.colorVal || '#03dac6';
+                    const cBg = t.colorBg || '#333333';
+                    visualHTML = createWaffleHTML(100, active, cVal, cBg);
+                    statsHTML = `<div class="tracker-stats">${active} / ${t.total}</div>`;
+                }
+                else if (t.type === 'line' || isLegacyLine) {
+                    let labels = []; let series = [];
+                    if (isLegacyLine) {
+                        labels = t.data.map(d => d.label);
+                        series.push({ name: t.y1Leg || 'Series 1', color: t.color1 || 'var(--chart-1)', values: t.data.map(d => d.y1 || 0) });
+                        if (t.type === 'line2') series.push({ name: t.y2Leg || 'Series 2', color: t.color2 || 'var(--chart-2)', values: t.data.map(d => d.y2 || 0) });
+                    } else {
+                        labels = t.labels || []; series = t.series || [];
+                    }
+                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createLineChartSVG(labels, series)}</div>`;
+                }
+                else if(t.type === 'bar') {
+                    if (isLegacyBar) {
+                        visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createBarChartSVG(t.data, t.yLabel, t.color1)}</div>`;
+                    } else {
+                        visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createMultiBarChartSVG(t.labels, t.series)}</div>`;
+                    }
+                }
+                else {
+                    const pct=t.total>0?Math.round((t.completed/t.total)*100):0;
+                    const c1 = t.colorVal || t.color1 || '#00e676'; 
+                    const c2 = t.color2 || '#ff1744';
+                    const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
+                    visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
+                    statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
+                }
+                card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); deleteTracker(${i})">&times;</button><div class="tracker-desc">${t.desc}</div><div class="tracker-viz-container">${visualHTML}</div>${statsHTML}`;
+                tGrid.appendChild(card);
+            });
+
+            const grid = document.getElementById('teamGrid'); grid.innerHTML='';
+            teamData.members.forEach((m, i) => {
+                let lw=''; m.lastWeek.tasks.forEach((t,x)=>{if(t.text.trim())lw+=`<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="toggleSuccess(${i},${x})"><span>${t.text}</span></li>`});
+                let nw=''; m.nextWeek.tasks.forEach((t,x)=>{if(t.text.trim())nw+=`<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="toggleActivity(${i},${x})"><span>${t.text}</span></li>`});
+                const mg=(a)=>a.map((v,k)=>`<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
+                const c = document.createElement('div'); c.className='member-card'; c.onclick=()=>openUserModal(i);
+                c.innerHTML=`<div class="member-name-row">${m.name}</div><div class="card-half card-top"><div class="half-header"><span class="half-label">Last Week (Successes)</span><div class="gauge-container">${createGauge(m.lastWeek.load)}</div></div><ul class="card-task-list">${lw||'<li>No tasks</li>'}</ul><div class="daily-mini-grid">${mg(m.lastWeek.load)}</div></div><div class="card-half card-bottom"><div class="half-header"><span class="half-label">Next Week (Priorities)</span><div class="gauge-container">${createGauge(m.nextWeek.load)}</div></div><ul class="card-task-list">${nw||'<li>No tasks</li>'}</ul><div class="daily-mini-grid">${mg(m.nextWeek.load)}</div></div>`;
+                grid.appendChild(c);
+            });
+        };
+
+        // --- ACTIONS ---
+        function countSelected(type) { let c=0; teamData.members.forEach(m=>{ (type==='success'?m.lastWeek.tasks:m.nextWeek.tasks).forEach(t=>{if(type==='success'?t.isTeamSuccess:t.isTeamActivity)c++}) }); return c; }
+        function toggleSuccess(i,x) { const t=teamData.members[i].lastWeek.tasks[x]; if(!t.isTeamSuccess&&countSelected('success')>=5){openAlert('Max 5 items.');renderBoard();return;} t.isTeamSuccess=!t.isTeamSuccess; renderBoard(); }
+        function toggleActivity(i,x) { const t=teamData.members[i].nextWeek.tasks[x]; if(!t.isTeamActivity&&countSelected('activity')>=5){openAlert('Max 5 items.');renderBoard();return;} t.isTeamActivity=!t.isTeamActivity; renderBoard(); }
+        function resetSelections(type) { openConfirm(`Reset all ${type==='success'?'Achievement':'Activity'} selections?`, () => { teamData.members.forEach(m => { (type==='success'?m.lastWeek.tasks:m.nextWeek.tasks).forEach(t => t[type==='success'?'isTeamSuccess':'isTeamActivity'] = false); }); renderBoard(); }); }
+
+        function handleTrackerClick(i) {
+            if(document.body.classList.contains('publishing')) openChartViewModal(i);
+            else openTrackerModal(i);
+        }
+
+        function handleOverviewClick(type) {
+            if(!document.body.classList.contains('publishing')) return;
+            let title = '', content = '';
+            if(type === 'success') { title = "Top 5 Achievements"; content = document.getElementById('teamSuccessList').innerHTML; }
+            if(type === 'activity') { title = "Top 5 Activities"; content = document.getElementById('teamActivityList').innerHTML; }
+            document.getElementById('zoomTitle').innerText = title;
+            document.getElementById('zoomBody').className = 'zoom-body-text';
+            document.getElementById('zoomBody').innerHTML = `<div class="zoomed-content"><ul>${content}</ul></div>`;
+            document.getElementById('zoomModal').classList.add('active');
+        }
+
+        function handleInfoClick() {
+            if(document.body.classList.contains('publishing')) {
+                document.getElementById('zoomTitle').innerText = "Additional Info";
+                document.getElementById('zoomBody').className = 'zoom-body-text';
+                document.getElementById('zoomBody').innerHTML = `<div class="zoomed-content">${document.getElementById('additionalInfoPreview').innerHTML}</div>`;
+                document.getElementById('zoomModal').classList.add('active');
+            } else {
+                openInfoModal();
+            }
+        }
+
+        // --- MODALS ---
+        function closeModal(id){document.getElementById(id).classList.remove('active');}
+
+        function openChartViewModal(i) {
+            const t = teamData.trackers[i];
+            document.getElementById('zoomTitle').innerText = t.desc;
+            let content = '';
+            const isLegacyLine = (t.type === 'line1' || t.type === 'line2');
+            const isLegacyBar = (t.type === 'bar' && !t.series);
+            
+            if (t.type === 'counter') {
+                content = `<div style="font-size: 6rem; font-weight:300; color:${t.color1}; text-shadow:0 0 20px ${t.color1}">${t.value}</div><div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${t.subtitle}</div>`;
+            }
+            else if (t.type === 'rag' || t.type === 'ryg') {
+                const statusClass = `ryg-${t.status || 'grey'}`;
+                const icon = t.status === 'red' ? 'CRITICAL' : (t.status === 'amber' ? 'WARNING' : (t.status === 'green' ? 'GOOD' : 'UNKNOWN'));
+                content = `<div class="ryg-indicator ${statusClass}" style="width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message}</div>`;
+            }
+            else if (t.type === 'waffle') {
+                const active = t.active || 0;
+                const cVal = t.colorVal || '#03dac6';
+                const cBg = t.colorBg || '#333333';
+                content = createWaffleHTML(100, active, cVal, cBg);
+            }
+            else if (t.type === 'line' || isLegacyLine) {
+                let labels = []; let series = [];
+                if (isLegacyLine) {
+                    labels = t.data.map(d => d.label);
+                    series.push({ name: t.y1Leg||'Series 1', color: t.color1||'#03dac6', values: t.data.map(d=>d.y1||0) });
+                    if(t.type === 'line2') series.push({ name: t.y2Leg||'Series 2', color: t.color2||'#ff4081', values: t.data.map(d=>d.y2||0) });
+                } else {
+                    labels = t.labels; series = t.series;
+                }
+                content = createLineChartSVG(labels, series);
+            }
+            else if(t.type === 'bar') {
+                if(isLegacyBar) {
+                     content = createBarChartSVG(t.data, t.yLabel, t.color1);
+                } else {
+                     content = createMultiBarChartSVG(t.labels, t.series);
+                }
+            }
+            else {
+                const pct=t.total>0?Math.round((t.completed/t.total)*100):0;
+                const c1 = t.colorVal || t.color1 || '#00e676'; 
+                const c2 = t.color2 || '#ff1744';
+                const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
+                content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
+            }
+            document.getElementById('zoomBody').className = 'zoom-body-chart';
+            document.getElementById('zoomBody').innerHTML = `<div style="width:100%; height:100%;">${content}</div>`;
+            document.getElementById('zoomModal').classList.add('active');
+        }
+
+        function openUserModal(i=-1){
+            if(document.body.classList.contains('publishing')) return;
+            document.getElementById('editIndex').value=i; document.getElementById('deleteBtn').style.display=i===-1?'none':'block'; document.getElementById('modalTitle').innerText=i===-1?'Add New User':'Edit User';
+            const m=i>-1?teamData.members[i]:null;
+            document.getElementById('mName').value=m?m.name:'';
+            ['lwTask1','lwTask2','lwTask3','nwTask1','nwTask2','nwTask3'].forEach((id,k)=>document.getElementById(id).value=m?(k<3?m.lastWeek.tasks[k]?.text||'':m.nextWeek.tasks[k-3]?.text||''):'');
+            for(let j=0;j<5;j++){document.getElementById(`lw${j}`).value=m?m.lastWeek.load[j]:'L';document.getElementById(`nw${j}`).value=m?m.nextWeek.load[j]:'L';}
+            document.getElementById('userModal').classList.add('active');
+        }
+        function submitUser(){
+            const i=parseInt(document.getElementById('editIndex').value); const n=document.getElementById('mName').value; if(!n)return openAlert('Name required');
+            const gl=(p)=>[0,1,2,3,4].map(x=>document.getElementById(`${p}${x}`).value);
+            const bt=(p,t,old)=>{const txts=[1,2,3].map(x=>document.getElementById(`${p}Task${x}`).value); return txts.map((txt,k)=>{const k2=t==='lw'?'isTeamSuccess':'isTeamActivity';return{text:txt,[k2]:old&&old[k]?old[k][k2]:false}})};
+            const old=i>-1?teamData.members[i]:null;
+            const u={id:old?old.id:Date.now(),name:n,lastWeek:{tasks:bt('lw','lw',old?old.lastWeek.tasks:null),load:gl('lw')},nextWeek:{tasks:bt('nw','nw',old?old.nextWeek.tasks:null),load:gl('nw')}};
+            if(i>-1)teamData.members[i]=u; else teamData.members.push(u); closeModal('userModal'); renderBoard();
+        }
+        function deleteUser(){openConfirm('Delete user?', () => {teamData.members.splice(document.getElementById('editTrackerIndex').value,1);closeModal('userModal');renderBoard();});}
+        function openInfoModal(){document.getElementById('additionalInfoInput').value=teamData.additionalInfo||'';document.getElementById('infoModal').classList.add('active');}
+        function saveAdditionalInfo(){teamData.additionalInfo=document.getElementById('additionalInfoInput').value;closeModal('infoModal');renderBoard();}
+
+// --- TRACKER MODAL ---
+        function setTrackerType(t) {
+            currentTrackerType = t;
+            // Map all IDs (RAG vs RYG etc)
+            const types = ['Gauge','Bar','Line','Counter','Rag','Waffle'];
+            types.forEach(x => {
+                const btn = document.getElementById(`type${x}Btn`);
+                if(btn) btn.className = t === x.toLowerCase() ? 'type-option active' : 'type-option';
+                const div = document.getElementById(`${x.toLowerCase()}Inputs`);
+                if(div) div.style.display = t === x.toLowerCase() ? 'block' : 'none';
+            });
+        }
+
+        function selectRag(val) {
+            document.getElementById('tkRagStatus').value = val;
+            document.querySelectorAll('.rag-pill').forEach(p => p.classList.remove('selected'));
+            document.querySelector(`.rag-pill[data-val="${val}"]`).classList.add('selected');
+        }
+
+        function createSeriesInputRow(type, name='', color='#03dac6', vals=[]) {
+            const div = document.createElement('div');
+            div.style.marginBottom = '1rem';
+            div.style.border = '1px solid #444';
+            div.style.padding = '0.5rem';
+            div.style.borderRadius = '4px';
+
+            // 24 inputs
+            let valInputs = '';
+            for(let k=0; k<24; k++) {
+                valInputs += `<input type="number" class="sv-input" data-idx="${k}" value="${vals[k]||''}" placeholder="${k+1}" style="width:100%; text-align:center;">`;
+            }
+
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                    <input type="text" class="s-name" value="${name}" placeholder="Series Name" style="width:50%;">
+                    <div style="display:flex; gap:5px; align-items:center;">
+                        <label style="font-size:0.7rem; color:#aaa;">Color:</label>
+                        <input type="color" class="s-color" value="${color}" style="width:30px; height:30px; padding:0; border:none; cursor:pointer;">
+                    </div>
+                    <button class="btn-reset" style="color:red; border-color:red;" onclick="this.parentElement.parentElement.remove()">Del</button>
+                </div>
+                <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:2px;">${valInputs}</div>
+            `;
+            return div;
+        }
+
+        function addBarSeries(name='', color='#03dac6', vals=[]) {
+            const c = document.getElementById('barSeriesContainer');
+            if(c.children.length >= 10) return openAlert("Max 10 series.");
+            c.appendChild(createSeriesInputRow('bar', name, color, vals));
+        }
+
+        function addLineSeries(name='', color='#03dac6', vals=[]) {
+            const c = document.getElementById('lineSeriesContainer');
+            if(c.children.length >= 10) return openAlert("Max 10 series.");
+            c.appendChild(createSeriesInputRow('line', name, color, vals));
+        }
+
+        function handleCSVImport(input, type) {
+            const file = input.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const rows = text.split('\n').map(r => r.trim()).filter(r => r);
+                
+                if(type === 'counter') {
+                    let sum = 0; let count = 0;
+                    rows.forEach(r => { const val = parseFloat(r); if(!isNaN(val)) { sum += val; count++; } });
+                    if(count > 0) {
+                        document.getElementById('tkCounterVal').value = sum;
+                        document.getElementById('csvCounterStatus').innerText = `Loaded ${count} items. Sum: ${sum}`;
+                    } else { openAlert('No valid numbers found in CSV.'); }
+                } else if (type === 'waffle') {
+                    const cols = rows[0].split(',');
+                    if(cols.length >= 2) {
+                        const total = parseFloat(cols[0]); const active = parseFloat(cols[1]);
+                        if(!isNaN(total) && !isNaN(active)) {
+                            document.getElementById('tkWaffleTotal').value = total;
+                            document.getElementById('tkWaffleActive').value = active;
+                            updateWafflePreview();
+                            document.getElementById('csvWaffleStatus').innerText = `Loaded: Total=${total}, Active=${active}`;
+                        } else { openAlert('Invalid number format in CSV columns.'); }
+                    } else { openAlert('CSV must have 2 columns (Total, Active).'); }
+                }
+            };
+            reader.readAsText(file);
+            input.value = '';
+        }
+
+        function updateWafflePreview() {
+            const total = parseInt(document.getElementById('tkWaffleTotal').value) || 0;
+            const active = parseInt(document.getElementById('tkWaffleActive').value) || 0;
+            const colorVal = document.getElementById('tkWaffleColorVal').value;
+            const colorBg = document.getElementById('tkWaffleColorBg').value;
+            const p = document.getElementById('wafflePreview');
+            
+            let html = '';
+            for(let i=0; i<100; i++) {
+                const isActive = i < active;
+                html += `<div class="waffle-cell" style="${isActive ? `background-color:${colorVal}; box-shadow: 0 0 2px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
+            }
+            p.innerHTML = html;
+        }
+
+        function openTrackerModal(i=-1){
+            document.getElementById('editTrackerIndex').value=i; 
+            document.getElementById('trackerModalTitle').innerText=i===-1?'Add Progress Tracker':'Edit Tracker';
+
+            // Hide all specific inputs first
+            ['gauge','bar','line','counter','rag','waffle'].forEach(t => document.getElementById(`${t}Inputs`).style.display = 'none');
+            
+            // Reset containers
+            document.getElementById('barSeriesContainer').innerHTML = '';
+            document.getElementById('lineSeriesContainer').innerHTML = '';
+            document.getElementById('barLabelsContainer').innerHTML = ''; 
+            document.getElementById('lineLabelsContainer').innerHTML = '';
+            
+            // Fill 24 inputs
+            for(let k=0; k<24; k++) {
+                document.getElementById('barLabelsContainer').innerHTML += `<input type="text" id="bLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+                document.getElementById('lineLabelsContainer').innerHTML += `<input type="text" id="lLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+            }
+
+            // Reset CSV status
+            document.getElementById('csvCounterStatus').innerText = '';
+            document.getElementById('csvWaffleStatus').innerText = '';
+
+            const t=i>-1?teamData.trackers[i]:null;
+
+            // Determine type
+            let type = t ? t.type : 'gauge';
+            if(type === 'line1' || type === 'line2') type = 'line';
+            if(type === 'ryg') type = 'rag'; // Normalize to rag for UI logic
+            
+            setTrackerType(type);
+
+            document.getElementById('tkDesc').value=t?t.desc:'';
+
+            // Load Specific Data
+            if(t && (t.type === 'line1' || t.type === 'line2')) {
+                const labels = t.data.map(d => d.label);
+                labels.forEach((l, k) => { if(k<24) document.getElementById(`lLbl${k}`).value = l; });
+                addLineSeries(t.y1Leg || 'Series 1', t.color1 || '#03dac6', t.data.map(d => d.y1));
+                if(t.type === 'line2') addLineSeries(t.y2Leg || 'Series 2', t.color2 || '#ff4081', t.data.map(d => d.y2));
+            } else if(t && t.type === 'line') {
+                (t.labels||[]).forEach((l, k) => { if(k<24) document.getElementById(`lLbl${k}`).value = l; });
+                (t.series||[]).forEach(s => addLineSeries(s.name, s.color, s.values));
+            } else if(t && t.type === 'bar') {
+                 document.getElementById('tkBarYLabel').value = t.yLabel || '';
+                 if(t.series) {
+                     (t.labels||[]).forEach((l, k) => { if(k<24) document.getElementById(`bLbl${k}`).value = l; });
+                     (t.series||[]).forEach(s => addBarSeries(s.name, s.color, s.values));
+                 } else {
+                     // Legacy Simple Bar -> Series 1
+                     (t.data||[]).forEach((d,k)=>{if(k<24)document.getElementById(`bLbl${k}`).value=d.label;});
+                     if(t.data && t.data.length > 0) {
+                         const vals = t.data.map(d => d.val);
+                         addBarSeries('Series 1', t.color1 || '#03dac6', vals);
+                     }
+                 }
+            } else if(t && t.type === 'gauge'){
+                document.getElementById('tkMetric').value=t?t.metric:''; 
+                document.getElementById('tkComp').value=t?t.completed:''; 
+                document.getElementById('tkTotal').value=t?t.total:'';
+                document.getElementById('tkPieColor').value = t.colorVal || t.color1 || '#00e676';
+            } else if(t && t.type === 'counter') {
+                document.getElementById('tkCounterVal').value = t.value || 0;
+                document.getElementById('tkCounterSub').value = t.subtitle || '';
+            } else if(t && t.type === 'rag' || t.type === 'ryg') {
+                selectRag(t.status || 'grey');
+                document.getElementById('tkRagMsg').value = t.message || '';
+            } else if(t && t.type === 'waffle') {
+                document.getElementById('tkWaffleTotal').value = t.total || 100;
+                document.getElementById('tkWaffleActive').value = t.active || 0;
+                document.getElementById('tkWaffleColorVal').value = t.colorVal || '#03dac6';
+                document.getElementById('tkWaffleColorBg').value = t.colorBg || '#333333';
+                updateWafflePreview();
+            }
+
+            // Defaults for NEW tracker (ensure clean slate)
+            if(!t) {
+                 if(type === 'line' && document.getElementById('lineSeriesContainer').children.length === 0) addLineSeries('Series 1', '#03dac6');
+                 if(type === 'bar' && document.getElementById('barSeriesContainer').children.length === 0) addBarSeries('Series 1', '#03dac6');
+                 if(type === 'gauge') document.getElementById('tkPieColor').value = '#00e676';
+                 if(type === 'rag') selectRag('green');
+                 if(type === 'waffle') {
+                    document.getElementById('tkWaffleColorVal').value = '#03dac6';
+                    document.getElementById('tkWaffleColorBg').value = '#333333';
+                    updateWafflePreview();
+                 }
+            }
+
+            document.getElementById('trackerModal').classList.add('active');
+        }
+
+        function submitTracker(){
+            const i=parseInt(document.getElementById('editTrackerIndex').value); const desc=document.getElementById('tkDesc').value; if(!desc)return openAlert("Title required");
+            let nt={desc,type:currentTrackerType};
+
+            if(currentTrackerType==='gauge'){
+                const m=document.getElementById('tkMetric').value, c=parseFloat(document.getElementById('tkComp').value)||0, t=parseFloat(document.getElementById('tkTotal').value)||0;
+                if(t<=0)return openAlert("Total > 0 required"); if(c>t)return openAlert("Completed value cannot exceed Total value.");
+                nt.metric=m;nt.completed=c;nt.total=t;
+                nt.colorVal = document.getElementById('tkPieColor').value; 
+            } else if(currentTrackerType==='bar'){
+                const y=document.getElementById('tkBarYLabel').value;
+                const labels = [];
+                for(let k=0; k<24; k++) {
+                    const l = document.getElementById(`bLbl${k}`).value;
+                    if(l) labels.push(l);
+                }
+                const series = [];
+                const sDivs = document.getElementById('barSeriesContainer').children;
+                for(let s of sDivs) {
+                    const name = s.querySelector('.s-name').value;
+                    const color = s.querySelector('.s-color').value;
+                    const vals = [];
+                    s.querySelectorAll('.sv-input').forEach((inp, k) => {
+                        if(k < labels.length) vals.push(parseFloat(inp.value)||0);
+                    });
+                    series.push({name, color, values: vals});
+                }
+                if(series.length === 0) return openAlert("Add at least one series");
+                nt.yLabel=y;nt.labels=labels;nt.series=series;
+            } else if(currentTrackerType==='line') {
+                const labels = [];
+                for(let k=0; k<24; k++) {
+                    const l = document.getElementById(`lLbl${k}`).value;
+                    if(l) labels.push(l);
+                }
+                if(labels.length < 2) return openAlert("Add at least 2 X-Axis labels");
+
+                const series = [];
+                const sDivs = document.getElementById('lineSeriesContainer').children;
+                for(let s of sDivs) {
+                    const name = s.querySelector('.s-name').value;
+                    const color = s.querySelector('.s-color').value;
+                    const vals = [];
+                    s.querySelectorAll('.sv-input').forEach((inp, k) => {
+                        if(k < labels.length) vals.push(parseFloat(inp.value)||0);
+                    });
+                    series.push({name, color, values: vals});
+                }
+                if(series.length === 0) return openAlert("Add at least one series");
+                nt.labels = labels;
+                nt.series = series;
+            } else if (currentTrackerType === 'counter') {
+                nt.value = parseFloat(document.getElementById('tkCounterVal').value) || 0;
+                nt.subtitle = document.getElementById('tkCounterSub').value;
+            } else if (currentTrackerType === 'rag') {
+                nt.type = 'rag'; // Save as rag
+                nt.status = document.getElementById('tkRagStatus').value;
+                nt.message = document.getElementById('tkRagMsg').value;
+            } else if (currentTrackerType === 'waffle') {
+                nt.total = parseInt(document.getElementById('tkWaffleTotal').value) || 100;
+                nt.active = parseInt(document.getElementById('tkWaffleActive').value) || 0;
+                nt.colorVal = document.getElementById('tkWaffleColorVal').value;
+                nt.colorBg = document.getElementById('tkWaffleColorBg').value;
+            }
+
+            if(!teamData.trackers)teamData.trackers=[]; if(i>-1)teamData.trackers[i]=nt;else teamData.trackers.push(nt); closeModal('trackerModal'); renderBoard();
+        }
+                function deleteTracker(i){openConfirm("Delete tracker?",()=>{teamData.trackers.splice(i,1);renderBoard();});}
+
+        function saveData(){const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(teamData));const a=document.createElement('a');a.href=d;a.download="team_tracker.json";document.body.appendChild(a);a.click();a.remove();}
+
+        function exportCSV() {
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Section,Title,Data1,Data2\n";
+            teamData.trackers.forEach(t => {
+                let row = `Tracker,"${t.desc}",`;
+                if(t.type === 'counter') row += `${t.value},"${t.subtitle}"`;
+                else if(t.type === 'waffle') row += `${t.active},${t.total}`;
+                else if(t.type === 'gauge') row += `${t.completed},${t.total}`;
+                else row += "Complex Data,See JSON";
+                csvContent += row + "\n";
+            });
+            teamData.members.forEach(m => {
+                let lwLoad = m.lastWeek.load.join('');
+                let row = `Member,"${m.name}","Load: ${lwLoad}","Successes: ${m.lastWeek.tasks.filter(t=>t.isTeamSuccess).length}"`;
+                csvContent += row + "\n";
+            });
+            const a = document.createElement('a');
+            a.href = encodeURI(csvContent);
+            a.download = "team_data_export.csv";
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+        }
+
+        function loadFromFile(inp){
+            const f=inp.files[0];if(!f)return;
+            const r=new FileReader();
+            r.onload=e=>{
+                const content = e.target.result;
+                try{
+                    const l=JSON.parse(content);
+                    if(l.members){
+                        l.members.forEach(m=>{
+                            if(typeof m.nextWeek.tasks[0]==='string')m.nextWeek.tasks=m.nextWeek.tasks.map(t=>({text:t,isTeamActivity:false}))
+                            if(typeof m.lastWeek.tasks[0]==='string')m.lastWeek.tasks=m.lastWeek.tasks.map(t=>({text:t,isTeamSuccess:false}))
+                        })
+                    }
+                    teamData=l;renderBoard();openAlert('Data loaded!');
+                } catch(x) {
+                    openAlert('Error reading file (Not a valid JSON)');
+                }
+            }; 
+            r.readAsText(f);
+            inp.value='';
+        }
+
+        renderBoard();
+    </script>
 </body>
 </html>
