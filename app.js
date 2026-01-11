@@ -18,34 +18,35 @@ let State = {
 // --- DOM HELPERS ---
 const getEl = (id) => document.getElementById(id);
 
+const formatDate = (date) => date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+const getRanges = () => {
+    const today = new Date();
+    const d = today.getDay();
+    const diff = d === 0 ? -6 : 1 - d;
+    const cm = new Date(today);
+    cm.setDate(today.getDate() + diff);
+    const cf = new Date(cm);
+    cf.setDate(cm.getDate() + 4);
+    
+    const nm = new Date(cm);
+    nm.setDate(cm.getDate() + 7);
+    const nf = new Date(nm);
+    nf.setDate(nm.getDate() + 4);
+    
+    const lm = new Date(cm);
+    lm.setDate(cm.getDate() - 7);
+    const lf = new Date(lm);
+    lf.setDate(lm.getDate() + 4);
+
+    return { 
+        current: `${formatDate(cm)} - ${formatDate(cf)}`, 
+        next: `${formatDate(nm)} - ${formatDate(nf)}`,
+        last: `${formatDate(lm)} - ${formatDate(lf)}`
+    };
+};
+
 // --- CORE FUNCTIONS ---
 export const initApp = () => {
-    const formatDate = (date) => date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-    const getRanges = () => {
-        const today = new Date();
-        const d = today.getDay();
-        const diff = d === 0 ? -6 : 1 - d;
-        const cm = new Date(today);
-        cm.setDate(today.getDate() + diff);
-        const cf = new Date(cm);
-        cf.setDate(cm.getDate() + 4);
-        
-        const nm = new Date(cm);
-        nm.setDate(cm.getDate() + 7);
-        const nf = new Date(nm);
-        nf.setDate(nm.getDate() + 4);
-        
-        const lm = new Date(cm);
-        lm.setDate(cm.getDate() - 7);
-        const lf = new Date(lm);
-        lf.setDate(lm.getDate() + 4);
-
-        return { 
-            current: `${formatDate(cm)} - ${formatDate(cf)}`, 
-            next: `${formatDate(nm)} - ${formatDate(nf)}`,
-            last: `${formatDate(lm)} - ${formatDate(lf)}`
-        };
-    };
     
     const updateDateUI = () => {
         const r = getRanges();
