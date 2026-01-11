@@ -131,12 +131,25 @@ header {
 .tracker-card.dragging { opacity: 0.5; border: 2px dashed var(--accent); }
 .tracker-grid.drag-active .tracker-card { cursor: grabbing; }
 .pie-chart {
-    width: 120px; height: 120px; border-radius: 50%; margin: 0 auto;
+    width: 100%; aspect-ratio: 1 / 1; max-height: 160px; max-width: 160px;
+    border-radius: 50%; margin: 0 auto;
     background: conic-gradient(var(--g-green) 0% 0%, var(--g-red) 0% 100%);
     position: relative; box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    flex-shrink: 0; /* Prevent squashing */
+    flex-shrink: 0;
 }
-.status-pill {
+.status-select-col { display: flex; flex-direction: column; gap: 5px; width: 100%; }
+.status-option {
+    width: 100%; padding: 8px; border-radius: 4px; text-align: center; cursor: pointer;
+    font-weight: bold; font-size: 0.8rem; opacity: 0.5; border: 1px solid #444; color: #000;
+}
+/* Ensure workload pills take full width of their container */
+.ls-box { text-align: center; flex: 1; }
+.pill-group .w-pill { width: 100%; }
+
+.average-pill {
+    position: absolute; top: 10px; right: 10px; padding: 4px 8px; border-radius: 12px;
+    font-size: 0.7rem; font-weight: bold; color: #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
     padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;
     text-align: center; color: #000; display: inline-block; width: 100%;
 }
