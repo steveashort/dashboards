@@ -887,22 +887,29 @@ export const UserManager = {
     toggleSuccess(i, x) {
         const t = State.members[i].lastWeek.tasks[x];
         t.isTeamSuccess = !t.isTeamSuccess;
-        // Limit check removed for brevity/user request (implied "replace logic") or keep? 
-        // User didn't ask to remove limit, but didn't mention it. I'll keep logic simple.
         renderBoard();
     },
 
     toggleActivity(i, x) {
         const t = State.members[i].thisWeek.tasks[x];
-        t.isTeamActivity = !t.isTeamActivity;
+        t.isTeamSuccess = !t.isTeamSuccess; // Now contributes to Achievements
+        renderBoard();
+    },
+
+    toggleFuture(i, x) {
+        const t = State.members[i].nextWeek.tasks[x];
+        t.isTeamActivity = !t.isTeamActivity; // Contributes to Next Week Activities
         renderBoard();
     },
 
     resetSelections(type) {
         App.confirm(`Reset selections?`, () => {
             State.members.forEach(m => {
-                if (type === 'success') m.lastWeek.tasks.forEach(t => t.isTeamSuccess = false);
-                else if (m.thisWeek) m.thisWeek.tasks.forEach(t => t.isTeamActivity = false);
+                if (type === 'success') {
+                    if (m.lastWeek) m.lastWeek.tasks.forEach(t => t.isTeamSuccess = false);
+                    if (m.thisWeek) m.thisWeek.tasks.forEach(t => t.isTeamSuccess = false);
+                }
+                else if (m.nextWeek) m.nextWeek.tasks.forEach(t => t.isTeamActivity = false);
             });
             renderBoard();
         });
@@ -919,7 +926,8 @@ export const UserManager = {
 export const OverviewManager = {
     handleOverviewClick: (type) => {
         if (!document.body.classList.contains('publishing')) {
-            const title = type === 'success' ? "Top 5 Achievements" : "Top 5 Activities";
+            const r = getRanges();
+            const title = type === 'success' ? `Top 5 Achievements (${r.current})` : `Top 5 Activities Next Week (${r.next})`;
             const containerId = type === 'success' ? 'teamSuccessList' : 'teamActivityList';
             
             getEl('zoomTitle').innerText = title;

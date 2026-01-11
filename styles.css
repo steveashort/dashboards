@@ -306,6 +306,7 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 .so-busy { background-color: var(--g-green); }
 .so-under { background-color: var(--g-amber); }
 .so-over { background-color: var(--g-red); color: #fff; }
+.so-absent { background-color: var(--accent); color: #fff; opacity: 0.7; }
 
 .daily-mini-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 15px; padding: 0 10px; }
 .dm-box { text-align: center; background: var(--input-bg); padding: 6px 2px; border-radius: 4px; }
@@ -345,3 +346,8 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 .status-under { background-color: var(--g-amber); color: #000; }
 .status-busy { background-color: var(--g-green); color: #000; }
 .status-over { background-color: var(--g-red); color: #fff; }
+.status-absent { background-color: var(--accent); color: #fff; opacity: 0.8; }
+
+.zoomed-content ul { list-style: none; font-size: 1.5rem; line-height: 2; padding-left: 1rem; }
+.zoomed-content li { margin-bottom: 1rem; position: relative; padding-left: 2rem; }
+.zoomed-content li::before { content: "★"; position: absolute; left: 0; color: gold; font-size: 1.5rem; line-height: 2; }
