@@ -311,7 +311,8 @@ export const renderBoard = () => {
         let tw = ''; 
         if(m.thisWeek && m.thisWeek.tasks) {
             m.thisWeek.tasks.forEach((t,x) => {
-                if(t.text.trim()) tw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleActivity(${i},${x})"><span>${t.text}</span></li>`;
+                // Fixed: Check isTeamSuccess because toggleActivity toggles isTeamSuccess now
+                if(t.text.trim()) tw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleActivity(${i},${x})"><span>${t.text}</span></li>`;
             });
         }
 
@@ -319,7 +320,8 @@ export const renderBoard = () => {
         let nw = '';
         if(m.nextWeek && m.nextWeek.tasks) {
             m.nextWeek.tasks.forEach((t,x) => {
-                if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><span>${t.text}</span></li>`;
+                // Added: Checkbox input calling toggleFuture
+                if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleFuture(${i},${x})"><span>${t.text}</span></li>`;
             });
         }
         
