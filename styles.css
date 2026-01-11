@@ -120,7 +120,16 @@ header {
 
 .tracker-card:hover { border-color: var(--accent); transform: translateY(-2px); }
 .tracker-desc { font-weight: bold; margin-bottom: 1rem; color: var(--text-main); height: 30px; display: flex; align-items: center; justify-content: center;}
-.tracker-viz-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 160px; overflow: hidden; }
+.tracker-viz-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 160px; overflow: hidden; padding: 0 5px; }
+.tracker-viz-container > div { width: 100% !important; }
+.tracker-card {
+    background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
+    padding: 1rem; text-align: center; position: relative; cursor: pointer; transition: transform 0.2s;
+    min-height: 280px; display: flex; flex-direction: column; justify-content: space-between;
+    flex-grow: 1;
+}
+.tracker-card.dragging { opacity: 0.5; border: 2px dashed var(--accent); }
+.tracker-grid.drag-active .tracker-card { cursor: grabbing; }
 .pie-chart {
     width: 120px; height: 120px; border-radius: 50%; margin: 0 auto;
     background: conic-gradient(var(--g-green) 0% 0%, var(--g-red) 0% 100%);

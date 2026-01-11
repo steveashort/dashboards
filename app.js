@@ -66,6 +66,67 @@ const parseMarkdown = (t) => {
 export const App = {
     init: () => {
         initApp();
+        App.initDragAndDrop();
+    },
+    initDragAndDrop: () => {
+        const grid = getEl('trackerGrid');
+        let dragSrcEl = null;
+
+        grid.addEventListener('dragstart', (e) => {
+            if (document.body.classList.contains('publishing')) return;
+            dragSrcEl = e.target.closest('.tracker-card');
+            if(!dragSrcEl) return;
+            dragSrcEl.classList.add('dragging');
+            grid.classList.add('drag-active');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', dragSrcEl.innerHTML);
+        });
+
+        grid.addEventListener('dragover', (e) => {
+            if (e.preventDefault) e.preventDefault(); 
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        });
+
+        grid.addEventListener('dragenter', (e) => {
+            const target = e.target.closest('.tracker-card');
+            if (target && target !== dragSrcEl) {
+                target.classList.add('over');
+            }
+        });
+
+        grid.addEventListener('dragleave', (e) => {
+            const target = e.target.closest('.tracker-card');
+            if (target) {
+                target.classList.remove('over');
+            }
+        });
+
+        grid.addEventListener('drop', (e) => {
+            if (e.stopPropagation) e.stopPropagation();
+            const target = e.target.closest('.tracker-card');
+            
+            if (dragSrcEl && target && dragSrcEl !== target) {
+                const srcIdx = parseInt(dragSrcEl.dataset.index);
+                const tgtIdx = parseInt(target.dataset.index);
+                
+                // Swap in State
+                const temp = State.trackers[srcIdx];
+                State.trackers.splice(srcIdx, 1);
+                State.trackers.splice(tgtIdx, 0, temp);
+                
+                renderBoard();
+            }
+            return false;
+        });
+
+        grid.addEventListener('dragend', () => {
+            grid.classList.remove('drag-active');
+            document.querySelectorAll('.tracker-card').forEach(c => {
+                c.classList.remove('dragging');
+                c.classList.remove('over');
+            });
+        });
     },
     alert: (msg) => {
         getEl('alertMessage').innerText = msg;
@@ -85,6 +146,7 @@ export const App = {
     },
     togglePublishMode: () => {
         document.body.classList.toggle('publishing');
+        renderBoard();
     },
     saveTitle: () => {
         State.title = getEl('appTitle').innerText;
@@ -144,6 +206,12 @@ export const renderBoard = () => {
     State.trackers.forEach((t, i) => {
         const card = document.createElement('div');
         card.className = `tracker-card size-${t.size || 'M'}`;
+        card.dataset.index = i;
+        
+        if (!document.body.classList.contains('publishing')) {
+            card.draggable = true;
+        }
+
         card.onclick = () => {
              if (document.body.classList.contains('publishing')) {
                  ZoomManager.openChartModal(i);
@@ -317,6 +385,7 @@ export const TrackerManager = {
         getEl('barLabelsContainer').innerHTML = ''; 
         getEl('lineLabelsContainer').innerHTML = '';
         getEl('csvInput').value = ''; 
+        getEl('csvInputBar').value = '';
         
         // Fill 24 inputs
         for(let k=0; k<24; k++) {
@@ -465,40 +534,39 @@ export const TrackerManager = {
         getEl('wafflePreview').innerHTML = createWaffleHTML(100, active, colorVal, colorBg);
     },
 
-    parseCSV() {
-        const raw = getEl('csvInput').value;
+    parseCSV(type) {
+        const inputId = type === 'bar' ? 'csvInputBar' : 'csvInput';
+        const raw = getEl(inputId).value;
         if (!raw.trim()) return App.alert("Please paste CSV data.");
         
         const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
         if (lines.length < 2) return App.alert("CSV must have at least 2 lines (Header + Data).");
 
-        // Row 1: Description/Headers (<x axis name>, <series 1 name>, ...)
         const headers = lines[0].split(/[,\t]+/).map(s => s.trim());
-        
-        // Series names start from column 2 (index 1)
         const seriesNames = headers.slice(1); 
         
         if (seriesNames.length === 0) return App.alert("No series columns found (columns 2-9).");
         
+        const lblContainerId = type === 'bar' ? 'barLabelsContainer' : 'lineLabelsContainer';
+        const seriesContainerId = type === 'bar' ? 'barSeriesContainer' : 'lineSeriesContainer';
+
         // Clear existing inputs
-        getEl('lineLabelsContainer').innerHTML = '';
-        getEl('lineSeriesContainer').innerHTML = '';
+        getEl(lblContainerId).innerHTML = '';
+        getEl(seriesContainerId).innerHTML = '';
         for(let k=0; k<24; k++) {
-            getEl('lineLabelsContainer').innerHTML += `<input type="text" id="lLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+            const prefix = type === 'bar' ? 'bLbl' : 'lLbl';
+            getEl(lblContainerId).innerHTML += `<input type="text" id="${prefix}${k}" placeholder="L${k+1}" style="text-align:center;">`;
         }
 
         const labels = [];
         const seriesData = seriesNames.map(() => []);
         
-        // Process data rows (up to 24 rows supported by UI)
         const dataRows = lines.slice(1).slice(0, 24);
         
         dataRows.forEach((line) => {
             const cols = line.split(/[,\t]+/).map(s => s.trim());
-            // Col 0 is X-Axis Label
             labels.push(cols[0] || ""); 
             
-            // Col 1..N are Series Values
             seriesNames.forEach((_, sIdx) => {
                 const val = parseFloat(cols[sIdx + 1]) || 0;
                 seriesData[sIdx].push(val);
@@ -506,14 +574,18 @@ export const TrackerManager = {
         });
 
         // Fill X-Axis Labels
-        labels.forEach((l, k) => { getEl(`lLbl${k}`).value = l; });
+        labels.forEach((l, k) => { 
+            const prefix = type === 'bar' ? 'bLbl' : 'lLbl';
+            getEl(`${prefix}${k}`).value = l; 
+        });
 
         // Create Series (Up to 8)
         const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
         
         seriesNames.forEach((name, sIdx) => {
             if (sIdx < 8) {
-                this.addLineSeries(name, colors[sIdx] || '#ffffff', seriesData[sIdx]);
+                if (type === 'bar') this.addBarSeries(name, colors[sIdx] || '#ffffff', seriesData[sIdx]);
+                else this.addLineSeries(name, colors[sIdx] || '#ffffff', seriesData[sIdx]);
             }
         });
         
