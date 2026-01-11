@@ -469,13 +469,16 @@ export const TrackerManager = {
         const raw = getEl('csvInput').value;
         if (!raw.trim()) return App.alert("Please paste CSV data.");
         
-        const lines = raw.trim().split(/\r?\n/);
+        const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
         if (lines.length < 2) return App.alert("CSV must have at least 2 lines (Header + Data).");
 
+        // Row 1: Description/Headers (<x axis name>, <series 1 name>, ...)
         const headers = lines[0].split(/[,\t]+/).map(s => s.trim());
+        
+        // Series names start from column 2 (index 1)
         const seriesNames = headers.slice(1); 
         
-        if (seriesNames.length === 0) return App.alert("No series columns found.");
+        if (seriesNames.length === 0) return App.alert("No series columns found (columns 2-9).");
         
         // Clear existing inputs
         getEl('lineLabelsContainer').innerHTML = '';
@@ -486,29 +489,35 @@ export const TrackerManager = {
 
         const labels = [];
         const seriesData = seriesNames.map(() => []);
+        
+        // Process data rows (up to 24 rows supported by UI)
         const dataRows = lines.slice(1).slice(0, 24);
         
         dataRows.forEach((line) => {
             const cols = line.split(/[,\t]+/).map(s => s.trim());
-            if (cols.length > 0) {
-                labels.push(cols[0]); 
-                seriesNames.forEach((_, sIdx) => {
-                    const val = parseFloat(cols[sIdx + 1]) || 0;
-                    seriesData[sIdx].push(val);
-                });
-            }
+            // Col 0 is X-Axis Label
+            labels.push(cols[0] || ""); 
+            
+            // Col 1..N are Series Values
+            seriesNames.forEach((_, sIdx) => {
+                const val = parseFloat(cols[sIdx + 1]) || 0;
+                seriesData[sIdx].push(val);
+            });
         });
 
+        // Fill X-Axis Labels
         labels.forEach((l, k) => { getEl(`lLbl${k}`).value = l; });
 
-        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#b00020', '#6200ee'];
+        // Create Series (Up to 8)
+        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
+        
         seriesNames.forEach((name, sIdx) => {
-            if (sIdx < 10) {
+            if (sIdx < 8) {
                 this.addLineSeries(name, colors[sIdx] || '#ffffff', seriesData[sIdx]);
             }
         });
         
-        App.alert(`Parsed ${labels.length} rows and ${seriesNames.length} series.`);
+        App.alert(`Parsed ${labels.length} rows and ${Math.min(seriesNames.length, 8)} series.`);
     },
 
     submitTracker() {
