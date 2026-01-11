@@ -191,26 +191,44 @@
             <div class="modal-body">
                 <input type="hidden" id="editTrackerIndex" value="-1">
                 <div class="type-selector" id="trackerTypeSelector">
-                    <button id="typegaugeBtn" class="type-option active" onclick="TrackerManager.setType('gauge')">Gauge (Pie)</button>
-                    <button id="typebarBtn" class="type-option" onclick="TrackerManager.setType('bar')">Bar Graph</button>
-                    <button id="typelineBtn" class="type-option" onclick="TrackerManager.setType('line')">Line Graph</button>
-                    <button id="typecounterBtn" class="type-option" onclick="TrackerManager.setType('counter')">Counter</button>
-                    <button id="typeragBtn" class="type-option" onclick="TrackerManager.setType('rag')">RAG Status</button>
-                    <button id="typewaffleBtn" class="type-option" onclick="TrackerManager.setType('waffle')">Waffle Chart</button>
+                    <button id="typeGaugeBtn" class="type-option active" onclick="TrackerManager.setType('gauge')">Gauge (Pie)</button>
+                    <button id="typeBarBtn" class="type-option" onclick="TrackerManager.setType('bar')">Bar Graph</button>
+                    <button id="typeLineBtn" class="type-option" onclick="TrackerManager.setType('line')">Line Graph</button>
+                    <button id="typeCounterBtn" class="type-option" onclick="TrackerManager.setType('counter')">Counter</button>
+                    <button id="typeRagBtn" class="type-option" onclick="TrackerManager.setType('rag')">RAG Status</button>
+                    <button id="typeWaffleBtn" class="type-option" onclick="TrackerManager.setType('waffle')">Waffle Chart</button>
                 </div>
-                <div class="input-group">
-                    <label>Tracker Title</label>
-                    <input type="text" id="tkDesc">
+                <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
+                    <div class="input-group" style="flex: 2;">
+                        <label>Tracker Title</label>
+                        <input type="text" id="tkDesc">
+                    </div>
+                    <div class="input-group" style="flex: 1;">
+                        <label>Size</label>
+                        <select id="tkSize">
+                            <option value="S">Small (5/row)</option>
+                            <option value="M" selected>Medium (3/row)</option>
+                            <option value="L">Large (2/row)</option>
+                            <option value="XL">Very Large (Full)</option>
+                        </select>
+                    </div>
                 </div>
+
                 <div id="gaugeInputs">
                     <div class="input-group"><label>Metric Name</label><input type="text" id="tkMetric"></div>
                     <div class="form-row" style="margin-bottom:0; gap:1rem;">
                         <div class="input-group"><label>Completed</label><input type="number" id="tkComp"></div>
                         <div class="input-group"><label>Total</label><input type="number" id="tkTotal"></div>
                     </div>
-                    <div class="input-group">
-                        <label>Color</label>
-                        <input type="color" id="tkPieColor" value="#03dac6">
+                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Primary Color (Start)</label>
+                            <input type="color" id="tkPieColor" value="#03dac6">
+                        </div>
+                        <div class="input-group">
+                            <label>Secondary Color (End)</label>
+                            <input type="color" id="tkPieColor2" value="#ff1744">
+                        </div>
                     </div>
                 </div>
                 <div id="barInputs" style="display:none;">
@@ -231,6 +249,11 @@
                     </div>
                 </div>
                 <div id="lineInputs" style="display:none;">
+                     <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px;">
+                        <label>Import Data from CSV</label>
+                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Label, Series1, Series2...&#10;Jan, 10, 20&#10;Feb, 15, 25" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
+                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV()">Parse CSV & Auto-fill</button>
+                    </div>
                     <div class="input-group">
                         <label>X-Axis Labels (Up to 24)</label>
                         <div id="lineLabelsContainer" class="grid-24"></div>
@@ -244,9 +267,15 @@
                     </div>
                 </div>
                 <div id="counterInputs" style="display:none;">
-                    <div class="input-group">
-                        <label>Counter Value</label>
-                        <input type="number" id="tkCounterVal">
+                    <div class="form-row" style="margin-bottom: 0; gap: 1rem;">
+                        <div class="input-group" style="flex: 1;">
+                            <label>Counter Value</label>
+                            <input type="number" id="tkCounterVal">
+                        </div>
+                        <div class="input-group" style="flex: 0 0 100px;">
+                            <label>Font Color</label>
+                            <input type="color" id="tkCounterColor" value="#bb86fc">
+                        </div>
                     </div>
                     <div class="input-group">
                         <label>Subtitle / Description</label>

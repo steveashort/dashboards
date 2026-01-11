@@ -143,7 +143,7 @@ export const renderBoard = () => {
     
     State.trackers.forEach((t, i) => {
         const card = document.createElement('div');
-        card.className = 'tracker-card';
+        card.className = `tracker-card size-${t.size || 'M'}`;
         card.onclick = () => {
              if (document.body.classList.contains('publishing')) {
                  ZoomManager.openChartModal(i);
@@ -193,6 +193,7 @@ export const renderBoard = () => {
             const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
             const c1 = t.colorVal || t.color1 || '#00e676'; 
             const c2 = t.color2 || '#ff1744';
+            // Use 2-color gradient
             const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
             visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
             statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
@@ -315,6 +316,7 @@ export const TrackerManager = {
         getEl('lineSeriesContainer').innerHTML = '';
         getEl('barLabelsContainer').innerHTML = ''; 
         getEl('lineLabelsContainer').innerHTML = '';
+        getEl('csvInput').value = ''; 
         
         // Fill 24 inputs
         for(let k=0; k<24; k++) {
@@ -331,6 +333,7 @@ export const TrackerManager = {
         this.setType(type);
 
         getEl('tkDesc').value = tracker ? tracker.desc : '';
+        getEl('tkSize').value = tracker ? (tracker.size || 'M') : 'M';
 
         // Load Specific Data
         if (tracker) {
@@ -359,11 +362,12 @@ export const TrackerManager = {
                 getEl('tkMetric').value = tracker.metric || '';
                 getEl('tkComp').value = tracker.completed || '';
                 getEl('tkTotal').value = tracker.total || '';
-                // Handle legacy color1 vs new colorVal
                 getEl('tkPieColor').value = tracker.colorVal || tracker.color1 || '#00e676';
+                getEl('tkPieColor2').value = tracker.color2 || '#ff1744';
             } else if (type === 'counter') {
                 getEl('tkCounterVal').value = tracker.value || 0;
                 getEl('tkCounterSub').value = tracker.subtitle || '';
+                getEl('tkCounterColor').value = tracker.color1 || '#bb86fc';
             } else if (type === 'rag' || type === 'ryg') {
                 this.selectRag(tracker.status || 'grey');
                 getEl('tkRagMsg').value = tracker.message || '';
@@ -380,8 +384,9 @@ export const TrackerManager = {
         if (!tracker) {
             if (type === 'line') this.addLineSeries('Series 1', '#03dac6');
             if (type === 'bar') this.addBarSeries('Series 1', '#03dac6');
-            if (type === 'gauge') getEl('tkPieColor').value = '#00e676';
+            if (type === 'gauge') { getEl('tkPieColor').value = '#00e676'; getEl('tkPieColor2').value = '#ff1744'; }
             if (type === 'rag') this.selectRag('green');
+            if (type === 'counter') getEl('tkCounterColor').value = '#bb86fc';
             if (type === 'waffle') {
                 getEl('tkWaffleColorVal').value = '#03dac6';
                 getEl('tkWaffleColorBg').value = '#333333';
@@ -460,13 +465,60 @@ export const TrackerManager = {
         getEl('wafflePreview').innerHTML = createWaffleHTML(100, active, colorVal, colorBg);
     },
 
+    parseCSV() {
+        const raw = getEl('csvInput').value;
+        if (!raw.trim()) return App.alert("Please paste CSV data.");
+        
+        const lines = raw.trim().split(/\r?\n/);
+        if (lines.length < 2) return App.alert("CSV must have at least 2 lines (Header + Data).");
+
+        const headers = lines[0].split(/[,\t]+/).map(s => s.trim());
+        const seriesNames = headers.slice(1); 
+        
+        if (seriesNames.length === 0) return App.alert("No series columns found.");
+        
+        // Clear existing inputs
+        getEl('lineLabelsContainer').innerHTML = '';
+        getEl('lineSeriesContainer').innerHTML = '';
+        for(let k=0; k<24; k++) {
+            getEl('lineLabelsContainer').innerHTML += `<input type="text" id="lLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+        }
+
+        const labels = [];
+        const seriesData = seriesNames.map(() => []);
+        const dataRows = lines.slice(1).slice(0, 24);
+        
+        dataRows.forEach((line) => {
+            const cols = line.split(/[,\t]+/).map(s => s.trim());
+            if (cols.length > 0) {
+                labels.push(cols[0]); 
+                seriesNames.forEach((_, sIdx) => {
+                    const val = parseFloat(cols[sIdx + 1]) || 0;
+                    seriesData[sIdx].push(val);
+                });
+            }
+        });
+
+        labels.forEach((l, k) => { getEl(`lLbl${k}`).value = l; });
+
+        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#b00020', '#6200ee'];
+        seriesNames.forEach((name, sIdx) => {
+            if (sIdx < 10) {
+                this.addLineSeries(name, colors[sIdx] || '#ffffff', seriesData[sIdx]);
+            }
+        });
+        
+        App.alert(`Parsed ${labels.length} rows and ${seriesNames.length} series.`);
+    },
+
     submitTracker() {
         const index = State.editingTrackerIndex;
         const desc = getEl('tkDesc').value;
+        const size = getEl('tkSize').value;
         if (!desc) return App.alert("Title required");
 
         const type = State.currentTrackerType;
-        let newTracker = { desc, type };
+        let newTracker = { desc, type, size };
 
         if (type === 'gauge') {
             const m = getEl('tkMetric').value;
@@ -478,6 +530,7 @@ export const TrackerManager = {
             newTracker.completed = c;
             newTracker.total = t;
             newTracker.colorVal = getEl('tkPieColor').value; 
+            newTracker.color2 = getEl('tkPieColor2').value;
         } else if (type === 'bar') {
             const y = getEl('tkBarYLabel').value;
             const labels = [];
@@ -525,7 +578,7 @@ export const TrackerManager = {
         } else if (type === 'counter') {
             newTracker.value = parseFloat(getEl('tkCounterVal').value) || 0;
             newTracker.subtitle = getEl('tkCounterSub').value;
-            newTracker.color1 = "#bb86fc";
+            newTracker.color1 = getEl('tkCounterColor').value;
         } else if (type === 'rag') {
             newTracker.type = 'rag'; 
             newTracker.status = getEl('tkRagStatus').value;
