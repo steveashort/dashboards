@@ -118,7 +118,7 @@ header {
     display: flex; flex-direction: column; justify-content: center; align-items: center;
 }
 .pie-pct { font-size: 1.4rem; font-weight: bold; color: var(--text-main); }
-.tracker-stats { font-size: 0.8rem; color: var(--text-muted); margin-top: auto; padding-top: 1rem; }
+.tracker-stats { font-size: 0.8rem; color: var(--text-muted); margin-top: auto; padding-top:1rem; }
 .btn-del-tracker {
     position: absolute; top: 10px; right: 10px; color: #666; background: none; border: none; cursor: pointer; font-size: 1.2rem; z-index: 2;
 }
