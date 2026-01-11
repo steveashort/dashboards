@@ -346,11 +346,7 @@ export const renderBoard = () => {
         const statusText = statusMap[statusVal] || 'Medium';
         const pillHTML = `<div class="status-pill status-${statusVal}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${statusText}</div>`;
 
-        // This Week Grid
-        const thisLoad = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N'];
-        const mg = thisLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
-
-        c.innerHTML = `<div class="member-name-row" style="padding-bottom:0.5rem; border-bottom:1px solid #333;">${m.name}</div>`;
+        c.innerHTML = `<div class="member-header">${m.name}</div>`;
         
         let content = `<div class="member-card-content">`;
         
