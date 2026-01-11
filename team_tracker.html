@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Platforms Tracker v26 (Fixed)</title>
+    <title>Server Platforms Tracker v27</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -15,10 +15,13 @@
             --accent: #bb86fc;
             --accent-hover: #9965f4;
             --border: #333;
+
+            /* Status Colors */
             --g-green: #00e676;
             --g-amber: #ffb300;
             --g-red: #ff1744;
             --g-grey: #666666;
+            /* Chart Colors */
             --chart-1: #03dac6;
             --chart-2: #ff4081;
         }
@@ -39,6 +42,7 @@
         }
         .header-left { display: flex; align-items: center; gap: 15px; }
         .header-logo-img { width: 48px; height: 48px; object-fit: contain; }
+
         #appTitle {
             font-weight: 300; letter-spacing: 1px; color: var(--accent); margin: 0;
             border-bottom: 1px dashed transparent; cursor: text; transition: border 0.2s;
@@ -47,6 +51,7 @@
         #appTitle:focus { outline: none; border-bottom: 1px solid var(--accent); }
         .date-display { color: var(--text-muted); font-size: 0.9rem; font-family: monospace; margin-top: 5px; }
         .header-actions { display: flex; gap: 0.8rem; align-items: center; flex-wrap: wrap; }
+
         .btn {
             background: var(--input-bg); border: 1px solid var(--accent); color: var(--accent);
             padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
@@ -56,12 +61,14 @@
         .btn-primary { background: var(--accent); color: #000; }
         .btn-primary:hover { background: var(--accent-hover); }
         .btn-sm { padding: 0.4rem 0.8rem; font-size: 0.75rem; }
+
         .btn-reset {
             background: transparent; border: 1px solid #444; color: var(--text-muted);
             padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 0.7rem;
             margin-top: 0.8rem; width: auto; display: inline-block; transition: all 0.2s;
         }
         .btn-reset:hover { border-color: var(--g-red); color: var(--g-red); }
+
         .team-overview-panel {
             background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
             padding: 1.5rem; margin-bottom: 2rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;
@@ -206,7 +213,7 @@
         .counter-display { font-size: 3rem; font-weight: 300; color: var(--accent); line-height: 1; text-shadow: 0 0 20px rgba(187, 134, 252, 0.3); }
         .counter-sub { font-size: 0.9rem; color: var(--text-muted); margin-top: 5px; }
         .ryg-indicator {
-            width: 80px; height: 80px; border-radius: 50%; margin: 0 auto; transition: background 0.3s, box-shadow  0.3s;
+            width: 80px; height: 80px; border-radius: 50%; margin: 0 auto; transition: background 0.3s, box-shadow 0.3s;
             display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: bold; color: #000;
         }
         .ryg-green { background: var(--g-green); box-shadow: 0 0 15px var(--g-green); }
@@ -329,8 +336,7 @@
                 <h3 id="zoomTitle" style="font-size:1.5rem;">View</h3>
                 <button class="btn" onclick="ModalManager.closeModal('zoomModal')">&times;</button>
             </div>
-            <div class="modal-body" id="zoomBody">
-            </div>
+            <div class="modal-body" id="zoomBody"></div>
         </div>
     </div>
     <div class="modal-overlay" id="userModal">
@@ -349,13 +355,13 @@
                     <div class="half-form">
                         <div class="form-section-title">Last Week (Mon - Fri)</div>
                         <div class="input-group">
-                            <label>Top 3 Successes <span class="help-icon" data-text="Key achievements from the previous week. Check the box on the dashboard to add these to the 'Top 5 Team Achievements'.">?</span></label>
+                            <label>Top 3 Successes <span class="help-icon" data-text="Key achievements from the previous week. Check the box on the dashboard to add these to the Top 5 Team Achievements.">?</span></label>
                             <input type="text" class="mb-2" id="lwTask1" placeholder="1. Project A...">
                             <input type="text" class="mb-2" id="lwTask2" style="margin-top:5px" placeholder="2. Client Call...">
                             <input type="text" class="mb-2" id="lwTask3" style="margin-top:5px" placeholder="3. Bug fix...">
                         </div>
                         <div class="input-group">
-                            <label>Workload <span class="help-icon" data-text="Daily workload intensity.&#10;L = Low&#10;M = Medium&#10;H = High&#10;X = Absence (Excluded from utilization score)">?</span></label>
+                            <label>Workload <span class="help-icon" data-text="Daily workload intensity. L=Low, M=Medium, H=High, X=Absence.">?</span></label>
                             <div class="load-select-row">
                                 <div class="ls-box"><label>M</label><select id="lw0"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
                                 <div class="ls-box"><label>T</label><select id="lw1"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
@@ -368,13 +374,13 @@
                     <div class="half-form">
                         <div class="form-section-title">Next Week (Mon - Fri)</div>
                         <div class="input-group">
-                            <label>Top 3 Priorities <span class="help-icon" data-text="Key planned activities. Check the box on the dashboard to add these to the 'Top 5 Activities'.">?</span></label>
+                            <label>Top 3 Priorities <span class="help-icon" data-text="Key planned activities. Check the box on the dashboard to add these to the Top 5 Activities.">?</span></label>
                             <input type="text" class="mb-2" id="nwTask1" placeholder="1. Start Phase 2...">
                             <input type="text" class="mb-2" id="nwTask2" style="margin-top:5px" placeholder="2. Planning...">
                             <input type="text" class="mb-2" id="nwTask3" style="margin-top:5px" placeholder="3. Code Review...">
                         </div>
                         <div class="input-group">
-                            <label>Workload <span class="help-icon" data-text="Daily workload intensity.&#10;L = Low&#10;M = Medium&#10;H = High&#10;X = Absence (Excluded from utilization score)">?</span></label>
+                            <label>Workload <span class="help-icon" data-text="Daily workload intensity. L=Low, M=Medium, H=High, X=Absence.">?</span></label>
                             <div class="load-select-row">
                                 <div class="ls-box"><label>M</label><select id="nw0"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
                                 <div class="ls-box"><label>T</label><select id="nw1"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
@@ -399,7 +405,7 @@
                 <button class="btn" onclick="ModalManager.closeModal('infoModal')">&times;</button>
             </div>
             <div class="modal-body">
-                <p style="font-size:0.8rem; color:#888; margin-bottom:1rem;">Supports: **bold**, *italic*, - list item, [link](url)</p>
+                <p style="font-size:0.8rem; color:#888; margin-bottom:1rem;">Supports: bold, italic, - list item, [link](url)</p>
                 <textarea id="additionalInfoInput" style="height:200px; resize:none;" placeholder="Enter risks, blockers, or general notes..."></textarea>
             </div>
             <div class="modal-footer">
@@ -455,7 +461,7 @@
                         <div id="barSeriesContainer"></div>
                     </div>
                 </div>
-                 <div id="lineInputs" style="display:none;">
+                <div id="lineInputs" style="display:none;">
                     <div class="input-group">
                         <label>X-Axis Labels (Up to 24)</label>
                         <div id="lineLabelsContainer" class="grid-24"></div>
@@ -476,14 +482,6 @@
                     <div class="input-group">
                         <label>Subtitle / Description</label>
                         <input type="text" id="tkCounterSub" placeholder="e.g. Active Incidents">
-                    </div>
-                    <div class="input-group">
-                        <label>Import CSV (Single Column)</label>
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn btn-sm" onclick="document.getElementById('csvCounterInput').click()">Select CSV</button>
-                            <input type="file" id="csvCounterInput" accept=".csv" style="display:none" onchange="TrackerManager.handleCSVImport(this, 'counter')">
-                            <span id="csvCounterStatus" style="font-size:0.8rem; color:#888;"></span>
-                        </div>
                     </div>
                 </div>
                 <div id="ragInputs" style="display:none;">
@@ -521,18 +519,9 @@
                             <input type="color" id="tkWaffleColorBg" value="#333333" oninput="TrackerManager.updateWafflePreview()">
                         </div>
                     </div>
-                    <div class="input-group">
-                        <label>Import CSV (2 Columns: Total, Active)</label>
-                        <div style="display:flex; gap:10px;">
-                            <button class="btn btn-sm" onclick="document.getElementById('csvWaffleInput').click()">Select CSV</button>
-                            <input type="file" id="csvWaffleInput" accept=".csv" style="display:none" onchange="TrackerManager.handleCSVImport(this, 'waffle')">
-                            <span id="csvWaffleStatus" style="font-size:0.8rem; color:#888;"></span>
-                        </div>
-                    </div>
                     <div style="margin-top:20px; padding:10px; border:1px dashed #444; border-radius:4px; text-align:center;">
                         <label style="font-size:0.7rem; text-transform:uppercase; color:#aaa;">Preview</label>
-                        <div id="wafflePreview">
-                        </div>
+                        <div id="wafflePreview"></div>
                     </div>
                 </div>
             </div>
@@ -543,18 +532,6 @@
     </div>
 
     <script>
-        /**
-         * SERVER PLATFORMS TRACKER v26 (Modular & Fixed)
-         * Split into modules for better stability.
-         */
-        
-        // --- GLOBAL SAFETY CHECK ---
-        if (typeof App === 'undefined') {
-            const err = new Error('App object not loaded. Script execution order error.');
-            console.error(err);
-            document.body.innerHTML = `<div style="color:red; font-family:monospace; padding:20px;">${err.message}</div>`;
-        }
-
         const App = {
             data: {
                 title: "Server Platforms",
@@ -562,9 +539,8 @@
                 trackers: [],
                 members: []
             },
-            
-            // --- CORE: Helpers ---
             init() {
+                const self = this;
                 const formatDate = (date) => date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
                 const getRanges = () => {
                     const today = new Date();
@@ -580,19 +556,15 @@
                     nf.setDate(nm.getDate() + 4);
                     return { current: `${formatDate(cm)} - ${formatDate(cf)}`, next: `${formatDate(nm)} - ${formatDate(nf)}` };
                 };
-                
                 const updateDateUI = () => {
                     const r = getRanges();
                     document.getElementById('dateRangeDisplay').innerText = `Current: ${r.current} | Next: ${r.next}`;
                     document.getElementById('overviewTitleCurrent').innerHTML = `Top 5 Team Achievements <span class="date-suffix">${r.current}</span>`;
                     document.getElementById('overviewTitleNext').innerHTML = `Top 5 Activities Next Week <span class="date-suffix">${r.next}</span>`;
                 };
-
-                // UI Helpers
                 console.log("App Initialized");
             },
 
-            // --- MODULE: Alert System ---
             alert(msg) {
                 document.getElementById('alertMessage').innerText = msg;
                 document.getElementById('alertModal').classList.add('active');
@@ -601,7 +573,6 @@
             confirm(msg, callback) {
                 document.getElementById('confirmMessage').innerText = msg;
                 const btn = document.getElementById('confirmYesBtn');
-                // Clean up listeners
                 const newBtn = btn.cloneNode(true);
                 btn.parentNode.replaceChild(newBtn, btn);
                 newBtn.addEventListener('click', () => {
@@ -616,116 +587,91 @@
             saveTitle() {
                 this.data.title = document.getElementById('appTitle').innerText;
                 console.log("Title saved");
-            },
-
-            // --- MODULE: Modal Manager ---
+            }
         };
 
         const ModalManager = {
             openModal(id) {
-                try {
-                    const el = document.getElementById(id);
-                    if (el) el.classList.add('active');
-                    console.log("Opening modal:", id);
-                } catch (e) {
-                    console.error("ModalManager open error:", e);
-                    App.alert("Error opening modal.");
-                }
+                console.log("Opening modal:", id);
+                const el = document.getElementById(id);
+                if (el) el.classList.add('active');
             },
             closeModal(id) {
-                try {
-                    const el = document.getElementById(id);
-                    if (el) el.classList.remove('active');
-                } catch (e) {
-                    console.error("ModalManager close error:", e);
-                }
+                const el = document.getElementById(id);
+                if (el) el.classList.remove('active');
             }
         };
 
-        // --- MODULE: User Manager ---
         const UserManager = {
             openUserModal(index) {
-                try {
-                    console.log("Opening User Modal for index:", index);
-                    if (document.body.classList.contains('publishing')) return;
+                console.log("Opening User Modal for index:", index);
+                if (document.body.classList.contains('publishing')) return;
 
-                    const isEdit = index > -1;
-                    document.getElementById('editIndex').value = index;
-                    document.getElementById('modalTitle').innerText = isEdit ? 'Edit User' : 'Add New User';
-                    document.getElementById('deleteBtn').style.display = isEdit ? 'block' : 'none';
+                const isEdit = index > -1;
+                document.getElementById('editIndex').value = index;
+                document.getElementById('modalTitle').innerText = isEdit ? 'Edit User' : 'Add New User';
+                document.getElementById('deleteBtn').style.display = isEdit ? 'block' : 'none';
 
-                    const member = isEdit ? App.data.members[index] : null;
+                const member = isEdit ? App.data.members[index] : null;
 
-                    // Populate Fields safely
-                    document.getElementById('mName').value = member ? member.name : '';
-                    
-                    const tasks = ['lwTask1','lwTask2','lwTask3','nwTask1','nwTask2','nwTask3'];
-                    const mTasks = member ? member.lastWeek.tasks : [null,null,null];
-                    const nTasks = member ? member.nextWeek.tasks : [null,null,null];
-                    
-                    tasks.forEach((tid, k) => {
-                        let val = '';
-                        if (k < 3 && mTasks[k]) val = mTasks[k].text;
-                        if (k >= 3 && nTasks[k-3]) val = nTasks[k-3].text;
-                        document.getElementById(tid).value = val;
-                    });
+                document.getElementById('mName').value = member ? member.name : '';
+                const tasks = ['lwTask1','lwTask2','lwTask3','nwTask1','nwTask2','nwTask3'];
+                const mTasks = member ? member.lastWeek.tasks : [null,null,null];
+                const nTasks = member ? member.nextWeek.tasks : [null,null,null];
+                
+                tasks.forEach((tid, k) => {
+                    let val = '';
+                    if (k < 3 && mTasks[k]) val = mTasks[k].text;
+                    if (k >= 3 && nTasks[k-3]) val = nTasks[k-3].text;
+                    document.getElementById(tid).value = val;
+                });
 
-                    for(let j=0; j<5; j++) {
-                        document.getElementById(`lw${j}`).value = member ? member.lastWeek.load[j] : 'L';
-                        document.getElementById(`nw${j}`).value = member ? member.nextWeek.load[j] : 'L';
-                    }
-
-                    ModalManager.openModal('userModal');
-                } catch (e) {
-                    console.error("UserManager openModal error:", e);
-                    App.alert("Error opening user form.");
+                for(let j=0; j<5; j++) {
+                    document.getElementById(`lw${j}`).value = member ? member.lastWeek.load[j] : 'L';
+                    document.getElementById(`nw${j}`).value = member ? member.nextWeek.load[j] : 'L';
                 }
+
+                ModalManager.openModal('userModal');
             },
 
             submitUser() {
-                try {
-                    const i = parseInt(document.getElementById('editIndex').value);
-                    const n = document.getElementById('mName').value;
-                    if (!n) return App.alert("Name required");
-                    console.log("Submitting user:", n, i);
+                const i = parseInt(document.getElementById('editIndex').value);
+                const n = document.getElementById('mName').value;
+                if (!n) return App.alert("Name required");
+                console.log("Submitting user:", n, i);
 
-                    const getLoad = (p) => [0,1,2,3,4].map(x => document.getElementById(`${p}${x}`).value);
-                    const getTasks = (prefix) => {
-                        return [1,2,3].map(x => {
-                            const text = document.getElementById(`${prefix}Task${x}`).value;
-                            return { text: text };
-                        });
-                    };
+                const getLoad = (p) => [0,1,2,3,4].map(x => document.getElementById(`${p}${x}`).value);
+                const getTasks = (prefix) => {
+                    return [1,2,3].map(x => {
+                        const text = document.getElementById(`${prefix}Task${x}`).value;
+                        return { text: text };
+                    });
+                };
 
-                    const newUser = {
-                        id: Date.now(),
-                        name: n,
-                        lastWeek: { tasks: getTasks('lw'), load: getLoad('lw') },
-                        nextWeek: { tasks: getTasks('nw'), load: getLoad('nw') }
-                    };
+                const newUser = {
+                    id: Date.now(),
+                    name: n,
+                    lastWeek: { tasks: getTasks('lw'), load: getLoad('lw') },
+                    nextWeek: { tasks: getTasks('nw'), load: getLoad('nw') }
+                };
 
-                    if (i > -1) {
-                        // Edit existing: Update while preserving flags
-                        const oldUser = App.data.members[i];
-                        newUser.id = oldUser.id;
-                        newUser.lastWeek.tasks.forEach((t, idx) => {
-                            if(oldUser.lastWeek.tasks[idx]) t.isTeamSuccess = oldUser.lastWeek.tasks[idx].isTeamSuccess;
-                        });
-                        newUser.nextWeek.tasks.forEach((t, idx) => {
-                            if(oldUser.nextWeek.tasks[idx]) t.isTeamActivity = oldUser.nextWeek.tasks[idx].isTeamActivity;
-                        });
-                        App.data.members[i] = newUser;
-                    } else {
-                        App.data.members.push(newUser);
-                    }
-
-                    ModalManager.closeModal('userModal');
-                    Renderer.render();
-                    console.log("User saved successfully");
-                } catch (e) {
-                    console.error("UserManager submitUser error:", e);
-                    App.alert("Error saving user.");
+                if (i > -1) {
+                    const oldUser = App.data.members[i];
+                    newUser.id = oldUser.id;
+                    newUser.lastWeek.tasks.forEach((t, idx) => {
+                        if(oldUser.lastWeek.tasks[idx]) t.isTeamSuccess = oldUser.lastWeek.tasks[idx].isTeamSuccess;
+                    });
+                    newUser.nextWeek.tasks.forEach((t, idx) => {
+                        if(oldUser.nextWeek.tasks[idx]) t.isTeamActivity = oldUser.nextWeek.tasks[idx].isTeamActivity;
+                    });
+                    App.data.members[i] = newUser;
+                } else {
+                    App.data.members.push(newUser);
                 }
+
+                ModalManager.closeModal('userModal');
+                Renderer.render();
+                console.log("User saved successfully");
             },
 
             deleteUser() {
@@ -744,7 +690,7 @@
                 if(!t.isTeamSuccess) {
                     const count = App.data.members.reduce((acc, m) => acc + m.lastWeek.tasks.filter(task => task.isTeamSuccess).length, 0);
                     if(count >= 5) {
-                        App.alert('Max 5 items.');
+                        App.alert("Max 5 items.");
                         Renderer.render();
                         return;
                     }
@@ -758,7 +704,7 @@
                 if(!t.isTeamActivity) {
                     const count = App.data.members.reduce((acc, m) => acc + m.nextWeek.tasks.filter(task => task.isTeamActivity).length, 0);
                     if(count >= 5) {
-                        App.alert('Max 5 items.');
+                        App.alert("Max 5 items.");
                         Renderer.render();
                         return;
                     }
@@ -771,7 +717,7 @@
                 App.confirm(`Reset all ${type==='success'?'Achievement':'Activity'} selections?`, () => {
                     App.data.members.forEach(m => {
                         const targetTasks = type === 'success' ? m.lastWeek.tasks : m.nextWeek.tasks;
-                        targetTasks.forEach(t => t[type==='success'?'isTeamSuccess':'isTeamActivity'] = false);
+                        targetTasks.forEach(t => t.isTeamSuccess = false);
                     });
                     Renderer.render();
                 });
@@ -784,33 +730,26 @@
             }
         };
 
-        // --- MODULE: Overview Manager ---
         const OverviewManager = {
             handleOverviewClick(type) {
-                if (!document.body.classList.contains('publishing')) return;
-                
-                let title = '';
-                let content = '';
-                if (type === 'success') {
-                    title = "Top 5 Achievements";
-                    content = document.getElementById('teamSuccessList').innerHTML;
+                if (document.body.classList.contains('publishing')) {
+                    const title = type === 'success' ? "Top 5 Achievements" : "Top 5 Activities";
+                    const containerId = type === 'success' ? 'teamSuccessList' : 'teamActivityList';
+                    
+                    document.getElementById('zoomTitle').innerText = title;
+                    document.getElementById('zoomBody').className = 'zoom-body-text';
+                    const content = document.getElementById(containerId).innerHTML;
+                    document.getElementById('zoomBody').innerHTML = `<div class="zoomed-content"><ul>${content}</ul></div>`;
+                    ModalManager.openModal('zoomModal');
                 }
-                if (type === 'activity') {
-                    title = "Top 5 Activities";
-                    content = document.getElementById('teamActivityList').innerHTML;
-                }
-
-                document.getElementById('zoomTitle').innerText = title;
-                document.getElementById('zoomBody').className = 'zoom-body-text';
-                document.getElementById('zoomBody').innerHTML = `<div class="zoomed-content"><ul>${content}</ul></div>`;
-                ModalManager.openModal('zoomModal');
             },
 
             handleInfoClick() {
                 if (document.body.classList.contains('publishing')) {
                     document.getElementById('zoomTitle').innerText = "Additional Info";
                     document.getElementById('zoomBody').className = 'zoom-body-text';
-                    document.getElementById('zoomBody').innerHTML = `<div class="zoomed-content">${document.getElementById('additionalInfoPreview').innerHTML}</div>`;
+                    const content = document.getElementById('additionalInfoPreview').innerHTML;
+                    document.getElementById('zoomBody').innerHTML = `<div class="zoomed-content">${content}</div>`;
                     ModalManager.openModal('zoomModal');
                 } else {
                     document.getElementById('additionalInfoInput').value = App.data.additionalInfo || '';
@@ -819,131 +758,117 @@
             }
         };
 
-        // --- MODULE: Tracker Manager ---
         const TrackerManager = {
-            editingIndex: -1,
             currentType: 'gauge',
+            editingIndex: -1,
 
             openModal(index) {
-                try {
-                    console.log("Opening Tracker Modal for index:", index);
-                    if (document.body.classList.contains('publishing')) return;
+                console.log("Opening Tracker Modal for index:", index);
+                if (document.body.classList.contains('publishing')) return;
 
-                    this.editingIndex = index;
-                    const isEdit = index > -1;
-                    document.getElementById('trackerModalTitle').innerText = isEdit ? 'Edit Progress Tracker' : 'Add Progress Tracker';
-                    
-                    // Hide all input sections first
+                this.editingIndex = index;
+                const isEdit = index > -1;
+                document.getElementById('trackerModalTitle').innerText = isEdit ? 'Edit Progress Tracker' : 'Add Progress Tracker';
+                
+                const hideAllInputs = () => {
                     ['gauge','bar','line','counter','rag','waffle'].forEach(t => {
                         const div = document.getElementById(`${t}Inputs`);
                         if (div) div.style.display = 'none';
                     });
-                    
-                    // Reset containers
-                    document.getElementById('barSeriesContainer').innerHTML = '';
-                    document.getElementById('lineSeriesContainer').innerHTML = '';
-                    document.getElementById('barLabelsContainer').innerHTML = ''; 
-                    document.getElementById('lineLabelsContainer').innerHTML = '';
-                    
-                    // Fill 24 inputs
-                    for(let k=0; k<24; k++) {
-                        document.getElementById('barLabelsContainer').innerHTML += `<input type="text" id="bLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
-                        document.getElementById('lineLabelsContainer').innerHTML += `<input type="text" id="lLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
-                    }
+                };
 
-                    // Reset CSV status
-                    const csvCounter = document.getElementById('csvCounterStatus');
-                    const csvWaffle = document.getElementById('csvWaffleStatus');
-                    if(csvCounter) csvCounter.innerText = '';
-                    if(csvWaffle) csvWaffle.innerText = '';
+                hideAllInputs();
 
-                    const tracker = isEdit ? App.data.trackers[index] : null;
-                    
-                    // Determine type (normalize legacy)
-                    let type = tracker ? tracker.type : 'gauge';
-                    if (type === 'line1' || type === 'line2') type = 'line';
-                    if (type === 'ryg') type = 'rag'; // Normalize to rag for UI logic
-                    
-                    this.setType(type);
+                const tracker = isEdit ? App.data.trackers[index] : null;
+                let type = tracker ? tracker.type : 'gauge';
+                if (type === 'line1' || type === 'line2') type = 'line';
+                if (type === 'ryg') type = 'rag';
+                
+                this.setType(type);
 
-                    document.getElementById('tkDesc').value = tracker ? tracker.desc : '';
+                document.getElementById('tkDesc').value = tracker ? tracker.desc : '';
 
-                    // Load Specific Data
-                    if (tracker && (tracker.type === 'line1' || tracker.type === 'line2')) {
-                        const labels = tracker.data.map(d => d.label);
-                        labels.forEach((l, k) => { if(k<24) document.getElementById(`lLbl${k}`).value = l; });
-                        this.addLineSeries(tracker.y1Leg || 'Series 1', tracker.color1 || '#03dac6', tracker.data.map(d => d.y1));
-                        if (tracker.type === 'line2') this.addLineSeries(tracker.y2Leg || 'Series 2', tracker.color2 || '#ff4081', tracker.data.map(d => d.y2));
-                    } else if (tracker && tracker.type === 'line') {
-                        (tracker.labels||[]).forEach((l, k) => { if(k<24) document.getElementById(`lLbl${k}`).value = l; });
-                        (tracker.series||[]).forEach(s => this.addLineSeries(s.name, s.color, s.values));
-                    } else if (tracker && tracker.type === 'bar') {
-                        document.getElementById('tkBarYLabel').value = tracker.yLabel || '';
-                        if (tracker.series) {
-                            (tracker.labels||[]).forEach((l, k) => { if(k<24) document.getElementById(`bLbl${k}`).value = l; });
-                            (tracker.series||[]).forEach(s => this.addBarSeries(s.name, s.color, s.values));
-                        } else {
-                            // Legacy Simple Bar -> Series 1
-                            (tracker.data||[]).forEach((d,k)=>{if(k<24)document.getElementById(`bLbl${k}`).value=d.label;});
-                            if (tracker.data && tracker.data.length > 0) {
-                                const vals = tracker.data.map(d => d.val);
-                                this.addBarSeries('Series 1', tracker.color1 || '#03dac6', vals);
-                            }
-                        }
-                    } else if (tracker && tracker.type === 'gauge') {
-                        document.getElementById('tkMetric').value = tracker ? tracker.metric : ''; 
-                        document.getElementById('tkComp').value = tracker ? tracker.completed : ''; 
-                        document.getElementById('tkTotal').value = tracker ? tracker.total : '';
+                if (tracker) {
+                    if (type === 'gauge') {
+                        document.getElementById('tkMetric').value = tracker.metric || '';
+                        document.getElementById('tkComp').value = tracker.completed || '';
+                        document.getElementById('tkTotal').value = tracker.total || '';
                         document.getElementById('tkPieColor').value = tracker.colorVal || tracker.color1 || '#00e676';
-                    } else if (tracker && tracker.type === 'counter') {
-                        document.getElementById('tkCounterVal').value = tracker ? tracker.value || 0;
-                        document.getElementById('tkCounterSub').value = tracker ? tracker.subtitle : '';
-                    } else if (tracker && (tracker.type === 'rag' || tracker.type === 'ryg')) {
+                    }
+                    else if (type === 'counter') {
+                        document.getElementById('tkCounterVal').value = tracker.value || 0;
+                        document.getElementById('tkCounterSub').value = tracker.subtitle || '';
+                    }
+                    else if (type === 'rag' || type === 'ryg') {
                         this.selectRag(tracker.status || 'grey');
-                        document.getElementById('tkRagMsg').value = tracker ? tracker.message : '';
-                    } else if (tracker && tracker.type === 'waffle') {
-                        document.getElementById('tkWaffleTotal').value = tracker ? tracker.total : 100;
-                        document.getElementById('tkWaffleActive').value = tracker ? tracker.active : 0;
-                        document.getElementById('tkWaffleColorVal').value = tracker ? tracker.colorVal || '#03dac6';
-                        document.getElementById('tkWaffleColorBg').value = tracker ? tracker.colorBg || '#333333';
+                        document.getElementById('tkRagMsg').value = tracker.message || '';
+                    }
+                    else if (type === 'waffle') {
+                        document.getElementById('tkWaffleTotal').value = tracker.total || 100;
+                        document.getElementById('tkWaffleActive').value = tracker.active || 0;
+                        document.getElementById('tkWaffleColorVal').value = tracker.colorVal || '#03dac6';
+                        document.getElementById('tkWaffleColorBg').value = tracker.colorBg || '#333333';
                         this.updateWafflePreview();
                     }
+                    else if (type === 'line' || type === 'line1' || type === 'line2') {
+                        const labels = (type === 'line') ? tracker.labels : tracker.data.map(d => d.label);
+                        const series = (type === 'line') ? tracker.series : [];
 
-                    // Defaults for NEW tracker
-                    if (!tracker) {
-                        if (type === 'line') this.addLineSeries('Series 1', '#03dac6');
-                        if (type === 'bar') this.addBarSeries('Series 1', '#03dac6');
-                        if (type === 'gauge') document.getElementById('tkPieColor').value = '#00e676';
-                        if (type === 'rag') this.selectRag('green');
-                        if (type === 'waffle') {
-                            document.getElementById('tkWaffleColorVal').value = '#03dac6';
-                            document.getElementById('tkWaffleColorBg').value = '#333333';
-                            this.updateWafflePreview();
+                        if (type === 'line') {
+                            tracker.series.forEach(s => this.addLineSeries(s.name, s.color, s.values));
+                        } else if (type === 'line1') {
+                            this.addLineSeries(tracker.y1Leg || 'Series 1', tracker.color1 || '#03dac6', tracker.data.map(d => d.y1));
+                        } else if (type === 'line2') {
+                            this.addLineSeries(tracker.y1Leg || 'Series 1', tracker.color1 || '#03dac6', tracker.data.map(d => d.y1));
+                            this.addLineSeries(tracker.y2Leg || 'Series 2', tracker.color2 || '#ff4081', tracker.data.map(d => d.y2));
                         }
                     }
-
-                    ModalManager.openModal('trackerModal');
-                } catch (e) {
-                    console.error("TrackerManager openModal error:", e);
-                    App.alert("Error opening tracker form.");
+                    else if (type === 'bar') {
+                        document.getElementById('tkBarYLabel').value = tracker.yLabel || '';
+                        const labels = (type === 'bar') ? tracker.labels : tracker.data.map(d => d.label);
+                        
+                        if (tracker.series) {
+                            tracker.series.forEach(s => this.addBarSeries(s.name, s.color, s.values));
+                        } else {
+                            const vals = tracker.data.map(d => d.val);
+                            this.addBarSeries('Series 1', tracker.color1 || '#03dac6', vals);
+                        }
+                    }
                 }
+
+                if (!tracker) {
+                    if (type === 'line') {
+                        if (document.getElementById('lineSeriesContainer').children.length === 0) this.addLineSeries('Series 1', '#03dac6');
+                    }
+                    else if (type === 'bar') {
+                        if (document.getElementById('barSeriesContainer').children.length === 0) this.addBarSeries('Series 1', '#03dac6');
+                    }
+                    else if (type === 'gauge') document.getElementById('tkPieColor').value = '#00e676';
+                    else if (type === 'rag') this.selectRag('green');
+                    else if (type === 'waffle') {
+                        document.getElementById('tkWaffleColorVal').value = '#03dac6';
+                        document.getElementById('tkWaffleColorBg').value = '#333333';
+                        this.updateWafflePreview();
+                    }
+                }
+
+                ModalManager.openModal('trackerModal');
             },
 
             setType(type) {
-                try {
-                    this.currentType = type;
-                    // Map all types to data-attr
-                    const types = ['Gauge','Bar','Line','Counter','Rag','Waffle'];
-                    types.forEach(x => {
-                        const btn = document.getElementById(`type${x}Btn`);
-                        if (btn) btn.className = (type === x.toLowerCase()) ? 'type-option active' : 'type-option';
-                        const div = document.getElementById(`${x.toLowerCase()}Inputs`);
-                        if (div) div.style.display = (type === x.toLowerCase()) ? 'block' : 'none';
-                    });
-                } catch (e) {
-                    console.error("TrackerManager setType error:", e);
-                    App.alert("Error switching tracker type.");
-                }
+                this.currentType = type;
+                
+                document.querySelectorAll('#trackerTypeSelector .type-option').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.getAttribute('data-type') === type) {
+                        btn.classList.add('active');
+                    }
+                });
+
+                ['gauge','bar','line','counter','rag','waffle'].forEach(t => {
+                    const div = document.getElementById(`${t}Inputs`);
+                    if (div) div.style.display = (t === type) ? 'block' : 'none';
+                });
             },
 
             selectRag(val) {
@@ -953,7 +878,6 @@
                 if (selected) selected.classList.add('selected');
             },
 
-            // --- Series Management ---
             addBarSeries(name, color, vals) {
                 const c = document.getElementById('barSeriesContainer');
                 if (c.children.length >= 10) return App.alert("Max 10 series.");
@@ -973,7 +897,6 @@
                 div.style.padding = '0.5rem';
                 div.style.borderRadius = '4px';
 
-                // 24 inputs
                 let valInputs = '';
                 for(let k=0; k<24; k++) {
                     valInputs += `<input type="number" class="sv-input" data-idx="${k}" value="${vals[k]||''}" placeholder="${k+1}" style="width:100%; text-align:center;">`;
@@ -993,25 +916,18 @@
                 return div;
             },
 
-            addDefaultSeriesForType(type) {
-                if (type === 'line') {
-                    if (document.getElementById('lineSeriesContainer').children.length === 0) this.addLineSeries('Series 1', '#03dac6');
-                } else if (type === 'bar') {
-                    if (document.getElementById('barSeriesContainer').children.length === 0) this.addBarSeries('Series 1', '#03dac6');
-                }
-            },
-
-            // --- CSV Handling ---
             handleCSVImport(input, type) {
                 const file = input.files[0];
                 if(!file) return;
+                
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const text = e.target.result;
                     const rows = text.split('\n').map(r => r.trim()).filter(r => r);
                     
                     if(type === 'counter') {
-                        let sum = 0; let count = 0;
+                        let sum = 0; 
+                        let count = 0;
                         rows.forEach(r => { const val = parseFloat(r); if(!isNaN(val)) { sum += val; count++; } });
                         if(count > 0) {
                             document.getElementById('tkCounterVal').value = sum;
@@ -1020,7 +936,8 @@
                     } else if (type === 'waffle') {
                         const cols = rows[0].split(',');
                         if(cols.length >= 2) {
-                            const total = parseFloat(cols[0]); const active = parseFloat(cols[1]);
+                            const total = parseFloat(cols[0]); 
+                            const active = parseFloat(cols[1]);
                             if(!isNaN(total) && !isNaN(active)) {
                                 document.getElementById('tkWaffleTotal').value = total;
                                 document.getElementById('tkWaffleActive').value = active;
@@ -1039,8 +956,8 @@
                 const active = parseInt(document.getElementById('tkWaffleActive').value) || 0;
                 const colorVal = document.getElementById('tkWaffleColorVal').value;
                 const colorBg = document.getElementById('tkWaffleColorBg').value;
-                const p = document.getElementById('wafflePreview');
                 
+                const p = document.getElementById('wafflePreview');
                 let html = '';
                 for(let i=0; i<100; i++) {
                     const isActive = i < active;
@@ -1049,105 +966,96 @@
                 p.innerHTML = html;
             },
 
-            // --- Submission ---
             submitTracker() {
-                try {
-                    const index = this.editingIndex;
-                    const desc = document.getElementById('tkDesc').value;
-                    if (!desc) return App.alert("Title required");
-                    console.log("Submitting tracker:", desc, index);
-                    
-                    const type = this.currentType;
-                    let newTracker = { desc, type };
+                const index = this.editingIndex;
+                const desc = document.getElementById('tkDesc').value;
+                if (!desc) return App.alert("Title required");
 
-                    if(type === 'gauge') {
-                        const m = document.getElementById('tkMetric').value;
-                        const c = parseFloat(document.getElementById('tkComp').value) || 0;
-                        const t = parseFloat(document.getElementById('tkTotal').value) || 0;
-                        if(t<=0) return App.alert("Total > 0 required");
-                        if(c>t) return App.alert("Completed value cannot exceed Total value.");
-                        newTracker.metric = m;
-                        newTracker.completed = c;
-                        newTracker.total = t;
-                        newTracker.colorVal = document.getElementById('tkPieColor').value; 
-                    } else if(type === 'bar') {
-                        const y = document.getElementById('tkBarYLabel').value;
-                        const labels = [];
-                        for(let k=0; k<24; k++) {
-                            const l = document.getElementById(`bLbl${k}`).value;
-                            if(l) labels.push(l);
-                        }
-                        const series = [];
-                        const sDivs = document.getElementById('barSeriesContainer').children;
-                        for(let s of sDivs) {
-                            const name = s.querySelector('.s-name').value;
-                            const color = s.querySelector('.s-color').value;
-                            const vals = [];
-                            s.querySelectorAll('.sv-input').forEach((inp, k) => {
-                                if(k < labels.length) vals.push(parseFloat(inp.value)||0);
-                            });
-                            series.push({name, color, values: vals});
-                        }
-                        if(series.length === 0) return App.alert("Add at least one series");
-                        newTracker.yLabel = y;
-                        newTracker.labels = labels;
-                        newTracker.series = series;
-                    } else if(type === 'line') {
-                        const labels = [];
-                        for(let k=0; k<24; k++) {
-                            const l = document.getElementById(`lLbl${k}`).value;
-                            if(l) labels.push(l);
-                        }
-                        if(labels.length < 2) return App.alert("Add at least 2 X-Axis labels");
+                const type = this.currentType;
+                let newTracker = { desc, type };
 
-                        const series = [];
-                        const sDivs = document.getElementById('lineSeriesContainer').children;
-                        for(let s of sDivs) {
-                            const name = s.querySelector('.s-name').value;
-                            const color = s.querySelector('.s-color').value;
-                            const vals = [];
-                            s.querySelectorAll('.sv-input').forEach((inp, k) => {
-                                if(k < labels.length) vals.push(parseFloat(inp.value)||0);
-                            });
-                            series.push({name, color, values: vals});
-                        }
-                        if(series.length === 0) return App.alert("Add at least one series");
-                        newTracker.labels = labels;
-                        newTracker.series = series;
-                    } else if (type === 'counter') {
-                        newTracker.value = parseFloat(document.getElementById('tkCounterVal').value) || 0;
-                        newTracker.subtitle = document.getElementById('tkCounterSub').value;
-                        newTracker.color1 = "#bb86fc"; // Accent color
-                    } else if (type === 'rag') {
-                        newTracker.type = 'rag'; 
-                        newTracker.status = document.getElementById('tkRagStatus').value;
-                        newTracker.message = document.getElementById('tkRagMsg').value;
-                    } else if (type === 'waffle') {
-                        newTracker.total = parseInt(document.getElementById('tkWaffleTotal').value) || 100;
-                        newTracker.active = parseInt(document.getElementById('tkWaffleActive').value) || 0;
-                        newTracker.colorVal = document.getElementById('tkWaffleColorVal').value;
-                        newTracker.colorBg = document.getElementById('tkWaffleColorBg').value;
+                if(type === 'gauge') {
+                    const m = document.getElementById('tkMetric').value;
+                    const c = parseFloat(document.getElementById('tkComp').value) || 0;
+                    const t = parseFloat(document.getElementById('tkTotal').value) || 0;
+                    if(t<=0) return App.alert("Total > 0 required");
+                    if(c>t) return App.alert("Completed value cannot exceed Total value.");
+                    newTracker.metric = m;
+                    newTracker.completed = c;
+                    newTracker.total = t;
+                    newTracker.colorVal = document.getElementById('tkPieColor').value; 
+                } else if(type === 'bar') {
+                    const y = document.getElementById('tkBarYLabel').value;
+                    const labels = [];
+                    for(let k=0; k<24; k++) {
+                        const l = document.getElementById(`bLbl${k}`).value;
+                        if(l) labels.push(l);
                     }
-
-                    if(index > -1) {
-                        App.data.trackers.push(newTracker);
-                    } else {
-                        // Preserve legacy data if not present in new tracker
-                        const existing = App.data.trackers[index];
-                        if(!newTracker.color1 && existing.color1) newTracker.color1 = existing.color1;
-                        if(type !== 'gauge' && !newTracker.colorVal && existing.colorVal) newTracker.colorVal = existing.colorVal;
-                        if(type === 'waffle' && !newTracker.colorBg && existing.colorBg) newTracker.colorBg = existing.colorBg;
-                        
-                        App.data.trackers[index] = newTracker;
+                    const series = [];
+                    const sDivs = document.getElementById('barSeriesContainer').children;
+                    for(let s of sDivs) {
+                        const name = s.querySelector('.s-name').value;
+                        const color = s.querySelector('.s-color').value;
+                        const vals = [];
+                        s.querySelectorAll('.sv-input').forEach((inp, k) => {
+                            if(k < labels.length) vals.push(parseFloat(inp.value)||0);
+                        });
+                        series.push({name, color, values: vals});
                     }
+                    if(series.length === 0) return App.alert("Add at least one series");
+                    newTracker.yLabel = y;
+                    newTracker.labels = labels;
+                    newTracker.series = series;
+                } else if(type === 'line') {
+                    const labels = [];
+                    for(let k=0; k<24; k++) {
+                        const l = document.getElementById(`lLbl${k}`).value;
+                        if(l) labels.push(l);
+                    }
+                    if(labels.length < 2) return App.alert("Add at least 2 X-Axis labels");
 
-                    ModalManager.closeModal('trackerModal');
-                    Renderer.render();
-                    console.log("Tracker saved:", type);
-                } catch (e) {
-                    console.error("TrackerManager submitTracker error:", e);
-                    App.alert("Error saving tracker.");
+                    const series = [];
+                    const sDivs = document.getElementById('lineSeriesContainer').children;
+                    for(let s of sDivs) {
+                        const name = s.querySelector('.s-name').value;
+                        const color = s.querySelector('.s-color').value;
+                        const vals = [];
+                        s.querySelectorAll('.sv-input').forEach((inp, k) => {
+                            if(k < labels.length) vals.push(parseFloat(inp.value)||0);
+                        });
+                        series.push({name, color, values: vals});
+                    }
+                    if(series.length === 0) return App.alert("Add at least one series");
+                    newTracker.labels = labels;
+                    newTracker.series = series;
+                } else if (type === 'counter') {
+                    newTracker.value = parseFloat(document.getElementById('tkCounterVal').value) || 0;
+                    newTracker.subtitle = document.getElementById('tkCounterSub').value;
+                    newTracker.color1 = "#bb86fc";
+                } else if (type === 'rag') {
+                    newTracker.status = document.getElementById('tkRagStatus').value;
+                    newTracker.message = document.getElementById('tkRagMsg').value;
+                    newTracker.color1 = (newTracker.status === 'green' ? '#00e676' : (newTracker.status === 'amber' ? '#ffb300' : (newTracker.status === 'red' ? '#ff1744' : '#666666')));
+                } else if (type === 'waffle') {
+                    newTracker.total = parseInt(document.getElementById('tkWaffleTotal').value) || 100;
+                    newTracker.active = parseInt(document.getElementById('tkWaffleActive').value) || 0;
+                    newTracker.colorVal = document.getElementById('tkWaffleColorVal').value;
+                    newTracker.colorBg = document.getElementById('tkWaffleColorBg').value;
                 }
+
+                if(index > -1) {
+                    App.data.trackers.push(newTracker);
+                } else {
+                    const existing = App.data.trackers[index];
+                    if(!newTracker.color1 && existing.color1) newTracker.color1 = existing.color1;
+                    if(type !== 'gauge' && !newTracker.colorVal && existing.colorVal) newTracker.colorVal = existing.colorVal;
+                    if(type === 'waffle' && !newTracker.colorBg && existing.colorBg) newTracker.colorBg = existing.colorBg;
+                    App.data.trackers[index] = newTracker;
+                }
+
+                ModalManager.closeModal('trackerModal');
+                Renderer.render();
+                console.log("Tracker saved:", type);
             },
 
             deleteTracker(index) {
@@ -1158,21 +1066,15 @@
             }
         };
 
-        // --- MODULE: Data Loader & Saver ---
         const DataSaver = {
             saveData() {
-                try {
-                    const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(App.data));
-                    const a = document.createElement('a');
-                    a.href = d;
-                    a.download = "team_tracker.json";
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                } catch (e) {
-                    console.error("DataSaver saveData error:", e);
-                    App.alert("Error saving data.");
-                }
+                const d = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(App.data));
+                const a = document.createElement('a');
+                a.href = d;
+                a.download = "team_tracker.json";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
             }
         };
 
@@ -1182,23 +1084,20 @@
                 if(!file) return;
                 const reader = new FileReader();
                 reader.onload = (e) => {
+                    const content = e.target.result;
                     try {
-                        const content = e.target.result;
-                        const loadedData = JSON.parse(content);
-                        
-                        // Migration: Ensure tasks are objects
-                        if(loadedData.members) {
-                            loadedData.members.forEach(m => {
+                        const l = JSON.parse(content);
+                        if(l.members) {
+                            l.members.forEach(m => {
                                 if(typeof m.nextWeek.tasks[0] === 'string') {
-                                    m.nextWeek.tasks = m.nextWeek.tasks.map(t => ({text:t, isTeamActivity:false}))
+                                    m.nextWeek.tasks = m.nextWeek.tasks.map(t => ({text:t, isTeamActivity:false}));
                                 }
                                 if(typeof m.lastWeek.tasks[0] === 'string') {
-                                    m.lastWeek.tasks = m.lastWeek.tasks.map(t => ({text:t, isTeamSuccess:false}))
+                                    m.lastWeek.tasks = m.lastWeek.tasks.map(t => ({text:t, isTeamSuccess:false}));
                                 }
                             });
                         }
-
-                        App.data = loadedData;
+                        App.data = l;
                         Renderer.render();
                         App.alert('Data loaded!');
                     } catch(x) {
@@ -1213,47 +1112,44 @@
 
         const DataExporter = {
             exportCSV() {
-                try {
-                    let csvContent = "data:text/csv;charset=utf-8,";
-                    csvContent += "Section,Title,Data1,Data2\n";
-                    App.data.trackers.forEach(t => {
-                        let row = `Tracker,"${t.desc}",`;
-                        if(t.type === 'counter') row += `${t.value},"${t.subtitle}"`;
-                        else if(t.type === 'waffle') row += `${t.active},${t.total}`;
-                        else if(t.type === 'gauge') row += `${t.completed},${t.total}`;
-                        else row += "Complex Data,See JSON";
-                        csvContent += row + "\n";
-                    });
-                    App.data.members.forEach(m => {
-                        let lwLoad = m.lastWeek.load.join('');
-                        let row = `Member,"${m.name}","Load: ${lwLoad}","Successes: ${m.lastWeek.tasks.filter(t=>t.isTeamSuccess).length}"`;
-                        csvContent += row + "\n";
-                    });
-                    const a = document.createElement('a');
-                    a.href = encodeURI(csvContent);
-                    a.download = "team_data_export.csv";
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                } catch (e) {
-                    console.error("DataExporter exportCSV error:", e);
-                    App.alert("Error exporting data.");
-                }
+                let csvContent = "data:text/csv;charset=utf-8,";
+                csvContent += "Section,Title,Data1,Data2\n";
+                App.data.trackers.forEach(t => {
+                    let row = `Tracker,"${t.desc}",`;
+                    if(t.type === 'counter') row += `${t.value},"${t.subtitle}"`;
+                    else if(t.type === 'waffle') row += `${t.active},${t.total}`;
+                    else if(t.type === 'gauge') row += `${t.completed},${t.total}`;
+                    else row += "Complex Data,See JSON";
+                    csvContent += row + "\n";
+                });
+                App.data.members.forEach(m => {
+                    let lwLoad = m.lastWeek.load.join('');
+                    let row = `Member,"${m.name}","Load: ${lwLoad}","Successes: ${m.lastWeek.tasks.filter(t=>t.isTeamSuccess).length}"`;
+                    csvContent += row + "\n";
+                });
+                const a = document.createElement('a');
+                a.href = encodeURI(csvContent);
+                a.download = "team_data_export.csv";
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
             }
         };
 
-        // --- MODULE: Visualizations ---
         const Visuals = {
             getColor(s) {
                 return s >= 90 ? '#ff1744' : s >= 51 ? '#ffb300' : '#00e676';
             },
             createGauge(loadArr) {
-                let t=0; let c=0; 
+                let t=0; 
+                let c=0; 
                 loadArr.forEach(v => { 
                     if(v==='H'){t+=100;c++}else if(v==='M'){t+=70;c++}else if(v==='L'){t+=30;c++} 
                 });
                 const s = c===0?0:Math.round(t/c); 
-                const r=15, cx=30, cy=30; 
+                const r=15; 
+                const cx=30; 
+                const cy=30; 
                 const rad=(Math.min(s,100)/100)*180*Math.PI/180;
                 const bg=`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`;
                 const val=s>0?`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r*Math.cos(rad-Math.PI)} ${cy+r*Math.sin(rad-Math.PI)}`:'';
@@ -1264,8 +1160,13 @@
                 let max = 0; 
                 data.forEach(d => { if(d.val > max) max = d.val; }); 
                 if(max === 0) max = 10;
-                const w=300, h=180, pTop=20, pBot=50, pSide=25;
-                const bw=(w-(pSide*2))/data.length, uh=h-pTop-pBot;
+                const w=300; 
+                const h=180; 
+                const pTop=20; 
+                const pBot=50; 
+                const pSide=25;
+                const bw=(w-(pSide*2))/data.length; 
+                const uh=h-pTop-pBot;
                 let bars='';
                 const fill = color || 'var(--chart-1)';
                 data.forEach((d, i) => {
@@ -1282,7 +1183,11 @@
                 series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
                 if(max === 0) max = 10;
 
-                const w=300, h=180, pTop=20, pBot=50, pSide=30;
+                const w=300; 
+                const h=180; 
+                const pTop=20; 
+                const pBot=50; 
+                const pSide=30;
                 const groupWidth = (w-(pSide*2)) / labels.length;
                 const barWidth = (groupWidth * 0.8) / series.length; 
                 const uh = h-pTop-pBot;
@@ -1322,8 +1227,13 @@
                 series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
                 if(max===0) max=10;
 
-                const w=300, h=180, pTop=30, pBot=50, pSide=30;
-                const gw=(w-(pSide*2))/(labels.length-1||1), uh=h-pTop-pBot;
+                const w=300; 
+                const h=180; 
+                const pTop=30; 
+                const pBot=50; 
+                const pSide=30;
+                const gw=(w-(pSide*2))/(labels.length-1||1); 
+                const uh=h-pTop-pBot;
 
                 let paths = '';
                 let points = '';
@@ -1375,12 +1285,11 @@
             },
 
             createRygHTML(status, color) {
-                const icon = status === 'red' ? '!' : (status === 'amber' ? '⚠' : (status === 'green' ? '✓' : '?');
+                const icon = status === 'red' ? '!' : (status === 'amber' ? '⚠' : (status === 'green' ? '✓' : '?'));
                 return `<div class="ryg-indicator ryg-${status}" style="background:${color}; box-shadow: 0 0 15px ${color}">${icon}</div>`;
             }
         };
 
-        // --- MODULE: Parser ---
         const Parser = {
             parseMd(t) {
                 if(!t) return '';
@@ -1396,208 +1305,192 @@
             }
         };
 
-        // --- MODULE: Renderer ---
         const Renderer = {
             render() {
-                try {
-                    console.log("Rendering Board...");
+                console.log("Rendering Board...");
 
-                    // Render Header
-                    document.getElementById('appTitle').innerText = App.data.title || "Server Platforms";
-                    
-                    // Render Overview
-                    const sL = document.getElementById('teamSuccessList'); 
-                    const aL = document.getElementById('teamActivityList');
-                    sL.innerHTML = ''; 
-                    aL.innerHTML = ''; 
-                    let sc = 0, ac = 0;
+                document.getElementById('appTitle').innerText = App.data.title || "Server Platforms";
+                
+                const sL = document.getElementById('teamSuccessList'); 
+                const aL = document.getElementById('teamActivityList');
+                sL.innerHTML = ''; 
+                aL.innerHTML = ''; 
+                let sc = 0, ac = 0;
 
-                    App.data.members.forEach(m => {
-                        m.lastWeek.tasks.forEach(t => {
-                            if(t.isTeamSuccess && t.text.trim()) { sc++; sL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; }
-                        });
-                        m.nextWeek.tasks.forEach(t => {
-                            if(t.isTeamActivity && t.text.trim()) { ac++; aL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; }
-                        });
+                App.data.members.forEach(m => {
+                    m.lastWeek.tasks.forEach(t => {
+                        if(t.isTeamSuccess && t.text.trim()) { 
+                            sc++; 
+                            sL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
+                        }
                     });
-
-                    if(sc===0) sL.innerHTML = '<li>No items selected.</li>'; 
-                    if(ac===0) aL.innerHTML = '<li>No items selected.</li>';
-                    
-                    document.getElementById('additionalInfoPreview').innerHTML = Parser.parseMd(App.data.additionalInfo) || "No additional info.";
-
-                    // Render Trackers
-                    const tGrid = document.getElementById('trackerGrid');
-                    tGrid.innerHTML = '';
-                    
-                    App.data.trackers.forEach((t, i) => {
-                        const card = document.createElement('div');
-                        card.className = 'tracker-card';
-                        card.onclick = () => ZoomManager.openChartModal(i);
-
-                        let visualHTML = '';
-                        let statsHTML = '';
-                        
-                        if (t.type === 'counter') {
-                            visualHTML = Visuals.createCounterHTML(t.value, t.color1);
-                            statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
+                    m.nextWeek.tasks.forEach(t => {
+                        if(t.isTeamActivity && t.text.trim()) { 
+                            ac++; 
+                            aL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
                         }
-                        else if (t.type === 'rag' || t.type === 'ryg') { 
-                            const statusClass = `ryg-${t.status || 'grey'}`;
-                            visualHTML = Visuals.createRygHTML(t.status || 'grey', (t.status === 'red' ? '#ff1744' : (t.status === 'amber' ? '#ffb300' : (t.status === 'green' ? '#00e676' : '#666666')));
-                            statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
-                        }
-                        else if (t.type === 'waffle') {
-                            const active = t.active || 0;
-                            const cVal = t.colorVal || '#03dac6';
-                            const cBg = t.colorBg || '#333333';
-                            visualHTML = Visuals.createWaffleHTML(100, active, cVal, cBg);
-                            statsHTML = `<div class="tracker-stats">${active} / ${t.total}</div>`;
-                        }
-                        else if (t.type === 'line' || t.type === 'line1' || t.type === 'line2') {
-                            let labels = []; let series = [];
-                            if (t.type === 'line1' || t.type === 'line2') {
-                                labels = t.data.map(d => d.label);
-                                series.push({ name: t.y1Leg || 'Series 1', color: t.color1 || 'var(--chart-1)', values: t.data.map(d => d.y1 || 0) });
-                                if (t.type === 'line2') series.push({ name: t.y2Leg || 'Series 2', color: t.color2 || 'var(--chart-2)', values: t.data.map(d => d.y2 || 0) });
-                            } else {
-                                labels = t.labels || []; series = t.series || [];
-                            }
-                            visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createLineChartSVG(labels, series)}</div>`;
-                        }
-                        else if(t.type === 'bar') {
-                            if (t.series) {
-                                visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createMultiBarChartSVG(t.labels, t.series)}</div>`;
-                            } else {
-                                // Legacy Simple Bar
-                                visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createBarChartSVG(t.data, t.yLabel, t.color1)}</div>`;
-                            }
-                        }
-                        else {
-                            const pct = t.total > 0 ? Math.round((t.completed/t.total)*100) : 0;
-                            const c1 = t.colorVal || t.color1 || '#00e676'; 
-                            const c2 = t.color2 || '#ff1744';
-                            const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
-                            visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
-                            statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
-                        }
-
-                        card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>
-                        card.innerHTML += `<div class="tracker-desc">${t.desc}</div>`;
-                        card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
-                        card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
-                        
-                        tGrid.appendChild(card);
                     });
+                });
 
-                    // Render Users
-                    const grid = document.getElementById('teamGrid');
-                    grid.innerHTML = '';
-                    App.data.members.forEach((m, i) => {
-                        let lw = ''; 
-                        m.lastWeek.tasks.forEach((t,x) => {
-                            if(t.text.trim()) lw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleSuccess(${i},${x})"><span>${t.text}</span></li>`;
-                        });
-                        let nw = ''; 
-                        m.nextWeek.tasks.forEach((t,x) => {
-                            if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleActivity(${i},${x})"><span>${t.text}</span></li>`;
-                        });
-                        
-                        const mg = (a) => a.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
-                        
-                        const c = document.createElement('div');
-                        c.className = 'member-card';
-                        c.onclick = () => UserManager.openUserModal(i);
-                        
-                        c.innerHTML = `<div class="member-name-row">${m.name}</div>`;
-                        c.innerHTML += `<div class="card-half card-top">`;
-                        c.innerHTML += `<div class="half-header"><span class="half-label">Last Week (Successes)</span>`;
-                        c.innerHTML += `<div class="gauge-container">${Visuals.createGauge(m.lastWeek.load)}</div>`;
-                        c.innerHTML += `</div>`;
-                        c.innerHTML += `<ul class="card-task-list">${lw || '<li>No tasks</li>'}</ul>`;
-                        c.innerHTML += `<div class="daily-mini-grid">${mg(m.lastWeek.load)}</div>`;
-                        c.innerHTML += `</div>`;
-                        
-                        c.innerHTML += `<div class="card-half card-bottom">`;
-                        c.innerHTML += `<div class="half-header"><span class="half-label">Next Week (Priorities)</span>`;
-                        c.innerHTML += `<div class="gauge-container">${Visuals.createGauge(m.nextWeek.load)}</div>`;
-                        c.innerHTML += `</div>`;
-                        c.innerHTML += `<ul class="card-task-list">${nw || '<li>No tasks</li>'}</ul>`;
-                        c.innerHTML += `<div class="daily-mini-grid">${mg(m.nextWeek.load)}</div>`;
-                        c.innerHTML += `</div>`;
+                if(sc===0) sL.innerHTML='<li>No items selected.</li>'; 
+                if(ac===0) aL.innerHTML='<li>No items selected.</li>';
+                
+                document.getElementById('additionalInfoPreview').innerHTML = Parser.parseMd(App.data.additionalInfo) || "No additional info.";
 
-                        grid.appendChild(c);
-                    });
+                const tGrid = document.getElementById('trackerGrid');
+                tGrid.innerHTML = '';
+                
+                App.data.trackers.forEach((t, i) => {
+                    const card = document.createElement('div');
+                    card.className = 'tracker-card';
+                    card.onclick = () => ZoomManager.openChartModal(i);
+                    
+                    let renderType = t.type;
+                    if (renderType === 'line1' || renderType === 'line2') renderType = 'line';
+                    if (renderType === 'ryg') renderType = 'rag';
 
-                } catch (e) {
-                    console.error("Render Error:", e);
-                    App.alert("Error rendering board. Check console.");
-                }
-            }
-        };
+                    let visualHTML = '';
+                    let statsHTML = '';
 
-        // --- MODULE: Zoom Manager ---
-        const ZoomManager = {
-            openChartModal(index) {
-                try {
-                    const t = App.data.trackers[index];
-                    if(!t) return;
-
-                    document.getElementById('zoomTitle').innerText = t.desc;
-                    let content = '';
-
-                    if (t.type === 'counter') {
-                        content = `<div style="font-size: 6rem; font-weight:300; color:${t.color1}; text-shadow:0 0 20px ${t.color1}">${t.value}</div><div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${t.subtitle}</div>`;
-                    }
-                    else if (t.type === 'rag' || t.type === 'ryg') {
-                        const statusClass = `ryg-${t.status || 'grey'}`;
-                        const icon = t.status === 'red' ? 'CRITICAL' : (t.status === 'amber' ? 'WARNING' : (t.status === 'green' ? 'GOOD' : 'UNKNOWN'));
-                        content = `<div class="ryg-indicator ${statusClass}" style="width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message}</div>`;
-                    }
-                    else if (t.type === 'waffle') {
-                        const active = t.active || 0;
-                        const cVal = t.colorVal || '#03dac6';
-                        const cBg = t.colorBg || '#333333';
-                        content = Visuals.createWaffleHTML(100, active, cVal, cBg);
-                    }
-                    else if (t.type === 'line' || t.type === 'line1' || t.type === 'line2') {
-                        let labels = []; let series = [];
-                        if (t.type === 'line1' || t.type === 'line2') {
+                    if (renderType === 'counter') {
+                        visualHTML = Visuals.createCounterHTML(t.value, t.color1);
+                        statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
+                    } else if (renderType === 'rag' || renderType === 'ryg') {
+                        const status = (renderType === 'ryg') ? t.status : t.color1 === '#ff1744' ? 'red' : (t.color1 === '#ffb300' ? 'amber' : 'green');
+                        visualHTML = Visuals.createRygHTML(status, t.color1);
+                        statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
+                    } else if (renderType === 'waffle') {
+                        const html = Visuals.createWaffleHTML(t.total, t.active, t.colorVal, t.colorBg);
+                        visualHTML = html;
+                        statsHTML = `<div class="tracker-stats">${t.active} / ${t.total}</div>`;
+                    } else if (renderType === 'line' || renderType === 'line1' || renderType === 'line2') {
+                        let labels = []; 
+                        let series = [];
+                        if (renderType === 'line1' || renderType === 'line2') {
                             labels = t.data.map(d => d.label);
                             series.push({ name: t.y1Leg || 'Series 1', color: t.color1 || '#03dac6', values: t.data.map(d => d.y1 || 0) });
-                            if (t.type === 'line2') series.push({ name: t.y2Leg || 'Series 2', color: t.color2 || '#ff4081', values: t.data.map(d => d.y2 || 0) });
+                            if (renderType === 'line2') series.push({ name: t.y2Leg || 'Series 2', color: t.color2 || '#ff4081', values: t.data.map(d => d.y2 || 0) });
                         } else {
-                            labels = t.labels; series = t.series;
+                            labels = t.labels; 
+                            series = t.series;
                         }
-                        content = Visuals.createLineChartSVG(labels, series);
-                    }
-                    else if (t.type === 'bar') {
+                        const svg = Visuals.createLineChartSVG(labels, series);
+                        visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${svg}</div>`;
+                    } else if (renderType === 'bar') {
                         if (t.series) {
-                             content = Visuals.createMultiBarChartSVG(t.labels, t.series);
+                            const svg = Visuals.createMultiBarChartSVG(t.labels, t.series);
+                            visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${svg}</div>`;
                         } else {
-                             content = Visuals.createBarChartSVG(t.data, t.yLabel, t.color1);
+                            const svg = Visuals.createBarChartSVG(t.data, t.yLabel, t.color1);
+                            visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${svg}</div>`;
                         }
-                    }
-                    else {
-                        const pct = t.total > 0 ? Math.round((t.completed/t.total)*100) : 0;
+                    } else {
+                        const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
                         const c1 = t.colorVal || t.color1 || '#00e676'; 
                         const c2 = t.color2 || '#ff1744';
                         const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
-                        content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
+                        visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
+                        statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
                     }
 
-                    document.getElementById('zoomBody').className = 'zoom-body-chart';
-                    document.getElementById('zoomBody').innerHTML = `<div style="width:100%; height:100%;">${content}</div>`;
-                    ModalManager.openModal('zoomModal');
+                    card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>
+                                    <div class="tracker-desc">${t.desc}</div>
+                                    <div class="tracker-viz-container">${visualHTML}</div>
+                                    ${statsHTML}`;
+                    tGrid.appendChild(card);
+                });
 
-                } catch (e) {
-                    console.error("ZoomManager openChartModal error:", e);
-                    App.alert("Error opening zoom.");
-                }
+                const grid = document.getElementById('teamGrid');
+                grid.innerHTML = '';
+                App.data.members.forEach((m, i) => {
+                    let lw = ''; 
+                    m.lastWeek.tasks.forEach((t,x) => {
+                        if(t.text.trim()) lw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleSuccess(${i},${x})"><span>${t.text}</span></li>`;
+                    });
+                    let nw = ''; 
+                    m.nextWeek.tasks.forEach((t,x) => {
+                        if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleActivity(${i},${x})"><span>${t.text}</span></li>`;
+                    });
+                    
+                    const mg = (a) => a.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
+                    
+                    const c = document.createElement('div');
+                    c.className = 'member-card';
+                    c.onclick = () => UserManager.openUserModal(i);
+                    c.innerHTML = `<div class="member-name-row">${m.name}</div>
+                                   <div class="card-half card-top">
+                                           <div class="half-header"><span class="half-label">Last Week (Successes)</span>
+                                           <div class="gauge-container">${Visuals.createGauge(m.lastWeek.load)}</div>
+                                       </div>
+                                       <ul class="card-task-list">${lw || '<li>No tasks</li>'}</ul>
+                                       <div class="daily-mini-grid">${mg(m.lastWeek.load)}</div>
+                                   </div>
+                                   <div class="card-half card-bottom">
+                                           <div class="half-header"><span class="half-label">Next Week (Priorities)</span>
+                                           <div class="gauge-container">${Visuals.createGauge(m.nextWeek.load)}</div>
+                                           </div>
+                                           <ul class="card-task-list">${nw || '<li>No tasks</li>'}</ul>
+                                           <div class="daily-mini-grid">${mg(m.nextWeek.load)}</div>
+                                           </div>`;
+                    grid.appendChild(c);
+                });
             }
         };
 
-        // --- INIT ---
+        const ZoomManager = {
+            openChartModal(index) {
+                const t = App.data.trackers[index];
+                if(!t) return;
+
+                document.getElementById('zoomTitle').innerText = t.desc;
+                let content = '';
+                
+                let renderType = t.type;
+                if (renderType === 'line1' || renderType === 'line2') renderType = 'line';
+                if (renderType === 'ryg') renderType = 'rag';
+
+                if (renderType === 'counter') {
+                    content = `<div style="font-size: 6rem; font-weight:300; color:${t.color1}; text-shadow:0 0 20px ${t.color1}">${t.value}</div>
+                                 <div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${t.subtitle}</div>`;
+                } else if (renderType === 'rag' || renderType === 'ryg') {
+                    const status = (renderType === 'ryg') ? t.status : t.color1 === '#ff1744' ? 'red' : (t.color1 === '#ffb300' ? 'amber' : 'green');
+                    const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
+                    content = `<div class="ryg-indicator ryg-${status}" style="width:200px; height:200px; font-size:2rem;">${icon}</div>
+                                 <div style="margin-top:2rem; font-size:1.5rem;">${t.message || ''}</div>`;
+                } else if (renderType === 'waffle') {
+                    content = Visuals.createWaffleHTML(t.total, t.active, t.colorVal, t.colorBg);
+                } else if (renderType === 'line' || renderType === 'line1' || renderType === 'line2') {
+                    let labels = []; 
+                    let series = [];
+                    if (renderType === 'line1' || renderType === 'line2') {
+                        labels = t.data.map(d => d.label);
+                        series.push({ name: t.y1Leg || 'Series 1', color: t.color1 || '#03dac6', values: t.data.map(d => d.y1 || 0) });
+                        if (renderType === 'line2') series.push({ name: t.y2Leg || 'Series 2', color: t.color2 || '#ff4081', values: t.data.map(d => d.y2 || 0) });
+                    } else {
+                        labels = t.labels; 
+                        series = t.series;
+                    }
+                    content = Visuals.createLineChartSVG(labels, series);
+                } else if (renderType === 'bar') {
+                    if (t.series) {
+                        content = Visuals.createMultiBarChartSVG(t.labels, t.series);
+                    } else {
+                        content = Visuals.createBarChartSVG(t.data, t.yLabel, t.color1);
+                    }
+                } else {
+                    const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
+                    const c1 = t.colorVal || t.color1 || '#00e676'; 
+                    const c2 = t.color2 || '#ff1744';
+                    const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
+                    content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
+                }
+
+                document.getElementById('zoomBody').className = 'zoom-body-chart';
+                document.getElementById('zoomBody').innerHTML = `<div style="width:100%; height:100%;">${content}</div>`;
+                ModalManager.openModal('zoomModal');
+            }
+        };
+
         window.onload = () => {
             App.init();
             Renderer.render();
