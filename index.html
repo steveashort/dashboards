@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Server Platforms Tracker v30 (Fixed)</title>
+    <!-- Load Styles -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    
+    <!-- NEW: LOADING OVERLAY -->
+    <div id="loadingOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color); z-index:99999; display:flex; justify-content:center; align-items:center;">
+        <h1 style="color:var(--accent);">Loading Application...</h1>
+        <p style="color:var(--text-muted);">Please wait.</p>
+    </div>
+
+    <button id="publishToggleBtn" class="btn btn-primary" onclick="App.togglePublishMode()" style="display:none;">Edit View</button>
+    
+    <header>
+        <div class="header-left">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmI4NmZjIiBzdHJva2Utd2lkdGg9IjIiB5PSIyIj48L3JlY3Q+PHJlY3QgeD0iMiIgeT0iMTAiIHdpZHRoPSIyMCIgaGVpZ2h0PSI4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48bGluZTB4MT0iNiIgeTE9IjYiIHgyPSI2LjAxIiB5MT0iMTgiPjwvcmVjdD48bGluZTB4MT0iNiIgeTE9IjYiIHgyPSI2LjAxIiB5MT0iMTgiPjwvbGluZT48L3N2Z+" alt="Logo" class="header-logo-img">
+            <div>
+                <h1 id="appTitle" contenteditable="true" spellcheck="false" onblur="App.saveTitle()">Server Platforms</h1>
+                <div class="date-display" id="dateRangeDisplay">...</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <input type="file" id="fileInput" style="display: none;" accept=".json,.csv" onchange="DataLoader.loadFromFile(this)">
+            <button class="btn" onclick="document.getElementById('fileInput').click()">Load Data</button>
+            <button class="btn" onclick="DataSaver.saveData()">Save JSON</button>
+            <button class="btn" onclick="DataExporter.exportCSV()">Export CSV</button>
+            <button class="btn" onclick="App.togglePublishMode()">Publish View</button>
+            <button class="btn btn-primary" onclick="UserManager.openUserModal()">+ Add User</button>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="team-overview-panel">
+            <div class="overview-col" onclick="OverviewManager.handleOverviewClick('success')">
+                <h4 id="overviewTitleCurrent">Top 5 Team Achievements</h4>
+                <div class="edit-hint">(Check max 5 boxes in Last Week)</div>
+                <ul class="overview-list" id="teamSuccessList"><li>No items selected.</li></ul>
+                <button class="btn-reset" onclick="event.stopPropagation(); OverviewManager.resetSelections('success')">Reset Selection</button>
+            </div>
+            <div class="overview-col" onclick="OverviewManager.handleOverviewClick('activity')">
+                <h4 id="overviewTitleNext">Top 5 Activities Next Week</h4>
+                <div class="edit-hint">(Check max 5 boxes in Next Week)</div>
+                <ul class="overview-list" id="teamActivityList"><li>No items selected.</li></ul>
+                <button class="btn-reset" onclick="event.stopPropagation(); OverviewManager.resetSelections('activity')">Reset Selection</button>
+            </div>
+            <div class="overview-col interactive" onclick="OverviewManager.handleInfoClick()">
+                <h4>Additional Info</h4>
+                <div class="edit-hint">(Click anywhere to edit)</div>
+                <div id="additionalInfoPreview"></div>
+            </div>
+        </div>
+
+        <div class="section-header first">
+            <h3 style="color:var(--accent); font-weight:300;">Progress Trackers</h3>
+            <button class="btn" onclick="TrackerManager.openModal()">+ Add Tracker</button>
+        </div>
+        <div class="tracker-grid" id="trackerGrid"></div>
+
+        <div class="section-header">
+            <h3 style="color:var(--accent); font-weight:300;">Team Members</h3>
+        </div>
+        <div class="team-grid" id="teamGrid"></div>
+    </div>
+
+    <!-- TOOLTIP & MODALS -->
+    <div id="globalTooltip"></div>
+    
+    <div class="modal-overlay" id="alertModal">
+        <div class="modal-content modal-mini">
+            <div class="modal-body" style="padding-bottom:1rem;">
+                <h3 style="margin-bottom:1rem; color:var(--accent);">Notice</h3>
+                <p id="alertMessage" style="font-size:1rem; color:#fff;"></p>
+            </div>
+            <div class="modal-footer" style="justify-content:center; border-top:none;">
+                <button class="btn btn-primary" onclick="ModalManager.closeModal('alertModal')">OK</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="confirmModal">
+        <div class="modal-content modal-mini">
+            <div class="modal-body" style="padding-bottom:1rem;">
+                <h3 style="margin-bottom:1rem; color:var(--accent);">Confirm</h3>
+                <p id="confirmMessage" style="font-size:1rem; color:#fff;"></p>
+            </div>
+            <div class="modal-footer" style="justify-content:center; border-top:none; gap:1rem;">
+                <button class="btn" onclick="ModalManager.closeModal('confirmModal')">Cancel</button>
+                <button id="confirmYesBtn" class="btn btn-primary">Yes, Proceed</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal-overlay" id="zoomModal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="zoomTitle" style="font-size:1.5rem;">View</h3>
+                <button class="btn" onclick="ModalManager.closeModal('zoomModal')">&times;</button>
+            </div>
+            <div class="modal-body" id="zoomBody"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="userModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Add User</h3>
+                <button class="btn" onclick="ModalManager.closeModal('userModal')" style="padding: 0.2rem 0.6rem;">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editIndex" value="-1">
+                <div class="input-group">
+                    <label>Team Member Name <span class="help-icon" data-text="Enter full name of team member.">?</span></label>
+                    <input type="text" id="mName" placeholder="e.g. Alex Chen">
+                </div>
+                <div class="form-row">
+                    <div class="half-form">
+                        <div class="form-section-title">Last Week (Mon - Fri)</div>
+                        <div class="input-group">
+                            <label>Top 3 Successes <span class="help-icon" data-text="Key achievements from the previous week.">?</span></label>
+                            <input type="text" class="mb-2" id="lwTask1" placeholder="1. Project A...">
+                            <input type="text" class="mb-2" id="lwTask2" style="margin-top:5px" placeholder="2. Client Call...">
+                            <input type="text" class="mb-2" id="lwTask3" style="margin-top:5px" placeholder="3. Bug fix...">
+                        </div>
+                        <div class="input-group">
+                            <label>Workload <span class="help-icon" data-text="Daily workload intensity. L=Low, M=Medium, H=High, X=Absence.">?</span></label>
+                            <div class="load-select-row">
+                                <div class="ls-box"><label>M</label><select id="lw0"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
+                                <div class="ls-box"><label>T</label><select id="lw1"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
+                                <div class="ls-box"><label>W</label><select id="lw2"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
+                                <div class="ls-box"><label>T</label><select id="lw3"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
+                                <div class="ls-box"><label>F</label><select id="lw4"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="half-form">
+                        <div class="form-section-title">Next Week (Mon - Fri)</div>
+                        <div class="input-group">
+                            <label>Top 3 Priorities <span class="help-icon" data-text="Key planned activities.">?</span></label>
+                            <input type="text" class="mb-2" id="nwTask1" placeholder="1. Start Phase 2...">
+                            <input type="text" class="mb-2" id="nwTask2" style="margin-top:5px" placeholder="2. Planning...">
+                            <input type="text" class="mb-2" id="nwTask3" style="margin-top:5px" placeholder="3. Code Review...">
+                        </div>
+                        <div class="input-group">
+                            <label>Workload <span class="help-icon" data-text="Daily workload intensity. L=Low, M=Medium, H=High, X=Absence.">?</span></label>
+                            <div class="load-select-row">
+                                <div class="ls-box"><label>M</label><select id="nw0"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
+                                <div class="ls-box"><label>T</label><select id="nw1"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
+                                <div class="ls-box"><label>W</label><select id="nw2"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
+                                <div class="ls-box"><label>T</label><select id="nw3"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
+                                <div class="ls-box"><label>F</label><select id="nw4"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="UserManager.deleteUser()" id="deleteBtn">Delete</button>
+                <button class="btn btn-primary" onclick="UserManager.submitUser()">Save User</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="infoModal">
+        <div class="modal-content" style="max-width:500px;">
+            <div class="modal-header">
+                <h3>Additional Information</h3>
+                <button class="btn" onclick="ModalManager.closeModal('infoModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p style="font-size:0.8rem; color:#888; margin-bottom:1rem;">Supports: bold, italic, - list item, [link](url)</p>
+                <textarea id="additionalInfoInput" style="height:200px; resize:none;" placeholder="Enter risks, blockers, or general notes..."></textarea>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="UserManager.saveAdditionalInfo()">Update Info</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="trackerModal">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3 id="trackerModalTitle">Add Progress Tracker</h3>
+                <button class="btn" onclick="ModalManager.closeModal('trackerModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editTrackerIndex" value="-1">
+                <div class="type-selector" id="trackerTypeSelector">
+                    <button class="type-option active" data-type="gauge" onclick="TrackerManager.openModal()">Gauge (Pie)</button>
+                    <button class="type-option" data-type="bar" onclick="TrackerManager.openModal()">Bar Graph</button>
+                    <button class="type-option" data-type="line" onclick="TrackerManager.openModal()">Line Graph</button>
+                    <button class="type-option" data-type="counter" onclick="TrackerManager.openModal()">Counter</button>
+                    <button class="type-option" data-type="rag" onclick="TrackerManager.openModal()">RAG Status</button>
+                    <button class="type-option" data-type="waffle" onclick="TrackerManager.openModal()">Waffle Chart</button>
+                </div>
+                <div class="input-group">
+                    <label>Tracker Title</label>
+                    <input type="text" id="tkDesc">
+                </div>
+                <div id="gaugeInputs">
+                    <div class="input-group"><label>Metric Name</label><input type="text" id="tkMetric"></div>
+                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
+                        <div class="input-group"><label>Completed</label><input type="number" id="tkComp"></div>
+                        <div class="input-group"><label>Total</label><input type="number" id="tkTotal"></div>
+                    </div>
+                    <div class="input-group">
+                        <label>Color</label>
+                        <input type="color" id="tkPieColor" value="#03dac6">
+                    </div>
+                </div>
+                <div id="barInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Y-Axis Label</label>
+                        <input type="text" id="tkBarYLabel">
+                    </div>
+                    <div class="input-group">
+                        <label>X-Axis Labels (Up to 24)</label>
+                        <div id="barLabelsContainer" class="grid-24"></div>
+                    </div>
+                    <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <label style="margin:0;">Data Series (Up to 10)</label>
+                            <button class="btn btn-sm" onclick="TrackerManager.openModal()">+ Add Series</button>
+                        </div>
+                        <div id="barSeriesContainer"></div>
+                    </div>
+                </div>
+                <div id="lineInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>X-Axis Labels (Up to 24)</label>
+                        <div id="lineLabelsContainer" class="grid-24"></div>
+                    </div>
+                    <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <label style="margin:0;">Data Series (Up to 10)</label>
+                            <button class="btn btn-sm" onclick="TrackerManager.openModal()">+ Add Series</button>
+                        </div>
+                        <div id="lineSeriesContainer"></div>
+                    </div>
+                </div>
+                <div id="counterInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Counter Value</label>
+                        <input type="number" id="tkCounterVal">
+                    </div>
+                    <div class="input-group">
+                        <label>Subtitle / Description</label>
+                        <input type="text" id="tkCounterSub" placeholder="e.g. Active Incidents">
+                    </div>
+                </div>
+                <div id="ragInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Status</label>
+                        <div class="rag-selector">
+                            <div class="rag-pill" data-val="green" onclick="TrackerManager.openModal()">Green</div>
+                            <div class="rag-pill" data-val="amber" onclick="TrackerManager.openModal()">Amber</div>
+                            <div class="rag-pill" data-val="red" onclick="TrackerManager.openModal()">Red</div>
+                            <div class="rag-pill" data-val="grey" onclick="TrackerManager.openModal()">Unknown</div>
+                        </div>
+                        <input type="hidden" id="tkRagStatus">
+                    </div>
+                    <div class="input-group">
+                        <label>Status Message</label>
+                        <input type="text" id="tkRagMsg" placeholder="e.g. All Systems Operational">
+                    </div>
+                </div>
+                <div id="waffleInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Total Count</label>
+                        <input type="number" id="tkWaffleTotal" oninput="TrackerManager.openModal()">
+                    </div>
+                    <div class="input-group">
+                        <label>Completed / Active Count</label>
+                        <input type="number" id="tkWaffleActive" oninput="TrackerManager.openModal()">
+                    </div>
+                    <div class="form-row">
+                        <div class="input-group">
+                            <label>Value Color</label>
+                            <input type="color" id="tkWaffleColorVal" value="#03dac6" oninput="TrackerManager.openModal()">
+                        </div>
+                        <div class="input-group">
+                            <label>Background Color</label>
+                            <input type="color" id="tkWaffleColorBg" value="#333333" oninput="TrackerManager.openModal()">
+                        </div>
+                    </div>
+                    <div style="margin-top:20px; padding:10px; border:1px dashed #444; border-radius:4px; text-align:center;">
+                        <label style="font-size:0.7rem; text-transform:uppercase; color:#aaa;">Preview</label>
+                        <div id="wafflePreview">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Tracker</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- LOAD SCRIPT LAST to ensure it's available -->
+    <!-- Changed to type="module" and added an export to window -->
+    <script type="module">
+        import * as AppModule from './app.js';
+        
+        // When module loads, expose it to window so HTML onclick works
+        window.App = AppModule.App;
+        window.UserManager = AppModule.UserManager;
+        window.TrackerManager = AppModule.TrackerManager;
+        window.OverviewManager = AppModule.OverviewManager;
+        window.ModalManager = AppModule.ModalManager;
+        window.DataSaver = AppModule.DataSaver;
+        window.DataLoader = AppModule.DataLoader;
+        window.DataExporter = AppModule.DataExporter;
+        window.Visuals = AppModule.Visuals;
+
+        // When ready, remove loading overlay
+        window.addEventListener('DOMContentLoaded', () => {
+            window.App.init();
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 100);
+            }
+        });
+    </script>
+</body>
+</html>
