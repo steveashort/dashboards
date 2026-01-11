@@ -2,9 +2,11 @@
  * SERVER PLATFORMS TRACKER v31
  * ES6 MODULE STRUCTURE
  */
+export { createGaugeSVG, createWaffleHTML, Visuals } from './charts.js';
+import { createGaugeSVG, createWaffleHTML, Visuals } from './charts.js';
 
 // --- GLOBAL STATE ---
-const State = {
+let State = {
     title: "Server Platforms",
     additionalInfo: "",
     trackers: [],
@@ -41,6 +43,8 @@ export const initApp = () => {
         getEl('overviewTitleNext').innerHTML = `Top 5 Activities Next Week <span class="date-suffix">${r.next}</span>`;
     };
 
+    updateDateUI();
+    renderBoard();
     console.log("App Initialized");
 };
 
@@ -56,31 +60,6 @@ const parseMarkdown = (t) => {
                  return `<a href="${finalUrl}" target="_blank">${text}</a>`;
              });
     return h.split('\n').map(l=>l.trim().startsWith('- ')?`<li>${l.substring(2)}</li>`:l+'<br>').join('').replace(/<\/li><br><li>/g,'</li><li>').replace(/<br><li>/g,'<ul><li>').replace(/<\/li><br>/g,'</li></ul>');
-};
-
-const createGaugeSVG = (loadArr) => {
-    let t=0; let c=0; 
-    loadArr.forEach(v => { 
-        if(v==='H'){t+=100;c++}else if(v==='M'){t+=70;c++}else if(v==='L'){t+=30;c++} 
-    });
-    const s = c===0?0:Math.round(t/c); 
-    const r=15, cx=30, cy=30; 
-    const rad=(Math.min(s,100)/100)*180*Math.PI/180;
-    const bg=`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`;
-    const val=s>0?`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r*Math.cos(rad-Math.PI)} ${cy+r*Math.sin(rad-Math.PI)}`:'';
-    const color = s >= 90 ? '#ff1744' : s >= 51 ? '#ffb300' : '#00e676';
-    return `<svg width="60" height="35" viewBox="0 0 60 35"><path d="${bg}" fill="none" stroke="#333" stroke-width="4" stroke-linecap="round"/><path d="${val}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="2" fill="#fff"/></svg><div class="gauge-val" style="color:${color}">${s}%</div>`;
-};
-
-const createWaffleHTML = (total, active, colorVal, colorBg) => {
-    const maxCells = 100;
-    let html = '<div style="display:grid; grid-template-columns: repeat(10, 1fr); gap: 2px; width: 140px; margin: 0 auto;">';
-    for(let i=0; i<maxCells; i++) {
-        const isActive = i < active;
-        html += `<div class="waffle-cell" style="${isActive ? `background-color:${colorVal}; box-shadow: 0 0 5px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
-    }
-    html += '</div>';
-    return html;
 };
 
 // --- MODULE: APP GLOBALS ---
@@ -179,7 +158,7 @@ export const renderBoard = () => {
             statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
         } else if (renderType === 'rag' || renderType === 'ryg') {
             const status = (renderType === 'ryg') ? t.status : (t.color1 === '#ff1744' ? 'red' : (t.color1 === '#ffb300' ? 'amber' : 'green'));
-            const icon = status === 'red' ? '!' : (status === 'amber' ? '⚠' : (status === 'green' ? '✓' : '?');
+            const icon = status === 'red' ? '!' : (status === 'amber' ? '⚠' : (status === 'green' ? '✓' : '?'));
             visualHTML = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; box-shadow: 0 0 15px ${t.color1}">${icon}</div>`;
             statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
         } else if (renderType === 'waffle') {
@@ -261,107 +240,6 @@ export const renderBoard = () => {
     });
 };
 
-// --- MODULE: VISUALS ---
-export const Visuals = {
-    createLineChartSVG: (labels, series) => {
-        let max = 0;
-        series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
-        if(max===0) max=10;
-        const w=300; const h=180; const pTop=30; const pBot=50; const pSide=30;
-        const gw=(w-(pSide*2))/(labels.length-1||1), uh=h-pTop-pBot;
-
-        let paths = '';
-        let points = '';
-
-        series.forEach((s, si) => {
-            let p = '';
-            s.values.forEach((v, i) => {
-                const x = pSide + (i*gw);
-                const y = h-pBot - (v/max)*uh;
-                p += (i===0?'M':'L') + `${x},${y} `;
-                points += `<circle cx="${x}" cy="${y}" r="3" fill="${s.color}"/>`;
-            });
-            paths += `<path d="${p}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
-        });
-
-        let lbls = '';
-        labels.forEach((l, i) => {
-            const x = pSide + (i*gw);
-            lbls += `<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
-        });
-
-        let legHTML = '';
-        const legY = h - 10;
-        const legItemW = 50;
-        const totalLegW = series.length * legItemW;
-        const startX = (w - totalLegW) / 2;
-
-        series.forEach((s, i) => {
-            const lx = startX + (i * legItemW);
-            legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
-        });
-
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${paths}${points}${lbls}${legHTML}<text x="${pSide-5}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-5}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
-    },
-
-    createMultiBarChartSVG: (labels, series) => {
-        let max = 0;
-        series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
-        if(max === 0) max = 10;
-
-        const w=300; const h=180; const pTop=20; const pBot=50; const pSide=30;
-        const groupWidth = (w-(pSide*2)) / labels.length;
-        const barWidth = (groupWidth * 0.8) / series.length; 
-        const uh = h-pTop-pBot;
-
-        let rects = '';
-        series.forEach((s, si) => {
-            s.values.forEach((v, i) => {
-                const bh = (v/max) * uh;
-                const x = pSide + (i * groupWidth) + (groupWidth * 0.1) + (si * barWidth); 
-                const y = h-pBot-bh;
-                rects += `<rect x="${x}" y="${y}" width="${barWidth-1}" height="${bh}" fill="${s.color}" rx="1"/>`;
-            });
-        });
-
-        let lbls = '';
-        labels.forEach((l, i) => {
-            const x = pSide + (i * groupWidth) + (groupWidth/2);
-            lbls += `<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
-        });
-
-        let legHTML = '';
-        const legY = h - 10;
-        const legItemW = 50;
-        const totalLegW = series.length * legItemW;
-        const startX = (w - totalLegW) / 2;
-
-        series.forEach((s, i) => {
-            const lx = startX + (i * legItemW);
-            legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
-        });
-
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${rects}${lbls}${legHTML}<text x="${pSide-5}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-5}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
-    },
-
-    createBarChartSVG: (data, yLabel, color) => {
-        let max = 0; 
-        data.forEach(d => { if(d.val > max) max = d.val; }); 
-        if(max === 0) max = 10;
-        const w=300; const h=180; const pTop=20; const pBot=50; const pSide=25;
-        const bw=(w-(pSide*2))/data.length, uh=h-pTop-pBot;
-        let bars='';
-        const fill = color || 'var(--chart-1)';
-        data.forEach((d, i) => {
-            const bh=(d.val/max)*uh; 
-            const x=pSide+(i*bw)+5; 
-            const y=h-pBot-bh;
-            bars+=`<rect x="${x}" y="${y}" width="${bw-10}" height="${bh}" fill="${fill}" rx="2"/><text x="${x+(bw-10)/2}" y="${y-5}" text-anchor="middle" fill="#fff" font-size="10">${d.val}</text><text x="${x+(bw-10)/2}" y="${h-15}" text-anchor="middle" fill="#aaa" font-size="10">${d.label.substring(0,5)}</text>`;
-        });
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/><text transform="rotate(-90 ${pSide/2},${h/2})" x="${pSide/2}" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>${bars}</svg>`;
-    }
-};
-
 // --- MODULE: ZOOM MANAGER ---
 export const ZoomManager = {
     openChartModal: (index) => {
@@ -412,7 +290,7 @@ export const ZoomManager = {
 
 // --- MODULE: TRACKER MANAGER ---
 export const TrackerManager = {
-    openModal: (index) => {
+    openModal(index) {
         console.log("Opening Tracker Modal for index:", index);
         if (document.body.classList.contains('publishing')) return;
 
@@ -508,7 +386,7 @@ export const TrackerManager = {
         ModalManager.openModal('trackerModal');
     },
 
-    setType: (type) => {
+    setType(type) {
         State.currentTrackerType = type;
         
         // Map all types to data-attr
@@ -521,26 +399,26 @@ export const TrackerManager = {
         });
     },
 
-    selectRag: (val) => {
+    selectRag(val) {
         getEl('tkRagStatus').value = val;
         document.querySelectorAll('.rag-pill').forEach(p => p.classList.remove('selected'));
         const selected = document.querySelector(`.rag-pill[data-val="${val}"]`);
         if (selected) selected.classList.add('selected');
     },
 
-    addBarSeries: (name, color, vals) => {
+    addBarSeries(name, color, vals = []) {
         const c = getEl('barSeriesContainer');
         if (c.children.length >= 10) return App.alert("Max 10 series.");
         c.appendChild(this.createSeriesInputRow('bar', name, color, vals));
     },
 
-    addLineSeries: (name, color, vals) => {
+    addLineSeries(name, color, vals = []) {
         const c = getEl('lineSeriesContainer');
         if (c.children.length >= 10) return App.alert("Max 10 series.");
         c.appendChild(this.createSeriesInputRow('line', name, color, vals));
     },
 
-    createSeriesInputRow: (type, name, color, vals) => {
+    createSeriesInputRow(type, name, color, vals) {
         const div = document.createElement('div');
         div.style.marginBottom = '1rem';
         div.style.border = '1px solid #444';
@@ -567,7 +445,7 @@ export const TrackerManager = {
         return div;
     },
 
-    updateWafflePreview: () => {
+    updateWafflePreview() {
         const total = parseInt(getEl('tkWaffleTotal').value) || 0;
         const active = parseInt(getEl('tkWaffleActive').value) || 0;
         const colorVal = getEl('tkWaffleColorVal').value;
@@ -582,7 +460,7 @@ export const TrackerManager = {
         p.innerHTML = html;
     },
 
-    submitTracker: () => {
+    submitTracker() {
         const index = State.editingTrackerIndex;
         const desc = getEl('tkDesc').value;
         if (!desc) return App.alert("Title required");
@@ -660,11 +538,9 @@ export const TrackerManager = {
             newTracker.colorBg = getEl('tkWaffleColorBg').value;
         }
 
-        if(index > -1) {
-            // New Tracker: Just push
+        if(index === -1) {
             State.trackers.push(newTracker);
         } else {
-            // Edit Tracker: Update existing
             State.trackers[index] = newTracker;
         }
 
@@ -683,7 +559,7 @@ export const TrackerManager = {
 
 // --- MODULE: USER MANAGER ---
 export const UserManager = {
-    openUserModal: (index) => {
+    openUserModal(index) {
         console.log("Opening User Modal for index:", index);
         if (document.body.classList.contains('publishing')) return;
 
@@ -715,7 +591,7 @@ export const UserManager = {
         ModalManager.openModal('userModal');
     },
 
-    submitUser: () => {
+    submitUser() {
         const i = parseInt(getEl('editIndex').value);
         const n = getEl('mName').value;
         if (!n) return App.alert("Name required");
@@ -756,7 +632,7 @@ export const UserManager = {
         console.log("User saved successfully");
     },
 
-    deleteUser: () => {
+    deleteUser() {
         App.confirm('Delete user?', () => {
             const index = parseInt(getEl('editIndex').value);
             if(index > -1) {
@@ -767,7 +643,7 @@ export const UserManager = {
         });
     },
 
-    toggleSuccess: (i, x) => {
+    toggleSuccess(i, x) {
         const t = State.members[i].lastWeek.tasks[x];
         if(!t.isTeamSuccess) {
             const count = State.members.reduce((acc, m) => acc + m.lastWeek.tasks.filter(task => task.isTeamSuccess).length, 0);
@@ -776,12 +652,14 @@ export const UserManager = {
                 renderBoard();
                 return;
             }
-            t.isTeamSuccess = !t.isTeamSuccess;
-            renderBoard();
+            t.isTeamSuccess = true;
+        } else {
+            t.isTeamSuccess = false;
         }
+        renderBoard();
     },
 
-    toggleActivity: (i, x) => {
+    toggleActivity(i, x) {
         const t = State.members[i].nextWeek.tasks[x];
         if(!t.isTeamActivity) {
             const count = State.members.reduce((acc, m) => acc + m.nextWeek.tasks.filter(task => task.isTeamActivity).length, 0);
@@ -790,22 +668,27 @@ export const UserManager = {
                 renderBoard();
                 return;
             }
-            t.isTeamActivity = !t.isTeamActivity;
-            renderBoard();
+            t.isTeamActivity = true;
+        } else {
+            t.isTeamActivity = false;
         }
+        renderBoard();
     },
 
-    resetSelections: (type) => {
+    resetSelections(type) {
         App.confirm(`Reset all ${type==='success'?'Achievement':'Activity'} selections?`, () => {
             State.members.forEach(m => {
-                const targetTasks = type === 'success' ? m.lastWeek.tasks : m.nextWeek.tasks;
-                targetTasks.forEach(t => t.isTeamSuccess = false);
+                if (type === 'success') {
+                    m.lastWeek.tasks.forEach(t => t.isTeamSuccess = false);
+                } else {
+                    m.nextWeek.tasks.forEach(t => t.isTeamActivity = false);
+                }
             });
             renderBoard();
         });
     },
 
-    saveAdditionalInfo: () => {
+    saveAdditionalInfo() {
         State.additionalInfo = getEl('additionalInfoInput').value;
         ModalManager.closeModal('infoModal');
         renderBoard();

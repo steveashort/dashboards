@@ -41,13 +41,13 @@
                 <h4 id="overviewTitleCurrent">Top 5 Team Achievements</h4>
                 <div class="edit-hint">(Check max 5 boxes in Last Week)</div>
                 <ul class="overview-list" id="teamSuccessList"><li>No items selected.</li></ul>
-                <button class="btn-reset" onclick="event.stopPropagation(); OverviewManager.resetSelections('success')">Reset Selection</button>
+                <button class="btn-reset" onclick="event.stopPropagation(); UserManager.resetSelections('success')">Reset Selection</button>
             </div>
             <div class="overview-col" onclick="OverviewManager.handleOverviewClick('activity')">
                 <h4 id="overviewTitleNext">Top 5 Activities Next Week</h4>
                 <div class="edit-hint">(Check max 5 boxes in Next Week)</div>
                 <ul class="overview-list" id="teamActivityList"><li>No items selected.</li></ul>
-                <button class="btn-reset" onclick="event.stopPropagation(); OverviewManager.resetSelections('activity')">Reset Selection</button>
+                <button class="btn-reset" onclick="event.stopPropagation(); UserManager.resetSelections('activity')">Reset Selection</button>
             </div>
             <div class="overview-col interactive" onclick="OverviewManager.handleInfoClick()">
                 <h4>Additional Info</h4>
@@ -58,7 +58,7 @@
 
         <div class="section-header first">
             <h3 style="color:var(--accent); font-weight:300;">Progress Trackers</h3>
-            <button class="btn" onclick="TrackerManager.openModal()">+ Add Tracker</button>
+            <button class="btn" onclick="TrackerManager.openModal(-1)">+ Add Tracker</button>
         </div>
         <div class="tracker-grid" id="trackerGrid"></div>
 
@@ -191,12 +191,12 @@
             <div class="modal-body">
                 <input type="hidden" id="editTrackerIndex" value="-1">
                 <div class="type-selector" id="trackerTypeSelector">
-                    <button class="type-option active" data-type="gauge" onclick="TrackerManager.openModal()">Gauge (Pie)</button>
-                    <button class="type-option" data-type="bar" onclick="TrackerManager.openModal()">Bar Graph</button>
-                    <button class="type-option" data-type="line" onclick="TrackerManager.openModal()">Line Graph</button>
-                    <button class="type-option" data-type="counter" onclick="TrackerManager.openModal()">Counter</button>
-                    <button class="type-option" data-type="rag" onclick="TrackerManager.openModal()">RAG Status</button>
-                    <button class="type-option" data-type="waffle" onclick="TrackerManager.openModal()">Waffle Chart</button>
+                    <button id="typegaugeBtn" class="type-option active" onclick="TrackerManager.setType('gauge')">Gauge (Pie)</button>
+                    <button id="typebarBtn" class="type-option" onclick="TrackerManager.setType('bar')">Bar Graph</button>
+                    <button id="typelineBtn" class="type-option" onclick="TrackerManager.setType('line')">Line Graph</button>
+                    <button id="typecounterBtn" class="type-option" onclick="TrackerManager.setType('counter')">Counter</button>
+                    <button id="typeragBtn" class="type-option" onclick="TrackerManager.setType('rag')">RAG Status</button>
+                    <button id="typewaffleBtn" class="type-option" onclick="TrackerManager.setType('waffle')">Waffle Chart</button>
                 </div>
                 <div class="input-group">
                     <label>Tracker Title</label>
@@ -225,7 +225,7 @@
                     <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                             <label style="margin:0;">Data Series (Up to 10)</label>
-                            <button class="btn btn-sm" onclick="TrackerManager.openModal()">+ Add Series</button>
+                            <button class="btn btn-sm" onclick="TrackerManager.addBarSeries('New Series', '#03dac6')">+ Add Series</button>
                         </div>
                         <div id="barSeriesContainer"></div>
                     </div>
@@ -238,7 +238,7 @@
                     <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
                             <label style="margin:0;">Data Series (Up to 10)</label>
-                            <button class="btn btn-sm" onclick="TrackerManager.openModal()">+ Add Series</button>
+                            <button class="btn btn-sm" onclick="TrackerManager.addLineSeries('New Series', '#03dac6')">+ Add Series</button>
                         </div>
                         <div id="lineSeriesContainer"></div>
                     </div>
@@ -257,10 +257,10 @@
                     <div class="input-group">
                         <label>Status</label>
                         <div class="rag-selector">
-                            <div class="rag-pill" data-val="green" onclick="TrackerManager.openModal()">Green</div>
-                            <div class="rag-pill" data-val="amber" onclick="TrackerManager.openModal()">Amber</div>
-                            <div class="rag-pill" data-val="red" onclick="TrackerManager.openModal()">Red</div>
-                            <div class="rag-pill" data-val="grey" onclick="TrackerManager.openModal()">Unknown</div>
+                            <div class="rag-pill" data-val="green" onclick="TrackerManager.selectRag('green')">Green</div>
+                            <div class="rag-pill" data-val="amber" onclick="TrackerManager.selectRag('amber')">Amber</div>
+                            <div class="rag-pill" data-val="red" onclick="TrackerManager.selectRag('red')">Red</div>
+                            <div class="rag-pill" data-val="grey" onclick="TrackerManager.selectRag('grey')">Unknown</div>
                         </div>
                         <input type="hidden" id="tkRagStatus">
                     </div>
@@ -272,20 +272,20 @@
                 <div id="waffleInputs" style="display:none;">
                     <div class="input-group">
                         <label>Total Count</label>
-                        <input type="number" id="tkWaffleTotal" oninput="TrackerManager.openModal()">
+                        <input type="number" id="tkWaffleTotal" oninput="TrackerManager.updateWafflePreview()">
                     </div>
                     <div class="input-group">
                         <label>Completed / Active Count</label>
-                        <input type="number" id="tkWaffleActive" oninput="TrackerManager.openModal()">
+                        <input type="number" id="tkWaffleActive" oninput="TrackerManager.updateWafflePreview()">
                     </div>
                     <div class="form-row">
                         <div class="input-group">
                             <label>Value Color</label>
-                            <input type="color" id="tkWaffleColorVal" value="#03dac6" oninput="TrackerManager.openModal()">
+                            <input type="color" id="tkWaffleColorVal" value="#03dac6" oninput="TrackerManager.updateWafflePreview()">
                         </div>
                         <div class="input-group">
                             <label>Background Color</label>
-                            <input type="color" id="tkWaffleColorBg" value="#333333" oninput="TrackerManager.openModal()">
+                            <input type="color" id="tkWaffleColorBg" value="#333333" oninput="TrackerManager.updateWafflePreview()">
                         </div>
                     </div>
                     <div style="margin-top:20px; padding:10px; border:1px dashed #444; border-radius:4px; text-align:center;">
