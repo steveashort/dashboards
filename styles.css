@@ -150,9 +150,7 @@ header {
     position: absolute; top: 10px; right: 10px; padding: 4px 8px; border-radius: 12px;
     font-size: 0.7rem; font-weight: bold; color: #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
-    padding: 6px 12px; border-radius: 20px; font-size: 0.8rem; font-weight: bold;
-    text-align: center; color: #000; display: inline-block; width: 100%;
-}
+
 .status-under { background-color: var(--g-amber); color: #000; }
 .status-busy { background-color: var(--g-green); color: #000; }
 .status-over { background-color: var(--g-red); color: #fff; }

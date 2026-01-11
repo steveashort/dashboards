@@ -199,16 +199,20 @@ export const renderBoard = () => {
     let sc = 0, ac = 0;
 
     State.members.forEach(m => {
-        m.lastWeek.tasks.forEach(t => {
-            if(t.isTeamSuccess && t.text.trim()) { 
-                sc++; sL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
-            }
-        });
-        m.nextWeek.tasks.forEach(t => {
-            if(t.isTeamActivity && t.text.trim()) { 
-                ac++; aL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
-            }
-        });
+        if(m.lastWeek && m.lastWeek.tasks) {
+            m.lastWeek.tasks.forEach(t => {
+                if(t.isTeamSuccess && t.text.trim()) { 
+                    sc++; sL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
+                }
+            });
+        }
+        if(m.thisWeek && m.thisWeek.tasks) {
+            m.thisWeek.tasks.forEach(t => {
+                if(t.isTeamActivity && t.text.trim()) { 
+                    ac++; aL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
+                }
+            });
+        }
     });
 
     if(sc===0) sL.innerHTML = '<li>No items selected.</li>'; 
@@ -278,7 +282,6 @@ export const renderBoard = () => {
             const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
             const c1 = t.colorVal || t.color1 || '#00e676'; 
             const c2 = t.color2 || '#ff1744';
-            // Use 2-color gradient
             const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
             visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
             statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
@@ -332,7 +335,7 @@ export const renderBoard = () => {
             let text = 'Medium'; let cls = 'status-busy';
             if(avg > 0 && avg < 1.6) { text = 'Low'; cls = 'status-under'; }
             else if(avg > 2.4) { text = 'High'; cls = 'status-over'; }
-            else if(avg === 0) { text = 'None'; cls = 'status-under'; } // Handle empty/absent
+            else if(avg === 0) { text = 'None'; cls = 'status-under'; } 
             return `<div class="status-pill ${cls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${text}</div>`;
         };
 
@@ -345,6 +348,10 @@ export const renderBoard = () => {
         const statusVal = (m.lastWeek && m.lastWeek.status) ? m.lastWeek.status : 'busy';
         const statusText = statusMap[statusVal] || 'Medium';
         const pillHTML = `<div class="status-pill status-${statusVal}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${statusText}</div>`;
+
+        // This Week Grid
+        const thisLoad = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N'];
+        const mg = thisLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
 
         c.innerHTML = `<div class="member-header">${m.name}</div>`;
         
