@@ -867,9 +867,10 @@ export const UserManager = {
             const old = State.members[i];
             newUser.id = old.id;
             // Preserve flags
-            newUser.lastWeek.tasks.forEach((t, k) => { if(old.lastWeek && old.lastWeek.tasks[k]) t.isTeamSuccess = old.lastWeek.tasks[k].isTeamSuccess; });
-            newUser.thisWeek.tasks.forEach((t, k) => { if(old.thisWeek && old.thisWeek.tasks[k]) t.isTeamActivity = old.thisWeek.tasks[k].isTeamActivity; });
-            // Next week future flags? Not used yet but safe to ignore
+            if(old.lastWeek) newUser.lastWeek.tasks.forEach((t, k) => { if(old.lastWeek.tasks[k]) t.isTeamSuccess = old.lastWeek.tasks[k].isTeamSuccess; });
+            if(old.thisWeek) newUser.thisWeek.tasks.forEach((t, k) => { if(old.thisWeek.tasks[k]) t.isTeamSuccess = old.thisWeek.tasks[k].isTeamSuccess; });
+            if(old.nextWeek) newUser.nextWeek.tasks.forEach((t, k) => { if(old.nextWeek.tasks[k]) t.isTeamActivity = old.nextWeek.tasks[k].isTeamActivity; });
+            
             State.members[i] = newUser;
         } else {
             State.members.push(newUser);
