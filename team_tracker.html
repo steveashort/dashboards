@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Platforms Tracker v24.3</title>
+    <title>Server Platforms Tracker v24.4</title>
     <style>
         :root {
             --bg-color: #121212;
@@ -85,7 +85,7 @@
         .date-suffix { color: var(--text-muted); font-weight: normal; font-size: 0.8em; margin-left: 8px; text-transform: none; }
         .edit-hint { font-size: 0.7rem; color: #666; font-style: italic; margin-bottom: 1rem; display: block; }
 
-        .overview-list { list-style: none; font-size: 0.9rem; line-height:1.4; color: var(--text-main); }
+        .overview-list { list-style: none; font-size: 0.9rem; line-height: 1.4; color: var(--text-main); }
         .overview-list li { margin-bottom: 0.5rem; position: relative; padding-left: 1rem; }
         .overview-list li::before { content: "•"; position: absolute; left: 0; color: #fff; }
         .auto-item { color: var(--text-main); }
@@ -192,7 +192,7 @@
         .modal-overlay.active { display: flex; }
         .modal-content {
             background: var(--modal-bg); width: 95%; max-width: 900px; max-height: 90vh;
-            border-radius: 8px; border:1px solid var(--border); display: flex; flex-direction: column;
+            border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column;
             box-shadow: 0 10px 40px rgba(0,0,0,0.8);
         }
         .modal-mini { max-width: 400px; text-align: center; }
@@ -202,18 +202,18 @@
         .modal-body { padding: 2rem; overflow-y: auto; flex-grow: 1; }
         .modal-footer { padding: 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; }
 
-        .form-row { display: grid; grid-template-columns:1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
-        .form-section-title { color: var(--accent); font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1rem; border-bottom:1px solid #444; padding-bottom: 0.5rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
+        .form-section-title { color: var(--accent); font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1rem; border-bottom: 1px solid #444; padding-bottom: 0.5rem; }
         .input-group { margin-bottom: 1rem; }
         .input-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem; }
         input[type="text"], input[type="number"], textarea {
-            width: 100%; padding: 0.6rem; background: var(--input-bg); border:1px solid var(--border);
+            width: 100%; padding: 0.6rem; background: var(--input-bg); border: 1px solid var(--border);
             color: #fff; border-radius: 4px; font-size: 0.9rem;
         }
         input:focus, textarea:focus { border-color: var(--accent); outline: none; }
         .load-select-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
         .ls-box { text-align: center; } .ls-box label { font-size: 0.7rem; margin-bottom: 2px; }
-        select { width: 100%; padding: 4px; background: var(--input-bg); color: #fff; border:1px solid var(--border); text-align: center; border-radius: 4px; cursor: pointer; }
+        select { width: 100%; padding: 4px; background: var(--input-bg); color: #fff; border: 1px solid var(--border); text-align: center; border-radius: 4px; cursor: pointer; }
         option { background: var(--input-bg); color: #fff; }
 
         /* Type Selector Grid */
@@ -303,7 +303,7 @@
         #wafflePreview {
             display: grid; 
             grid-template-columns: repeat(10, 1fr); 
-            gap:1px; 
+            gap: 1px; 
             width: 60px; 
             margin: 10px auto;
         }
@@ -355,7 +355,7 @@
 
     <header>
         <div class="header-left">
-            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmI4NmZjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjAiIGhlaWdodD0iOCIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PHJlY3QgeD0iMiIgeT0iMTQiIHdpZHRoPSIyMCIgaGVpZ2h0PSI4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48bGluZSB4MT0iNiIgeTE9IjYiIHgyPSI2LjAxIiB5Mj0iNiI+PC9saW5lPjxsaW5lIHgxPSI2IiB5MT0iMTgiIHgyPSI2LjAxIiB5Mj0iMTgiPjwvbGluZT48L3N2Z+" alt="Logo" class="header-logo-img">
+            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmI4NmZjIiBzdHJva2Utd2lkdGg9IjIiBzdHJva2Utd2lkaWdodD0iOCIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PHJlY3QgeD0iMiIgeT0iMTAiIHdpZHRoPSIyMCIgaGVpZ2h0PSI4IiByeD0iMiIgcnk9IjIiPjwvcmVjdD48bGluZSB4MT0iNiIgeTE9IjYiIHgyPSI2LjAxIiB5Mj0iNiI+PC9saW5lPjxsaW5lIHgxPSI2IiB5MT0iMTgiIHgyPSI2LjAxIiB5Mj0iMTgiPjwvbGluZT48L3N2Z+" alt="Logo" class="header-logo-img">
             <div>
                 <h1 id="appTitle" contenteditable="true" spellcheck="false" onblur="saveTitle()">Server Platforms</h1>
                 <div class="date-display" id="dateRangeDisplay">...</div>
@@ -871,7 +871,7 @@
                     visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
                     statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
                 }
-                else if (t.type === 'rag' || t.type === 'ryg') { 
+                else if (t.type === 'rag' || t.type === 'ryg') { // Support old name
                     const statusClass = `ryg-${t.status || 'grey'}`;
                     const icon = t.status === 'red' ? '!' : (t.status === 'amber' ? '⚠' : (t.status === 'green' ? '✓' : '?'));
                     visualHTML = `<div class="ryg-indicator ${statusClass}">${icon}</div>`;
@@ -1036,7 +1036,7 @@
 // --- TRACKER MODAL ---
         function setTrackerType(t) {
             currentTrackerType = t;
-            // Map all IDs (RAG vs RYG etc)
+            // Standardize types: RYG is stored internally as 'rag'
             const types = ['Gauge','Bar','Line','Counter','Rag','Waffle'];
             types.forEach(x => {
                 const btn = document.getElementById(`type${x}Btn`);
@@ -1163,10 +1163,10 @@
 
             const t=i>-1?teamData.trackers[i]:null;
 
-            // Determine type
+            // Determine type (normalize legacy types)
             let type = t ? t.type : 'gauge';
             if(type === 'line1' || type === 'line2') type = 'line';
-            if(type === 'ryg') type = 'rag'; // Normalize to rag for UI logic
+            if(type === 'ryg') type = 'rag'; // UI internal normalization
             
             setTrackerType(type);
 
@@ -1213,17 +1213,17 @@
                 updateWafflePreview();
             }
 
-            // Defaults for NEW tracker (ensure clean slate)
+            // Defaults for NEW tracker only (crash safe)
             if(!t) {
-                 if(type === 'line' && document.getElementById('lineSeriesContainer').children.length === 0) addLineSeries('Series 1', '#03dac6');
-                 if(type === 'bar' && document.getElementById('barSeriesContainer').children.length === 0) addBarSeries('Series 1', '#03dac6');
-                 if(type === 'gauge') document.getElementById('tkPieColor').value = '#00e676';
-                 if(type === 'rag') selectRag('green');
-                 if(type === 'waffle') {
+                if(type === 'line' && document.getElementById('lineSeriesContainer').children.length === 0) addLineSeries('Series 1', '#03dac6');
+                if(type === 'bar' && document.getElementById('barSeriesContainer').children.length === 0) addBarSeries('Series 1', '#03dac6');
+                if(type === 'gauge') document.getElementById('tkPieColor').value = '#00e676';
+                if(type === 'rag') selectRag('green');
+                if(type === 'waffle') {
                     document.getElementById('tkWaffleColorVal').value = '#03dac6';
                     document.getElementById('tkWaffleColorBg').value = '#333333';
                     updateWafflePreview();
-                 }
+                }
             }
 
             document.getElementById('trackerModal').classList.add('active');
@@ -1284,7 +1284,7 @@
                 nt.value = parseFloat(document.getElementById('tkCounterVal').value) || 0;
                 nt.subtitle = document.getElementById('tkCounterSub').value;
             } else if (currentTrackerType === 'rag') {
-                nt.type = 'rag'; // Save as rag
+                nt.type = 'rag'; 
                 nt.status = document.getElementById('tkRagStatus').value;
                 nt.message = document.getElementById('tkRagMsg').value;
             } else if (currentTrackerType === 'waffle') {
