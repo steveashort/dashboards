@@ -319,54 +319,61 @@ export const renderBoard = () => {
             });
         }
         
-        // This Week Grid
-        const thisLoad = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N'];
-        const mg = thisLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
-        
-        // Next Week Average
-        const nextLoad = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N'];
-        let score = 0; let count = 0;
-        nextLoad.forEach(v => {
-            if(v === 'L') { score += 1; count++; }
-            else if(v === 'N') { score += 2; count++; }
-            else if(v === 'R') { score += 3; count++; }
-        });
-        const avg = count === 0 ? 0 : score / count;
-        let avgText = 'Med'; let avgClass = 'val-N';
-        if(avg < 1.6) { avgText = 'Low'; avgClass = 'val-L'; }
-        else if(avg > 2.4) { avgText = 'High'; avgClass = 'val-R'; }
-        
+        // Helper to calc average load pill
+        const getAvgPill = (loadArr) => {
+            let score = 0; let count = 0;
+            (loadArr||[]).forEach(v => {
+                if(v === 'L') { score += 1; count++; }
+                else if(v === 'N') { score += 2; count++; }
+                else if(v === 'R') { score += 3; count++; }
+            });
+            const avg = count === 0 ? 0 : score / count;
+            let text = 'Medium'; let cls = 'status-busy';
+            if(avg > 0 && avg < 1.6) { text = 'Low'; cls = 'status-under'; }
+            else if(avg > 2.4) { text = 'High'; cls = 'status-over'; }
+            else if(avg === 0) { text = 'None'; cls = 'status-under'; } // Handle empty/absent
+            return `<div class="status-pill ${cls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${text}</div>`;
+        };
+
         const c = document.createElement('div');
         c.className = 'member-card';
         c.onclick = () => UserManager.openUserModal(i);
         
-        // Status Pill Logic
+        // Status Pill Logic (Last Week)
         const statusMap = { 'under': 'Low', 'busy': 'Medium', 'over': 'High' };
         const statusVal = (m.lastWeek && m.lastWeek.status) ? m.lastWeek.status : 'busy';
         const statusText = statusMap[statusVal] || 'Medium';
-        const pillHTML = `<div class="status-pill status-${statusVal}" style="font-size:0.8rem; padding:4px 8px;">${statusText}</div>`;
+        const pillHTML = `<div class="status-pill status-${statusVal}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${statusText}</div>`;
+
+        // This Week Grid
+        const thisLoad = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N'];
+        const mg = thisLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
 
         c.innerHTML = `<div class="member-name-row" style="padding-bottom:0.5rem; border-bottom:1px solid #333;">${m.name}</div>`;
         
-        // Section 1: Last Week
-        c.innerHTML += `<div class="card-half" style="padding: 0.8rem; border-bottom: 1px solid #333; background: rgba(255,255,255,0.02);">`;
-        c.innerHTML += `<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;"><span class="half-label">Last Week</span>${pillHTML}</div>`;
-        c.innerHTML += `<ul class="card-task-list" style="padding-left:10px; font-size:0.85rem;">${lw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
-        c.innerHTML += `</div>`;
+        let content = `<div class="member-card-content">`;
         
-        // Section 2: This Week
-        c.innerHTML += `<div class="card-half" style="padding: 0.8rem; border-bottom: 1px solid #333;">`;
-        c.innerHTML += `<div class="half-header" style="margin-bottom:5px;"><span class="half-label">This Week</span></div>`;
-        c.innerHTML += `<ul class="card-task-list" style="padding-left:10px; font-size:0.85rem;">${tw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
-        c.innerHTML += `<div class="daily-mini-grid" style="margin-top:5px;">${mg}</div>`;
-        c.innerHTML += `</div>`;
+        // Col 1: Last Week
+        content += `<div class="card-col"><div class="col-header">Last Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().last.split(' - ')[0]})</span></div>`;
+        content += `<div style="text-align:center; margin-bottom:5px;">${pillHTML}</div>`;
+        content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${lw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
+        content += `</div>`;
 
-        // Section 3: Next Week
-        c.innerHTML += `<div class="card-half" style="padding: 0.8rem; position:relative;">`;
-        c.innerHTML += `<div class="half-header" style="margin-bottom:5px;"><span class="half-label">Next Week</span></div>`;
-        c.innerHTML += `<div class="average-pill ${avgClass}" style="background:#333; border:1px solid #555;">${avgText}</div>`;
-        c.innerHTML += `<ul class="card-task-list" style="padding-left:10px; font-size:0.85rem;">${nw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
-        c.innerHTML += `</div>`;
+        // Col 2: This Week
+        content += `<div class="card-col"><div class="col-header">This Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().current.split(' - ')[0]})</span></div>`;
+        content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.thisWeek ? m.thisWeek.load : [])}</div>`;
+        content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${tw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
+        content += `<div class="daily-mini-grid" style="margin-top:auto;">${mg}</div>`;
+        content += `</div>`;
+
+        // Col 3: Next Week
+        content += `<div class="card-col"><div class="col-header">Next Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().next.split(' - ')[0]})</span></div>`;
+        content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.nextWeek ? m.nextWeek.load : [])}</div>`;
+        content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${nw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
+        content += `</div>`;
+
+        content += `</div>`; // End content
+        c.innerHTML += content;
 
         grid.appendChild(c);
     });
