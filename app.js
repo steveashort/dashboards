@@ -522,38 +522,75 @@ export const TrackerManager = {
              }
              
              this.renderTimeTable(series);
-        } else if (type === 'gauge') {
-            const tmIn = getEl('tkMetric');
-            if (tmIn) tmIn.value = tracker ? (tracker.metric || '') : '';
-            const tcIn = getEl('tkComp');
-            if (tcIn) tcIn.value = tracker ? (tracker.completed || '') : '';
-            const ttIn = getEl('tkTotal');
-            if (ttIn) ttIn.value = tracker ? (tracker.total || '') : '';
-            const pcIn = getEl('tkPieColor');
-            if (pcIn) pcIn.value = tracker ? (tracker.colorVal || tracker.color1 || '#00e676') : '#00e676';
-            const pc2In = getEl('tkPieColor2');
-            if (pc2In) pc2In.value = tracker ? (tracker.color2 || '#ff1744') : '#ff1744';
-        } else if (type === 'counter') {
-            const cvIn = getEl('tkCounterVal');
-            if (cvIn) cvIn.value = tracker ? (tracker.value || 0) : 0;
-            const csIn = getEl('tkCounterSub');
-            if (csIn) csIn.value = tracker ? (tracker.subtitle || '') : '';
-            const ccIn = getEl('tkCounterColor');
-            if (ccIn) ccIn.value = tracker ? (tracker.color1 || '#bb86fc') : '#bb86fc';
-        } else if (type === 'rag') {
-            this.selectRag(tracker ? (tracker.status || 'grey') : 'grey');
-            const rmIn = getEl('tkRagMsg');
-            if (rmIn) rmIn.value = tracker ? (tracker.message || '') : '';
-        } else if (type === 'waffle') {
-            const wtIn = getEl('tkWaffleTotal');
-            if (wtIn) wtIn.value = tracker ? (tracker.total || 100) : 100;
-            const waIn = getEl('tkWaffleActive');
-            if (waIn) waIn.value = tracker ? (tracker.active || 0) : 0;
-            const wcIn = getEl('tkWaffleColorVal');
-            if (wcIn) wcIn.value = tracker ? (tracker.colorVal || '#03dac6') : '#03dac6';
-            const wbIn = getEl('tkWaffleColorBg');
-            if (wbIn) wbIn.value = tracker ? (tracker.colorBg || '#333333') : '#333333';
-            this.updateWafflePreview();
+        } else {
+            // Reset Line inputs in background for new trackers so switching types shows defaults
+            if (!isEdit) {
+                const ctx = this.getContext('line');
+                const d = new Date();
+                const defDate = d.toISOString().split('T')[0];
+                
+                const sdIn = getEl(`${ctx.prefix}StartDate`);
+                if(sdIn) { sdIn.value = defDate; sdIn.dataset.prev = defDate; }
+                
+                const rad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="day"]`);
+                if(rad) rad.checked = true;
+                
+                // Manually trigger update options logic without render
+                const histLabel = getEl(`${ctx.prefix}HistoricLabel`);
+                if (histLabel) histLabel.innerText = "Historic Days";
+                
+                const countSel = getEl(`${ctx.prefix}TimeCount`);
+                if (countSel) {
+                    countSel.innerHTML = '';
+                    [5, 7, 14, 30, 60, 90].forEach(o => {
+                        const opt = document.createElement('option');
+                        opt.value = o; opt.innerText = o;
+                        countSel.appendChild(opt);
+                    });
+                    countSel.value = 30;
+                }
+
+                const yIn = getEl(`${ctx.prefix}YLabel`);
+                if(yIn) yIn.value = '';
+
+                // Clear table to ensure fresh start
+                const tableContainer = getEl('lineTableContainer');
+                if(tableContainer) tableContainer.innerHTML = '';
+            }
+
+            if (type === 'gauge') {
+                const tmIn = getEl('tkMetric');
+                if (tmIn) tmIn.value = tracker ? (tracker.metric || '') : '';
+                const tcIn = getEl('tkComp');
+                if (tcIn) tcIn.value = tracker ? (tracker.completed || '') : '';
+                const ttIn = getEl('tkTotal');
+                if (ttIn) ttIn.value = tracker ? (tracker.total || '') : '';
+                const pcIn = getEl('tkPieColor');
+                if (pcIn) pcIn.value = tracker ? (tracker.colorVal || tracker.color1 || '#00e676') : '#00e676';
+                const pc2In = getEl('tkPieColor2');
+                if (pc2In) pc2In.value = tracker ? (tracker.color2 || '#ff1744') : '#ff1744';
+            } else if (type === 'counter') {
+                const cvIn = getEl('tkCounterVal');
+                if (cvIn) cvIn.value = tracker ? (tracker.value || 0) : 0;
+                const csIn = getEl('tkCounterSub');
+                if (csIn) csIn.value = tracker ? (tracker.subtitle || '') : '';
+                const ccIn = getEl('tkCounterColor');
+                if (ccIn) ccIn.value = tracker ? (tracker.color1 || '#bb86fc') : '#bb86fc';
+            } else if (type === 'rag') {
+                this.selectRag(tracker ? (tracker.status || 'grey') : 'grey');
+                const rmIn = getEl('tkRagMsg');
+                if (rmIn) rmIn.value = tracker ? (tracker.message || '') : '';
+            } else if (type === 'waffle') {
+                const wtIn = getEl('tkWaffleTotal');
+                if (wtIn) wtIn.value = tracker ? (tracker.total || 100) : 100;
+                const waIn = getEl('tkWaffleActive');
+                if (waIn) waIn.value = tracker ? (tracker.active || 0) : 0;
+                const wcIn = getEl('tkWaffleColorVal');
+                if (wcIn) wcIn.value = tracker ? (tracker.colorVal || '#03dac6') : '#03dac6';
+                const wbIn = getEl('tkWaffleColorBg');
+                if (wbIn) wbIn.value = tracker ? (tracker.colorBg || '#333333') : '#333333';
+                this.updateWafflePreview();
+            }
         }
 
         ModalManager.openModal('trackerModal');
@@ -693,8 +730,8 @@ export const TrackerManager = {
 
         if (series.length < 6) {
             html += `<tr>
-                <td colspan="${labels.length + 2}" style="padding: 8px; text-align: center; cursor: pointer; background: rgba(255, 255, 255, 0.05); color: var(--accent);" onclick="TrackerManager.addTimeSeriesColumn()">
-                    + Add Series
+                <td colspan="${labels.length + 2}" style="padding: 10px; text-align: center; border-top: 1px dashed #444;">
+                    <button class="btn btn-sm" onclick="TrackerManager.addTimeSeriesColumn()" style="width:100%; max-width:200px; display:inline-block;">+ Add Series</button>
                 </td>
             </tr>`;
         }
