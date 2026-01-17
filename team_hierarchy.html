@@ -38,7 +38,7 @@
         }
 
         /* ==========================================================
-           2) PAGE LAYOUT & SCROLLBAR FIXES
+           2) PAGE LAYOUT
            ========================================================== */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -46,9 +46,31 @@
             color: var(--text-main);
             margin: 0;
             display: flex;
+            flex-direction: column;
             height: 100vh;
             overflow: hidden;
-            transition: background-color 0.3s, color 0.3s;
+        }
+
+        header {
+            height: 60px;
+            background: var(--sidebar-bg);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            z-index: 100;
+        }
+
+        #headerOrgName {
+            font-size: 22px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .app-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
         }
 
         .sidebar {
@@ -65,23 +87,20 @@
         .main-content { 
             flex: 1; 
             padding: 40px; 
-            overflow: auto; /* FIX: Enable both vertical and horizontal scroll */
+            overflow: auto; 
             height: 100%;
             position: relative;
         }
 
-        /* FIX: High-Visibility Scrollbars */
-        .main-content::-webkit-scrollbar { width: 16px; height: 16px; }
+        /* Scrollbars */
+        .main-content::-webkit-scrollbar { width: 14px; height: 14px; }
         .main-content::-webkit-scrollbar-track { background: var(--bg-color); }
         .main-content::-webkit-scrollbar-thumb { 
             background-color: var(--accent); 
             border-radius: 10px; 
-            border: 4px solid var(--bg-color); 
+            border: 3px solid var(--bg-color); 
         }
 
-        .sidebar-logo { width: 100%; margin-bottom: 15px; border-radius: 4px; display: block; }
-        .app-title-input { font-size: 18px; font-weight: bold; color: var(--text-main); background: transparent; border: 1px solid transparent; padding: 4px 0; width: 100%; margin-bottom: 20px; outline: none; }
-        
         .control-group { margin-bottom: 20px; }
         .control-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; }
         
@@ -91,152 +110,125 @@
         }
 
         .btn-group { display: flex; flex-direction: column; gap: 10px; }
-        button { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        button { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-success { background-color: #27ae60; color: white; }
         .btn-primary { background-color: var(--accent); color: white; }
         .btn-secondary { background-color: #555; color: white; }
 
-        .theme-toggle-wrapper { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--card-border); }
-        .theme-btn { background: none; border: none; cursor: pointer; color: var(--text-main); display: flex; align-items: center; justify-content: center; padding: 5px; border-radius: 50%; }
-        .theme-btn svg { width: 22px; height: 22px; fill: currentColor; }
-        .hidden { display: none !important; }
-
-        .toggle-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; }
-
         /* Floating Toolbar */
-        .floating-toolbar { position: fixed; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 500; }
+        .floating-toolbar { position: fixed; top: 80px; right: 20px; display: flex; gap: 10px; z-index: 500; }
         .icon-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
         /* ==========================================================
-           3) TREE STRUCTURE
+           3) TREE & NODES
            ========================================================== */
-        .main-tree {
-            display: inline-block; 
-            padding-right: 150px; /* FIX: Safe zone for horizontal scroll */
-            padding-bottom: 150px; /* FIX: Safe zone for vertical scroll */
-        }
-
+        .main-tree { display: inline-block; padding-right: 150px; padding-bottom: 150px; }
         ul { list-style: none; padding-left: 20px; margin: 0; position: relative; }
         ul.children-list { border-left: 2px solid var(--line-color); margin-left: 15px; padding-left: 30px; }
         ul.hidden { display: none !important; }
         li { margin: 15px 0; position: relative; }
         li::before { content: ''; position: absolute; top: 32px; left: -32px; width: 30px; height: 2px; background-color: var(--line-color); }
-        .main-tree > ul > li::before { display: none; }
 
         .node-card {
-            display: flex; align-items: center;
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            padding: 12px 18px;
-            border-radius: 6px;
-            width: fit-content; min-width: 280px; max-width: 600px;
+            padding: 15px;
+            border-radius: 8px;
+            width: fit-content; min-width: 320px;
             cursor: grab;
-            transition: all 0.2s ease;
             position: relative;
             border-left: 6px solid var(--accent);
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
-        .node-card:active { cursor: grabbing; }
-        .node-card.drag-over { border: 2px dashed #27ae60; background: rgba(39, 174, 96, 0.1); }
-        .node-card.is-dragging { opacity: 0.4; }
-        .node-card.matched { border: 2px solid #27ae60; box-shadow: 0 0 15px rgba(39, 174, 96, 0.3); }
-
+        
         .node-actions { position: absolute; top: -12px; right: 10px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s; z-index: 10; }
         .node-card:hover .node-actions { opacity: 1; }
         .node-action-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
         .btn-add-child { background: #27ae60; }
         .btn-del-node { background: #c0392b; }
 
-        .info { display: flex; flex-direction: column; width: 100%; pointer-events: none; }
-        .top-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-        .name { font-weight: 700; font-size: 16px; color: var(--text-main); }
-        .engagement-pill { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); padding: 1px 6px; border-radius: 10px; text-transform: uppercase; font-weight: 600; }
-        .location-pill { font-size: 11px; color: #2ecc71; border: 1px solid #2ecc71; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; font-weight: 600; }
-        .role { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        .info { display: flex; flex-direction: column; pointer-events: none; }
+        .name { font-weight: 700; font-size: 17px; }
+        .role { font-size: 12px; color: var(--text-muted); text-transform: uppercase; margin-top: 2px; }
+        .contact-info { font-size: 11px; color: var(--text-muted); margin-top: 5px; }
         
-        /* Tag Display Logic */
-        .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+        .pills-container { display: flex; gap: 8px; margin-top: 6px; }
+        .engagement-pill { font-size: 10px; color: var(--accent); border: 1px solid var(--accent); padding: 1px 6px; border-radius: 10px; font-weight: 600; }
+        .location-pill { font-size: 10px; color: #2ecc71; border: 1px solid #2ecc71; padding: 1px 6px; border-radius: 10px; font-weight: 600; }
+        
+        .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
         .hide-tags .tags-row { display: none !important; }
         
         .pill { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; color: white; text-transform: uppercase; }
-        .toggle-btn { margin-right: 15px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); cursor: pointer; }
+        .bw-tags .pill { background: #444 !important; border: 1px solid #666; }
 
         /* Modal */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-overlay.active { display: flex; }
-        .modal { background: var(--sidebar-bg); padding: 30px; border-radius: 12px; width: 550px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); max-height: 90vh; overflow-y: auto; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; font-weight: 600; }
-        
-        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 3000; }
-        .toast { background: #333; color: white; padding: 12px 20px; border-radius: 4px; border-left: 4px solid var(--accent); margin-top: 10px; }
+        .modal { background: var(--sidebar-bg); padding: 30px; border-radius: 12px; width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--card-border); }
+        .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
+        .form-row > div { flex: 1; }
     </style>
 </head>
-<body class="">
+<body>
 
-<aside class="sidebar">
-    <img src="https://via.placeholder.com/280x100.png?text=Company+Logo" class="sidebar-logo">
-    
-    <div class="theme-toggle-wrapper">
-        <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Theme</span>
-        <button class="theme-btn" onclick="toggleTheme()" title="Toggle Theme">
-            <svg id="sunIcon" class="hidden" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>
-            <svg id="moonIcon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
-        </button>
-    </div>
+<header>
+    <div id="headerOrgName">Org Viewer</div>
+</header>
 
-    <input type="text" id="appTitle" class="app-title-input" placeholder="Title...">
-
-    <div class="control-group">
-        <label>Search</label>
-        <input type="text" id="searchInput" placeholder="Search..." oninput="applyFilter()">
-    </div>
-
-    <div class="control-group"><label>Filter by Role</label><select id="roleFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
-    <div class="control-group"><label>Filter by Location</label><select id="locFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
-    <div class="control-group"><label>Filter by Tag</label><select id="tagFilter" multiple size="6" onchange="applyFilter()"></select></div>
-
-    <div class="control-group">
-        <div class="toggle-row">
-            <span style="font-size: 11px; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Show Tags</span>
-            <input type="checkbox" id="showTagsToggle" checked onchange="toggleTagVisibility()">
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="control-group">
+            <label>Search</label>
+            <input type="text" id="searchInput" placeholder="Search hierarchy..." oninput="applyFilter()">
         </div>
-    </div>
 
-    <div class="control-group" style="margin-top: auto; border-top: 1px solid var(--card-border); padding-top: 20px;">
-        <label>Data Management</label>
-        <input type="file" id="jsonFileInput" accept=".json" style="display: none;" onchange="importJson(this)">
-        <div class="btn-group">
-            <button class="btn-success" onclick="triggerUpload()">Load JSON</button>
-            <button class="btn-primary" onclick="saveJson()">Download JSON</button>
+        <div class="control-group"><label>Filter by Role</label><select id="roleFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
+        <div class="control-group"><label>Filter by Location</label><select id="locFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
+        <div class="control-group"><label>Filter by Tag</label><select id="tagFilter" multiple size="8" onchange="applyFilter()"></select></div>
+
+        <div class="control-group" style="margin-top: auto;">
+            <label>Data Management</label>
+            <input type="file" id="jsonFileInput" accept=".json" style="display: none;" onchange="importJson(this)">
+            <div class="btn-group">
+                <button class="btn-success" onclick="triggerUpload()">Load JSON</button>
+                <button class="btn-primary" onclick="saveJson()">Download JSON</button>
+            </div>
         </div>
-    </div>
-</aside>
+    </aside>
+
+    <main class="main-content" id="mainDisplay">
+        <div id="tree-container" class="main-tree"></div>
+    </main>
+</div>
 
 <div class="floating-toolbar">
-    <button class="icon-btn" onclick="openSettingsModal()" title="Global Settings">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    <button class="icon-btn" onclick="openSettingsModal()" title="Settings">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </button>
     <button class="icon-btn" onclick="expandAll()" title="Expand All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
     <button class="icon-btn" onclick="collapseAll()" title="Collapse All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
 </div>
 
-<main class="main-content" id="mainDisplay">
-    <div id="tree-container" class="main-tree"></div>
-</main>
-
 <div class="modal-overlay" id="editModal">
     <div class="modal">
         <h2>Edit Person</h2>
         <input type="hidden" id="editNodeId">
-        <div class="form-group"><label>Name</label><input type="text" id="editName"></div>
-        <div class="form-group"><label>Role</label><select id="editRole"></select></div>
-        <div class="form-group"><label>Location</label><select id="editLocation"></select></div>
-        <div class="form-group"><label>Engagement</label><input type="text" id="editEngagement"></div>
+        <div class="form-row">
+            <div><label>Name</label><input type="text" id="editName"></div>
+            <div><label>Role</label><select id="editRole"></select></div>
+        </div>
+        <div class="form-row">
+            <div><label>Email</label><input type="text" id="editEmail"></div>
+            <div><label>Phone</label><input type="text" id="editPhone"></div>
+        </div>
+        <div class="form-row">
+            <div><label>Location</label><select id="editLocation"></select></div>
+            <div><label>Engagement</label><select id="editEngagement"></select></div>
+        </div>
         <div class="form-group">
             <label>Tags (Select Multiple)</label>
-            <select id="editTagsMulti" multiple size="5"></select>
-            <small style="color: var(--text-muted)">Hold Ctrl/Cmd to select multiple</small>
+            <select id="editTagsMulti" multiple size="6"></select>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
             <button class="btn-secondary" onclick="closeModal()">Cancel</button>
@@ -247,22 +239,37 @@
 
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
-        <h2>Manage Global Lists</h2>
-        <div class="form-group">
-            <label>Global Roles (Comma separated)</label>
-            <textarea id="settingsRoles" rows="3"></textarea>
+        <h2>Global Settings</h2>
+        <div class="form-group"><label>Organization Name</label><input type="text" id="setOrgName"></div>
+        
+        <div class="form-row">
+            <div>
+                <label>Theme</label>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button id="themeToggleBtn" class="btn-secondary" onclick="toggleTheme()" style="flex:1;">
+                        <span id="themeBtnText">Dark Mode</span>
+                        <svg id="sunIcon" style="width:18px; height:18px; display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                        <svg id="moonIcon" style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                    </button>
+                </div>
+            </div>
+            <div>
+                <label>Options</label>
+                <div style="display:flex; gap:10px; flex-direction:column;">
+                    <label style="text-transform:none; font-size:13px;"><input type="checkbox" id="setShowTags"> Display Tags</label>
+                    <label style="text-transform:none; font-size:13px;"><input type="checkbox" id="setBWTags"> Black & White Tags</label>
+                </div>
+            </div>
         </div>
-        <div class="form-group">
-            <label>Global Locations (Comma separated)</label>
-            <textarea id="settingsLocs" rows="3"></textarea>
-        </div>
-        <div class="form-group">
-            <label>Global Tags (Comma separated)</label>
-            <textarea id="settingsTags" rows="3"></textarea>
-        </div>
+
+        <div class="form-group"><label>Global Roles (Comma separated)</label><textarea id="setRoles" rows="2"></textarea></div>
+        <div class="form-group"><label>Global Locations (Comma separated)</label><textarea id="setLocs" rows="2"></textarea></div>
+        <div class="form-group"><label>Global Tags (Comma separated)</label><textarea id="setTags" rows="2"></textarea></div>
+        <div class="form-group"><label>Global Engagements (Comma separated)</label><textarea id="setEng" rows="2"></textarea></div>
+
         <div style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px;">
             <button class="btn-secondary" onclick="closeSettingsModal()">Cancel</button>
-            <button class="btn-primary" onclick="saveSettings()">Save Global Lists</button>
+            <button class="btn-primary" onclick="saveSettings()">Apply Settings</button>
         </div>
     </div>
 </div>
@@ -271,21 +278,23 @@
 
 <script>
     let appData = {
-        title: "Org Viewer",
+        title: "Org Viewer Pro",
         settings: {
-            roles: ["CEO", "CTO", "VP Sales", "Developer", "Manager", "Designer"],
-            locations: ["New York", "San Francisco", "London", "Remote", "Eastleigh", "Tokyo"],
-            tags: ["Leadership", "Cloud", "Unix", "Linux", "Coder", "Marketing", "HR"]
+            theme: "dark",
+            showTags: true,
+            bwTags: false,
+            roles: ["CEO", "CTO", "Manager", "Developer"],
+            locations: ["New York", "London", "San Francisco", "Remote", "Eastleigh"],
+            tags: ["Leadership", "Cloud", "Unix", "Linux", "Coder"],
+            engagements: ["Internal", "Contract", "Consultant"]
         },
         tree: {
-            id: "root-1", name: "Sarah Connors", role: "CEO", location: "New York", engagement: "Internal", tags: ["Leadership"],
-            children: [
-                { id: "c1", name: "John Reese", role: "CTO", location: "San Francisco", engagement: "Internal", tags: ["Cloud"], children: [] }
-            ]
+            id: "root-1", name: "Sarah Connors", role: "CEO", location: "New York", engagement: "Internal", phone: "555-0100", email: "sarah@org.com", tags: ["Leadership"],
+            children: []
         }
     };
 
-    // --- CORE LOGIC ---
+    // --- LOGIC ---
     function findNodeAndParent(id, currentNode, parent = null) {
         if (currentNode.id === id) return { node: currentNode, parent: parent };
         if (currentNode.children) {
@@ -297,43 +306,31 @@
         return null;
     }
 
-    function isDescendant(sourceId, targetId) {
-        const sourceRes = findNodeAndParent(sourceId, appData.tree);
-        if (!sourceRes) return false;
-        function check(node) {
-            if (node.id === targetId) return true;
-            return (node.children || []).some(child => check(child));
-        }
-        return check(sourceRes.node);
-    }
-
     function stringToColor(str) {
         let hash = 0;
         for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
         return `hsl(${Math.abs(hash) % 360}, 65%, 40%)`;
     }
 
-    function showToast(m) {
-        const t = document.createElement('div'); t.className='toast'; t.textContent=m;
-        document.getElementById('toastContainer').appendChild(t);
-        setTimeout(()=>t.remove(), 3000);
-    }
-
     // --- RENDERING ---
     function renderTree() {
+        document.getElementById('headerOrgName').textContent = appData.title;
+        const main = document.getElementById('mainDisplay');
+        appData.settings.showTags ? main.classList.remove('hide-tags') : main.classList.add('hide-tags');
+        appData.settings.bwTags ? main.classList.add('bw-tags') : main.classList.remove('bw-tags');
+        
         const container = document.getElementById('tree-container');
         container.innerHTML = '';
         const rootUl = document.createElement('ul');
         container.appendChild(rootUl);
         buildNode(appData.tree, rootUl, 0);
-        populateFilters();
+        populateSidebarFilters();
         applyFilter();
     }
 
     function buildNode(data, parentElement, depth) {
         const li = document.createElement('li');
-        li.className = "tree-item";
-        li.dataset.id = data.id;
+        li.className = "tree-item"; li.dataset.id = data.id;
 
         const tags = data.tags || [];
         li.dataset.tags = tags.join(',').toUpperCase();
@@ -342,53 +339,32 @@
         li.dataset.searchText = `${data.name} ${data.role} ${data.location} ${tags.join(' ')}`.toUpperCase();
 
         const card = document.createElement('div');
-        card.className = 'node-card';
-        card.draggable = true;
-        card.dataset.nodeId = data.id;
+        card.className = 'node-card'; card.draggable = true; card.dataset.nodeId = data.id;
         card.style.borderLeftColor = `var(--h-${depth % 6})`;
 
         card.addEventListener('dragstart', handleDragStart);
         card.addEventListener('dragover', handleDragOver);
-        card.addEventListener('dragleave', handleDragLeave);
         card.addEventListener('drop', handleDrop);
-        card.addEventListener('dragend', handleDragEnd);
 
-        const acts = document.createElement('div');
-        acts.className = 'node-actions';
-        acts.innerHTML = `
-            <button class="node-action-btn btn-add-child" onclick="addChild('${data.id}', event)"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
-            <button class="node-action-btn btn-del-node" onclick="deleteNode('${data.id}', event)"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
-        `;
-        card.appendChild(acts);
-
-        if (data.children && data.children.length > 0) {
-            const btn = document.createElement('div');
-            btn.className = 'toggle-btn'; btn.textContent = '−';
-            btn.onclick = (e) => {
-                e.stopPropagation();
-                const ul = li.querySelector('ul');
-                ul.classList.toggle('hidden');
-                btn.textContent = ul.classList.contains('hidden') ? '+' : '−';
-            };
-            card.appendChild(btn);
-        }
-
-        const info = document.createElement('div');
-        info.className = 'info';
-        let tagPills = tags.map(t => `<span class="pill" style="background:${stringToColor(t)}">${t}</span>`).join('');
-        info.innerHTML = `
-            <div class="top-row">
-                <span class="name">${data.name}</span>
-                ${data.engagement ? `<span class="engagement-pill">${data.engagement}</span>`:''}
-                ${data.location ? `<span class="location-pill">${data.location}</span>`:''}
+        card.innerHTML = `
+            <div class="node-actions">
+                <button class="node-action-btn btn-add-child" onclick="addChild('${data.id}', event)"><svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+                <button class="node-action-btn btn-del-node" onclick="deleteNode('${data.id}', event)"><svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
             </div>
-            <span class="role">${data.role || ''}</span>
-            <div class="tags-row">${tagPills}</div>
+            <div class="info">
+                <div class="top-row">
+                    <span class="name">${data.name}</span>
+                    ${data.engagement ? `<span class="engagement-pill">${data.engagement}</span>`:''}
+                    ${data.location ? `<span class="location-pill">${data.location}</span>`:''}
+                </div>
+                <span class="role">${data.role || ''}</span>
+                <div class="contact-info">${data.email || ''} ${data.phone ? '• ' + data.phone : ''}</div>
+                <div class="tags-row">${tags.map(t => `<span class="pill" style="background:${stringToColor(t)}">${t}</span>`).join('')}</div>
+            </div>
         `;
-        card.appendChild(info);
         card.onclick = () => openEditModal(data.id);
-
         li.appendChild(card);
+
         if (data.children && data.children.length > 0) {
             const cul = document.createElement('ul'); cul.className = 'children-list';
             data.children.forEach(c => buildNode(c, cul, depth + 1));
@@ -397,203 +373,146 @@
         parentElement.appendChild(li);
     }
 
-    // --- MODALS & LOGIC ---
+    // --- SETTINGS ---
+    function openSettingsModal() {
+        document.getElementById('setOrgName').value = appData.title;
+        document.getElementById('setShowTags').checked = appData.settings.showTags;
+        document.getElementById('setBWTags').checked = appData.settings.bwTags;
+        document.getElementById('setRoles').value = appData.settings.roles.join(', ');
+        document.getElementById('setLocs').value = appData.settings.locations.join(', ');
+        document.getElementById('setTags').value = appData.settings.tags.join(', ');
+        document.getElementById('setEng').value = appData.settings.engagements.join(', ');
+        document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function saveSettings() {
+        appData.title = document.getElementById('setOrgName').value;
+        appData.settings.showTags = document.getElementById('setShowTags').checked;
+        appData.settings.bwTags = document.getElementById('setBWTags').checked;
+        
+        // Deduplicate lists
+        const clean = (id) => [...new Set(document.getElementById(id).value.split(',').map(s => s.trim()).filter(s => s))];
+        appData.settings.roles = clean('setRoles');
+        appData.settings.locations = clean('setLocs');
+        appData.settings.tags = clean('setTags');
+        appData.settings.engagements = clean('setEng');
+
+        renderTree();
+        document.getElementById('settingsModal').classList.remove('active');
+    }
+
     function toggleTheme() {
-        document.body.classList.toggle('light-theme');
-        const isLight = document.body.classList.contains('light-theme');
-        document.getElementById('sunIcon').classList.toggle('hidden', !isLight);
-        document.getElementById('moonIcon').classList.toggle('hidden', isLight);
+        appData.settings.theme = (appData.settings.theme === "dark") ? "light" : "dark";
+        const isDark = appData.settings.theme === "dark";
+        document.body.classList.toggle('light-theme', !isDark);
+        document.getElementById('themeBtnText').textContent = isDark ? "Dark Mode" : "Light Mode";
+        document.getElementById('sunIcon').style.display = isDark ? "none" : "block";
+        document.getElementById('moonIcon').style.display = isDark ? "block" : "none";
     }
 
-    function toggleTagVisibility() {
-        const isChecked = document.getElementById('showTagsToggle').checked;
-        const main = document.getElementById('mainDisplay');
-        if(isChecked) main.classList.remove('hide-tags');
-        else main.classList.add('hide-tags');
-    }
-
+    // --- PERSON EDIT ---
     function openEditModal(id) {
-        const res = findNodeAndParent(id, appData.tree);
-        const n = res.node;
+        const n = findNodeAndParent(id, appData.tree).node;
         document.getElementById('editNodeId').value = id;
-        document.getElementById('editName').value = n.name || "";
-        document.getElementById('editEngagement').value = n.engagement || "";
+        document.getElementById('editName').value = n.name;
+        document.getElementById('editEmail').value = n.email || "";
+        document.getElementById('editPhone').value = n.phone || "";
         
-        // Populate Selects from Settings
-        const roleSel = document.getElementById('editRole');
-        roleSel.innerHTML = appData.settings.roles.map(r => `<option value="${r}" ${r === n.role ? 'selected':''}>${r}</option>`).join('');
+        const fill = (id, list, val) => {
+            const s = document.getElementById(id);
+            s.innerHTML = list.map(i => `<option value="${i}" ${i === val ? 'selected':''}>${i}</option>`).join('');
+        };
+        fill('editRole', appData.settings.roles, n.role);
+        fill('editLocation', appData.settings.locations, n.location);
+        fill('editEngagement', appData.settings.engagements, n.engagement);
         
-        const locSel = document.getElementById('editLocation');
-        locSel.innerHTML = appData.settings.locations.map(l => `<option value="${l}" ${l === n.location ? 'selected':''}>${l}</option>`).join('');
-        
-        const tagsSel = document.getElementById('editTagsMulti');
-        tagsSel.innerHTML = appData.settings.tags.map(t => `<option value="${t}" ${(n.tags||[]).includes(t) ? 'selected':''}>${t}</option>`).join('');
+        const tagS = document.getElementById('editTagsMulti');
+        tagS.innerHTML = appData.settings.tags.map(t => `<option value="${t}" ${(n.tags||[]).includes(t) ? 'selected':''}>${t}</option>`).join('');
 
         document.getElementById('editModal').classList.add('active');
     }
 
-    function closeModal() { document.getElementById('editModal').classList.remove('active'); }
-
     function saveNodeChanges() {
-        const id = document.getElementById('editNodeId').value;
-        const res = findNodeAndParent(id, appData.tree);
-        const n = res.node;
+        const n = findNodeAndParent(document.getElementById('editNodeId').value, appData.tree).node;
         n.name = document.getElementById('editName').value;
+        n.email = document.getElementById('editEmail').value;
+        n.phone = document.getElementById('editPhone').value;
         n.role = document.getElementById('editRole').value;
         n.location = document.getElementById('editLocation').value;
         n.engagement = document.getElementById('editEngagement').value;
-        
-        // Multi-select tags
-        const selectedTags = Array.from(document.getElementById('editTagsMulti').selectedOptions).map(o => o.value);
-        n.tags = selectedTags;
-        
-        renderTree(); closeModal();
+        n.tags = Array.from(document.getElementById('editTagsMulti').selectedOptions).map(o => o.value);
+        renderTree(); document.getElementById('editModal').classList.remove('active');
     }
 
-    // --- SETTINGS LOGIC ---
-    function openSettingsModal() {
-        document.getElementById('settingsRoles').value = appData.settings.roles.join(', ');
-        document.getElementById('settingsLocs').value = appData.settings.locations.join(', ');
-        document.getElementById('settingsTags').value = appData.settings.tags.join(', ');
-        document.getElementById('settingsModal').classList.add('active');
-    }
-
-    function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('active'); }
-
-    function saveSettings() {
-        appData.settings.roles = document.getElementById('settingsRoles').value.split(',').map(s => s.trim()).filter(s => s);
-        appData.settings.locations = document.getElementById('settingsLocs').value.split(',').map(s => s.trim()).filter(s => s);
-        appData.settings.tags = document.getElementById('settingsTags').value.split(',').map(s => s.trim()).filter(s => s);
-        renderTree();
-        closeSettingsModal();
-        showToast("Global settings updated");
-    }
-
-    // --- DRAG / DROP ---
-    let draggedId = null;
-    function handleDragStart(e) { draggedId = this.dataset.nodeId; this.classList.add('is-dragging'); }
-    function handleDragOver(e) { e.preventDefault(); this.classList.add('drag-over'); }
-    function handleDragLeave() { this.classList.remove('drag-over'); }
-    function handleDrop(e) {
-        e.preventDefault(); this.classList.remove('drag-over');
-        const tid = this.dataset.nodeId;
-        if (draggedId === tid || isDescendant(draggedId, tid)) return;
-        const s = findNodeAndParent(draggedId, appData.tree);
-        const t = findNodeAndParent(tid, appData.tree);
-        if (s && t) {
-            if (s.parent) s.parent.children = s.parent.children.filter(c => c.id !== draggedId);
-            if (!t.node.children) t.node.children = [];
-            t.node.children.push(s.node);
-            renderTree();
-        }
-    }
-    function handleDragEnd() { this.classList.remove('is-dragging'); }
-
-    // --- ACTIONS ---
-    function addChild(id, e) {
-        e.stopPropagation();
-        const res = findNodeAndParent(id, appData.tree);
-        if (res) {
-            if (!res.node.children) res.node.children = [];
-            res.node.children.push({ id: 'n'+Date.now(), name: "New Person", role: appData.settings.roles[0], location: appData.settings.locations[0], children: [] });
-            renderTree();
-        }
-    }
-
-    function deleteNode(id, e) {
-        e.stopPropagation();
-        const res = findNodeAndParent(id, appData.tree);
-        if (res && res.parent) {
-            if (confirm(`Delete ${res.node.name}?`)) {
-                res.parent.children = res.parent.children.filter(c => c.id !== id);
-                renderTree();
-            }
-        }
-    }
-
-    // --- FILTERING ---
-    function populateFilters() {
-        // Use Settings for filters
-        fillSelect('roleFilter', appData.settings.roles);
-        fillSelect('locFilter', appData.settings.locations);
-        fillSelect('tagFilter', appData.settings.tags);
-    }
-
-    function fillSelect(id, list) {
-        const s = document.getElementById(id);
-        const val = Array.from(s.selectedOptions).map(o => o.value);
-        s.innerHTML = '<option value="ALL">Show All</option>';
-        list.sort().forEach(v => {
-            const o = document.createElement('option');
-            o.value = v.toUpperCase(); o.textContent = v; s.appendChild(o);
-        });
-        Array.from(s.options).forEach(o => { if (val.includes(o.value)) o.selected = true; });
+    // --- FILTER & D&D ---
+    function populateSidebarFilters() {
+        const fill = (id, list) => {
+            const s = document.getElementById(id); const val = s.value;
+            s.innerHTML = '<option value="ALL">Show All</option>' + list.map(i => `<option value="${i.toUpperCase()}">${i}</option>`).join('');
+            s.value = val;
+        };
+        fill('roleFilter', appData.settings.roles);
+        fill('locFilter', appData.settings.locations);
+        const tf = document.getElementById('tagFilter'); const tval = Array.from(tf.selectedOptions).map(o=>o.value);
+        tf.innerHTML = appData.settings.tags.map(t => `<option value="${t.toUpperCase()}" ${tval.includes(t.toUpperCase())?'selected':''}>${t}</option>`).join('');
     }
 
     function applyFilter() {
         const search = document.getElementById('searchInput').value.toUpperCase();
         const role = document.getElementById('roleFilter').value;
         const loc = document.getElementById('locFilter').value;
-        const selTags = Array.from(document.getElementById('tagFilter').selectedOptions).map(o => o.value).filter(v => v !== "ALL");
+        const selTags = Array.from(document.getElementById('tagFilter').selectedOptions).map(o => o.value);
 
-        const items = Array.from(document.querySelectorAll('.tree-item'));
-        const nodeMap = {};
-        items.forEach(li => {
-            const id = li.dataset.id;
-            const matchSearch = !search || li.dataset.searchText.includes(search);
-            const matchRole = role === "ALL" || li.dataset.role === role;
-            const matchLoc = loc === "ALL" || li.dataset.location === loc;
-            const nodeTags = li.dataset.tags;
-            const matchTags = selTags.length === 0 || selTags.every(t => nodeTags.includes(t));
-
-            nodeMap[id] = {
-                li: li,
-                selfMatch: matchSearch && matchRole && matchLoc && matchTags,
-                shouldBeVisible: false
-            };
+        document.querySelectorAll('.tree-item').forEach(li => {
+            const match = (!search || li.dataset.searchText.includes(search)) && 
+                          (role === "ALL" || li.dataset.role === role) && 
+                          (loc === "ALL" || li.dataset.location === loc) && 
+                          (selTags.length === 0 || selTags.every(t => li.dataset.tags.includes(t)));
+            li.style.display = match ? '' : 'none';
         });
+    }
 
-        function markVisible(id) {
-            const entry = nodeMap[id];
-            if (!entry || entry.shouldBeVisible) return;
-            entry.shouldBeVisible = true;
-            const res = findNodeAndParent(id, appData.tree);
-            if (res && res.parent) markVisible(res.parent.id);
+    function handleDragStart(e) { e.dataTransfer.setData("text", e.target.closest('.node-card').dataset.nodeId); }
+    function handleDrop(e) {
+        e.preventDefault();
+        const sourceId = e.dataTransfer.getData("text");
+        const targetId = e.target.closest('.node-card').dataset.nodeId;
+        if (sourceId === targetId || isDescendant(sourceId, targetId)) return;
+        const s = findNodeAndParent(sourceId, appData.tree);
+        const t = findNodeAndParent(targetId, appData.tree);
+        if (s.parent) s.parent.children = s.parent.children.filter(c => c.id !== sourceId);
+        if (!t.node.children) t.node.children = [];
+        t.node.children.push(s.node);
+        renderTree();
+    }
+    function handleDragOver(e) { e.preventDefault(); }
+
+    function addChild(id, e) {
+        e.stopPropagation();
+        const n = findNodeAndParent(id, appData.tree).node;
+        if (!n.children) n.children = [];
+        const newId = 'n' + Date.now();
+        n.children.push({ id: newId, name: "New Person", role: appData.settings.roles[0], children: [] });
+        renderTree(); openEditModal(newId);
+    }
+
+    function deleteNode(id, e) {
+        e.stopPropagation();
+        const res = findNodeAndParent(id, appData.tree);
+        if (res.parent && confirm("Delete?")) {
+            res.parent.children = res.parent.children.filter(c => c.id !== id);
+            renderTree();
         }
-
-        Object.keys(nodeMap).forEach(id => { if (nodeMap[id].selfMatch) markVisible(id); });
-
-        Object.keys(nodeMap).forEach(id => {
-            const entry = nodeMap[id];
-            entry.li.style.display = entry.shouldBeVisible ? '' : 'none';
-            const card = entry.li.querySelector('.node-card');
-            if (entry.selfMatch && (search || selTags.length > 0 || role !== "ALL" || loc !== "ALL")) {
-                card.classList.add('matched');
-            } else { card.classList.remove('matched'); }
-        });
     }
 
+    function closeModal() { document.getElementById('editModal').classList.remove('active'); }
+    function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('active'); }
     function triggerUpload() { document.getElementById('jsonFileInput').click(); }
-    function saveJson() {
-        const blob = new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'});
-        const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='org_data.json'; a.click();
-    }
-    function importJson(input) {
-        const reader = new FileReader();
-        reader.onload = (e) => { 
-            try {
-                const data = JSON.parse(e.target.result);
-                appData = data;
-                document.getElementById('appTitle').value = appData.title || "Org Viewer";
-                renderTree(); 
-            } catch(err) { alert("Invalid JSON"); }
-        };
-        reader.readAsText(input.files[0]);
-    }
+    function saveJson() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'})); a.download='org.json'; a.click(); }
+    function importJson(i) { const r = new FileReader(); r.onload = (e) => { appData = JSON.parse(e.target.result); renderTree(); }; r.readAsText(i.files[0]); }
     function expandAll() { document.querySelectorAll('.children-list').forEach(u => u.classList.remove('hidden')); }
     function collapseAll() { document.querySelectorAll('.children-list').forEach(u => u.classList.add('hidden')); }
 
-    document.getElementById('appTitle').value = appData.title;
     renderTree();
 </script>
 </body>
