@@ -282,7 +282,11 @@
                         <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
                         <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
                     </div>
-                    <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end;">
+                    <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end; display: flex; gap: 2rem;">
+                        <div class="input-group">
+                            <label>End Date</label>
+                            <input type="date" id="tkStartDate" onchange="TrackerManager.renderTimeTable()" style="background-color: var(--modal-bg); color: #fff;">
+                        </div>
                         <div class="input-group">
                             <label>Time Unit</label>
                             <div style="display: flex; gap: 15px; margin-top: 5px;">
@@ -292,12 +296,8 @@
                             </div>
                         </div>
                         <div class="input-group">
-                            <label>Start Date</label>
-                            <input type="date" id="tkStartDate" onchange="TrackerManager.renderTimeTable()">
-                        </div>
-                        <div class="input-group">
                             <label>Data Points</label>
-                            <select id="tkTimeCount" onchange="TrackerManager.renderTimeTable()"></select>
+                            <select id="tkTimeCount" onchange="TrackerManager.renderTimeTable()" style="width: 80px; min-width: 60px;"></select>
                         </div>
                     </div>
                     <div class="input-group">

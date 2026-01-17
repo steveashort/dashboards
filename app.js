@@ -699,15 +699,19 @@ export const TrackerManager = {
         
         for(let i=0; i<count; i++) {
             let label = '';
+            // Calculate backwards from End Date so the last one is the selected date
+            // Order is chronological: 2024, 2025, 2026 (if 2026 is end)
+            const offset = (count - 1) - i; 
+            
             if (unit === 'year') {
-                label = (start.getFullYear() + i).toString();
+                label = (start.getFullYear() - offset).toString();
             } else if (unit === 'month') {
-                let d = new Date(start.getFullYear(), start.getMonth() + i, 1);
+                let d = new Date(start.getFullYear(), start.getMonth() - offset, 1);
                 let m = d.getMonth() + 1;
                 label = `${d.getFullYear()}-${m.toString().padStart(2, '0')}`;
             } else {
                 let d = new Date(start);
-                d.setDate(d.getDate() + i);
+                d.setDate(d.getDate() - offset);
                 label = d.toISOString().split('T')[0];
             }
             labels.push(label);
@@ -715,28 +719,36 @@ export const TrackerManager = {
 
         const container = getEl('lineTableContainer');
         if (!container) return;
-        let html = '<table style="width:100%; border-collapse: separate; border-spacing: 0;">';
-        html += '<thead><tr><th style="padding:8px; text-align:left; border-bottom:1px solid #444; position:sticky; top:0; background:var(--modal-bg);">Date</th>';
         
-        series.forEach((s, si) => {
-            html += `<th style="padding:8px; border-bottom:1px solid #444; position:sticky; top:0; background:var(--modal-bg);">
-                <div style="display:flex; align-items:center; gap:5px;">
-                    <input type="text" class="ts-name" value="${s.name}" style="width:80px; font-size:0.8rem; background:#222; border:1px solid #444; color:#fff; padding:2px;" data-idx="${si}">
-                    <input type="color" class="ts-color" value="${s.color}" style="width:20px; height:20px; border:none; padding:0;" data-idx="${si}">
-                </div>
-            </th>`;
+        // Transposed Layout: Columns are Time, Rows are Series
+        let html = '<div style="overflow-x:auto;"><table style="width:100%; border-collapse: separate; border-spacing: 0;">';
+        
+        // Header: Series Name Column + Date Columns
+        html += '<thead><tr><th style="padding:8px; text-align:left; border-bottom:1px solid #444; position:sticky; left:0; top:0; background:var(--modal-bg); z-index:20; min-width:140px;">Series Name</th>';
+        
+        labels.forEach(l => {
+            html += `<th style="padding:8px; border-bottom:1px solid #444; position:sticky; top:0; background:var(--modal-bg); z-index:10; min-width:80px; text-align:center;">${l}</th>`;
         });
         html += '</tr></thead><tbody>';
 
-        labels.forEach((l, li) => {
-            html += `<tr><td style="padding:4px 8px; font-size:0.8rem; color:#aaa; border-bottom:1px solid #333;">${l}</td>`;
-            series.forEach((s, si) => {
+        series.forEach((s, si) => {
+            html += `<tr>
+                <td style="padding:8px; border-bottom:1px solid #333; position:sticky; left:0; background:var(--modal-bg); z-index:10;">
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="color" class="ts-color" value="${s.color}" style="width:20px; height:20px; border:none; padding:0; cursor:pointer;" data-idx="${si}">
+                        <input type="text" class="ts-name" value="${s.name}" style="width:100px; font-size:0.8rem; background:#222; border:1px solid #444; color:#fff; padding:2px;" data-idx="${si}">
+                    </div>
+                </td>`;
+            
+            labels.forEach((l, li) => {
                 const val = (s.values && s.values[li] !== undefined) ? s.values[li] : '';
-                html += `<td style="padding:2px; border-bottom:1px solid #333;"><input type="number" class="ts-val" data-s="${si}" data-r="${li}" value="${val}" style="width:100%; background:transparent; border:none; color:#fff; text-align:right;"></td>`;
+                html += `<td style="padding:2px; border-bottom:1px solid #333;">
+                    <input type="number" class="ts-val" data-s="${si}" data-r="${li}" value="${val}" style="width:100%; background:transparent; border:none; color:#fff; text-align:center;">
+                </td>`;
             });
             html += '</tr>';
         });
-        html += '</tbody></table>';
+        html += '</tbody></table></div>';
         
         container.innerHTML = html;
         container.dataset.labels = JSON.stringify(labels);
@@ -745,30 +757,30 @@ export const TrackerManager = {
     scrapeTimeSeries() {
         const container = getEl('lineTableContainer');
         if (!container) return [];
-        const headers = container.querySelectorAll('th .ts-name');
-        if (headers.length === 0) return [];
+        // Rows are now Series (tr in tbody)
+        const rows = container.querySelectorAll('tbody tr');
+        if (rows.length === 0) return [];
 
         const series = [];
-        headers.forEach((h, i) => {
-            const colorIn = container.querySelector(`.ts-color[data-idx="${i}"]`);
+        rows.forEach((row, si) => {
+            const nameIn = row.querySelector('.ts-name');
+            const colorIn = row.querySelector('.ts-color');
+            const name = nameIn ? nameIn.value : `Series ${si+1}`;
             const color = colorIn ? colorIn.value : '#03dac6';
-            series.push({ name: h.value, color: color, values: [] });
+            
+            const values = [];
+            // Find values for this series row
+            const valInputs = row.querySelectorAll('.ts-val');
+            valInputs.forEach(inp => values.push(parseFloat(inp.value) || 0));
+            
+            series.push({ name, color, values });
         });
-
-        // Values are flat list of inputs: row 0 col 0, row 0 col 1, row 1 col 0...
-        // Actually, easier to select by data attributes
-        series.forEach((s, si) => {
-            const inputs = container.querySelectorAll(`.ts-val[data-s="${si}"]`);
-            // Convert NodeList to sorted array based on row index just in case, but querySelectorAll is doc order
-            // inputs are naturally ordered by row
-            inputs.forEach(inp => {
-                s.values.push(parseFloat(inp.value) || 0);
-            });
-        });
+        
         return series;
     },
 
     addTimeSeriesColumn() {
+        // Adds a new Series (Row)
         const series = this.scrapeTimeSeries();
         const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
         const color = colors[series.length % colors.length];
@@ -777,6 +789,7 @@ export const TrackerManager = {
     },
 
     removeTimeSeriesColumn() {
+        // Removes the last Series (Row)
         const series = this.scrapeTimeSeries();
         if(series.length > 1) {
             series.pop();
