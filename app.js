@@ -300,12 +300,12 @@ export const renderBoard = () => {
                 statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
             } else if (renderType === 'rag' || renderType === 'ryg') {
                 const status = (renderType === 'ryg') ? t.status : (t.color1 === '#ff1744' ? 'red' : (t.color1 === '#ffb300' ? 'amber' : 'green'));
-                const icon = status === 'red' ? '!' : (status === 'amber' ? '⚠' : (status === 'green' ? '✓' : '?'));
                 
                 const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
                 const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
                 
-                visualHTML = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; box-shadow: 0 0 15px ${t.color1}" ${hoverEvents}>${icon}</div>`;
+                const iconHTML = Visuals.createRAGIconHTML(status);
+                visualHTML = `<div class="ryg-icon-wrapper" ${hoverEvents}>${iconHTML}</div>`;
                 statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
             } else if (renderType === 'waffle') {
                 const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
