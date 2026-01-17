@@ -176,20 +176,6 @@
                         </div>
                     </div>
                 </div>
-
-                <div id="donutInputs" style="display:none;">
-                    <div class="input-group">
-                        <label>Data Points (Max 10)</label>
-                        <div id="donutDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
-                            <!-- Rows will be added here -->
-                        </div>
-                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addDonutRow()">+ Add Data Point</button>
-                    </div>
-                    <div class="input-group" style="margin-top: 1rem;">
-                        <label>Notes (Hover info - Published View)</label>
-                        <textarea id="tkDonutNotes" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
-                    </div>
-                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="UserManager.deleteUser()" id="deleteBtn">Delete</button>
@@ -528,23 +514,57 @@
 
                                                     </div>
 
-                                                                <div id="noteInputs" style="display:none;">
+                                                                                                <div id="noteInputs" style="display:none;">
 
-                                                                    <div class="input-group">
+                                                                                                    <div class="input-group">
 
-                                                                        <label>Content (Markdown supported)</label>
+                                                                                                        <label>Content (Markdown supported)</label>
 
-                                                                        <textarea id="tkNoteContent" style="height: 200px; font-family: monospace;" placeholder="# Heading&#10;- Bullet&#10;**Bold**&#10;[Link](google.com)"></textarea>
+                                                                                                        <textarea id="tkNoteContent" style="height: 200px; font-family: monospace;" placeholder="# Heading&#10;- Bullet&#10;**Bold**&#10;[Link](google.com)"></textarea>
+
+                                                                                                    </div>
+
+                                                                                                </div>
+
+                                                                
+
+                                                                                                <div id="donutInputs" style="display:none;">
+
+                                                                                                    <div class="input-group">
+
+                                                                                                        <label>Data Points (Max 10)</label>
+
+                                                                                                        <div id="donutDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+
+                                                                                                            <!-- Rows will be added here -->
+
+                                                                                                        </div>
+
+                                                                                                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addDonutRow()">+ Add Data Point</button>
+
+                                                                                                    </div>
+
+                                                                                                    <div class="input-group" style="margin-top: 1rem;">
+
+                                                                                                        <label>Notes (Hover info - Published View)</label>
+
+                                                                                                        <textarea id="tkDonutNotes" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+
+                                                                                                    </div>
+
+                                                                                                </div>
+
+                                                                            </div>
+
+                                                                            <div class="modal-footer">
+
+                                                                                <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Tracker</button>
+
+                                                                            </div>
+
+                                                                        </div>
 
                                                                     </div>
-
-                                                                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Tracker</button>
-            </div>
-        </div>
-    </div>
 
     <!-- LOAD SCRIPT LAST to ensure it's available -->
     <!-- Changed to type="module" and added an export to window -->
