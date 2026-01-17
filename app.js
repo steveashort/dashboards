@@ -883,8 +883,9 @@ export const TrackerManager = {
             if (lines.length < 2) return App.alert("CSV must have header + data.");
             
             const headers = lines[0].split(/[,\t]+/).map(s => s.trim());
-            const seriesNames = headers.slice(1);
+            let seriesNames = headers.slice(1);
             if (seriesNames.length === 0) return App.alert("No series columns.");
+            if (seriesNames.length > 6) seriesNames = seriesNames.slice(0, 6);
 
             // Detect Unit from first data row date
             const firstRowDate = lines[1].split(/[,\t]+/)[0].trim();
