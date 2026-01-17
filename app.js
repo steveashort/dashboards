@@ -50,14 +50,24 @@ export const initApp = () => {
     
     const updateDateUI = () => {
         const r = getRanges();
-        getEl('dateRangeDisplay').innerText = `Current: ${r.current} | Next: ${r.next}`;
-        getEl('overviewTitleCurrent').innerHTML = `Top 5 Team Achievements <span class="date-suffix">${r.current}</span>`;
-        getEl('overviewTitleNext').innerHTML = `Top 5 Activities Next Week <span class="date-suffix">${r.next}</span>`;
+        const drd = getEl('dateRangeDisplay');
+        if (drd) drd.innerText = `Current: ${r.current} | Next: ${r.next}`;
+        
+        const otc = getEl('overviewTitleCurrent');
+        if (otc) otc.innerHTML = `Top 5 Team Achievements <span class="date-suffix">${r.current}</span>`;
+        
+        const otn = getEl('overviewTitleNext');
+        if (otn) otn.innerHTML = `Top 5 Activities Next Week <span class="date-suffix">${r.next}</span>`;
         
         // Update Modal Headers
-        if(getEl('lastWeekTitle')) getEl('lastWeekTitle').innerText = `Last Week (${r.last})`;
-        if(getEl('thisWeekTitle')) getEl('thisWeekTitle').innerText = `This Week (${r.current})`;
-        if(getEl('nextWeekTitle')) getEl('nextWeekTitle').innerText = `Next Week (${r.next})`;
+        const lwt = getEl('lastWeekTitle');
+        if(lwt) lwt.innerText = `Last Week (${r.last})`;
+        
+        const twt = getEl('thisWeekTitle');
+        if(twt) twt.innerText = `This Week (${r.current})`;
+        
+        const nwt = getEl('nextWeekTitle');
+        if(nwt) nwt.innerText = `Next Week (${r.next})`;
     };
 
     updateDateUI();
@@ -87,6 +97,7 @@ export const App = {
     },
     initDragAndDrop: () => {
         const grid = getEl('trackerGrid');
+        if (!grid) return;
         let dragSrcEl = null;
 
         grid.addEventListener('dragstart', (e) => {
@@ -146,27 +157,34 @@ export const App = {
         });
     },
     alert: (msg) => {
-        getEl('alertMessage').innerText = msg;
-        getEl('alertModal').classList.add('active');
+        const am = getEl('alertMessage');
+        if (am) am.innerText = msg;
+        const modal = getEl('alertModal');
+        if (modal) modal.classList.add('active');
         console.log("Alert:", msg);
     },
     confirm: (msg, callback) => {
-        getEl('confirmMessage').innerText = msg;
+        const cm = getEl('confirmMessage');
+        if (cm) cm.innerText = msg;
         const btn = getEl('confirmYesBtn');
-        const newBtn = btn.cloneNode(true);
-        btn.parentNode.replaceChild(newBtn, btn);
-        newBtn.addEventListener('click', () => {
-            if(callback) callback();
-            ModalManager.closeModal('confirmModal');
-        });
-        getEl('confirmModal').classList.add('active');
+        if (btn) {
+            const newBtn = btn.cloneNode(true);
+            btn.parentNode.replaceChild(newBtn, btn);
+            newBtn.addEventListener('click', () => {
+                if(callback) callback();
+                ModalManager.closeModal('confirmModal');
+            });
+        }
+        const modal = getEl('confirmModal');
+        if (modal) modal.classList.add('active');
     },
     togglePublishMode: () => {
         document.body.classList.toggle('publishing');
         renderBoard();
     },
     saveTitle: () => {
-        State.title = getEl('appTitle').innerText;
+        const titleEl = getEl('appTitle');
+        if (titleEl) State.title = titleEl.innerText;
         console.log("Title saved");
     }
 };
@@ -189,13 +207,14 @@ export const renderBoard = () => {
     console.log("Rendering Board...");
 
     // Render Header
-    getEl('appTitle').innerText = State.title || "Server Platforms";
+    const titleEl = getEl('appTitle');
+    if (titleEl) titleEl.innerText = State.title || "Server Platforms";
     
     // Render Overview
     const sL = getEl('teamSuccessList'); 
     const aL = getEl('teamActivityList');
-    sL.innerHTML = ''; 
-    aL.innerHTML = ''; 
+    if (sL) sL.innerHTML = ''; 
+    if (aL) aL.innerHTML = ''; 
     let sc = 0, ac = 0;
 
     State.members.forEach(m => {
@@ -203,14 +222,14 @@ export const renderBoard = () => {
         if(m.lastWeek && m.lastWeek.tasks) {
             m.lastWeek.tasks.forEach(t => {
                 if(t.isTeamSuccess && t.text.trim()) { 
-                    sc++; sL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
+                    sc++; if (sL) sL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
                 }
             });
         }
         if(m.thisWeek && m.thisWeek.tasks) {
             m.thisWeek.tasks.forEach(t => {
                 if(t.isTeamSuccess && t.text.trim()) { 
-                    sc++; sL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
+                    sc++; if (sL) sL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
                 }
             });
         }
@@ -218,187 +237,192 @@ export const renderBoard = () => {
         if(m.nextWeek && m.nextWeek.tasks) {
             m.nextWeek.tasks.forEach(t => {
                 if(t.isTeamActivity && t.text.trim()) { 
-                    ac++; aL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
+                    ac++; if (aL) aL.innerHTML += `<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`; 
                 }
             });
         }
     });
 
-    if(sc===0) sL.innerHTML = '<li>No items selected.</li>'; 
-    if(ac===0) aL.innerHTML = '<li>No items selected.</li>';
+    if(sc===0 && sL) sL.innerHTML = '<li>No items selected.</li>'; 
+    if(ac===0 && aL) aL.innerHTML = '<li>No items selected.</li>';
     
-    getEl('additionalInfoPreview').innerHTML = parseMarkdown(State.additionalInfo) || "No additional info.";
+    const aip = getEl('additionalInfoPreview');
+    if (aip) aip.innerHTML = parseMarkdown(State.additionalInfo) || "No additional info.";
 
     // Render Trackers
     const tGrid = getEl('trackerGrid');
-    tGrid.innerHTML = '';
-    
-    State.trackers.forEach((t, i) => {
-        const card = document.createElement('div');
-        card.className = `tracker-card size-${t.size || 'M'}`;
-        card.dataset.index = i;
+    if (tGrid) {
+        tGrid.innerHTML = '';
         
-        if (!document.body.classList.contains('publishing')) {
-            card.draggable = true;
-        }
-
-        card.onclick = () => {
-             if (document.body.classList.contains('publishing')) {
-                 ZoomManager.openChartModal(i);
-             } else {
-                 TrackerManager.openModal(i);
-             }
-        };
-
-        let visualHTML = '';
-        let statsHTML = '';
-        
-        let renderType = t.type;
-        if (renderType === 'line1' || renderType === 'line2') renderType = 'line';
-        if (renderType === 'ryg') renderType = 'rag';
-
-        if (renderType === 'counter') {
-            visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
-            statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
-        } else if (renderType === 'rag' || renderType === 'ryg') {
-            const status = (renderType === 'ryg') ? t.status : (t.color1 === '#ff1744' ? 'red' : (t.color1 === '#ffb300' ? 'amber' : 'green'));
-            const icon = status === 'red' ? '!' : (status === 'amber' ? '⚠' : (status === 'green' ? '✓' : '?'));
-            visualHTML = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; box-shadow: 0 0 15px ${t.color1}">${icon}</div>`;
-            statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
-        } else if (renderType === 'waffle') {
-            const html = createWaffleHTML(100, t.active || 0, t.colorVal || '#03dac6', t.colorBg || '#333333');
-            visualHTML = html;
-            statsHTML = `<div class="tracker-stats">${t.active} / ${t.total}</div>`;
-        } else if (renderType === 'line' || renderType === 'line1' || renderType === 'line2') {
-            let labels = []; let series = [];
-            if (renderType === 'line1' || renderType === 'line2') {
-                labels = t.data.map(d => d.label);
-                series.push({ name: t.y1Leg || 'Series 1', color: t.color1 || '#03dac6', values: t.data.map(d => d.y1 || 0) });
-                if (renderType === 'line2') series.push({ name: t.y2Leg || 'Series 2', color: t.color2 || '#ff4081', values: t.data.map(d => d.y2 || 0) });
-            } else {
-                labels = t.labels; series = t.series;
+        State.trackers.forEach((t, i) => {
+            const card = document.createElement('div');
+            card.className = `tracker-card size-${t.size || 'M'}`;
+            card.dataset.index = i;
+            
+            if (!document.body.classList.contains('publishing')) {
+                card.draggable = true;
             }
-            visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createLineChartSVG(labels, series, t.yLabel)}</div>`;
-        } else if (renderType === 'bar') {
-            if (t.series) {
-                visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createMultiBarChartSVG(t.labels, t.series)}</div>`;
-            } else {
-                // Legacy Simple Bar
-                const svg = Visuals.createBarChartSVG(t.data, t.yLabel, t.color1);
-                visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${svg}</div>`;
-            }
-        } else {
-            const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
-            const c1 = t.colorVal || t.color1 || '#00e676'; 
-            const c2 = t.color2 || '#ff1744';
-            // Use 2-color gradient
-            const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
-            visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
-            statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
-        }
 
-        card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
-        card.innerHTML += `<div class="tracker-desc">${t.desc}</div>`;
-        card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
-        card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
-        
-        tGrid.appendChild(card);
-    });
+            card.onclick = () => {
+                 if (document.body.classList.contains('publishing')) {
+                     ZoomManager.openChartModal(i);
+                 } else {
+                     TrackerManager.openModal(i);
+                 }
+            };
+
+            let visualHTML = '';
+            let statsHTML = '';
+            
+            let renderType = t.type;
+            if (renderType === 'line1' || renderType === 'line2') renderType = 'line';
+            if (renderType === 'ryg') renderType = 'rag';
+
+            if (renderType === 'counter') {
+                visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
+                statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
+            } else if (renderType === 'rag' || renderType === 'ryg') {
+                const status = (renderType === 'ryg') ? t.status : (t.color1 === '#ff1744' ? 'red' : (t.color1 === '#ffb300' ? 'amber' : 'green'));
+                const icon = status === 'red' ? '!' : (status === 'amber' ? '⚠' : (status === 'green' ? '✓' : '?'));
+                visualHTML = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; box-shadow: 0 0 15px ${t.color1}">${icon}</div>`;
+                statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
+            } else if (renderType === 'waffle') {
+                const html = createWaffleHTML(100, t.active || 0, t.colorVal || '#03dac6', t.colorBg || '#333333');
+                visualHTML = html;
+                statsHTML = `<div class="tracker-stats">${t.active} / ${t.total}</div>`;
+            } else if (renderType === 'line' || renderType === 'line1' || renderType === 'line2') {
+                let labels = []; let series = [];
+                if (renderType === 'line1' || renderType === 'line2') {
+                    labels = t.data.map(d => d.label);
+                    series.push({ name: t.y1Leg || 'Series 1', color: t.color1 || '#03dac6', values: t.data.map(d => d.y1 || 0) });
+                    if (renderType === 'line2') series.push({ name: t.y2Leg || 'Series 2', color: t.color2 || '#ff4081', values: t.data.map(d => d.y2 || 0) });
+                } else {
+                    labels = t.labels; series = t.series;
+                }
+                visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createLineChartSVG(labels, series, t.yLabel)}</div>`;
+            } else if (renderType === 'bar') {
+                if (t.series) {
+                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createMultiBarChartSVG(t.labels, t.series)}</div>`;
+                } else {
+                    // Legacy Simple Bar
+                    const svg = Visuals.createBarChartSVG(t.data, t.yLabel, t.color1);
+                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${svg}</div>`;
+                }
+            } else {
+                const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
+                const c1 = t.colorVal || t.color1 || '#00e676'; 
+                const c2 = t.color2 || '#ff1744';
+                // Use 2-color gradient
+                const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
+                visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
+                statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
+            }
+
+            card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
+            card.innerHTML += `<div class="tracker-desc">${t.desc}</div>`;
+            card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
+            card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
+            
+            tGrid.appendChild(card);
+        });
+    }
 
     // Render Users
     const grid = getEl('teamGrid');
-    grid.innerHTML = '';
-    State.members.forEach((m, i) => {
-        // Last Week Tasks
-        let lw = ''; 
-        if(m.lastWeek && m.lastWeek.tasks) {
-            m.lastWeek.tasks.forEach((t,x) => {
-                if(t.text.trim()) lw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleSuccess(${i},${x})"><span>${t.text}</span></li>`;
-            });
-        }
+    if (grid) {
+        grid.innerHTML = '';
+        State.members.forEach((m, i) => {
+            // Last Week Tasks
+            let lw = ''; 
+            if(m.lastWeek && m.lastWeek.tasks) {
+                m.lastWeek.tasks.forEach((t,x) => {
+                    if(t.text.trim()) lw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleSuccess(${i},${x})"><span>${t.text}</span></li>`;
+                });
+            }
 
-        // This Week Tasks (Priorities)
-        let tw = ''; 
-        if(m.thisWeek && m.thisWeek.tasks) {
-            m.thisWeek.tasks.forEach((t,x) => {
-                // Fixed: Check isTeamSuccess because toggleActivity toggles isTeamSuccess now
-                if(t.text.trim()) tw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleActivity(${i},${x})"><span>${t.text}</span></li>`;
-            });
-        }
+            // This Week Tasks (Priorities)
+            let tw = ''; 
+            if(m.thisWeek && m.thisWeek.tasks) {
+                m.thisWeek.tasks.forEach((t,x) => {
+                    // Fixed: Check isTeamSuccess because toggleActivity toggles isTeamSuccess now
+                    if(t.text.trim()) tw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleActivity(${i},${x})"><span>${t.text}</span></li>`;
+                });
+            }
 
-        // Next Week Tasks (Future)
-        let nw = '';
-        if(m.nextWeek && m.nextWeek.tasks) {
-            m.nextWeek.tasks.forEach((t,x) => {
-                // Added: Checkbox input calling toggleFuture
-                if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleFuture(${i},${x})"><span>${t.text}</span></li>`;
-            });
-        }
-        
-        // Helper to calc average load pill
-        const getAvgPill = (loadArr) => {
-            let score = 0; let count = 0;
-            (loadArr||[]).forEach(v => {
-                if(v === 'L') { score += 1; count++; } 
-                else if(v === 'N') { score += 2; count++; } 
-                else if(v === 'R') { score += 3; count++; } 
-            });
-            const avg = count === 0 ? 0 : score / count;
-            let text = 'Medium'; let cls = 'status-busy';
-            if(avg > 0 && avg < 1.6) { text = 'Low'; cls = 'status-under'; } 
-            else if(avg > 2.4) { text = 'High'; cls = 'status-over'; } 
-            else if(avg === 0) { text = 'None'; cls = 'status-under'; } 
-            return `<div class="status-pill ${cls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${text}</div>`;
-        };
+            // Next Week Tasks (Future)
+            let nw = '';
+            if(m.nextWeek && m.nextWeek.tasks) {
+                m.nextWeek.tasks.forEach((t,x) => {
+                    // Added: Checkbox input calling toggleFuture
+                    if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleFuture(${i},${x})"><span>${t.text}</span></li>`;
+                });
+            }
+            
+            // Helper to calc average load pill
+            const getAvgPill = (loadArr) => {
+                let score = 0; let count = 0;
+                (loadArr||[]).forEach(v => {
+                    if(v === 'L') { score += 1; count++; } 
+                    else if(v === 'N') { score += 2; count++; } 
+                    else if(v === 'R') { score += 3; count++; } 
+                });
+                const avg = count === 0 ? 0 : score / count;
+                let text = 'Medium'; let cls = 'status-busy';
+                if(avg > 0 && avg < 1.6) { text = 'Low'; cls = 'status-under'; } 
+                else if(avg > 2.4) { text = 'High'; cls = 'status-over'; } 
+                else if(avg === 0) { text = 'None'; cls = 'status-under'; } 
+                return `<div class="status-pill ${cls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${text}</div>`;
+            };
 
-        const c = document.createElement('div');
-        c.className = 'member-card';
-        c.onclick = () => UserManager.openUserModal(i);
-        
-        // Status Pill Logic (Last Week)
-        const statusMap = { 'under': 'Low', 'busy': 'Medium', 'over': 'High', 'absent': 'Absent' };
-        const statusVal = (m.lastWeek && m.lastWeek.status) ? m.lastWeek.status : 'busy';
-        const statusText = statusMap[statusVal] || 'Medium';
-        const statusCls = statusVal === 'absent' ? 'status-absent' : `status-${statusVal}`;
-        const pillHTML = `<div class="status-pill ${statusCls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${statusText}</div>`;
+            const c = document.createElement('div');
+            c.className = 'member-card';
+            c.onclick = () => UserManager.openUserModal(i);
+            
+            // Status Pill Logic (Last Week)
+            const statusMap = { 'under': 'Low', 'busy': 'Medium', 'over': 'High', 'absent': 'Absent' };
+            const statusVal = (m.lastWeek && m.lastWeek.status) ? m.lastWeek.status : 'busy';
+            const statusText = statusMap[statusVal] || 'Medium';
+            const statusCls = statusVal === 'absent' ? 'status-absent' : `status-${statusVal}`;
+            const pillHTML = `<div class="status-pill ${statusCls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${statusText}</div>`;
 
-        // This Week Grid
-        const thisLoad = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N'];
-        const mgThis = thisLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
+            // This Week Grid
+            const thisLoad = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N'];
+            const mgThis = thisLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
 
-        // Next Week Grid
-        const nextLoad = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N'];
-        const mgNext = nextLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
+            // Next Week Grid
+            const nextLoad = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N'];
+            const mgNext = nextLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
 
-        c.innerHTML = `<div class="member-header">${m.name}</div>`;
-        
-        let content = `<div class="member-card-content">`;
-        
-        // Col 1: Last Week
-        content += `<div class="card-col"><div class="col-header">Last Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().last.split(' - ')[0]})</span></div>`;
-        content += `<div style="text-align:center; margin-bottom:5px;">${pillHTML}</div>`;
-        content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${lw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
-        content += `</div>`;
+            c.innerHTML = `<div class="member-header">${m.name}</div>`;
+            
+            let content = `<div class="member-card-content">`;
+            
+            // Col 1: Last Week
+            content += `<div class="card-col"><div class="col-header">Last Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().last.split(' - ')[0]})</span></div>`;
+            content += `<div style="text-align:center; margin-bottom:5px;">${pillHTML}</div>`;
+            content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${lw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
+            content += `</div>`;
 
-        // Col 2: This Week
-        content += `<div class="card-col"><div class="col-header">This Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().current.split(' - ')[0]})</span></div>`;
-        content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.thisWeek ? m.thisWeek.load : [])}</div>`;
-        content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${tw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
-        content += `<div class="daily-mini-grid" style="margin-top:auto;">${mgThis}</div>`;
-        content += `</div>`;
+            // Col 2: This Week
+            content += `<div class="card-col"><div class="col-header">This Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().current.split(' - ')[0]})</span></div>`;
+            content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.thisWeek ? m.thisWeek.load : [])}</div>`;
+            content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${tw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
+            content += `<div class="daily-mini-grid" style="margin-top:auto;">${mgThis}</div>`;
+            content += `</div>`;
 
-        // Col 3: Next Week
-        content += `<div class="card-col"><div class="col-header">Next Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().next.split(' - ')[0]})</span></div>`;
-        content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.nextWeek ? m.nextWeek.load : [])}</div>`;
-        content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${nw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
-        content += `<div class="daily-mini-grid" style="margin-top:auto;">${mgNext}</div>`;
-        content += `</div>`;
+            // Col 3: Next Week
+            content += `<div class="card-col"><div class="col-header">Next Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().next.split(' - ')[0]})</span></div>`;
+            content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.nextWeek ? m.nextWeek.load : [])}</div>`;
+            content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${nw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
+            content += `<div class="daily-mini-grid" style="margin-top:auto;">${mgNext}</div>`;
+            content += `</div>`;
 
-        content += `</div>`; // End content
-        c.innerHTML += content;
+            content += `</div>`; // End content
+            c.innerHTML += content;
 
-        grid.appendChild(c);
-    });
+            grid.appendChild(c);
+        });
+    }
 };
 
 // --- MODULE: ZOOM MANAGER ---
@@ -407,7 +431,8 @@ export const ZoomManager = {
         const t = State.trackers[index];
         if(!t) return;
 
-        getEl('zoomTitle').innerText = t.desc;
+        const titleEl = getEl('zoomTitle');
+        if (titleEl) titleEl.innerText = t.desc;
         let content = '';
         
         let renderType = t.type;
@@ -443,8 +468,11 @@ export const ZoomManager = {
             content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
         }
 
-        getEl('zoomBody').className = 'zoom-body-chart';
-        getEl('zoomBody').innerHTML = `<div style="width:100%; height:100%;">${content}</div>`;
+        const bodyEl = getEl('zoomBody');
+        if (bodyEl) {
+            bodyEl.className = 'zoom-body-chart';
+            bodyEl.innerHTML = `<div style="width:100%; height:100%;">${content}</div>`;
+        }
         ModalManager.openModal('zoomModal');
     }
 };
@@ -457,7 +485,8 @@ export const TrackerManager = {
 
         State.editingTrackerIndex = index;
         const isEdit = index > -1;
-        getEl('trackerModalTitle').innerText = isEdit ? 'Edit Progress Tracker' : 'Add Progress Tracker';
+        const titleEl = getEl('trackerModalTitle');
+        if (titleEl) titleEl.innerText = isEdit ? 'Edit Progress Tracker' : 'Add Progress Tracker';
         
         // Hide all input sections first
         ['gauge','bar','line','counter','rag','waffle'].forEach(type => {
@@ -466,26 +495,37 @@ export const TrackerManager = {
         });
 
         // Reset containers
-        getEl('barSeriesContainer').innerHTML = '';
-        // getEl('lineSeriesContainer').innerHTML = ''; // Removed
-        getEl('barLabelsContainer').innerHTML = ''; 
-        // getEl('lineLabelsContainer').innerHTML = ''; // Removed
-        if(getEl('lineTableContainer')) getEl('lineTableContainer').innerHTML = '';
-        getEl('csvInput').value = ''; 
-        getEl('csvInputBar').value = '';
+        const bsc = getEl('barSeriesContainer');
+        if (bsc) bsc.innerHTML = '';
         
-        // Fill 24 inputs for bar
-        for(let k=0; k<24; k++) {
-            getEl('barLabelsContainer').innerHTML += `<input type="text" id="bLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+        const blc = getEl('barLabelsContainer');
+        if (blc) {
+            blc.innerHTML = '';
+            // Fill 24 inputs for bar
+            for(let k=0; k<24; k++) {
+                blc.innerHTML += `<input type="text" id="bLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+            }
         }
+
+        const ltc = getEl('lineTableContainer');
+        if (ltc) ltc.innerHTML = '';
+
+        const csvIn = getEl('csvInput');
+        if (csvIn) csvIn.value = '';
+
+        const csvInBar = getEl('csvInputBar');
+        if (csvInBar) csvInBar.value = '';
 
         const tracker = isEdit ? State.trackers[index] : null;
         
         let type = tracker ? tracker.type : 'gauge';
         this.setType(type);
 
-        getEl('tkDesc').value = tracker ? tracker.desc : '';
-        getEl('tkSize').value = tracker ? (tracker.size || 'M') : 'M';
+        const descIn = getEl('tkDesc');
+        if (descIn) descIn.value = tracker ? tracker.desc : '';
+        
+        const sizeIn = getEl('tkSize');
+        if (sizeIn) sizeIn.value = tracker ? (tracker.size || 'M') : 'M';
 
         // Load Specific Data
         if (type === 'line') {
@@ -499,11 +539,15 @@ export const TrackerManager = {
              const monday = new Date(d.setDate(diff));
              const defDate = monday.toISOString().split('T')[0];
              
-             getEl('tkStartDate').value = tracker ? (tracker.startDate || defDate) : defDate;
-             getEl('tkLineYLabel').value = tracker ? (tracker.yLabel || '') : '';
+             const sdIn = getEl('tkStartDate');
+             if (sdIn) sdIn.value = tracker ? (tracker.startDate || defDate) : defDate;
+             
+             const lyIn = getEl('tkLineYLabel');
+             if (lyIn) lyIn.value = tracker ? (tracker.yLabel || '') : '';
              
              this.updateTimeOptions();
-             if (tracker) getEl('tkTimeCount').value = tracker.timeCount || 7;
+             const tcIn = getEl('tkTimeCount');
+             if (tcIn && tracker) tcIn.value = tracker.timeCount || 7;
              
              // Reconstruct series structure if needed
              let series = [];
@@ -519,54 +563,85 @@ export const TrackerManager = {
              this.renderTimeTable(series);
         } else {
              // Reset Time controls defaults just in case
-             document.querySelector(`input[name="tkTimeUnit"][value="day"]`).checked = true;
+             const radDay = document.querySelector(`input[name="tkTimeUnit"][value="day"]`);
+             if (radDay) radDay.checked = true;
              this.updateTimeOptions();
         }
 
         // Load Data for other types
         if (tracker) {
             if (type === 'bar') {
-                getEl('tkBarYLabel').value = tracker.yLabel || '';
-                const labels = tracker.labels || tracker.data.map(d => d.label);
+                const byIn = getEl('tkBarYLabel');
+                if (byIn) byIn.value = tracker.yLabel || '';
+                
                 if (tracker.series) {
-                    (tracker.labels||[]).forEach((l, k) => { if(k<24) getEl(`bLbl${k}`).value = l; });
+                    (tracker.labels||[]).forEach((l, k) => { 
+                        const lbl = getEl(`bLbl${k}`);
+                        if(lbl) lbl.value = l; 
+                    });
                     tracker.series.forEach(s => this.addBarSeries(s.name, s.color, s.values));
                 } else {
-                    (tracker.data||[]).forEach((d,k)=>{if(k<24)getEl(`bLbl${k}`).value=d.label;});
+                    (tracker.data||[]).forEach((d,k)=>{
+                        const lbl = getEl(`bLbl${k}`);
+                        if(lbl) lbl.value=d.label;
+                    });
                     if (tracker.data && tracker.data.length > 0) {
                         const vals = tracker.data.map(d => d.val);
                         this.addBarSeries('Series 1', tracker.color1 || '#03dac6', vals);
                     }
                 }
             } else if (type === 'gauge') {
-                getEl('tkMetric').value = tracker.metric || '';
-                getEl('tkComp').value = tracker.completed || '';
-                getEl('tkTotal').value = tracker.total || '';
-                getEl('tkPieColor').value = tracker.colorVal || tracker.color1 || '#00e676';
-                getEl('tkPieColor2').value = tracker.color2 || '#ff1744';
+                const tmIn = getEl('tkMetric');
+                if (tmIn) tmIn.value = tracker.metric || '';
+                const tcIn = getEl('tkComp');
+                if (tcIn) tcIn.value = tracker.completed || '';
+                const ttIn = getEl('tkTotal');
+                if (ttIn) ttIn.value = tracker.total || '';
+                const pcIn = getEl('tkPieColor');
+                if (pcIn) pcIn.value = tracker.colorVal || tracker.color1 || '#00e676';
+                const pc2In = getEl('tkPieColor2');
+                if (pc2In) pc2In.value = tracker.color2 || '#ff1744';
             } else if (type === 'counter') {
-                getEl('tkCounterVal').value = tracker.value || 0;
-                getEl('tkCounterSub').value = tracker.subtitle || '';
-                getEl('tkCounterColor').value = tracker.color1 || '#bb86fc';
+                const cvIn = getEl('tkCounterVal');
+                if (cvIn) cvIn.value = tracker.value || 0;
+                const csIn = getEl('tkCounterSub');
+                if (csIn) csIn.value = tracker.subtitle || '';
+                const ccIn = getEl('tkCounterColor');
+                if (ccIn) ccIn.value = tracker.color1 || '#bb86fc';
             } else if (type === 'rag') {
                 this.selectRag(tracker.status || 'grey');
-                getEl('tkRagMsg').value = tracker.message || '';
+                const rmIn = getEl('tkRagMsg');
+                if (rmIn) rmIn.value = tracker.message || '';
             } else if (type === 'waffle') {
-                getEl('tkWaffleTotal').value = tracker.total || 100;
-                getEl('tkWaffleActive').value = tracker.active || 0;
-                getEl('tkWaffleColorVal').value = tracker.colorVal || '#03dac6';
-                getEl('tkWaffleColorBg').value = tracker.colorBg || '#333333';
+                const wtIn = getEl('tkWaffleTotal');
+                if (wtIn) wtIn.value = tracker.total || 100;
+                const waIn = getEl('tkWaffleActive');
+                if (waIn) waIn.value = tracker.active || 0;
+                const wcIn = getEl('tkWaffleColorVal');
+                if (wcIn) wcIn.value = tracker.colorVal || '#03dac6';
+                const wbIn = getEl('tkWaffleColorBg');
+                if (wbIn) wbIn.value = tracker.colorBg || '#333333';
                 this.updateWafflePreview();
             }
         } else {
             // New defaults
             if (type === 'bar') this.addBarSeries('Series 1', '#03dac6');
-            if (type === 'gauge') { getEl('tkPieColor').value = '#00e676'; getEl('tkPieColor2').value = '#ff1744'; }
+            if (type === 'gauge') { 
+                const pcIn = getEl('tkPieColor');
+                if (pcIn) pcIn.value = '#00e676'; 
+                const pc2In = getEl('tkPieColor2');
+                if (pc2In) pc2In.value = '#ff1744'; 
+            }
             if (type === 'rag') this.selectRag('green');
-            if (type === 'counter') getEl('tkCounterColor').value = '#bb86fc';
+            if (type === 'counter') {
+                const ccIn = getEl('tkCounterColor');
+                if (ccIn) ccIn.value = '#bb86fc';
+            }
             if (type === 'waffle') {
-                getEl('tkWaffleColorVal').value = '#03dac6';
-                getEl('tkWaffleColorBg').value = '#333333';
+                const wcIn = getEl('tkWaffleColorVal');
+                if (wcIn) wcIn.value = '#03dac6';
+                const wbIn = getEl('tkWaffleColorBg');
+                if (wbIn) wbIn.value = '#333333';
                 this.updateWafflePreview();
             }
         }
@@ -585,8 +660,10 @@ export const TrackerManager = {
     },
 
     updateTimeOptions() {
-        const unit = document.querySelector('input[name="tkTimeUnit"]:checked').value;
+        const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
+        const unit = unitRad ? unitRad.value : 'day';
         const countSel = getEl('tkTimeCount');
+        if (!countSel) return;
         countSel.innerHTML = '';
         let opts = [];
         if (unit === 'year') opts = [3, 5, 10];
@@ -604,9 +681,12 @@ export const TrackerManager = {
     },
 
     renderTimeTable(seriesOverride = null) {
-        const unit = document.querySelector('input[name="tkTimeUnit"]:checked').value;
-        const count = parseInt(getEl('tkTimeCount').value) || 5;
-        const startDateVal = getEl('tkStartDate').value;
+        const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
+        const unit = unitRad ? unitRad.value : 'day';
+        const tcIn = getEl('tkTimeCount');
+        const count = tcIn ? (parseInt(tcIn.value) || 5) : 5;
+        const sdIn = getEl('tkStartDate');
+        const startDateVal = sdIn ? sdIn.value : '';
         if(!startDateVal) return;
 
         // Scrape existing series data if not overridden
@@ -634,6 +714,7 @@ export const TrackerManager = {
         }
 
         const container = getEl('lineTableContainer');
+        if (!container) return;
         let html = '<table style="width:100%; border-collapse: separate; border-spacing: 0;">';
         html += '<thead><tr><th style="padding:8px; text-align:left; border-bottom:1px solid #444; position:sticky; top:0; background:var(--modal-bg);">Date</th>';
         
@@ -663,12 +744,14 @@ export const TrackerManager = {
 
     scrapeTimeSeries() {
         const container = getEl('lineTableContainer');
+        if (!container) return [];
         const headers = container.querySelectorAll('th .ts-name');
         if (headers.length === 0) return [];
 
         const series = [];
         headers.forEach((h, i) => {
-            const color = container.querySelector(`.ts-color[data-idx="${i}"]`).value;
+            const colorIn = container.querySelector(`.ts-color[data-idx="${i}"]`);
+            const color = colorIn ? colorIn.value : '#03dac6';
             series.push({ name: h.value, color: color, values: [] });
         });
 
@@ -704,7 +787,8 @@ export const TrackerManager = {
     },
 
     selectRag(val) {
-        getEl('tkRagStatus').value = val;
+        const ragIn = getEl('tkRagStatus');
+        if (ragIn) ragIn.value = val;
         document.querySelectorAll('.rag-pill').forEach(p => p.classList.remove('selected'));
         const selected = document.querySelector(`.rag-pill[data-val="${val}"]`);
         if (selected) selected.classList.add('selected');
@@ -712,13 +796,9 @@ export const TrackerManager = {
 
     addBarSeries(name, color, vals = []) {
         const c = getEl('barSeriesContainer');
+        if (!c) return;
         if (c.children.length >= 10) return App.alert("Max 10 series.");
         c.appendChild(this.createSeriesInputRow('bar', name, color, vals));
-    },
-
-    // addLineSeries is unused now but kept for safety or if I revert logic
-    addLineSeries(name, color, vals = []) {
-        // No-op or log warning
     },
 
     createSeriesInputRow(type, name, color, vals) {
@@ -749,18 +829,24 @@ export const TrackerManager = {
     },
 
     updateWafflePreview() {
-        const total = parseInt(getEl('tkWaffleTotal').value) || 0;
-        const active = parseInt(getEl('tkWaffleActive').value) || 0;
-        const colorVal = getEl('tkWaffleColorVal').value;
-        const colorBg = getEl('tkWaffleColorBg').value;
+        const wtIn = getEl('tkWaffleTotal');
+        const total = wtIn ? (parseInt(wtIn.value) || 0) : 0;
+        const waIn = getEl('tkWaffleActive');
+        const active = waIn ? (parseInt(waIn.value) || 0) : 0;
+        const wcIn = getEl('tkWaffleColorVal');
+        const colorVal = wcIn ? wcIn.value : '#03dac6';
+        const wbIn = getEl('tkWaffleColorBg');
+        const colorBg = wbIn ? wbIn.value : '#333333';
         
-        getEl('wafflePreview').innerHTML = createWaffleHTML(100, active, colorVal, colorBg);
+        const preview = getEl('wafflePreview');
+        if (preview) preview.innerHTML = createWaffleHTML(100, active, colorVal, colorBg);
     },
 
     parseCSV(type) {
         // Simplified CSV parser for Time Series Table if type is 'line'
         if (type === 'line') {
-            const raw = getEl('csvInput').value;
+            const csvIn = getEl('csvInput');
+            const raw = csvIn ? csvIn.value : '';
             if (!raw.trim()) return App.alert("Please paste CSV data.");
             const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
             if (lines.length < 2) return App.alert("CSV must have header + data.");
@@ -769,19 +855,14 @@ export const TrackerManager = {
             const seriesNames = headers.slice(1);
             if (seriesNames.length === 0) return App.alert("No series columns.");
 
-            // We only care about data values, dates are auto-generated by config
-            // The user must ensure rows match the count config.
-            // Or we could auto-set count? "Show the user the pre-populated series"
-            // Let's assume user configured start date/unit/count, and is pasting corresponding data.
-            // We'll fill the table cells.
-            
             const seriesData = seriesNames.map((n, i) => ({
                 name: n, 
                 color: ['#03dac6', '#ff4081', '#bb86fc'][i%3], 
                 values: []
             }));
             
-            const count = parseInt(getEl('tkTimeCount').value);
+            const tcIn = getEl('tkTimeCount');
+            const count = tcIn ? parseInt(tcIn.value) : 7;
             const dataRows = lines.slice(1).slice(0, count);
             
             dataRows.forEach(line => {
@@ -797,8 +878,8 @@ export const TrackerManager = {
         }
 
         // Original logic for Bar
-        const inputId = 'csvInputBar';
-        const raw = getEl(inputId).value;
+        const csvInBar = getEl('csvInputBar');
+        const raw = csvInBar ? csvInBar.value : '';
         if (!raw.trim()) return App.alert("Please paste CSV data.");
         
         const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
@@ -807,16 +888,20 @@ export const TrackerManager = {
         const headers = lines[0].split(/[\,\t]+/).map(s => s.trim());
         const seriesNames = headers.slice(1); 
         
-        if (seriesNames.length === 0) return App.alert("No series columns found (columns 2-9).");
+        if (seriesNames.length === 0) return App.alert("No series columns found.");
         
         const lblContainerId = 'barLabelsContainer';
         const seriesContainerId = 'barSeriesContainer';
 
-        // Clear existing inputs
-        getEl(lblContainerId).innerHTML = '';
-        getEl(seriesContainerId).innerHTML = '';
-        for(let k=0; k<24; k++) {
-            getEl(lblContainerId).innerHTML += `<input type="text" id="bLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+        const blc = getEl(lblContainerId);
+        const bsc = getEl(seriesContainerId);
+        if (blc) blc.innerHTML = '';
+        if (bsc) bsc.innerHTML = '';
+        
+        if (blc) {
+            for(let k=0; k<24; k++) {
+                blc.innerHTML += `<input type="text" id="bLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+            }
         }
 
         const labels = [];
@@ -836,7 +921,8 @@ export const TrackerManager = {
 
         // Fill X-Axis Labels
         labels.forEach((l, k) => { 
-            getEl(`bLbl${k}`).value = l; 
+            const lbl = getEl(`bLbl${k}`);
+            if (lbl) lbl.value = l; 
         });
 
         // Create Series
@@ -853,77 +939,104 @@ export const TrackerManager = {
 
     submitTracker() {
         const index = State.editingTrackerIndex;
-        const desc = getEl('tkDesc').value;
-        const size = getEl('tkSize').value;
+        const descIn = getEl('tkDesc');
+        const desc = descIn ? descIn.value : '';
+        const sizeIn = getEl('tkSize');
+        const size = sizeIn ? sizeIn.value : 'M';
         if (!desc) return App.alert("Title required");
 
         const type = State.currentTrackerType;
         let newTracker = { desc, type, size };
 
         if (type === 'gauge') {
-            const m = getEl('tkMetric').value;
-            const c = parseFloat(getEl('tkComp').value) || 0;
-            const t = parseFloat(getEl('tkTotal').value) || 0;
+            const mIn = getEl('tkMetric');
+            const cIn = getEl('tkComp');
+            const tIn = getEl('tkTotal');
+            const m = mIn ? mIn.value : '';
+            const c = cIn ? parseFloat(cIn.value) || 0 : 0;
+            const t = tIn ? parseFloat(tIn.value) || 0 : 0;
             if(t<=0) return App.alert("Total > 0 required");
             if(c>t) return App.alert("Completed value cannot exceed Total value.");
             newTracker.metric = m;
             newTracker.completed = c;
             newTracker.total = t;
-            newTracker.colorVal = getEl('tkPieColor').value; 
-            newTracker.color2 = getEl('tkPieColor2').value;
+            const pcIn = getEl('tkPieColor');
+            newTracker.colorVal = pcIn ? pcIn.value : '#00e676'; 
+            const pc2In = getEl('tkPieColor2');
+            newTracker.color2 = pc2In ? pc2In.value : '#ff1744';
         } else if (type === 'bar') {
-            const y = getEl('tkBarYLabel').value;
+            const byIn = getEl('tkBarYLabel');
+            const y = byIn ? byIn.value : '';
             const labels = [];
             for(let k=0; k<24; k++) {
-                const l = getEl(`bLbl${k}`).value;
+                const lIn = getEl(`bLbl${k}`);
+                const l = lIn ? lIn.value : '';
                 if(l) labels.push(l);
             }
             const series = [];
-            const sDivs = getEl('barSeriesContainer').children;
-            for(let s of sDivs) {
-                const name = s.querySelector('.s-name').value;
-                const color = s.querySelector('.s-color').value;
-                const vals = [];
-                s.querySelectorAll('.sv-input').forEach((inp, k) => {
-                    if(k < labels.length) vals.push(parseFloat(inp.value)||0);
-                });
-                series.push({name, color, values: vals});
+            const bsc = getEl('barSeriesContainer');
+            if (bsc) {
+                const sDivs = bsc.children;
+                for(let s of sDivs) {
+                    const snIn = s.querySelector('.s-name');
+                    const name = snIn ? snIn.value : 'Series';
+                    const scIn = s.querySelector('.s-color');
+                    const color = scIn ? scIn.value : '#03dac6';
+                    const vals = [];
+                    s.querySelectorAll('.sv-input').forEach((inp, k) => {
+                        if(k < labels.length) vals.push(parseFloat(inp.value)||0);
+                    });
+                    series.push({name, color, values: vals});
+                }
             }
             if(series.length === 0) return App.alert("Add at least one series");
             newTracker.yLabel = y;
             newTracker.labels = labels;
             newTracker.series = series;
         } else if (type === 'line') {
-            const y = getEl('tkLineYLabel').value;
+            const lyIn = getEl('tkLineYLabel');
+            const y = lyIn ? lyIn.value : '';
             // Get data from Table
             const series = this.scrapeTimeSeries();
             const container = getEl('lineTableContainer');
-            const labels = JSON.parse(container.dataset.labels || '[]');
+            const labels = container ? JSON.parse(container.dataset.labels || '[]') : [];
             
             if(series.length === 0) return App.alert("Add at least one series");
             
             // Save config too
-            newTracker.timeUnit = document.querySelector('input[name="tkTimeUnit"]:checked').value;
-            newTracker.startDate = getEl('tkStartDate').value;
-            newTracker.timeCount = parseInt(getEl('tkTimeCount').value);
+            const urIn = document.querySelector('input[name="tkTimeUnit"]:checked');
+            newTracker.timeUnit = urIn ? urIn.value : 'day';
+            const sdIn = getEl('tkStartDate');
+            newTracker.startDate = sdIn ? sdIn.value : '';
+            const tcIn = getEl('tkTimeCount');
+            newTracker.timeCount = tcIn ? parseInt(tcIn.value) : 7;
             
             newTracker.labels = labels;
             newTracker.series = series;
             newTracker.yLabel = y;
         } else if (type === 'counter') {
-            newTracker.value = parseFloat(getEl('tkCounterVal').value) || 0;
-            newTracker.subtitle = getEl('tkCounterSub').value;
-            newTracker.color1 = getEl('tkCounterColor').value;
+            const cvIn = getEl('tkCounterVal');
+            newTracker.value = cvIn ? parseFloat(cvIn.value) || 0 : 0;
+            const csIn = getEl('tkCounterSub');
+            newTracker.subtitle = csIn ? csIn.value : '';
+            const ccIn = getEl('tkCounterColor');
+            newTracker.color1 = ccIn ? ccIn.value : '#bb86fc';
         } else if (type === 'rag') {
             newTracker.type = 'rag'; 
-            newTracker.status = getEl('tkRagStatus').value;
-            newTracker.message = getEl('tkRagMsg').value;
+            const rsIn = getEl('tkRagStatus');
+            newTracker.status = rsIn ? rsIn.value : 'grey';
+            const rmIn = getEl('tkRagMsg');
+            newTracker.message = rmIn ? rmIn.value : '';
             newTracker.color1 = (newTracker.status === 'green' ? '#00e676' : (newTracker.status === 'amber' ? '#ffb300' : (newTracker.status === 'red' ? '#ff1744' : '#666666')));
         } else if (type === 'waffle') {
-            newTracker.total = parseInt(getEl('tkWaffleTotal').value) || 100;
-            newTracker.active = parseInt(getEl('tkWaffleActive').value) || 0;
-            newTracker.colorVal = getEl('tkWaffleColorVal').value;
-            newTracker.colorBg = getEl('tkWaffleColorBg').value;
+            const wtIn = getEl('tkWaffleTotal');
+            newTracker.total = wtIn ? (parseInt(wtIn.value) || 100) : 100;
+            const waIn = getEl('tkWaffleActive');
+            newTracker.active = waIn ? (parseInt(waIn.value) || 0) : 0;
+            const wcIn = getEl('tkWaffleColorVal');
+            newTracker.colorVal = wcIn ? wcIn.value : '#03dac6';
+            const wbIn = getEl('tkWaffleColorBg');
+            newTracker.colorBg = wbIn ? wbIn.value : '#333333';
         }
 
         if(index === -1) {
@@ -952,29 +1065,42 @@ export const UserManager = {
     openUserModal: (index = -1) => {
         UserManager.editingUserIndex = index;
         const isEdit = index > -1;
-        getEl('modalTitle').innerText = isEdit ? 'Edit Team Member' : 'Add Team Member';
-        getEl('deleteBtn').style.display = isEdit ? 'block' : 'none';
+        const mt = getEl('modalTitle');
+        if (mt) mt.innerText = isEdit ? 'Edit Team Member' : 'Add Team Member';
+        const db = getEl('deleteBtn');
+        if (db) db.style.display = isEdit ? 'block' : 'none';
         
         const m = isEdit ? State.members[index] : null;
-        getEl('mName').value = m ? m.name : '';
+        const mn = getEl('mName');
+        if (mn) mn.value = m ? m.name : '';
         
         // Last Week
-        getEl('lwStatus').value = (m && m.lastWeek) ? m.lastWeek.status : 'busy';
+        const ls = getEl('lwStatus');
+        if (ls) ls.value = (m && m.lastWeek) ? m.lastWeek.status : 'busy';
         UserManager.setStatus((m && m.lastWeek) ? m.lastWeek.status : 'busy');
         
         const lwTasks = (m && m.lastWeek && m.lastWeek.tasks) ? m.lastWeek.tasks : [];
-        [1,2,3].forEach((n, i) => getEl(`lwTask${n}`).value = lwTasks[i] ? lwTasks[i].text : '');
+        [1,2,3].forEach((n, i) => {
+            const taskIn = getEl(`lwTask${n}`);
+            if (taskIn) taskIn.value = lwTasks[i] ? lwTasks[i].text : '';
+        });
         
         // This Week
         const nwTasks = (m && m.thisWeek && m.thisWeek.tasks) ? m.thisWeek.tasks : [];
-        [1,2,3].forEach((n, i) => getEl(`nwTask${n}`).value = nwTasks[i] ? nwTasks[i].text : '');
+        [1,2,3].forEach((n, i) => {
+            const taskIn = getEl(`nwTask${n}`);
+            if (taskIn) taskIn.value = nwTasks[i] ? nwTasks[i].text : '';
+        });
         
         const nwLoad = (m && m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N'];
         nwLoad.forEach((v, i) => UserManager.setLoad(i, v));
 
         // Next Week
         const fwTasks = (m && m.nextWeek && m.nextWeek.tasks) ? m.nextWeek.tasks : [];
-        [1,2,3].forEach((n, i) => getEl(`fwTask${n}`).value = fwTasks[i] ? fwTasks[i].text : '');
+        [1,2,3].forEach((n, i) => {
+            const taskIn = getEl(`fwTask${n}`);
+            if (taskIn) taskIn.value = fwTasks[i] ? fwTasks[i].text : '';
+        });
 
         const fwLoad = (m && m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N'];
         fwLoad.forEach((v, i) => UserManager.setFutureLoad(i, v));
@@ -983,15 +1109,19 @@ export const UserManager = {
     },
 
     submitUser: () => {
-        const name = getEl('mName').value;
+        const mn = getEl('mName');
+        const name = mn ? mn.value : '';
         if(!name) return App.alert("Name required");
         
         const getTasks = (prefix) => {
-            return [1,2,3].map(n => ({ 
-                text: getEl(`${prefix}Task${n}`).value, 
-                isTeamSuccess: false, // Default false, strictly controlled by checkboxes on board
-                isTeamActivity: false
-            }));
+            return [1,2,3].map(n => {
+                const taskIn = getEl(`${prefix}Task${n}`);
+                return { 
+                    text: taskIn ? taskIn.value : '', 
+                    isTeamSuccess: false, 
+                    isTeamActivity: false
+                };
+            });
         };
 
         // Preserve existing checkboxes state if editing
@@ -1016,15 +1146,15 @@ export const UserManager = {
         const newUser = {
             name,
             lastWeek: {
-                status: getEl('lwStatus').value,
+                status: getEl('lwStatus') ? getEl('lwStatus').value : 'busy',
                 tasks: lwTasks
             },
             thisWeek: {
-                load: [0,1,2,3,4].map(i => getEl(`nw${i}`).value),
+                load: [0,1,2,3,4].map(i => getEl(`nw${i}`) ? getEl(`nw${i}`).value : 'N'),
                 tasks: nwTasks
             },
             nextWeek: {
-                load: [0,1,2,3,4].map(i => getEl(`fw${i}`).value),
+                load: [0,1,2,3,4].map(i => getEl(`fw${i}`) ? getEl(`fw${i}`).value : 'N'),
                 tasks: fwTasks
             }
         };
@@ -1046,15 +1176,18 @@ export const UserManager = {
     },
     
     setStatus: (val) => {
-        getEl('lwStatus').value = val;
+        const ls = getEl('lwStatus');
+        if (ls) ls.value = val;
         document.querySelectorAll('.status-option').forEach(el => el.classList.remove('selected'));
         const sel = document.querySelector(`.so-${val}`);
         if(sel) sel.classList.add('selected');
     },
 
     setLoad: (idx, val) => {
-        getEl(`nw${idx}`).value = val;
-        const box = getEl(`nw${idx}`).parentNode;
+        const loadIn = getEl(`nw${idx}`);
+        if (!loadIn) return;
+        loadIn.value = val;
+        const box = loadIn.parentNode;
         box.querySelectorAll('.w-pill').forEach(el => el.classList.remove('selected'));
         const map = { 'L': 'wp-l', 'N': 'wp-n', 'R': 'wp-r', 'X': 'wp-x' };
         const sel = box.querySelector(`.${map[val]}`);
@@ -1062,8 +1195,10 @@ export const UserManager = {
     },
 
     setFutureLoad: (idx, val) => {
-        getEl(`fw${idx}`).value = val;
-        const box = getEl(`fw${idx}`).parentNode;
+        const loadIn = getEl(`fw${idx}`);
+        if (!loadIn) return;
+        loadIn.value = val;
+        const box = loadIn.parentNode;
         box.querySelectorAll('.w-pill').forEach(el => el.classList.remove('selected'));
         const map = { 'L': 'wp-l', 'N': 'wp-n', 'R': 'wp-r', 'X': 'wp-x' };
         const sel = box.querySelector(`.${map[val]}`);
@@ -1071,25 +1206,35 @@ export const UserManager = {
     },
 
     toggleSuccess: (mIdx, tIdx) => {
-        const t = State.members[mIdx].lastWeek.tasks[tIdx];
-        t.isTeamSuccess = !t.isTeamSuccess;
-        renderBoard();
+        const m = State.members[mIdx];
+        if (m && m.lastWeek && m.lastWeek.tasks[tIdx]) {
+            const t = m.lastWeek.tasks[tIdx];
+            t.isTeamSuccess = !t.isTeamSuccess;
+            renderBoard();
+        }
     },
 
     toggleActivity: (mIdx, tIdx) => {
-        const t = State.members[mIdx].thisWeek.tasks[tIdx];
-        t.isTeamSuccess = !t.isTeamSuccess; // Reusing isTeamSuccess for "This Week" items that go to "Team Achievements"
-        renderBoard();
+        const m = State.members[mIdx];
+        if (m && m.thisWeek && m.thisWeek.tasks[tIdx]) {
+            const t = m.thisWeek.tasks[tIdx];
+            t.isTeamSuccess = !t.isTeamSuccess; 
+            renderBoard();
+        }
     },
 
     toggleFuture: (mIdx, tIdx) => {
-        const t = State.members[mIdx].nextWeek.tasks[tIdx];
-        t.isTeamActivity = !t.isTeamActivity;
-        renderBoard();
+        const m = State.members[mIdx];
+        if (m && m.nextWeek && m.nextWeek.tasks[tIdx]) {
+            const t = m.nextWeek.tasks[tIdx];
+            t.isTeamActivity = !t.isTeamActivity;
+            renderBoard();
+        }
     },
     
     saveAdditionalInfo: () => {
-        State.additionalInfo = getEl('additionalInfoInput').value;
+        const aii = getEl('additionalInfoInput');
+        if (aii) State.additionalInfo = aii.value;
         ModalManager.closeModal('infoModal');
         renderBoard();
     },
@@ -1111,11 +1256,11 @@ export const UserManager = {
 export const OverviewManager = {
     handleOverviewClick: (type) => {
        // Just visual feedback or hint? 
-       // Currently handled by checkboxes in user cards.
     },
     handleInfoClick: () => {
         if(document.body.classList.contains('publishing')) return;
-        getEl('additionalInfoInput').value = State.additionalInfo;
+        const aii = getEl('additionalInfoInput');
+        if (aii) aii.value = State.additionalInfo;
         ModalManager.openModal('infoModal');
     }
 };
