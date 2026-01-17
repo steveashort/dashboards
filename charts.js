@@ -24,19 +24,17 @@ export const createGaugeSVG = (loadArr) => {
 export const createWaffleHTML = (total, active, colorVal, colorBg) => {
     const maxCells = Math.min(total, 450);
     const cols = total > 200 ? 25 : 15;
-    const rows = Math.ceil(maxCells / cols);
-    const cellSize = total > 200 ? '5px' : '7px';
-    const gridWidth = total > 200 ? '180px' : '140px';
+    const cellSize = total > 200 ? 5 : 7;
+    const gap = 2;
+    // Calculate exact width to force wrap at 'cols'
+    const gridWidth = (cols * (cellSize + gap)) - gap;
     
-    let html = `<div style="display:grid; grid-template-columns: repeat(${cols}, 1fr); gap: 2px; width: ${gridWidth}; margin: 0 auto;">`;
+    let html = `<div style="display:flex; flex-wrap: wrap-reverse; gap: ${gap}px; width: ${gridWidth}px; margin: 0 auto;">`;
     for(let i=0; i<maxCells; i++) {
-        const row = Math.floor(i / cols);
-        const col = i % cols;
-        const reverseRow = (rows - 1) - row;
-        const logicalIndex = (reverseRow * cols) + col;
-        const isActive = logicalIndex < active;
-        
-        html += `<div class="waffle-cell" style="width:${cellSize}; height:${cellSize}; ${isActive ? `background-color:${colorVal}; box-shadow: 0 0 5px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
+        // With wrap-reverse, index 0 is at the bottom row.
+        // As i increases, it fills left-to-right, then moves to the row ABOVE.
+        const isActive = i < active;
+        html += `<div class="waffle-cell" style="width:${cellSize}px; height:${cellSize}px; flex: 0 0 ${cellSize}px; ${isActive ? `background-color:${colorVal}; box-shadow: 0 0 5px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
     }
     html += '</div>';
     return html;

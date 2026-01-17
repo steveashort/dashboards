@@ -621,7 +621,7 @@ export const TrackerManager = {
                 if (tracker && nIn) nIn.value = tracker.notes || '';
                 
                 const pcIn = getEl('tkPieColor');
-                if (pcIn) pcIn.value = tracker ? (tracker.colorVal || tracker.color1 || '#00e676') : '#00e676';
+                if (pcIn) pcIn.value = tracker ? (tracker.colorVal || tracker.color1 || '#03dac6') : '#03dac6';
                 const pc2In = getEl('tkPieColor2');
                 if (pc2In) pc2In.value = tracker ? (tracker.color2 || '#ff1744') : '#ff1744';
             } else if (type === 'counter') {
