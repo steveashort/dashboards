@@ -222,14 +222,15 @@
                         <label>Chart Title</label>
                         <input type="text" id="tkDesc">
                     </div>
-                    <div class="input-group" style="flex: 0 0 140px;">
+                    <div class="input-group" style="flex: 0 0 180px;">
                         <label>Size</label>
-                        <select id="tkSize">
-                            <option value="S">Small (5/row)</option>
-                            <option value="M" selected>Medium (3/row)</option>
-                            <option value="L">Large (2/row)</option>
-                            <option value="XL">Very Large (Full)</option>
-                        </select>
+                        <div id="tkSize" style="display:flex; gap:5px;">
+                            <label class="size-opt"><input type="radio" name="tkSize" value="S"> S</label>
+                            <label class="size-opt"><input type="radio" name="tkSize" value="M" checked> M</label>
+                            <label class="size-opt"><input type="radio" name="tkSize" value="L"> L</label>
+                            <label class="size-opt"><input type="radio" name="tkSize" value="XL"> XL</label>
+                        </div>
+                        <style>.size-opt { flex:1; text-align:center; padding:5px; border:1px solid #444; border-radius:4px; cursor:pointer; font-size:0.8rem; background:var(--input-bg); } .size-opt:has(input:checked) { background:var(--accent); color:#000; border-color:var(--accent); } .size-opt input { display:none; }</style>
                     </div>
                 </div>
 
@@ -277,15 +278,10 @@
                         <label>Metric Label</label>
                         <input type="text" id="tkLineYLabel">
                     </div>
-                    <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px;">
-                        <label>Import Data from CSV</label>
-                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
-                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
-                    </div>
                     <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end; display: flex; gap: 2rem;">
                         <div class="input-group">
                             <label>End Date</label>
-                            <input type="date" id="tkStartDate" onchange="TrackerManager.renderTimeTable()" style="background-color: var(--modal-bg); color: #fff;">
+                            <input type="date" id="tkStartDate" onchange="TrackerManager.renderTimeTable()">
                         </div>
                         <div class="input-group">
                             <label>Time Unit</label>
@@ -296,7 +292,7 @@
                             </div>
                         </div>
                         <div class="input-group">
-                            <label>Historic Days</label>
+                            <label id="tkHistoricLabel">Historic Days</label>
                             <select id="tkTimeCount" onchange="TrackerManager.renderTimeTable()" style="width: 80px; min-width: 60px;"></select>
                         </div>
                     </div>
@@ -309,6 +305,11 @@
                             </div>
                         </div>
                         <div id="lineTableContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; border-radius: 4px;"></div>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-top: 1rem;">
+                        <label>Import Data from CSV</label>
+                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
+                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
                     </div>
                 </div>
                 <div id="counterInputs" style="display:none;">

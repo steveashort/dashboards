@@ -524,8 +524,9 @@ export const TrackerManager = {
         const descIn = getEl('tkDesc');
         if (descIn) descIn.value = tracker ? tracker.desc : '';
         
-        const sizeIn = getEl('tkSize');
-        if (sizeIn) sizeIn.value = tracker ? (tracker.size || 'M') : 'M';
+        const sizeVal = tracker ? (tracker.size || 'M') : 'M';
+        const sizeRadio = document.querySelector(`input[name="tkSize"][value="${sizeVal}"]`);
+        if (sizeRadio) sizeRadio.checked = true;
 
         // Load Specific Data
         if (type === 'line') {
@@ -662,6 +663,10 @@ export const TrackerManager = {
     updateTimeOptions() {
         const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
         const unit = unitRad ? unitRad.value : 'day';
+        
+        const histLabel = getEl('tkHistoricLabel');
+        if (histLabel) histLabel.innerText = `Historic ${unit.charAt(0).toUpperCase() + unit.slice(1)}s`;
+
         const countSel = getEl('tkTimeCount');
         if (!countSel) return;
         countSel.innerHTML = '';
@@ -686,8 +691,14 @@ export const TrackerManager = {
         const tcIn = getEl('tkTimeCount');
         const count = tcIn ? (parseInt(tcIn.value) || 5) : 5;
         const sdIn = getEl('tkStartDate');
-        const startDateVal = sdIn ? sdIn.value : '';
-        if(!startDateVal) return;
+        let startDateVal = sdIn ? sdIn.value : '';
+        if(!startDateVal) {
+             const d = new Date();
+             const day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1); 
+             const monday = new Date(d.setDate(diff));
+             startDateVal = monday.toISOString().split('T')[0];
+             if(sdIn) sdIn.value = startDateVal;
+        }
 
         // Scrape existing series data if not overridden
         let series = seriesOverride;
@@ -958,8 +969,8 @@ export const TrackerManager = {
         const index = State.editingTrackerIndex;
         const descIn = getEl('tkDesc');
         const desc = descIn ? descIn.value : '';
-        const sizeIn = getEl('tkSize');
-        const size = sizeIn ? sizeIn.value : 'M';
+        const sizeRadio = document.querySelector('input[name="tkSize"]:checked');
+        const size = sizeRadio ? sizeRadio.value : 'M';
         if (!desc) return App.alert("Title required");
 
         const type = State.currentTrackerType;
