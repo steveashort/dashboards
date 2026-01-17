@@ -38,7 +38,7 @@
         }
 
         /* ==========================================================
-           2) PAGE LAYOUT & SCROLLBARS
+           2) PAGE LAYOUT & ROBUST SCROLLING
            ========================================================== */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -103,17 +103,17 @@
         .main-content { 
             flex: 1; 
             padding: 40px; 
-            overflow: auto; 
+            overflow: auto; /* Required for scrollbars */
             position: relative;
         }
 
-        /* Scrollbars */
-        .main-content::-webkit-scrollbar { width: 14px; height: 14px; }
+        /* FIX: High-Visibility Scrollbars for Horizontal/Vertical */
+        .main-content::-webkit-scrollbar { width: 16px; height: 16px; }
         .main-content::-webkit-scrollbar-track { background: var(--bg-color); }
         .main-content::-webkit-scrollbar-thumb { 
             background-color: var(--accent); 
             border-radius: 10px; 
-            border: 3px solid var(--bg-color); 
+            border: 4px solid var(--bg-color); 
         }
 
         .control-group { margin-bottom: 25px; }
@@ -138,21 +138,21 @@
            3) TREE & NODES
            ========================================================== */
         .main-tree {
-            display: inline-block;
-            white-space: nowrap; 
-            padding-right: 200px; 
-            padding-bottom: 200px; 
+            display: inline-block; /* Essential for horizontal scroll */
+            min-width: 100%;
+            padding-right: 250px; 
+            padding-bottom: 250px; 
         }
         ul { list-style: none; padding-left: 20px; margin: 0; position: relative; }
         ul.children-list { border-left: 2px solid var(--line-color); margin-left: 15px; padding-left: 30px; }
         ul.hidden { display: none !important; }
-        li { margin: 20px 0; position: relative; }
+        li { margin: 25px 0; position: relative; }
         li::before { content: ''; position: absolute; top: 32px; left: -32px; width: 30px; height: 2px; background-color: var(--line-color); }
 
         .node-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            padding: 18px;
+            padding: 20px;
             border-radius: 8px;
             width: fit-content; min-width: 320px;
             cursor: pointer;
@@ -169,11 +169,11 @@
         .btn-del-node { background: #c0392b; }
 
         .info { display: flex; flex-direction: column; pointer-events: none; }
-        .name { font-weight: 700; font-size: 18px; letter-spacing: -0.2px; }
+        .name { font-weight: 700; font-size: 18px; letter-spacing: -0.2px; color: var(--text-main); }
         .role { font-size: 13px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; letter-spacing: 0.5px; }
         .contact-info { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
         
-        .pills-container { display: flex; gap: 8px; margin-top: 8px; }
+        .pills-row { display: flex; gap: 8px; margin-top: 10px; }
         .engagement-pill { font-size: 10px; color: var(--accent); border: 1px solid var(--accent); padding: 2px 8px; border-radius: 12px; font-weight: 700; text-transform: uppercase; }
         .location-pill { font-size: 10px; color: #2ecc71; border: 1px solid #2ecc71; padding: 2px 8px; border-radius: 12px; font-weight: 700; text-transform: uppercase; }
         
@@ -181,16 +181,20 @@
         .hide-tags .tags-row { display: none !important; }
         
         .pill { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 800; color: white; text-transform: uppercase; }
-        .bw-tags .pill { background: #444 !important; border: 1px solid #666; }
+        .bw-tags .pill { background: #444 !important; border: 1px solid #666; color: #eee !important; }
 
         .toggle-btn { 
-            position: absolute; left: -14px; top: 18px; width: 26px; height: 26px; 
+            position: absolute; left: -14px; top: 20px; width: 26px; height: 26px; 
             display: flex; align-items: center; justify-content: center; 
             border: 2px solid var(--input-border); border-radius: 4px; 
             background: var(--input-bg); cursor: pointer; font-weight: bold; z-index: 15;
+            color: var(--text-muted);
         }
+        .toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
 
-        /* Modal */
+        .matched { border: 2px solid #27ae60 !important; box-shadow: 0 0 15px rgba(39, 174, 96, 0.4) !important; }
+
+        /* Modal Settings */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-overlay.active { display: flex; }
         .modal { background: var(--sidebar-bg); padding: 35px; border-radius: 12px; width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--card-border); }
@@ -204,10 +208,11 @@
 
 <div class="app-container">
     <aside class="sidebar">
-        <img src="company-logo.png" alt="Company Logo" class="sidebar-logo">
+        <img src="company-logo.png" alt="Logo" class="sidebar-logo">
+        
         <div class="control-group">
             <label>Search Hierarchy</label>
-            <input type="text" id="searchInput" placeholder="Search..." oninput="applyFilter()">
+            <input type="text" id="searchInput" placeholder="Search any field..." oninput="applyFilter()">
         </div>
 
         <div class="control-group"><label>Filter by Role</label><select id="roleFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
@@ -235,8 +240,8 @@
 </div>
 
 <div class="floating-toolbar">
-    <button class="icon-btn" onclick="openSettingsModal()" title="Settings">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    <button class="icon-btn" onclick="openSettingsModal()" title="Global Settings">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </button>
     <button class="icon-btn" onclick="expandAll()" title="Expand All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
     <button class="icon-btn" onclick="collapseAll()" title="Collapse All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
@@ -248,18 +253,18 @@
         <input type="hidden" id="editNodeId">
         <div class="form-row">
             <div><label>Full Name</label><input type="text" id="editName"></div>
-            <div><label>Job Title / Role</label><select id="editRole"></select></div>
+            <div><label>Job Title</label><select id="editRole"></select></div>
         </div>
         <div class="form-row">
             <div><label>Email Address</label><input type="text" id="editEmail"></div>
-            <div><label>Mobile / Phone</label><input type="text" id="editPhone"></div>
+            <div><label>Phone Number</label><input type="text" id="editPhone"></div>
         </div>
         <div class="form-row">
-            <div><label>Primary Location</label><select id="editLocation"></select></div>
-            <div><label>Engagement Type</label><select id="editEngagement"></select></div>
+            <div><label>Location</label><select id="editLocation"></select></div>
+            <div><label>Engagement</label><select id="editEngagement"></select></div>
         </div>
         <div class="form-group">
-            <label>Assigned Tags</label>
+            <label>Skills & Tags</label>
             <select id="editTagsMulti" multiple size="6"></select>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top: 25px;">
@@ -271,37 +276,35 @@
 
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
-        <h2>System Configuration</h2>
-        <div class="form-group"><label>Display Organization Name</label><input type="text" id="setOrgName"></div>
+        <h2>Global Configuration</h2>
+        <div class="form-group"><label>Organization Name</label><input type="text" id="setOrgName"></div>
         
         <div class="form-row">
             <div>
-                <label>Day/Night Toggle</label>
-                <div style="display:flex; gap:10px; align-items:center;">
-                    <button id="themeToggleBtn" class="btn-secondary" onclick="toggleTheme()" style="flex:1;">
-                        <span id="themeBtnText">Night Mode</span>
-                        <svg id="sunIcon" style="width:18px; height:18px; display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                        <svg id="moonIcon" style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                    </button>
-                </div>
+                <label>Day/Night Mode</label>
+                <button id="themeToggleBtn" class="btn-secondary" onclick="toggleTheme()" style="width:100%; border: 1px solid var(--input-border);">
+                    <span id="themeBtnText">Night Mode</span>
+                    <svg id="sunIcon" style="width:20px; height:20px; display:none; margin-left: 10px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg id="moonIcon" style="width:20px; height:20px; margin-left: 10px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
             </div>
             <div>
-                <label>Node Visibility</label>
-                <div style="display:flex; gap:10px; flex-direction:column;">
-                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setShowTags"> Show Skills & Tags</label>
-                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setBWTags"> Monochrome Tags</label>
+                <label>View Toggles</label>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setShowTags"> Show Tags Row</label>
+                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setBWTags"> Monochrome Mode</label>
                 </div>
             </div>
         </div>
 
-        <div class="form-group"><label>Role Master List (CSV)</label><textarea id="setRoles" rows="2"></textarea></div>
-        <div class="form-group"><label>Location Master List (CSV)</label><textarea id="setLocs" rows="2"></textarea></div>
-        <div class="form-group"><label>Technical Tag Master List (CSV)</label><textarea id="setTags" rows="2"></textarea></div>
-        <div class="form-group"><label>Engagement Master List (CSV)</label><textarea id="setEng" rows="2"></textarea></div>
+        <div class="form-group"><label>Roles (CSV)</label><textarea id="setRoles" rows="2"></textarea></div>
+        <div class="form-group"><label>Locations (CSV)</label><textarea id="setLocs" rows="2"></textarea></div>
+        <div class="form-group"><label>Tags (CSV)</label><textarea id="setTags" rows="2"></textarea></div>
+        <div class="form-group"><label>Engagements (CSV)</label><textarea id="setEng" rows="2"></textarea></div>
 
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top: 25px;">
             <button class="btn-secondary" onclick="closeSettingsModal()">Discard</button>
-            <button class="btn-primary" onclick="saveSettings()">Apply Global Changes</button>
+            <button class="btn-primary" onclick="saveSettings()">Save & Refresh</button>
         </div>
     </div>
 </div>
@@ -312,9 +315,7 @@
     let appData = {
         title: "Org Viewer Pro",
         settings: {
-            theme: "dark",
-            showTags: true,
-            bwTags: false,
+            theme: "dark", showTags: true, bwTags: false,
             roles: ["CEO", "CTO", "Manager", "Developer"],
             locations: ["New York", "London", "San Francisco", "Remote", "Eastleigh"],
             tags: ["Leadership", "Cloud", "Unix", "Linux", "Coder"],
@@ -326,6 +327,7 @@
         }
     };
 
+    // --- LOGIC UTILS ---
     function findNodeAndParent(id, currentNode, parent = null) {
         if (currentNode.id === id) return { node: currentNode, parent: parent };
         if (currentNode.children) {
@@ -343,6 +345,13 @@
         return `hsl(${Math.abs(hash) % 360}, 65%, 40%)`;
     }
 
+    function showToast(m) {
+        const t = document.createElement('div'); t.className='toast'; t.textContent=m;
+        document.getElementById('toastContainer').appendChild(t);
+        setTimeout(()=>t.remove(), 3000);
+    }
+
+    // --- RENDERING ---
     function renderTree() {
         document.getElementById('headerOrgName').textContent = appData.title;
         const main = document.getElementById('mainDisplay');
@@ -366,19 +375,18 @@
         li.dataset.tags = tags.join(',').toUpperCase();
         li.dataset.location = (data.location || "").toUpperCase();
         li.dataset.role = (data.role || "").toUpperCase();
-        li.dataset.searchText = `${data.name} ${data.role} ${data.location} ${tags.join(' ')}`.toUpperCase();
+        // SEARCH METADATA (Aggressive Case-Insensitive String)
+        li.dataset.searchText = `${data.name} ${data.role} ${data.location} ${data.engagement} ${data.email} ${data.phone} ${tags.join(' ')}`.toUpperCase();
 
         const card = document.createElement('div');
         card.className = 'node-card'; card.dataset.nodeId = data.id;
         card.style.borderLeftColor = `var(--h-${depth % 6})`;
 
-        // Expand/Collapse Toggle Logic
         if (data.children && data.children.length > 0) {
             const toggle = document.createElement('div');
-            toggle.className = 'toggle-btn'; 
-            toggle.textContent = '−';
+            toggle.className = 'toggle-btn'; toggle.textContent = '−';
             toggle.onclick = (e) => {
-                e.stopPropagation(); // Stop from opening modal
+                e.stopPropagation();
                 const childUl = li.querySelector('ul.children-list');
                 const isHidden = childUl.classList.toggle('hidden');
                 toggle.textContent = isHidden ? '+' : '−';
@@ -386,7 +394,6 @@
             card.appendChild(toggle);
         }
 
-        // Use insertAdjacentHTML instead of innerHTML+= to keep event listeners alive
         const cardContent = `
             <div class="node-actions">
                 <button class="node-action-btn btn-add-child" onclick="addChild('${data.id}', event)"><svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
@@ -399,30 +406,29 @@
                     ${data.location ? `<span class="location-pill">${data.location}</span>`:''}
                 </div>
                 <span class="role">${data.role || ''}</span>
-                <div class="contact-info">${data.email || ''} ${data.phone ? '• ' + data.phone : ''}</div>
+                <div class="contact-info">${data.email || ''} ${data.phone ? ' • ' + data.phone : ''}</div>
                 <div class="tags-row">${tags.map(t => `<span class="pill" style="background:${stringToColor(t)}">${t}</span>`).join('')}</div>
             </div>
         `;
         card.insertAdjacentHTML('beforeend', cardContent);
         card.onclick = () => openEditModal(data.id);
         
-        // Drag events
+        // DRAG & DROP
         card.draggable = true;
         card.addEventListener('dragstart', (e) => e.dataTransfer.setData("text", data.id));
         card.addEventListener('dragover', (e) => e.preventDefault());
         card.addEventListener('drop', (e) => {
             e.preventDefault();
             const sourceId = e.dataTransfer.getData("text");
-            const targetId = data.id;
-            if (sourceId === targetId) return;
+            if (sourceId === data.id) return;
             const source = findNodeAndParent(sourceId, appData.tree);
             if (source.parent) source.parent.children = source.parent.children.filter(c => c.id !== sourceId);
+            if(!data.children) data.children = [];
             data.children.push(source.node);
             renderTree();
         });
 
         li.appendChild(card);
-
         if (data.children && data.children.length > 0) {
             const cul = document.createElement('ul'); cul.className = 'children-list';
             data.children.forEach(c => buildNode(c, cul, depth + 1));
@@ -431,7 +437,108 @@
         parentElement.appendChild(li);
     }
 
-    // --- SETTINGS ---
+    // --- SEARCH ENGINE (RECURSIVE VISIBILITY) ---
+    function applyFilter() {
+        const search = document.getElementById('searchInput').value.toUpperCase();
+        const role = document.getElementById('roleFilter').value;
+        const loc = document.getElementById('locFilter').value;
+        const selTags = Array.from(document.getElementById('tagFilter').selectedOptions).map(o => o.value);
+
+        const items = Array.from(document.querySelectorAll('.tree-item'));
+        const nodeMap = {};
+
+        // 1. Evaluate Direct Matches
+        items.forEach(li => {
+            const id = li.dataset.id;
+            const matchSearch = !search || li.dataset.searchText.includes(search);
+            const matchRole = role === "ALL" || li.dataset.role === role;
+            const matchLoc = loc === "ALL" || li.dataset.location === loc;
+            const matchTags = selTags.length === 0 || selTags.every(t => li.dataset.tags.includes(t));
+
+            nodeMap[id] = {
+                li: li,
+                selfMatch: matchSearch && matchRole && matchLoc && matchTags,
+                visible: false
+            };
+        });
+
+        // 2. Recursive Bottom-Up: Match -> Show Ancestors
+        function showAncestors(id) {
+            const entry = nodeMap[id];
+            if (!entry || entry.visible) return;
+            entry.visible = true;
+            const res = findNodeAndParent(id, appData.tree);
+            if (res && res.parent) showAncestors(res.parent.id);
+        }
+
+        Object.keys(nodeMap).forEach(id => {
+            if (nodeMap[id].selfMatch) showAncestors(id);
+        });
+
+        // 3. Update DOM
+        Object.keys(nodeMap).forEach(id => {
+            const entry = nodeMap[id];
+            entry.li.style.display = entry.visible ? '' : 'none';
+            const card = entry.li.querySelector('.node-card');
+            if (entry.selfMatch && (search || selTags.length > 0 || role !== "ALL" || loc !== "ALL")) {
+                card.classList.add('matched');
+            } else { card.classList.remove('matched'); }
+        });
+    }
+
+    // --- DATA MGMT ---
+    function saveSettings() {
+        appData.title = document.getElementById('setOrgName').value;
+        appData.settings.showTags = document.getElementById('setShowTags').checked;
+        appData.settings.bwTags = document.getElementById('setBWTags').checked;
+        const dedup = (id) => [...new Set(document.getElementById(id).value.split(',').map(s => s.trim()).filter(s => s))];
+        appData.settings.roles = dedup('setRoles');
+        appData.settings.locations = dedup('setLocs');
+        appData.settings.tags = dedup('setTags');
+        appData.settings.engagements = dedup('setEng');
+        renderTree(); closeSettingsModal();
+    }
+
+    function saveNodeChanges() {
+        const id = document.getElementById('editNodeId').value;
+        const n = findNodeAndParent(id, appData.tree).node;
+        n.name = document.getElementById('editName').value;
+        n.email = document.getElementById('editEmail').value;
+        n.phone = document.getElementById('editPhone').value;
+        n.role = document.getElementById('editRole').value;
+        n.location = document.getElementById('editLocation').value;
+        n.engagement = document.getElementById('editEngagement').value;
+        n.tags = Array.from(document.getElementById('editTagsMulti').selectedOptions).map(o => o.value);
+        renderTree(); closeModal();
+    }
+
+    function addChild(id, e) {
+        e.stopPropagation();
+        const n = findNodeAndParent(id, appData.tree).node;
+        const newId = 'n' + Date.now();
+        if(!n.children) n.children = [];
+        n.children.push({ id: newId, name: "New Person", role: appData.settings.roles[0], children: [] });
+        renderTree(); openEditModal(newId);
+    }
+
+    function deleteNode(id, e) {
+        e.stopPropagation();
+        const res = findNodeAndParent(id, appData.tree);
+        if (res.parent && confirm("Delete?")) {
+            res.parent.children = res.parent.children.filter(c => c.id !== id);
+            renderTree();
+        }
+    }
+
+    // --- THEME & UI HELPERS ---
+    function toggleTheme() {
+        appData.settings.theme = (appData.settings.theme === "dark") ? "light" : "dark";
+        const isDark = appData.settings.theme === "dark";
+        document.body.classList.toggle('light-theme', !isDark);
+        document.getElementById('themeBtnText').textContent = isDark ? "Night Mode" : "Day Mode";
+        document.getElementById('sunIcon').style.display = isDark ? "none" : "block";
+        document.getElementById('moonIcon').style.display = isDark ? "block" : "none";
+    }
     function openSettingsModal() {
         document.getElementById('setOrgName').value = appData.title;
         document.getElementById('setShowTags').checked = appData.settings.showTags;
@@ -442,29 +549,6 @@
         document.getElementById('setEng').value = appData.settings.engagements.join(', ');
         document.getElementById('settingsModal').classList.add('active');
     }
-
-    function saveSettings() {
-        appData.title = document.getElementById('setOrgName').value;
-        appData.settings.showTags = document.getElementById('setShowTags').checked;
-        appData.settings.bwTags = document.getElementById('setBWTags').checked;
-        const clean = (id) => [...new Set(document.getElementById(id).value.split(',').map(s => s.trim()).filter(s => s))];
-        appData.settings.roles = clean('setRoles');
-        appData.settings.locations = clean('setLocs');
-        appData.settings.tags = clean('setTags');
-        appData.settings.engagements = clean('setEng');
-        renderTree();
-        closeSettingsModal();
-    }
-
-    function toggleTheme() {
-        appData.settings.theme = (appData.settings.theme === "dark") ? "light" : "dark";
-        const isDark = appData.settings.theme === "dark";
-        document.body.classList.toggle('light-theme', !isDark);
-        document.getElementById('themeBtnText').textContent = isDark ? "Night Mode" : "Day Mode";
-        document.getElementById('sunIcon').style.display = isDark ? "none" : "block";
-        document.getElementById('moonIcon').style.display = isDark ? "block" : "none";
-    }
-
     function openEditModal(id) {
         const n = findNodeAndParent(id, appData.tree).node;
         document.getElementById('editNodeId').value = id;
@@ -482,19 +566,8 @@
         tagS.innerHTML = appData.settings.tags.map(t => `<option value="${t}" ${(n.tags||[]).includes(t) ? 'selected':''}>${t}</option>`).join('');
         document.getElementById('editModal').classList.add('active');
     }
-
-    function saveNodeChanges() {
-        const n = findNodeAndParent(document.getElementById('editNodeId').value, appData.tree).node;
-        n.name = document.getElementById('editName').value;
-        n.email = document.getElementById('editEmail').value;
-        n.phone = document.getElementById('editPhone').value;
-        n.role = document.getElementById('editRole').value;
-        n.location = document.getElementById('editLocation').value;
-        n.engagement = document.getElementById('editEngagement').value;
-        n.tags = Array.from(document.getElementById('editTagsMulti').selectedOptions).map(o => o.value);
-        renderTree(); closeModal();
-    }
-
+    function closeModal() { document.getElementById('editModal').classList.remove('active'); }
+    function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('active'); }
     function populateSidebarFilters() {
         const fill = (id, list) => {
             const s = document.getElementById(id); const val = s.value;
@@ -506,43 +579,8 @@
         const tf = document.getElementById('tagFilter'); const tval = Array.from(tf.selectedOptions).map(o=>o.value);
         tf.innerHTML = appData.settings.tags.map(t => `<option value="${t.toUpperCase()}" ${tval.includes(t.toUpperCase())?'selected':''}>${t}</option>`).join('');
     }
-
-    function applyFilter() {
-        const search = document.getElementById('searchInput').value.toUpperCase();
-        const role = document.getElementById('roleFilter').value;
-        const loc = document.getElementById('locFilter').value;
-        const selTags = Array.from(document.getElementById('tagFilter').selectedOptions).map(o => o.value);
-        document.querySelectorAll('.tree-item').forEach(li => {
-            const match = (!search || li.dataset.searchText.includes(search)) && 
-                          (role === "ALL" || li.dataset.role === role) && 
-                          (loc === "ALL" || li.dataset.location === loc) && 
-                          (selTags.length === 0 || selTags.every(t => li.dataset.tags.includes(t)));
-            li.style.display = match ? '' : 'none';
-        });
-    }
-
-    function addChild(id, e) {
-        e.stopPropagation();
-        const n = findNodeAndParent(id, appData.tree).node;
-        if (!n.children) n.children = [];
-        const newId = 'n' + Date.now();
-        n.children.push({ id: newId, name: "New Person", role: appData.settings.roles[0], location: appData.settings.locations[0], children: [] });
-        renderTree(); openEditModal(newId);
-    }
-
-    function deleteNode(id, e) {
-        e.stopPropagation();
-        const res = findNodeAndParent(id, appData.tree);
-        if (res.parent && confirm("Delete?")) {
-            res.parent.children = res.parent.children.filter(c => c.id !== id);
-            renderTree();
-        }
-    }
-
-    function closeModal() { document.getElementById('editModal').classList.remove('active'); }
-    function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('active'); }
     function triggerUpload() { document.getElementById('jsonFileInput').click(); }
-    function saveJson() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'})); a.download='hierarchy.json'; a.click(); }
+    function saveJson() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'})); a.download='org.json'; a.click(); }
     function importJson(i) { const r = new FileReader(); r.onload = (e) => { appData = JSON.parse(e.target.result); renderTree(); }; r.readAsText(i.files[0]); }
     function expandAll() { document.querySelectorAll('ul.children-list').forEach(u => u.classList.remove('hidden')); document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '−'); }
     function collapseAll() { document.querySelectorAll('ul.children-list').forEach(u => u.classList.add('hidden')); document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '+'); }
