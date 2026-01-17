@@ -522,35 +522,35 @@ export const TrackerManager = {
              this.renderTimeTable(series);
         } else if (type === 'gauge') {
             const tmIn = getEl('tkMetric');
-            if (tmIn) tmIn.value = tracker.metric || '';
+            if (tmIn) tmIn.value = tracker ? (tracker.metric || '') : '';
             const tcIn = getEl('tkComp');
-            if (tcIn) tcIn.value = tracker.completed || '';
+            if (tcIn) tcIn.value = tracker ? (tracker.completed || '') : '';
             const ttIn = getEl('tkTotal');
-            if (ttIn) ttIn.value = tracker.total || '';
+            if (ttIn) ttIn.value = tracker ? (tracker.total || '') : '';
             const pcIn = getEl('tkPieColor');
-            if (pcIn) pcIn.value = tracker.colorVal || tracker.color1 || '#00e676';
+            if (pcIn) pcIn.value = tracker ? (tracker.colorVal || tracker.color1 || '#00e676') : '#00e676';
             const pc2In = getEl('tkPieColor2');
-            if (pc2In) pc2In.value = tracker.color2 || '#ff1744';
+            if (pc2In) pc2In.value = tracker ? (tracker.color2 || '#ff1744') : '#ff1744';
         } else if (type === 'counter') {
             const cvIn = getEl('tkCounterVal');
-            if (cvIn) cvIn.value = tracker.value || 0;
+            if (cvIn) cvIn.value = tracker ? (tracker.value || 0) : 0;
             const csIn = getEl('tkCounterSub');
-            if (csIn) csIn.value = tracker.subtitle || '';
+            if (csIn) csIn.value = tracker ? (tracker.subtitle || '') : '';
             const ccIn = getEl('tkCounterColor');
-            if (ccIn) ccIn.value = tracker.color1 || '#bb86fc';
+            if (ccIn) ccIn.value = tracker ? (tracker.color1 || '#bb86fc') : '#bb86fc';
         } else if (type === 'rag') {
-            this.selectRag(tracker.status || 'grey');
+            this.selectRag(tracker ? (tracker.status || 'grey') : 'grey');
             const rmIn = getEl('tkRagMsg');
-            if (rmIn) rmIn.value = tracker.message || '';
+            if (rmIn) rmIn.value = tracker ? (tracker.message || '') : '';
         } else if (type === 'waffle') {
             const wtIn = getEl('tkWaffleTotal');
-            if (wtIn) wtIn.value = tracker.total || 100;
+            if (wtIn) wtIn.value = tracker ? (tracker.total || 100) : 100;
             const waIn = getEl('tkWaffleActive');
-            if (waIn) waIn.value = tracker.active || 0;
+            if (waIn) waIn.value = tracker ? (tracker.active || 0) : 0;
             const wcIn = getEl('tkWaffleColorVal');
-            if (wcIn) wcIn.value = tracker.colorVal || '#03dac6';
+            if (wcIn) wcIn.value = tracker ? (tracker.colorVal || '#03dac6') : '#03dac6';
             const wbIn = getEl('tkWaffleColorBg');
-            if (wbIn) wbIn.value = tracker.colorBg || '#333333';
+            if (wbIn) wbIn.value = tracker ? (tracker.colorBg || '#333333') : '#333333';
             this.updateWafflePreview();
         }
 
