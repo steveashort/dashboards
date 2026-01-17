@@ -1356,3 +1356,211 @@ export const TrackerManager = {
         console.log("Tracker saved:", type);
     }
 };
+
+export const UserManager = {
+    openUserModal: (index = -1) => {
+        const isEdit = index > -1;
+        getEl('modalTitle').innerText = isEdit ? 'Edit User' : 'Add User';
+        getEl('editIndex').value = index;
+        
+        const m = isEdit ? State.members[index] : {
+            name: '',
+            lastWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], status: 'busy' },
+            thisWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], load: ['N','N','N','N','N'] },
+            nextWeek: { tasks: [{text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}], load: ['N','N','N','N','N'] }
+        };
+
+        getEl('mName').value = m.name || '';
+        
+        // Populate tasks
+        for(let i=1; i<=3; i++) {
+            getEl('lwTask'+i).value = m.lastWeek.tasks[i-1]?.text || '';
+            getEl('nwTask'+i).value = m.thisWeek.tasks[i-1]?.text || '';
+            getEl('fwTask'+i).value = m.nextWeek.tasks[i-1]?.text || '';
+        }
+
+        // Status
+        UserManager.setStatus(m.lastWeek.status || 'busy');
+
+        // Loads
+        const thisLoad = m.thisWeek.load || ['N','N','N','N','N'];
+        const nextLoad = m.nextWeek.load || ['N','N','N','N','N'];
+        thisLoad.forEach((v, i) => UserManager.setLoad(i, v));
+        nextLoad.forEach((v, i) => UserManager.setFutureLoad(i, v));
+
+        getEl('deleteBtn').style.display = isEdit ? 'block' : 'none';
+        ModalManager.openModal('userModal');
+    },
+    setStatus: (status) => {
+        getEl('lwStatus').value = status;
+        document.querySelectorAll('.status-option').forEach(el => {
+            el.classList.toggle('selected', el.classList.contains('so-' + status));
+        });
+    },
+    setLoad: (day, val) => {
+        getEl('nw' + day).value = val;
+        // Search globally for all load select rows
+        const rows = document.querySelectorAll('.load-select-row');
+        if (rows.length > 0) {
+            const boxes = rows[0].querySelectorAll('.ls-box');
+            if (boxes[day]) {
+                boxes[day].querySelectorAll('.w-pill').forEach(p => {
+                    const text = p.innerText;
+                    const expected = (val === 'N' ? 'M' : (val === 'L' ? 'L' : (val === 'R' ? 'H' : 'A')));
+                    p.classList.toggle('selected', text === expected);
+                });
+            }
+        }
+    },
+    setFutureLoad: (day, val) => {
+        getEl('fw' + day).value = val;
+        const rows = document.querySelectorAll('.load-select-row');
+        if (rows.length > 1) {
+            const boxes = rows[1].querySelectorAll('.ls-box');
+            if (boxes[day]) {
+                boxes[day].querySelectorAll('.w-pill').forEach(p => {
+                    const text = p.innerText;
+                    const expected = (val === 'N' ? 'M' : (val === 'L' ? 'L' : (val === 'R' ? 'H' : 'A')));
+                    p.classList.toggle('selected', text === expected);
+                });
+            }
+        }
+    },
+    submitUser: () => {
+        const idx = parseInt(getEl('editIndex').value);
+        const name = getEl('mName').value.trim();
+        if(!name) return App.alert("Name is required");
+
+        const member = {
+            name,
+            lastWeek: {
+                status: getEl('lwStatus').value,
+                tasks: [
+                    { text: getEl('lwTask1').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[0]?.isTeamSuccess || false) : false },
+                    { text: getEl('lwTask2').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[1]?.isTeamSuccess || false) : false },
+                    { text: getEl('lwTask3').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[2]?.isTeamSuccess || false) : false }
+                ]
+            },
+            thisWeek: {
+                load: [getEl('nw0').value, getEl('nw1').value, getEl('nw2').value, getEl('nw3').value, getEl('nw4').value],
+                tasks: [
+                    { text: getEl('nwTask1').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[0]?.isTeamSuccess || false) : false },
+                    { text: getEl('nwTask2').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[1]?.isTeamSuccess || false) : false },
+                    { text: getEl('nwTask3').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[2]?.isTeamSuccess || false) : false }
+                ]
+            },
+            nextWeek: {
+                load: [getEl('fw0').value, getEl('fw1').value, getEl('fw2').value, getEl('fw3').value, getEl('fw4').value],
+                tasks: [
+                    { text: getEl('fwTask1').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[0]?.isTeamActivity || false) : false },
+                    { text: getEl('fwTask2').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[1]?.isTeamActivity || false) : false },
+                    { text: getEl('fwTask3').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[2]?.isTeamActivity || false) : false }
+                ]
+            }
+        };
+
+        if(idx === -1) State.members.push(member);
+        else State.members[idx] = member;
+
+        ModalManager.closeModal('userModal');
+        renderBoard();
+    },
+    deleteUser: () => {
+        const idx = parseInt(getEl('editIndex').value);
+        App.confirm("Delete this user?", () => {
+            State.members.splice(idx, 1);
+            ModalManager.closeModal('userModal');
+            renderBoard();
+        });
+    },
+    toggleSuccess: (mIdx, tIdx) => {
+        State.members[mIdx].lastWeek.tasks[tIdx].isTeamSuccess = !State.members[mIdx].lastWeek.tasks[tIdx].isTeamSuccess;
+        renderBoard();
+    },
+    toggleActivity: (mIdx, tIdx) => {
+        State.members[mIdx].thisWeek.tasks[tIdx].isTeamSuccess = !State.members[mIdx].thisWeek.tasks[tIdx].isTeamSuccess;
+        renderBoard();
+    },
+    toggleFuture: (mIdx, tIdx) => {
+        State.members[mIdx].nextWeek.tasks[tIdx].isTeamActivity = !State.members[mIdx].nextWeek.tasks[tIdx].isTeamActivity;
+        renderBoard();
+    },
+    resetSelections: (type) => {
+        State.members.forEach(m => {
+            if(type === 'success') {
+                m.lastWeek.tasks.forEach(t => t.isTeamSuccess = false);
+                m.thisWeek.tasks.forEach(t => t.isTeamSuccess = false);
+            } else {
+                m.nextWeek.tasks.forEach(t => t.isTeamActivity = false);
+            }
+        });
+        renderBoard();
+    }
+};
+
+export const OverviewManager = {
+    handleOverviewClick: (type) => {
+        if(document.body.classList.contains('publishing')) {
+            const list = type === 'success' ? getEl('teamSuccessList') : getEl('teamActivityList');
+            const title = type === 'success' ? 'Team Achievements' : 'Activities Next Week';
+            const body = `<div class="zoomed-content"><ul>${list.innerHTML}</ul></div>`;
+            getEl('zoomTitle').innerText = title;
+            getEl('zoomBody').innerHTML = body;
+            ModalManager.openModal('zoomModal');
+        }
+    },
+    handleInfoClick: () => {
+        if(!document.body.classList.contains('publishing')) {
+            const val = prompt("Enter Additional Info (Markdown supported):", State.additionalInfo);
+            if(val !== null) {
+                State.additionalInfo = val;
+                renderBoard();
+            }
+        } else {
+            getEl('zoomTitle').innerText = "Additional Info";
+            getEl('zoomBody').innerHTML = `<div class="zoomed-content">${parseMarkdown(State.additionalInfo)}</div>`;
+            ModalManager.openModal('zoomModal');
+        }
+    }
+};
+
+export const DataSaver = {
+    saveData: () => {
+        const data = JSON.stringify(State, null, 2);
+        const blob = new Blob([data], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `team_tracker_${new Date().toISOString().split('T')[0]}.json`;
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+};
+
+export const DataLoader = {
+    loadFromFile: (input) => {
+        const file = input.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if(data.trackers && data.members) {
+                    State = { ...State, ...data };
+                    renderBoard();
+                    App.alert("Data loaded successfully.");
+                } else {
+                    App.alert("Invalid data format.");
+                }
+            } catch(err) {
+                App.alert("Error parsing file.");
+            }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    }
+};
+
+export const DataExporter = {
+    exportCSV: () => {}
+};

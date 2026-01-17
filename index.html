@@ -29,7 +29,6 @@
             <input type="file" id="fileInput" style="display: none;" accept=".json,.csv" onchange="DataLoader.loadFromFile(this)">
             <button class="btn" onclick="document.getElementById('fileInput').click()">Load Data</button>
             <button class="btn" onclick="DataSaver.saveData()">Save JSON</button>
-            <button class="btn" onclick="DataExporter.exportCSV()">Export CSV</button>
             <button class="btn" onclick="App.togglePublishMode()">Publish View</button>
         </div>
     </header>
