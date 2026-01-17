@@ -817,6 +817,56 @@ export const TrackerManager = {
         this.renderTimeTable(newSeries);
     },
 
+    addDateColumn() {
+        const tcIn = getEl('tkTimeCount');
+        if (tcIn) {
+             const sdIn = getEl('tkStartDate');
+             if (sdIn) {
+                 const d = new Date(sdIn.value);
+                 const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
+                 const unit = unitRad ? unitRad.value : 'day';
+                 
+                 if (unit === 'year') d.setFullYear(d.getFullYear() + 1);
+                 else if (unit === 'month') d.setMonth(d.getMonth() + 1);
+                 else d.setDate(d.getDate() + 1);
+                 
+                 sdIn.value = d.toISOString().split('T')[0];
+             }
+             
+             tcIn.value = parseInt(tcIn.value) + 1;
+             this.renderTimeTable();
+        }
+    },
+
+    removeDateColumn(index) {
+        const tcIn = getEl('tkTimeCount');
+        const count = parseInt(tcIn.value);
+        
+        if (count <= 1) return App.alert("Cannot remove the last date.");
+
+        if (index === 0) {
+            tcIn.value = count - 1;
+            this.renderTimeTable();
+        } else if (index === count - 1) {
+            const sdIn = getEl('tkStartDate');
+            if (sdIn) {
+                 const d = new Date(sdIn.value);
+                 const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
+                 const unit = unitRad ? unitRad.value : 'day';
+                 
+                 if (unit === 'year') d.setFullYear(d.getFullYear() - 1);
+                 else if (unit === 'month') d.setMonth(d.getMonth() - 1);
+                 else d.setDate(d.getDate() - 1);
+                 
+                 sdIn.value = d.toISOString().split('T')[0];
+            }
+            tcIn.value = count - 1;
+            this.renderTimeTable();
+        } else {
+            App.alert("Please remove dates from the start or end of the series.");
+        }
+    },
+
     selectRag(val) {
         const ragIn = getEl('tkRagStatus');
         if (ragIn) ragIn.value = val;
