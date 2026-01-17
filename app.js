@@ -729,9 +729,9 @@ export const TrackerManager = {
         });
 
         if (series.length < 6) {
-            html += `<tr>
+            html += `<tr class="add-series-row">
                 <td colspan="${labels.length + 2}" style="padding: 10px; text-align: center; border-top: 1px dashed #444;">
-                    <button class="btn btn-sm" onclick="TrackerManager.addTimeSeriesColumn()" style="width:100%; max-width:200px; display:inline-block;">+ Add Series</button>
+                    <div onclick="TrackerManager.addTimeSeriesColumn()" style="width: 30px; height: 30px; background: var(--primary); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; cursor: pointer; margin: 0 auto; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">+</div>
                 </td>
             </tr>`;
         }
@@ -759,6 +759,7 @@ export const TrackerManager = {
 
         const series = [];
         rows.forEach((row, si) => {
+            if (row.classList.contains('add-series-row')) return;
             const nameIn = row.querySelector('.ts-name');
             const colorIn = row.querySelector('.ts-color');
             const name = nameIn ? nameIn.value : `Series ${si+1}`;
