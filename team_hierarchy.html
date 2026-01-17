@@ -46,31 +46,14 @@
             color: var(--text-main);
             margin: 0;
             display: flex;
-            flex-direction: column;
             height: 100vh;
             overflow: hidden;
         }
 
-        header {
-            height: 60px;
-            background: var(--sidebar-bg);
-            border-bottom: 1px solid var(--card-border);
-            display: flex;
-            align-items: center;
-            padding: 0 25px;
-            z-index: 100;
-        }
-
-        #headerOrgName {
-            font-size: 22px;
-            font-weight: bold;
-            color: var(--accent);
-        }
-
         .app-container {
             display: flex;
-            flex: 1;
-            overflow: hidden;
+            width: 100%;
+            height: 100%;
         }
 
         .sidebar {
@@ -84,11 +67,41 @@
             overflow-y: auto;
         }
 
+        .sidebar-logo {
+            width: 100%;
+            max-height: 80px;
+            object-fit: contain;
+            margin-bottom: 20px;
+        }
+
+        .main-window {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        .main-header {
+            height: 60px;
+            background: var(--bg-color);
+            border-bottom: 1px solid var(--card-border);
+            display: flex;
+            align-items: center;
+            padding: 0 25px;
+            flex-shrink: 0;
+        }
+
+        #headerOrgName {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--text-main);
+        }
+
         .main-content { 
             flex: 1; 
             padding: 40px; 
-            overflow: auto; 
-            height: 100%;
+            overflow: auto; /* FIX: Enable both vertical and horizontal scroll */
             position: relative;
         }
 
@@ -122,7 +135,12 @@
         /* ==========================================================
            3) TREE & NODES
            ========================================================== */
-        .main-tree { display: inline-block; padding-right: 150px; padding-bottom: 150px; }
+        .main-tree {
+            display: inline-block;
+            white-space: nowrap; /* FIX: Forces horizontal expansion */
+            padding-right: 150px; 
+            padding-bottom: 150px; 
+        }
         ul { list-style: none; padding-left: 20px; margin: 0; position: relative; }
         ul.children-list { border-left: 2px solid var(--line-color); margin-left: 15px; padding-left: 30px; }
         ul.hidden { display: none !important; }
@@ -139,6 +157,7 @@
             position: relative;
             border-left: 6px solid var(--accent);
             box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+            white-space: normal; /* Reset for card content */
         }
         
         .node-actions { position: absolute; top: -12px; right: 10px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s; z-index: 10; }
@@ -168,16 +187,15 @@
         .modal { background: var(--sidebar-bg); padding: 30px; border-radius: 12px; width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--card-border); }
         .form-row { display: flex; gap: 15px; margin-bottom: 15px; }
         .form-row > div { flex: 1; }
+        .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 3000; }
+        .toast { background: #333; color: white; padding: 12px 20px; border-radius: 4px; border-left: 4px solid var(--accent); margin-top: 10px; }
     </style>
 </head>
 <body>
 
-<header>
-    <div id="headerOrgName">Org Viewer</div>
-</header>
-
 <div class="app-container">
     <aside class="sidebar">
+        <img src="company-logo.png" alt="Company Logo" class="sidebar-logo">
         <div class="control-group">
             <label>Search</label>
             <input type="text" id="searchInput" placeholder="Search hierarchy..." oninput="applyFilter()">
@@ -197,9 +215,14 @@
         </div>
     </aside>
 
-    <main class="main-content" id="mainDisplay">
-        <div id="tree-container" class="main-tree"></div>
-    </main>
+    <div class="main-window">
+        <header class="main-header">
+            <div id="headerOrgName">Org Viewer</div>
+        </header>
+        <main class="main-content" id="mainDisplay">
+            <div id="tree-container" class="main-tree"></div>
+        </main>
+    </div>
 </div>
 
 <div class="floating-toolbar">
@@ -492,7 +515,7 @@
         const n = findNodeAndParent(id, appData.tree).node;
         if (!n.children) n.children = [];
         const newId = 'n' + Date.now();
-        n.children.push({ id: newId, name: "New Person", role: appData.settings.roles[0], children: [] });
+        n.children.push({ id: newId, name: "New Person", role: appData.settings.roles[0], location: appData.settings.locations[0], children: [] });
         renderTree(); openEditModal(newId);
     }
 
