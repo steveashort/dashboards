@@ -81,7 +81,7 @@ const parseMarkdown = (t) => {
              .replace(/\*(.*?)\*/g,'<i>$1</i>')
              .replace(/\((.*?)\)\((\s*.*?\s*)\)/g, (match, text, url) => {
                  let finalUrl = url.trim();
-                 if(!/^https?:\/\/i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
+                 if(!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
                  return `<a href="${finalUrl}" target="_blank">${text}</a>`;
              });
     return h.split('\n').map(l=>l.trim().startsWith('- ')?`<li>${l.substring(2)}</li>`:l+'<br>').join('').replace(/<\/li><br><li>/g,'</li><li>').replace(/<br><li>/g,'<ul><li>').replace(/<\/li><br>/g,'</li></ul>');
