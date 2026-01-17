@@ -509,7 +509,7 @@ export const TrackerManager = {
                            
                            this.updateTimeOptions();
                            const tcIn = getEl(`${ctx.prefix}TimeCount`);
-                           if (tcIn) tcIn.value = (tracker && tracker.timeCount) ? tracker.timeCount : 7;             
+                           if (tcIn) tcIn.value = (tracker && tracker.timeCount) ? tracker.timeCount : 30;             
              let series = [];
              if (tracker) {
                  if (tracker.series) series = tracker.series;
@@ -591,6 +591,7 @@ export const TrackerManager = {
 
         const countSel = getEl(`${ctx.prefix}TimeCount`);
         if (!countSel) return;
+        const currentVal = countSel.value;
         countSel.innerHTML = '';
         let opts = [];
         if (unit === 'year') opts = [3, 5, 10];
@@ -603,6 +604,11 @@ export const TrackerManager = {
             opt.innerText = o;
             countSel.appendChild(opt);
         });
+        if (currentVal && opts.includes(parseInt(currentVal))) {
+            countSel.value = currentVal;
+        } else if (unit === 'day') {
+            countSel.value = 30;
+        }
         this.renderTimeTable();
     },
 
@@ -669,7 +675,7 @@ export const TrackerManager = {
             html += `<tr>
                 <td style="padding:8px; border-bottom:1px solid #333; position:sticky; left:0; background:var(--modal-bg); z-index:10;">
                     <div style="display:flex; align-items:center; gap:5px;">
-                        <input type="checkbox" class="ts-select" data-idx="${si}" style="accent-color:var(--accent);">
+                        <input type="checkbox" class="ts-select" data-idx="${si}" style="accent-color:var(--accent);" onchange="TrackerManager.updateDeleteSeriesButtonVisibility()">
                         <input type="color" class="ts-color" value="${s.color}" style="width:20px; height:20px; border:none; padding:0; cursor:pointer;" data-idx="${si}">
                         <input type="text" class="ts-name" value="${s.name}" style="width:100px; font-size:0.8rem; background:#222; border:1px solid #444; color:#fff; padding:2px;" data-idx="${si}">
                     </div>
@@ -688,6 +694,14 @@ export const TrackerManager = {
         
         container.innerHTML = html;
         container.dataset.labels = JSON.stringify(labels);
+        this.updateDeleteSeriesButtonVisibility();
+    },
+
+    updateDeleteSeriesButtonVisibility() {
+        const btnDelete = document.querySelector('button[onclick="TrackerManager.deleteSelectedSeries()"]');
+        if (!btnDelete) return;
+        const checks = document.querySelectorAll('.ts-select:checked');
+        btnDelete.style.display = checks.length > 0 ? 'inline-block' : 'none';
     },
 
     scrapeTimeSeries() {
