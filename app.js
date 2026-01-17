@@ -685,7 +685,7 @@ export const TrackerManager = {
         this.renderTimeTable();
     },
 
-    renderTimeTable(seriesOverride = null) {
+    renderTimeTable(seriesOverride = null, labelsOverride = null) {
         const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
         const unit = unitRad ? unitRad.value : 'day';
         const tcIn = getEl('tkTimeCount');
@@ -705,27 +705,30 @@ export const TrackerManager = {
         if (!series) series = this.scrapeTimeSeries();
         if (series.length === 0) series = [{name:'Series 1', color: '#03dac6', values:[]}];
 
-        const start = new Date(startDateVal);
-        const labels = [];
-        
-        for(let i=0; i<count; i++) {
-            let label = '';
-            // Calculate backwards from End Date so the last one is the selected date
-            // Order is chronological: 2024, 2025, 2026 (if 2026 is end)
-            const offset = (count - 1) - i; 
-            
-            if (unit === 'year') {
-                label = (start.getFullYear() - offset).toString();
-            } else if (unit === 'month') {
-                let d = new Date(start.getFullYear(), start.getMonth() - offset, 1);
-                let m = d.getMonth() + 1;
-                label = `${d.getFullYear()}-${m.toString().padStart(2, '0')}`;
-            } else {
-                let d = new Date(start);
-                d.setDate(d.getDate() - offset);
-                label = d.toISOString().split('T')[0];
+        let labels = [];
+        if (labelsOverride) {
+            labels = labelsOverride;
+        } else {
+            const start = new Date(startDateVal);
+            for(let i=0; i<count; i++) {
+                let label = '';
+                // Calculate backwards from End Date so the last one is the selected date
+                // Order is chronological: 2024, 2025, 2026 (if 2026 is end)
+                const offset = (count - 1) - i; 
+                
+                if (unit === 'year') {
+                    label = (start.getFullYear() - offset).toString();
+                } else if (unit === 'month') {
+                    let d = new Date(start.getFullYear(), start.getMonth() - offset, 1);
+                    let m = d.getMonth() + 1;
+                    label = `${d.getFullYear()}-${m.toString().padStart(2, '0')}`;
+                } else {
+                    let d = new Date(start);
+                    d.setDate(d.getDate() - offset);
+                    label = d.toISOString().split('T')[0];
+                }
+                labels.push(label);
             }
-            labels.push(label);
         }
 
         const container = getEl('lineTableContainer');
@@ -879,29 +882,82 @@ export const TrackerManager = {
             const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
             if (lines.length < 2) return App.alert("CSV must have header + data.");
             
-            const headers = lines[0].split(/[\,\t]+/).map(s => s.trim());
+            const headers = lines[0].split(/[,\t]+/).map(s => s.trim());
             const seriesNames = headers.slice(1);
             if (seriesNames.length === 0) return App.alert("No series columns.");
 
+            // Detect Unit from first data row date
+            const firstRowDate = lines[1].split(/[,\t]+/)[0].trim();
+            let unit = 'day';
+            if (/^\d{4}$/.test(firstRowDate)) unit = 'year';
+            else if (/^\d{4}-\d{2}$/.test(firstRowDate)) unit = 'month';
+            
+            // Update UI Radio
+            const unitRad = document.querySelector(`input[name="tkTimeUnit"][value="${unit}"]`);
+            if (unitRad) {
+                unitRad.checked = true;
+                this.updateTimeOptions(); // Refresh dropdown
+            }
+
+            // Determine Max Limit
+            let max = 90;
+            if (unit === 'year') max = 10;
+            if (unit === 'month') max = 24;
+
+            let dataLines = lines.slice(1);
+            let truncated = false;
+            if (dataLines.length > max) {
+                dataLines = dataLines.slice(0, max);
+                truncated = true;
+            }
+
+            // Set Count (Historic X)
+            const count = dataLines.length;
+            const tcIn = getEl('tkTimeCount');
+            if (tcIn) {
+                let exists = false;
+                for(let opt of tcIn.options) { if(parseInt(opt.value) === count) exists = true; }
+                if (!exists) {
+                    const opt = document.createElement('option');
+                    opt.value = count;
+                    opt.innerText = count;
+                    opt.selected = true;
+                    tcIn.appendChild(opt); 
+                }
+                tcIn.value = count;
+            }
+
+            // Set End Date (Last row date)
+            const lastRowDate = dataLines[dataLines.length - 1].split(/[,\t]+/)[0].trim();
+            const sdIn = getEl('tkStartDate');
+            let isoDate = lastRowDate;
+            if (unit === 'year') isoDate = `${lastRowDate}-01-01`;
+            else if (unit === 'month') isoDate = `${lastRowDate}-01`;
+            
+            const d = new Date(isoDate);
+            if (!isNaN(d.getTime()) && sdIn) {
+                sdIn.value = d.toISOString().split('T')[0];
+            }
+
+            const labels = [];
             const seriesData = seriesNames.map((n, i) => ({
                 name: n, 
                 color: ['#03dac6', '#ff4081', '#bb86fc'][i%3], 
                 values: []
             }));
             
-            const tcIn = getEl('tkTimeCount');
-            const count = tcIn ? parseInt(tcIn.value) : 7;
-            const dataRows = lines.slice(1).slice(0, count);
-            
-            dataRows.forEach(line => {
-                const cols = line.split(/[\,\t]+/).map(s => s.trim());
+            dataLines.forEach(line => {
+                const cols = line.split(/[,\t]+/).map(s => s.trim());
+                labels.push(cols[0]); 
                 seriesData.forEach((s, idx) => {
                     s.values.push(parseFloat(cols[idx+1]) || 0);
                 });
             });
             
-            this.renderTimeTable(seriesData);
-            App.alert("Data imported into table.");
+            if (truncated) App.alert(`Maximum series limit reached (${max} ${unit}s) - data truncated.`);
+            else App.alert("Data imported.");
+
+            this.renderTimeTable(seriesData, labels);
             return;
         }
 
