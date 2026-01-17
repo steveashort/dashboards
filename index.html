@@ -216,135 +216,281 @@
                     </div>
                 </div>
 
-                <div id="gaugeInputs">
-                    <div class="input-group"><label>Gauge Name</label><input type="text" id="tkMetric"></div>
-                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
-                        <div class="input-group"><label>Target</label><input type="number" id="tkTotal"></div>
-                        <div class="input-group"><label>Progress</label><input type="number" id="tkComp"></div>
-                    </div>
-                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
-                        <div class="input-group">
-                            <label>Target Colour</label>
-                            <input type="color" id="tkPieColor" value="#03dac6">
-                        </div>
-                        <div class="input-group">
-                            <label>Progress Colour</label>
-                            <input type="color" id="tkPieColor2" value="#ff1744">
-                        </div>
-                    </div>
-                    <div class="input-group" style="margin-top: 1rem;">
-                        <label>Notes (Hover info - Published View)</label>
-                        <textarea id="tkNotes" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
-                    </div>
-                </div>
-                
-                <div id="lineInputs" style="display:none;">
-                    <div class="form-row" style="margin-bottom: 1rem; gap: 2rem;">
-                        <div class="input-group">
-                            <label>Metric Unit</label>
-                            <input type="text" id="tkYLabel">
-                        </div>
-                        <div class="input-group">
-                            <label>Chart Style</label>
-                            <div style="display:flex; gap:15px; margin-top:5px;">
-                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="line" checked> Line Chart</label>
-                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="bar"> Bar Chart</label>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end; display: flex; gap: 2rem;">
-                        <div class="input-group">
-                            <label>End Date</label>
-                            <input type="date" id="tkStartDate" onchange="TrackerManager.handleEndDateChange(this)" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
-                        </div>
-                        <div class="input-group">
-                            <label>Time Unit</label>
-                            <div style="display: flex; gap: 15px; margin-top: 5px;" id="tkTimeUnitContainer">
-                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="day" checked onchange="TrackerManager.handleTimeUnitChange(this)"> Days</label>
-                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="month" onchange="TrackerManager.handleTimeUnitChange(this)"> Months</label>
-                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="year" onchange="TrackerManager.handleTimeUnitChange(this)"> Years</label>
-                            </div>
-                        </div>
-                        <div class="input-group">
-                            <label id="tkHistoricLabel">Historic Days</label>
-                            <select id="tkTimeCount" onchange="TrackerManager.handleCountChange(this)" style="width: 80px; min-width: 60px;"></select>
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                            <label>Manual Data Entry</label>
-                        </div>
-                        <div id="lineTableContainer" style="max-height: 450px; overflow: auto; border: 1px solid #333; border-radius: 4px;"></div>
-                        <div style="margin-top: 10px; display:flex; justify-content:flex-end;">
-                            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); display: none;" onclick="TrackerManager.deleteSelectedSeries()">Delete Series</button>
-                        </div>
-                    </div>
-                    <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-top: 1rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                            <label style="margin:0;">Import / Export Data</label>
-                            <button class="btn btn-sm" onclick="TrackerManager.exportTimeSeriesCSV()">Export Table to CSV</button>
-                        </div>
-                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
-                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
-                    </div>
-                </div>
-                <div id="counterInputs" style="display:none;">
-                    <div class="form-row" style="margin-bottom: 0; gap: 1rem;">
-                        <div class="input-group" style="flex: 1;">
-                            <label>Counter Value</label>
-                            <input type="number" id="tkCounterVal">
-                        </div>
-                        <div class="input-group" style="flex: 0 0 100px;">
-                            <label>Font Color</label>
-                            <input type="color" id="tkCounterColor" value="#bb86fc">
-                        </div>
-                    </div>
-                    <div class="input-group">
-                        <label>Subtitle / Description</label>
-                        <input type="text" id="tkCounterSub" placeholder="e.g. Active Incidents">
-                    </div>
-                </div>
-                <div id="ragInputs" style="display:none;">
-                    <div class="input-group">
-                        <label>Status</label>
-                        <div class="rag-selector">
-                            <div class="rag-pill" data-val="green" onclick="TrackerManager.selectRag('green')">Green</div>
-                            <div class="rag-pill" data-val="amber" onclick="TrackerManager.selectRag('amber')">Amber</div>
-                            <div class="rag-pill" data-val="red" onclick="TrackerManager.selectRag('red')">Red</div>
-                            <div class="rag-pill" data-val="grey" onclick="TrackerManager.selectRag('grey')">Unknown</div>
-                        </div>
-                        <input type="hidden" id="tkRagStatus">
-                    </div>
-                    <div class="input-group">
-                        <label>Status Message</label>
-                        <input type="text" id="tkRagMsg" placeholder="e.g. All Systems Operational">
-                    </div>
-                </div>
-                <div id="waffleInputs" style="display:none;">
-                    <div class="input-group">
-                        <label>Total Count</label>
-                        <input type="number" id="tkWaffleTotal" oninput="TrackerManager.updateWafflePreview()">
-                    </div>
-                    <div class="input-group">
-                        <label>Completed / Active Count</label>
-                        <input type="number" id="tkWaffleActive" oninput="TrackerManager.updateWafflePreview()">
-                    </div>
-                    <div class="form-row">
-                        <div class="input-group">
-                            <label>Value Color</label>
-                            <input type="color" id="tkWaffleColorVal" value="#03dac6" oninput="TrackerManager.updateWafflePreview()">
-                        </div>
-                        <div class="input-group">
-                            <label>Background Color</label>
-                            <input type="color" id="tkWaffleColorBg" value="#333333" oninput="TrackerManager.updateWafflePreview()">
-                        </div>
-                    </div>
-                    <div style="margin-top:20px; padding:10px; border:1px dashed #444; border-radius:4px; text-align:center;">
-                        <label style="font-size:0.7rem; text-transform:uppercase; color:#aaa;">Preview</label>
-                        <div id="wafflePreview">
-                        </div>
-                    </div>
-                </div>
+                                <div id="gaugeInputs">
+
+                                    <div class="input-group"><label>Metric Unit</label><input type="text" id="tkMetric"></div>
+
+                                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
+
+                                        <div class="input-group"><label>Target</label><input type="number" id="tkTotal"></div>
+
+                                        <div class="input-group"><label>Progress</label><input type="number" id="tkComp"></div>
+
+                                    </div>
+
+                                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
+
+                                        <div class="input-group">
+
+                                            <label>Target Colour</label>
+
+                                            <input type="color" id="tkPieColor" value="#03dac6">
+
+                                        </div>
+
+                                        <div class="input-group">
+
+                                            <label>Progress Colour</label>
+
+                                            <input type="color" id="tkPieColor2" value="#ff1744">
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="input-group" style="margin-top: 1rem;">
+
+                                        <label>Notes (Hover info - Published View)</label>
+
+                                        <textarea id="tkNotes" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+
+                                    </div>
+
+                                </div>
+
+                                <div id="lineInputs" style="display:none;">
+
+                                    <div class="form-row" style="margin-bottom: 1rem; gap: 2rem;">
+
+                                        <div class="input-group">
+
+                                            <label>Metric Unit</label>
+
+                                            <input type="text" id="tkYLabel">
+
+                                        </div>
+
+                                        <div class="input-group">
+
+                                            <label>Chart Style</label>
+
+                                            <div style="display:flex; gap:15px; margin-top:5px;">
+
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="line" checked> Line Chart</label>
+
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="bar"> Bar Chart</label>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end; display: flex; gap: 2rem;">
+
+                                        <div class="input-group">
+
+                                            <label>End Date</label>
+
+                                            <input type="date" id="tkStartDate" onchange="TrackerManager.handleEndDateChange(this)" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+
+                                        </div>
+
+                                        <div class="input-group">
+
+                                            <label>Time Unit</label>
+
+                                            <div style="display: flex; gap: 15px; margin-top: 5px;" id="tkTimeUnitContainer">
+
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="day" checked onchange="TrackerManager.handleTimeUnitChange(this)"> Days</label>
+
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="month" onchange="TrackerManager.handleTimeUnitChange(this)"> Months</label>
+
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="year" onchange="TrackerManager.handleTimeUnitChange(this)"> Years</label>
+
+                                            </div>
+
+                                        </div>
+
+                                        <div class="input-group">
+
+                                            <label id="tkHistoricLabel">Historic Days</label>
+
+                                            <select id="tkTimeCount" onchange="TrackerManager.handleCountChange(this)" style="width: 80px; min-width: 60px;"></select>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="input-group">
+
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+
+                                            <label>Manual Data Entry</label>
+
+                                        </div>
+
+                                        <div id="lineTableContainer" style="max-height: 450px; overflow: auto; border: 1px solid #333; border-radius: 4px;"></div>
+
+                                        <div style="margin-top: 10px; display:flex; justify-content:flex-end;">
+
+                                            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); display: none;" onclick="TrackerManager.deleteSelectedSeries()">Delete Series</button>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-top: 1rem;">
+
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+
+                                            <label style="margin:0;">Import / Export Data</label>
+
+                                            <button class="btn btn-sm" onclick="TrackerManager.exportTimeSeriesCSV()">Export Table to CSV</button>
+
+                                        </div>
+
+                                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
+
+                                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
+
+                                    </div>
+
+                                </div>
+
+                                <div id="counterInputs" style="display:none;">
+
+                                    <div class="form-row" style="margin-bottom: 0; gap: 1rem;">
+
+                                        <div class="input-group" style="flex: 1;">
+
+                                            <label>Counter Value</label>
+
+                                            <input type="number" id="tkCounterVal">
+
+                                        </div>
+
+                                        <div class="input-group" style="flex: 0 0 100px;">
+
+                                            <label>Font Color</label>
+
+                                            <input type="color" id="tkCounterColor" value="#bb86fc">
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="input-group">
+
+                                        <label>Subtitle / Description</label>
+
+                                        <input type="text" id="tkCounterSub" placeholder="e.g. Active Incidents">
+
+                                    </div>
+
+                                </div>
+
+                                <div id="ragInputs" style="display:none;">
+
+                                    <div class="input-group">
+
+                                        <label>Status</label>
+
+                                        <div class="rag-selector">
+
+                                            <div class="rag-pill" data-val="green" onclick="TrackerManager.selectRag('green')">Green</div>
+
+                                            <div class="rag-pill" data-val="amber" onclick="TrackerManager.selectRag('amber')">Amber</div>
+
+                                            <div class="rag-pill" data-val="red" onclick="TrackerManager.selectRag('red')">Red</div>
+
+                                            <div class="rag-pill" data-val="grey" onclick="TrackerManager.selectRag('grey')">Unknown</div>
+
+                                        </div>
+
+                                        <input type="hidden" id="tkRagStatus">
+
+                                    </div>
+
+                                    <div class="input-group">
+
+                                        <label>Status Message</label>
+
+                                        <input type="text" id="tkRagMsg" placeholder="e.g. All Systems Operational">
+
+                                    </div>
+
+                                </div>
+
+                                <div id="waffleInputs" style="display:none;">
+
+                                    <div class="input-group">
+
+                                        <label>Metric Unit</label>
+
+                                        <input type="text" id="tkWaffleMetric" oninput="TrackerManager.updateWafflePreview()">
+
+                                    </div>
+
+                                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
+
+                                        <div class="input-group">
+
+                                            <label>Target (Max 500)</label>
+
+                                            <input type="number" id="tkWaffleTotal" max="500" oninput="TrackerManager.updateWafflePreview()">
+
+                                        </div>
+
+                                        <div class="input-group">
+
+                                            <label>Progress</label>
+
+                                            <input type="number" id="tkWaffleActive" oninput="TrackerManager.updateWafflePreview()">
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
+
+                                        <div class="input-group">
+
+                                            <label>Target Colour</label>
+
+                                            <input type="color" id="tkWaffleColorBg" value="#333333" oninput="TrackerManager.updateWafflePreview()">
+
+                                        </div>
+
+                                        <div class="input-group">
+
+                                            <label>Progress Colour</label>
+
+                                            <input type="color" id="tkWaffleColorVal" value="#03dac6" oninput="TrackerManager.updateWafflePreview()">
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="input-group" style="margin-top: 1rem;">
+
+                                        <label>Notes (Hover info - Published View)</label>
+
+                                        <textarea id="tkWaffleNotes" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..." oninput="TrackerManager.updateWafflePreview()"></textarea>
+
+                                    </div>
+
+                                    <div style="margin-top:20px; padding:10px; border:1px dashed #444; border-radius:4px; text-align:center;">
+
+                                        <label style="font-size:0.7rem; text-transform:uppercase; color:#aaa;">Preview</label>
+
+                                        <div id="wafflePreview">
+
+                                        </div>
+
+                                    </div>
+
+                                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Tracker</button>

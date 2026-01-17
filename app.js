@@ -254,7 +254,7 @@ export const renderBoard = () => {
 
             card.onclick = () => {
                  if (document.body.classList.contains('publishing')) {
-                     if (t.type !== 'gauge') ZoomManager.openChartModal(i);
+                     if (t.type !== 'gauge' && t.type !== 'waffle') ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
                  }
@@ -304,9 +304,12 @@ export const renderBoard = () => {
                 visualHTML = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; box-shadow: 0 0 15px ${t.color1}">${icon}</div>`;
                 statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
             } else if (renderType === 'waffle') {
-                const html = createWaffleHTML(100, t.active || 0, t.colorVal || '#03dac6', t.colorBg || '#333333');
-                visualHTML = html;
-                statsHTML = `<div class="tracker-stats">${t.active} / ${t.total}</div>`;
+                const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
+                const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
+                
+                const html = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#03dac6', t.colorBg || '#333333');
+                visualHTML = `<div ${hoverEvents} style="width:100%;">${html}</div>`;
+                statsHTML = `<div class="tracker-stats">${t.active} / ${t.total} ${t.metric || ''}</div>`;
             }
 
             card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
@@ -591,9 +594,19 @@ export const TrackerManager = {
                 // Set Size to S
                 const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
                 if(sizeRad) sizeRad.checked = true;
+            } else if (!isEdit && type === 'waffle') {
+                // Reset Waffle defaults for new trackers
+                const twmIn = getEl('tkWaffleMetric'); if(twmIn) twmIn.value = '';
+                const twtIn = getEl('tkWaffleTotal'); if(twtIn) twtIn.value = '';
+                const twaIn = getEl('tkWaffleActive'); if(twaIn) twaIn.value = '';
+                const twnIn = getEl('tkWaffleNotes'); if(twnIn) twnIn.value = '';
+                
+                // Set Size to XL
+                const sizeRad = document.querySelector('input[name="tkSize"][value="XL"]');
+                if(sizeRad) sizeRad.checked = true;
             }
-            // For editing non-line types, we don't need to do anything special for line inputs yet.
-            // ... existing code for gauge/counter etc ...
+
+            if (type === 'gauge') {
             if (type === 'gauge') {
                 const tmIn = getEl('tkMetric');
                 // Only populate if tracker exists, otherwise keep blank (from reset above)
@@ -624,10 +637,15 @@ export const TrackerManager = {
                 const rmIn = getEl('tkRagMsg');
                 if (rmIn) rmIn.value = tracker ? (tracker.message || '') : '';
             } else if (type === 'waffle') {
-                const wtIn = getEl('tkWaffleTotal');
-                if (wtIn) wtIn.value = tracker ? (tracker.total || 100) : 100;
-                const waIn = getEl('tkWaffleActive');
-                if (waIn) waIn.value = tracker ? (tracker.active || 0) : 0;
+                const twmIn = getEl('tkWaffleMetric');
+                if (tracker && twmIn) twmIn.value = tracker.metric || '';
+                const twtIn = getEl('tkWaffleTotal');
+                if (tracker && twtIn) twtIn.value = tracker.total || '';
+                const twaIn = getEl('tkWaffleActive');
+                if (tracker && twaIn) twaIn.value = tracker.active || '';
+                const twnIn = getEl('tkWaffleNotes');
+                if (tracker && twnIn) twnIn.value = tracker.notes || '';
+                
                 const wcIn = getEl('tkWaffleColorVal');
                 if (wcIn) wcIn.value = tracker ? (tracker.colorVal || '#03dac6') : '#03dac6';
                 const wbIn = getEl('tkWaffleColorBg');
@@ -651,7 +669,7 @@ export const TrackerManager = {
         });
 
         const sizeCont = getEl('sizeContainer');
-        if(sizeCont) sizeCont.style.display = (type === 'gauge') ? 'none' : 'block';
+        if(sizeCont) sizeCont.style.display = (type === 'gauge' || type === 'waffle') ? 'none' : 'block';
 
         if (inputType === 'line') {
              this.renderTimeTable();
@@ -1078,7 +1096,7 @@ export const TrackerManager = {
         const colorBg = wb ? wb.value : '#333333';
         
         const preview = getEl('wafflePreview');
-        if (preview) preview.innerHTML = createWaffleHTML(100, active, colorVal, colorBg);
+        if (preview) preview.innerHTML = createWaffleHTML(total, active, colorVal, colorBg);
     },
 
     parseCSV(type) {
@@ -1267,10 +1285,24 @@ export const TrackerManager = {
             newTracker.message = rmIn ? rmIn.value : '';
             newTracker.color1 = (newTracker.status === 'green' ? '#00e676' : (newTracker.status === 'amber' ? '#ffb300' : (newTracker.status === 'red' ? '#ff1744' : '#666666')));
         } else if (type === 'waffle') {
+            const wmIn = getEl('tkWaffleMetric');
             const wtIn = getEl('tkWaffleTotal');
-            newTracker.total = wtIn ? (parseInt(wtIn.value) || 100) : 100;
             const waIn = getEl('tkWaffleActive');
-            newTracker.active = waIn ? (parseInt(waIn.value) || 0) : 0;
+            const wnIn = getEl('tkWaffleNotes');
+            
+            const total = wtIn ? (parseInt(wtIn.value) || 100) : 100;
+            const active = waIn ? (parseInt(waIn.value) || 0) : 0;
+            
+            if (total <= 0) return App.alert("Target must be a positive number.");
+            if (total > 500) return App.alert("Target cannot exceed 500.");
+            if (active > total) return App.alert("Progress cannot exceed the Target.");
+            
+            newTracker.metric = wmIn ? wmIn.value : '';
+            newTracker.total = total;
+            newTracker.active = active;
+            newTracker.notes = wnIn ? wnIn.value : '';
+            newTracker.size = 'XL'; // Force XL size
+            
             const wcIn = getEl('tkWaffleColorVal');
             newTracker.colorVal = wcIn ? wcIn.value : '#03dac6';
             const wbIn = getEl('tkWaffleColorBg');

@@ -22,14 +22,16 @@ export const createGaugeSVG = (loadArr) => {
 };
 
 export const createWaffleHTML = (total, active, colorVal, colorBg) => {
-    const maxCells = 100;
-    let html = '<div style="display:grid; grid-template-columns: repeat(10, 1fr); gap: 2px; width: 140px; margin: 0 auto;">';
+    const maxCells = Math.min(total, 500);
+    const cols = total > 100 ? 25 : 10;
+    const cellSize = total > 100 ? '8px' : '12px';
+    const gridWidth = total > 100 ? '250px' : '140px';
+    
+    let html = `<div style="display:grid; grid-template-columns: repeat(${cols}, 1fr); gap: 2px; width: ${gridWidth}; margin: 0 auto;">`;
     for(let i=0; i<maxCells; i++) {
-        const row = Math.floor(i / 10);
-        const col = i % 10;
-        const logicalIndex = ((9 - row) * 10) + col;
-        const isActive = logicalIndex < active;
-        html += `<div class="waffle-cell" style="${isActive ? `background-color:${colorVal}; box-shadow: 0 0 5px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
+        // Simple linear fill
+        const isActive = i < active;
+        html += `<div class="waffle-cell" style="width:${cellSize}; height:${cellSize}; ${isActive ? `background-color:${colorVal}; box-shadow: 0 0 5px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
     }
     html += '</div>';
     return html;
