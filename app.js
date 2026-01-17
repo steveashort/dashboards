@@ -622,11 +622,44 @@ export const TrackerManager = {
         };
     },
 
+    handleTimeUnitChange(input) {
+        const ctx = this.getContext();
+        const container = document.getElementById('tkTimeUnitContainer');
+        const prevUnit = container ? container.dataset.currentUnit : 'day';
+        const newUnit = input.value;
+
+        if (prevUnit === newUnit) return;
+
+        const series = this.scrapeTimeSeries();
+        let hasData = false;
+        series.forEach(s => { if (s.values.some(v => v !== 0)) hasData = true; });
+
+        if (hasData) {
+            App.confirm("Changing the Time Unit will clear existing data. Proceed?", () => {
+                if(container) container.dataset.currentUnit = newUnit;
+                this.updateTimeOptions();
+            });
+            // Revert immediately, will be re-checked if confirmed
+            // But App.confirm is async-like in UI but sync in code if using standard confirm, 
+            // but here App.confirm is custom modal.
+            // So we must revert the radio button visually now.
+            const prevRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${prevUnit}"]`);
+            if (prevRad) prevRad.checked = true;
+        } else {
+            if(container) container.dataset.currentUnit = newUnit;
+            this.updateTimeOptions();
+        }
+    },
+
     updateTimeOptions() {
         const ctx = this.getContext();
         const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
         const unit = unitRad ? unitRad.value : 'day';
         
+        // Ensure dataset is synced if updateTimeOptions called directly (e.g. from openModal)
+        const container = document.getElementById('tkTimeUnitContainer');
+        if(container) container.dataset.currentUnit = unit;
+
         const histLabel = getEl(`${ctx.prefix}HistoricLabel`);
         if (histLabel) histLabel.innerText = `Historic ${unit.charAt(0).toUpperCase() + unit.slice(1)}s`;
 
@@ -650,6 +683,9 @@ export const TrackerManager = {
         } else if (unit === 'day') {
             countSel.value = 30;
         }
+        
+        // When changing unit, we must reset the table to match the new unit's dates
+        // This implicitly clears data as requested
         this.renderTimeTable();
     },
 
@@ -698,7 +734,7 @@ export const TrackerManager = {
         const container = getEl(ctx.tableId);
         if (!container) return;
         
-        let html = '<div style="overflow-x:auto;"><table style="width:100%; border-collapse: separate; border-spacing: 0;">';
+        let html = '<table style="width:100%; border-collapse: separate; border-spacing: 0;">';
         
         html += '<thead><tr><th style="padding:8px; text-align:left; border-bottom:1px solid #444; position:sticky; left:0; top:0; background:var(--modal-bg); z-index:20; min-width:160px;">Series Name</th>';
         
@@ -739,7 +775,7 @@ export const TrackerManager = {
             </tr>`;
         }
 
-        html += '</tbody></table></div>';
+        html += '</tbody></table>';
         
         container.innerHTML = html;
         container.dataset.labels = JSON.stringify(labels);
@@ -1002,87 +1038,106 @@ export const TrackerManager = {
         const text = txtArea.value.trim();
         if (!text) return App.alert("Please paste CSV data.");
         
-        const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-        if (lines.length < 2) return App.alert("Invalid CSV format.");
-        
-        const headers = lines[0].split(',').map(h => h.trim());
-        const seriesNames = headers.slice(1);
-        
-        const labels = [];
-        const seriesData = seriesNames.map(name => ({ name: name, values: [] }));
-        
-        for(let i=1; i<lines.length; i++) {
-            const cols = lines[i].split(',').map(c => c.trim());
-            labels.push(cols[0]); 
-            
-            for(let j=0; j<seriesNames.length; j++) {
-                const val = parseFloat(cols[j+1]) || 0;
-                seriesData[j].values.push(val);
-            }
-        }
+        // Check for existing data
+        const series = this.scrapeTimeSeries();
+        let hasData = false;
+        series.forEach(s => { if (s.values.some(v => v !== 0)) hasData = true; });
 
-        // Infer Unit
-        let unit = 'day';
-        if (labels.length > 0) {
-            const sample = labels.slice(0, 5);
-            if (sample.every(d => /^\d{4}$/.test(d))) {
-                unit = 'year';
-            } else if (sample.every(d => /^\d{4}-\d{2}$/.test(d))) {
-                unit = 'month';
-            } else if (sample.every(d => /^\d{4}-\d{2}-\d{2}$/.test(d))) {
-                 if (labels.length > 1) {
-                     const d1 = new Date(labels[0]);
-                     const d2 = new Date(labels[1]);
-                     const diff = Math.abs((d2 - d1) / (1000 * 60 * 60 * 24));
-                     if (diff >= 28 && diff <= 32) unit = 'month';
+        const processCSV = () => {
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+            if (lines.length < 2) return App.alert("Invalid CSV format.");
+            
+            const headers = lines[0].split(',').map(h => h.trim());
+            const seriesNames = headers.slice(1);
+            
+            const labels = [];
+            const seriesData = seriesNames.map(name => ({ name: name, values: [] }));
+            
+            for(let i=1; i<lines.length; i++) {
+                const cols = lines[i].split(',').map(c => c.trim());
+                labels.push(cols[0]); 
+                
+                for(let j=0; j<seriesNames.length; j++) {
+                    const val = parseFloat(cols[j+1]) || 0;
+                    seriesData[j].values.push(val);
+                }
+            }
+
+            // Infer Unit
+            let unit = 'day';
+            if (labels.length > 0) {
+                const sample = labels.slice(0, 5);
+                if (sample.every(d => /^\d{4}$/.test(d))) {
+                    unit = 'year';
+                } else if (sample.every(d => /^\d{4}-\d{2}$/.test(d))) {
+                    unit = 'month';
+                } else if (sample.every(d => /^\d{4}-\d{2}-\d{2}$/.test(d))) {
+                     if (labels.length > 1) {
+                         const d1 = new Date(labels[0]);
+                         const d2 = new Date(labels[1]);
+                         const diff = Math.abs((d2 - d1) / (1000 * 60 * 60 * 24));
+                         if (diff >= 28 && diff <= 32) unit = 'month';
+                     }
+                }
+            }
+
+            // Set Unit Radio
+            const rad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${unit}"]`);
+            if(rad) rad.checked = true;
+            
+            // Sync current unit dataset
+            const container = document.getElementById('tkTimeUnitContainer');
+            if(container) container.dataset.currentUnit = unit;
+
+            // Reset Options based on new unit
+            this.updateTimeOptions();
+
+            // Update Start Date (End Date in UI)
+            const sdIn = getEl(`${ctx.prefix}StartDate`);
+            if(sdIn && labels.length > 0) {
+                 const lastLbl = labels[labels.length-1];
+                 let dateStr = lastLbl;
+                 // Normalize to YYYY-MM-DD
+                 if (unit === 'year' && /^\d{4}$/.test(lastLbl)) dateStr = `${lastLbl}-01-01`;
+                 if (unit === 'month' && /^\d{4}-\d{2}$/.test(lastLbl)) dateStr = `${lastLbl}-01`;
+                 
+                 // Ensure valid date object
+                 const d = new Date(dateStr);
+                 if(!isNaN(d.getTime())) {
+                     sdIn.value = d.toISOString().split('T')[0];
+                     sdIn.dataset.prev = sdIn.value;
                  }
             }
-        }
-
-        // Set Unit Radio
-        const rad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${unit}"]`);
-        if(rad) rad.checked = true;
-
-        // Reset Options based on new unit
-        this.updateTimeOptions();
-
-        // Update Start Date (End Date in UI)
-        const sdIn = getEl(`${ctx.prefix}StartDate`);
-        if(sdIn && labels.length > 0) {
-             const lastLbl = labels[labels.length-1];
-             let dateStr = lastLbl;
-             // Normalize to YYYY-MM-DD
-             if (unit === 'year' && /^\d{4}$/.test(lastLbl)) dateStr = `${lastLbl}-01-01`;
-             if (unit === 'month' && /^\d{4}-\d{2}$/.test(lastLbl)) dateStr = `${lastLbl}-01`;
-             
-             // Ensure valid date object
-             const d = new Date(dateStr);
-             if(!isNaN(d.getTime())) {
-                 sdIn.value = d.toISOString().split('T')[0];
-                 sdIn.dataset.prev = sdIn.value;
-             }
-        }
-        
-        // Update Time Count
-        const tcIn = getEl(`${ctx.prefix}TimeCount`);
-        if(tcIn) {
-            const count = labels.length;
-            let exists = false;
-            for(let opt of tcIn.options) if(parseInt(opt.value) === count) exists = true;
-            if(!exists) {
-                const opt = document.createElement('option');
-                opt.value = count;
-                opt.innerText = count;
-                tcIn.appendChild(opt);
+            
+            // Update Time Count
+            const tcIn = getEl(`${ctx.prefix}TimeCount`);
+            if(tcIn) {
+                const count = labels.length;
+                let exists = false;
+                for(let opt of tcIn.options) if(parseInt(opt.value) === count) exists = true;
+                if(!exists) {
+                    const opt = document.createElement('option');
+                    opt.value = count;
+                    opt.innerText = count;
+                    tcIn.appendChild(opt);
+                }
+                tcIn.value = count;
             }
-            tcIn.value = count;
+            
+            const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
+            seriesData.forEach((s, i) => s.color = colors[i % colors.length]);
+            
+            this.renderTimeTable(seriesData, labels);
+            App.alert("CSV Parsed Successfully!");
+        };
+
+        if (hasData) {
+            App.confirm("Importing CSV will overwrite existing data. Proceed?", () => {
+                processCSV();
+            });
+        } else {
+            processCSV();
         }
-        
-        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
-        seriesData.forEach((s, i) => s.color = colors[i % colors.length]);
-        
-        this.renderTimeTable(seriesData, labels);
-        App.alert("CSV Parsed Successfully!");
     },
 
     deleteTracker(index) {
