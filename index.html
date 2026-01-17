@@ -277,6 +277,11 @@
                         <label>Y-Axis Label</label>
                         <input type="text" id="tkLineYLabel">
                     </div>
+                    <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px;">
+                        <label>Import Data from CSV</label>
+                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
+                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
+                    </div>
                     <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end;">
                         <div class="input-group">
                             <label>Time Unit</label>

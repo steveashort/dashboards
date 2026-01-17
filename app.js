@@ -467,10 +467,10 @@ export const TrackerManager = {
 
         // Reset containers
         getEl('barSeriesContainer').innerHTML = '';
-        getEl('lineSeriesContainer').innerHTML = ''; // Unused for line now
+        // getEl('lineSeriesContainer').innerHTML = ''; // Removed
         getEl('barLabelsContainer').innerHTML = ''; 
-        getEl('lineLabelsContainer').innerHTML = ''; // Unused for line now
-        getEl('lineTableContainer').innerHTML = '';
+        // getEl('lineLabelsContainer').innerHTML = ''; // Removed
+        if(getEl('lineTableContainer')) getEl('lineTableContainer').innerHTML = '';
         getEl('csvInput').value = ''; 
         getEl('csvInputBar').value = '';
         
@@ -765,7 +765,7 @@ export const TrackerManager = {
             const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
             if (lines.length < 2) return App.alert("CSV must have header + data.");
             
-            const headers = lines[0].split(/[,\t]+/).map(s => s.trim());
+            const headers = lines[0].split(/[\,\t]+/).map(s => s.trim());
             const seriesNames = headers.slice(1);
             if (seriesNames.length === 0) return App.alert("No series columns.");
 
@@ -785,7 +785,7 @@ export const TrackerManager = {
             const dataRows = lines.slice(1).slice(0, count);
             
             dataRows.forEach(line => {
-                const cols = line.split(/[,\t]+/).map(s => s.trim());
+                const cols = line.split(/[\,\t]+/).map(s => s.trim());
                 seriesData.forEach((s, idx) => {
                     s.values.push(parseFloat(cols[idx+1]) || 0);
                 });
@@ -804,7 +804,7 @@ export const TrackerManager = {
         const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
         if (lines.length < 2) return App.alert("CSV must have at least 2 lines (Header + Data).");
 
-        const headers = lines[0].split(/[,\t]+/).map(s => s.trim());
+        const headers = lines[0].split(/[\,\t]+/).map(s => s.trim());
         const seriesNames = headers.slice(1); 
         
         if (seriesNames.length === 0) return App.alert("No series columns found (columns 2-9).");
@@ -825,7 +825,7 @@ export const TrackerManager = {
         const dataRows = lines.slice(1).slice(0, 24);
         
         dataRows.forEach((line) => {
-            const cols = line.split(/[,\t]+/).map(s => s.trim());
+            const cols = line.split(/[\,\t]+/).map(s => s.trim());
             labels.push(cols[0] || ""); 
             
             seriesNames.forEach((_, sIdx) => {
@@ -942,5 +942,234 @@ export const TrackerManager = {
             State.trackers.splice(index, 1);
             renderBoard();
         });
+    }
+};
+
+// --- MODULE: USER MANAGER ---
+export const UserManager = {
+    editingUserIndex: -1,
+    
+    openUserModal: (index = -1) => {
+        UserManager.editingUserIndex = index;
+        const isEdit = index > -1;
+        getEl('modalTitle').innerText = isEdit ? 'Edit Team Member' : 'Add Team Member';
+        getEl('deleteBtn').style.display = isEdit ? 'block' : 'none';
+        
+        const m = isEdit ? State.members[index] : null;
+        getEl('mName').value = m ? m.name : '';
+        
+        // Last Week
+        getEl('lwStatus').value = (m && m.lastWeek) ? m.lastWeek.status : 'busy';
+        UserManager.setStatus((m && m.lastWeek) ? m.lastWeek.status : 'busy');
+        
+        const lwTasks = (m && m.lastWeek && m.lastWeek.tasks) ? m.lastWeek.tasks : [];
+        [1,2,3].forEach((n, i) => getEl(`lwTask${n}`).value = lwTasks[i] ? lwTasks[i].text : '');
+        
+        // This Week
+        const nwTasks = (m && m.thisWeek && m.thisWeek.tasks) ? m.thisWeek.tasks : [];
+        [1,2,3].forEach((n, i) => getEl(`nwTask${n}`).value = nwTasks[i] ? nwTasks[i].text : '');
+        
+        const nwLoad = (m && m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N'];
+        nwLoad.forEach((v, i) => UserManager.setLoad(i, v));
+
+        // Next Week
+        const fwTasks = (m && m.nextWeek && m.nextWeek.tasks) ? m.nextWeek.tasks : [];
+        [1,2,3].forEach((n, i) => getEl(`fwTask${n}`).value = fwTasks[i] ? fwTasks[i].text : '');
+
+        const fwLoad = (m && m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N'];
+        fwLoad.forEach((v, i) => UserManager.setFutureLoad(i, v));
+
+        ModalManager.openModal('userModal');
+    },
+
+    submitUser: () => {
+        const name = getEl('mName').value;
+        if(!name) return App.alert("Name required");
+        
+        const getTasks = (prefix) => {
+            return [1,2,3].map(n => ({ 
+                text: getEl(`${prefix}Task${n}`).value, 
+                isTeamSuccess: false, // Default false, strictly controlled by checkboxes on board
+                isTeamActivity: false
+            }));
+        };
+
+        // Preserve existing checkboxes state if editing
+        const idx = UserManager.editingUserIndex;
+        const oldM = idx > -1 ? State.members[idx] : null;
+        
+        const lwTasks = getTasks('lw');
+        if(oldM && oldM.lastWeek) {
+            lwTasks.forEach((t, i) => { if(oldM.lastWeek.tasks[i]) t.isTeamSuccess = oldM.lastWeek.tasks[i].isTeamSuccess; });
+        }
+        
+        const nwTasks = getTasks('nw'); // This week
+        if(oldM && oldM.thisWeek) {
+            nwTasks.forEach((t, i) => { if(oldM.thisWeek.tasks[i]) t.isTeamSuccess = oldM.thisWeek.tasks[i].isTeamSuccess; });
+        }
+
+        const fwTasks = getTasks('fw'); // Next week
+        if(oldM && oldM.nextWeek) {
+            fwTasks.forEach((t, i) => { if(oldM.nextWeek.tasks[i]) t.isTeamActivity = oldM.nextWeek.tasks[i].isTeamActivity; });
+        }
+
+        const newUser = {
+            name,
+            lastWeek: {
+                status: getEl('lwStatus').value,
+                tasks: lwTasks
+            },
+            thisWeek: {
+                load: [0,1,2,3,4].map(i => getEl(`nw${i}`).value),
+                tasks: nwTasks
+            },
+            nextWeek: {
+                load: [0,1,2,3,4].map(i => getEl(`fw${i}`).value),
+                tasks: fwTasks
+            }
+        };
+
+        if(idx === -1) State.members.push(newUser);
+        else State.members[idx] = newUser;
+
+        ModalManager.closeModal('userModal');
+        renderBoard();
+    },
+
+    deleteUser: () => {
+        if(UserManager.editingUserIndex === -1) return;
+        App.confirm("Delete this user?", () => {
+            State.members.splice(UserManager.editingUserIndex, 1);
+            ModalManager.closeModal('userModal');
+            renderBoard();
+        });
+    },
+    
+    setStatus: (val) => {
+        getEl('lwStatus').value = val;
+        document.querySelectorAll('.status-option').forEach(el => el.classList.remove('selected'));
+        const sel = document.querySelector(`.so-${val}`);
+        if(sel) sel.classList.add('selected');
+    },
+
+    setLoad: (idx, val) => {
+        getEl(`nw${idx}`).value = val;
+        const box = getEl(`nw${idx}`).parentNode;
+        box.querySelectorAll('.w-pill').forEach(el => el.classList.remove('selected'));
+        const map = { 'L': 'wp-l', 'N': 'wp-n', 'R': 'wp-r', 'X': 'wp-x' };
+        const sel = box.querySelector(`.${map[val]}`);
+        if(sel) sel.classList.add('selected');
+    },
+
+    setFutureLoad: (idx, val) => {
+        getEl(`fw${idx}`).value = val;
+        const box = getEl(`fw${idx}`).parentNode;
+        box.querySelectorAll('.w-pill').forEach(el => el.classList.remove('selected'));
+        const map = { 'L': 'wp-l', 'N': 'wp-n', 'R': 'wp-r', 'X': 'wp-x' };
+        const sel = box.querySelector(`.${map[val]}`);
+        if(sel) sel.classList.add('selected');
+    },
+
+    toggleSuccess: (mIdx, tIdx) => {
+        const t = State.members[mIdx].lastWeek.tasks[tIdx];
+        t.isTeamSuccess = !t.isTeamSuccess;
+        renderBoard();
+    },
+
+    toggleActivity: (mIdx, tIdx) => {
+        const t = State.members[mIdx].thisWeek.tasks[tIdx];
+        t.isTeamSuccess = !t.isTeamSuccess; // Reusing isTeamSuccess for "This Week" items that go to "Team Achievements"
+        renderBoard();
+    },
+
+    toggleFuture: (mIdx, tIdx) => {
+        const t = State.members[mIdx].nextWeek.tasks[tIdx];
+        t.isTeamActivity = !t.isTeamActivity;
+        renderBoard();
+    },
+    
+    saveAdditionalInfo: () => {
+        State.additionalInfo = getEl('additionalInfoInput').value;
+        ModalManager.closeModal('infoModal');
+        renderBoard();
+    },
+    
+    resetSelections: (type) => {
+        State.members.forEach(m => {
+            if (type === 'success') {
+                if(m.lastWeek) m.lastWeek.tasks.forEach(t => t.isTeamSuccess = false);
+                if(m.thisWeek) m.thisWeek.tasks.forEach(t => t.isTeamSuccess = false);
+            } else {
+                if(m.nextWeek) m.nextWeek.tasks.forEach(t => t.isTeamActivity = false);
+            }
+        });
+        renderBoard();
+    }
+};
+
+// --- MODULE: OVERVIEW MANAGER ---
+export const OverviewManager = {
+    handleOverviewClick: (type) => {
+       // Just visual feedback or hint? 
+       // Currently handled by checkboxes in user cards.
+    },
+    handleInfoClick: () => {
+        if(document.body.classList.contains('publishing')) return;
+        getEl('additionalInfoInput').value = State.additionalInfo;
+        ModalManager.openModal('infoModal');
+    }
+};
+
+// --- MODULE: DATA HANDLING ---
+export const DataSaver = {
+    saveData: () => {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(State));
+        const dlAnchorElem = document.createElement('a');
+        dlAnchorElem.setAttribute("href", dataStr);
+        dlAnchorElem.setAttribute("download", "tracker_data.json");
+        dlAnchorElem.click();
+    }
+};
+
+export const DataLoader = {
+    loadFromFile: (input) => {
+        const file = input.files[0];
+        if(!file) return;
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const json = JSON.parse(e.target.result);
+                if(json.title) State = json; // Basic validation
+                else App.alert("Invalid JSON format");
+                renderBoard();
+                App.alert("Data loaded successfully");
+            } catch(ex) {
+                App.alert("Error parsing JSON");
+            }
+        };
+        reader.readAsText(file);
+        input.value = ''; // Reset
+    }
+};
+
+export const DataExporter = {
+    exportCSV: () => {
+        let csv = "Member,Type,Text\n";
+        State.members.forEach(m => {
+            if(m.lastWeek) m.lastWeek.tasks.forEach(t => csv += `"${m.name}","Last Week","${t.text}"\n`);
+            if(m.thisWeek) m.thisWeek.tasks.forEach(t => csv += `"${m.name}","This Week","${t.text}"\n`);
+            if(m.nextWeek) m.nextWeek.tasks.forEach(t => csv += `"${m.name}","Next Week","${t.text}"\n`);
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", "team_report.csv");
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
     }
 };
