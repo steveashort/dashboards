@@ -256,21 +256,42 @@
                         <label>Metric Label</label>
                         <input type="text" id="tkBarYLabel">
                     </div>
-                     <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px;">
-                        <label>Import Data from CSV</label>
-                        <textarea id="csvInputBar" placeholder="Paste CSV data here...&#10;Label, Series1, Series2...&#10;Jan, 10, 20&#10;Feb, 15, 25" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
-                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('bar')">Parse CSV & Auto-fill</button>
+                    <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end; display: flex; gap: 2rem;">
+                        <div class="input-group">
+                            <label>End Date</label>
+                            <input type="date" id="tkBarStartDate" onchange="TrackerManager.handleEndDateChange(this)" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                        </div>
+                        <div class="input-group">
+                            <label>Time Unit</label>
+                            <div style="display: flex; gap: 15px; margin-top: 5px;">
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkBarTimeUnit" value="day" checked onchange="TrackerManager.updateTimeOptions()"> Days</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkBarTimeUnit" value="month" onchange="TrackerManager.updateTimeOptions()"> Months</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkBarTimeUnit" value="year" onchange="TrackerManager.updateTimeOptions()"> Years</label>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label id="tkBarHistoricLabel">Historic Days</label>
+                            <select id="tkBarTimeCount" onchange="TrackerManager.handleCountChange(this)" style="width: 80px; min-width: 60px;"></select>
+                        </div>
                     </div>
                     <div class="input-group">
-                        <label>X-Axis Labels (Up to 24)</label>
-                        <div id="barLabelsContainer" class="grid-24"></div>
-                    </div>
-                    <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <label style="margin:0;">Data Series (Up to 10)</label>
-                            <button class="btn btn-sm" onclick="TrackerManager.addBarSeries('New Series', '#03dac6')">+ Add Series</button>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <label>Manual Data Entry</label>
+                            <button class="btn btn-sm" onclick="TrackerManager.addDateColumn()">+ Add New Data</button>
                         </div>
-                        <div id="barSeriesContainer"></div>
+                        <div id="barTableContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; border-radius: 4px;"></div>
+                        <div style="margin-top: 10px;">
+                            <button id="btnAddBarSeries" class="btn btn-sm" onclick="TrackerManager.addTimeSeriesColumn()">+ Add Series</button>
+                            <button class="btn btn-sm" style="margin-left:5px; color:var(--g-red); border-color:var(--g-red);" onclick="TrackerManager.deleteSelectedSeries()">- Delete Selected</button>
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-top: 1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <label style="margin:0;">Import / Export Data</label>
+                            <button class="btn btn-sm" onclick="TrackerManager.exportTimeSeriesCSV()">Export Table to CSV</button>
+                        </div>
+                        <textarea id="csvInputBar" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
+                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('bar')">Parse CSV & Auto-fill</button>
                     </div>
                 </div>
                 <div id="lineInputs" style="display:none;">

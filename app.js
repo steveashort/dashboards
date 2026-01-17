@@ -59,7 +59,6 @@ export const initApp = () => {
         const otn = getEl('overviewTitleNext');
         if (otn) otn.innerHTML = `Top 5 Activities Next Week <span class="date-suffix">${r.next}</span>`;
         
-        // Update Modal Headers
         const lwt = getEl('lastWeekTitle');
         if(lwt) lwt.innerText = `Last Week (${r.last})`;
         
@@ -75,7 +74,6 @@ export const initApp = () => {
     console.log("App Initialized");
 };
 
-// --- RENDER ---
 const parseMarkdown = (t) => {
     if(!t) return '';
     let h = t.replace(/&/g,"&amp;").replace(/</g,"&lt;")
@@ -89,7 +87,6 @@ const parseMarkdown = (t) => {
     return h.split('\n').map(l=>l.trim().startsWith('- ')?`<li>${l.substring(2)}</li>`:l+'<br>').join('').replace(/<\/li><br><li>/g,'</li><li>').replace(/<br><li>/g,'<ul><li>').replace(/<\/li><br>/g,'</li></ul>');
 };
 
-// --- MODULE: APP GLOBALS ---
 export const App = {
     init: () => {
         initApp();
@@ -138,7 +135,6 @@ export const App = {
                 const srcIdx = parseInt(dragSrcEl.dataset.index);
                 const tgtIdx = parseInt(target.dataset.index);
                 
-                // Swap in State
                 const temp = State.trackers[srcIdx];
                 State.trackers.splice(srcIdx, 1);
                 State.trackers.splice(tgtIdx, 0, temp);
@@ -189,7 +185,6 @@ export const App = {
     }
 };
 
-// --- MODULE: MODAL MANAGER ---
 export const ModalManager = {
     openModal: (id) => {
         console.log("Opening modal:", id);
@@ -202,15 +197,12 @@ export const ModalManager = {
     }
 };
 
-// --- MODULE: RENDER BOARD ---
 export const renderBoard = () => {
     console.log("Rendering Board...");
 
-    // Render Header
     const titleEl = getEl('appTitle');
     if (titleEl) titleEl.innerText = State.title || "Server Platforms";
     
-    // Render Overview
     const sL = getEl('teamSuccessList'); 
     const aL = getEl('teamActivityList');
     if (sL) sL.innerHTML = ''; 
@@ -218,7 +210,6 @@ export const renderBoard = () => {
     let sc = 0, ac = 0;
 
     State.members.forEach(m => {
-        // Achievements: Last Week + This Week
         if(m.lastWeek && m.lastWeek.tasks) {
             m.lastWeek.tasks.forEach(t => {
                 if(t.isTeamSuccess && t.text.trim()) { 
@@ -233,7 +224,6 @@ export const renderBoard = () => {
                 }
             });
         }
-        // Activities: Next Week
         if(m.nextWeek && m.nextWeek.tasks) {
             m.nextWeek.tasks.forEach(t => {
                 if(t.isTeamActivity && t.text.trim()) { 
@@ -249,7 +239,6 @@ export const renderBoard = () => {
     const aip = getEl('additionalInfoPreview');
     if (aip) aip.innerHTML = parseMarkdown(State.additionalInfo) || "No additional info.";
 
-    // Render Trackers
     const tGrid = getEl('trackerGrid');
     if (tGrid) {
         tGrid.innerHTML = '';
@@ -304,7 +293,6 @@ export const renderBoard = () => {
                 if (t.series) {
                     visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createMultiBarChartSVG(t.labels, t.series, t.size)}</div>`;
                 } else {
-                    // Legacy Simple Bar
                     const svg = Visuals.createBarChartSVG(t.data, t.yLabel, t.color1, t.size);
                     visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${svg}</div>`;
                 }
@@ -312,7 +300,6 @@ export const renderBoard = () => {
                 const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
                 const c1 = t.colorVal || t.color1 || '#00e676'; 
                 const c2 = t.color2 || '#ff1744';
-                // Use 2-color gradient
                 const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
                 visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
                 statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
@@ -327,12 +314,10 @@ export const renderBoard = () => {
         });
     }
 
-    // Render Users
     const grid = getEl('teamGrid');
     if (grid) {
         grid.innerHTML = '';
         State.members.forEach((m, i) => {
-            // Last Week Tasks
             let lw = ''; 
             if(m.lastWeek && m.lastWeek.tasks) {
                 m.lastWeek.tasks.forEach((t,x) => {
@@ -340,25 +325,20 @@ export const renderBoard = () => {
                 });
             }
 
-            // This Week Tasks (Priorities)
             let tw = ''; 
             if(m.thisWeek && m.thisWeek.tasks) {
                 m.thisWeek.tasks.forEach((t,x) => {
-                    // Fixed: Check isTeamSuccess because toggleActivity toggles isTeamSuccess now
                     if(t.text.trim()) tw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleActivity(${i},${x})"><span>${t.text}</span></li>`;
                 });
             }
 
-            // Next Week Tasks (Future)
             let nw = '';
             if(m.nextWeek && m.nextWeek.tasks) {
                 m.nextWeek.tasks.forEach((t,x) => {
-                    // Added: Checkbox input calling toggleFuture
                     if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleFuture(${i},${x})"><span>${t.text}</span></li>`;
                 });
             }
             
-            // Helper to calc average load pill
             const getAvgPill = (loadArr) => {
                 let score = 0; let count = 0;
                 (loadArr||[]).forEach(v => {
@@ -378,46 +358,39 @@ export const renderBoard = () => {
             c.className = 'member-card';
             c.onclick = () => UserManager.openUserModal(i);
             
-            // Status Pill Logic (Last Week)
             const statusMap = { 'under': 'Low', 'busy': 'Medium', 'over': 'High', 'absent': 'Absent' };
             const statusVal = (m.lastWeek && m.lastWeek.status) ? m.lastWeek.status : 'busy';
             const statusText = statusMap[statusVal] || 'Medium';
             const statusCls = statusVal === 'absent' ? 'status-absent' : `status-${statusVal}`;
             const pillHTML = `<div class="status-pill ${statusCls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${statusText}</div>`;
 
-            // This Week Grid
             const thisLoad = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N'];
             const mgThis = thisLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
 
-            // Next Week Grid
             const nextLoad = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N'];
             const mgNext = nextLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
 
             c.innerHTML = `<div class="member-header">${m.name}</div>`;
             
             let content = `<div class="member-card-content">`;
-            
-            // Col 1: Last Week
             content += `<div class="card-col"><div class="col-header">Last Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().last.split(' - ')[0]})</span></div>`;
             content += `<div style="text-align:center; margin-bottom:5px;">${pillHTML}</div>`;
             content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${lw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
             content += `</div>`;
 
-            // Col 2: This Week
             content += `<div class="card-col"><div class="col-header">This Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().current.split(' - ')[0]})</span></div>`;
             content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.thisWeek ? m.thisWeek.load : [])}</div>`;
             content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${tw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
             content += `<div class="daily-mini-grid" style="margin-top:auto;">${mgThis}</div>`;
             content += `</div>`;
 
-            // Col 3: Next Week
             content += `<div class="card-col"><div class="col-header">Next Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().next.split(' - ')[0]})</span></div>`;
             content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.nextWeek ? m.nextWeek.load : [])}</div>`;
             content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${nw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
             content += `<div class="daily-mini-grid" style="margin-top:auto;">${mgNext}</div>`;
             content += `</div>`;
 
-            content += `</div>`; // End content
+            content += `</div>`;
             c.innerHTML += content;
 
             grid.appendChild(c);
@@ -425,7 +398,6 @@ export const renderBoard = () => {
     }
 };
 
-// --- MODULE: ZOOM MANAGER ---
 export const ZoomManager = {
     openChartModal: (index) => {
         const t = State.trackers[index];
@@ -477,7 +449,6 @@ export const ZoomManager = {
     }
 };
 
-// --- MODULE: TRACKER MANAGER ---
 export const TrackerManager = {
     openModal(index) {
         console.log("Opening Tracker Modal for index:", index);
@@ -488,36 +459,22 @@ export const TrackerManager = {
         const titleEl = getEl('trackerModalTitle');
         if (titleEl) titleEl.innerText = isEdit ? 'Edit Progress Tracker' : 'Add Progress Tracker';
         
-        // Hide all input sections first
         ['gauge','bar','line','counter','rag','waffle'].forEach(type => {
             const div = getEl(`${type}Inputs`);
             if (div) div.style.display = 'none';
         });
 
-        // Reset containers
-        const bsc = getEl('barSeriesContainer');
-        if (bsc) bsc.innerHTML = '';
+        ['barTableContainer', 'lineTableContainer'].forEach(id => {
+            const el = getEl(id);
+            if(el) el.innerHTML = '';
+        });
         
-        const blc = getEl('barLabelsContainer');
-        if (blc) {
-            blc.innerHTML = '';
-            // Fill 24 inputs for bar
-            for(let k=0; k<24; k++) {
-                blc.innerHTML += `<input type="text" id="bLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
-            }
-        }
-
-        const ltc = getEl('lineTableContainer');
-        if (ltc) ltc.innerHTML = '';
-
-        const csvIn = getEl('csvInput');
-        if (csvIn) csvIn.value = '';
-
-        const csvInBar = getEl('csvInputBar');
-        if (csvInBar) csvInBar.value = '';
+        ['csvInput', 'csvInputBar'].forEach(id => {
+            const el = getEl(id);
+            if(el) el.value = '';
+        });
 
         const tracker = isEdit ? State.trackers[index] : null;
-        
         let type = tracker ? tracker.type : 'gauge';
         this.setType(type);
 
@@ -528,126 +485,73 @@ export const TrackerManager = {
         const sizeRadio = document.querySelector(`input[name="tkSize"][value="${sizeVal}"]`);
         if (sizeRadio) sizeRadio.checked = true;
 
-        // Load Specific Data
-        if (type === 'line') {
+        if (type === 'line' || type === 'bar') {
+             const ctx = this.getContext();
              const unit = tracker ? (tracker.timeUnit || 'day') : 'day';
-             const rad = document.querySelector(`input[name="tkTimeUnit"][value="${unit}"]`);
+             const rad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${unit}"]`);
              if(rad) rad.checked = true;
              
-             // Default Start Date to this Monday
              const d = new Date();
              const day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1); 
              const monday = new Date(d.setDate(diff));
              const defDate = monday.toISOString().split('T')[0];
              
-             const sdIn = getEl('tkStartDate');
+             const sdIn = getEl(`${ctx.prefix}StartDate`);
              if (sdIn) {
                  sdIn.value = tracker ? (tracker.startDate || defDate) : defDate;
                  sdIn.dataset.prev = sdIn.value;
              }
              
-             const lyIn = getEl('tkLineYLabel');
-             if (lyIn) lyIn.value = tracker ? (tracker.yLabel || '') : '';
+             const yIn = getEl(`${ctx.prefix}YLabel`);
+             if (yIn) yIn.value = tracker ? (tracker.yLabel || '') : '';
              
              this.updateTimeOptions();
-             const tcIn = getEl('tkTimeCount');
+             const tcIn = getEl(`${ctx.prefix}TimeCount`);
              if (tcIn && tracker) tcIn.value = tracker.timeCount || 7;
              
-             // Reconstruct series structure if needed
              let series = [];
              if (tracker) {
                  if (tracker.series) series = tracker.series;
-                 else if (tracker.data) { // Legacy migration
-                     series = [{name:'Series 1', color: tracker.color1||'#03dac6', values: tracker.data.map(d=>d.val)}];
+                 else if (tracker.data) {
+                     series = [{name:'Series 1', color: tracker.color1||'#03dac6', values: tracker.data.map(d => d.val || 0)}];
                  }
              } else {
                  series = [{name:'Series 1', color: '#03dac6', values:[]}];
              }
              
              this.renderTimeTable(series);
-        } else {
-             // Reset Time controls defaults just in case
-             const radDay = document.querySelector(`input[name="tkTimeUnit"][value="day"]`);
-             if (radDay) radDay.checked = true;
-             this.updateTimeOptions();
-        }
-
-        // Load Data for other types
-        if (tracker) {
-            if (type === 'bar') {
-                const byIn = getEl('tkBarYLabel');
-                if (byIn) byIn.value = tracker.yLabel || '';
-                
-                if (tracker.series) {
-                    (tracker.labels||[]).forEach((l, k) => { 
-                        const lbl = getEl(`bLbl${k}`);
-                        if(lbl) lbl.value = l; 
-                    });
-                    tracker.series.forEach(s => this.addBarSeries(s.name, s.color, s.values));
-                } else {
-                    (tracker.data||[]).forEach((d,k)=>{
-                        const lbl = getEl(`bLbl${k}`);
-                        if(lbl) lbl.value=d.label;
-                    });
-                    if (tracker.data && tracker.data.length > 0) {
-                        const vals = tracker.data.map(d => d.val);
-                        this.addBarSeries('Series 1', tracker.color1 || '#03dac6', vals);
-                    }
-                }
-            } else if (type === 'gauge') {
-                const tmIn = getEl('tkMetric');
-                if (tmIn) tmIn.value = tracker.metric || '';
-                const tcIn = getEl('tkComp');
-                if (tcIn) tcIn.value = tracker.completed || '';
-                const ttIn = getEl('tkTotal');
-                if (ttIn) ttIn.value = tracker.total || '';
-                const pcIn = getEl('tkPieColor');
-                if (pcIn) pcIn.value = tracker.colorVal || tracker.color1 || '#00e676';
-                const pc2In = getEl('tkPieColor2');
-                if (pc2In) pc2In.value = tracker.color2 || '#ff1744';
-            } else if (type === 'counter') {
-                const cvIn = getEl('tkCounterVal');
-                if (cvIn) cvIn.value = tracker.value || 0;
-                const csIn = getEl('tkCounterSub');
-                if (csIn) csIn.value = tracker.subtitle || '';
-                const ccIn = getEl('tkCounterColor');
-                if (ccIn) ccIn.value = tracker.color1 || '#bb86fc';
-            } else if (type === 'rag') {
-                this.selectRag(tracker.status || 'grey');
-                const rmIn = getEl('tkRagMsg');
-                if (rmIn) rmIn.value = tracker.message || '';
-            } else if (type === 'waffle') {
-                const wtIn = getEl('tkWaffleTotal');
-                if (wtIn) wtIn.value = tracker.total || 100;
-                const waIn = getEl('tkWaffleActive');
-                if (waIn) waIn.value = tracker.active || 0;
-                const wcIn = getEl('tkWaffleColorVal');
-                if (wcIn) wcIn.value = tracker.colorVal || '#03dac6';
-                const wbIn = getEl('tkWaffleColorBg');
-                if (wbIn) wbIn.value = tracker.colorBg || '#333333';
-                this.updateWafflePreview();
-            }
-        } else {
-            // New defaults
-            if (type === 'bar') this.addBarSeries('Series 1', '#03dac6');
-            if (type === 'gauge') { 
-                const pcIn = getEl('tkPieColor');
-                if (pcIn) pcIn.value = '#00e676'; 
-                const pc2In = getEl('tkPieColor2');
-                if (pc2In) pc2In.value = '#ff1744'; 
-            }
-            if (type === 'rag') this.selectRag('green');
-            if (type === 'counter') {
-                const ccIn = getEl('tkCounterColor');
-                if (ccIn) ccIn.value = '#bb86fc';
-            }
-            if (type === 'waffle') {
-                const wcIn = getEl('tkWaffleColorVal');
-                if (wcIn) wcIn.value = '#03dac6';
-                const wbIn = getEl('tkWaffleColorBg');
-                if (wbIn) wbIn.value = '#333333';
-                this.updateWafflePreview();
-            }
+        } else if (type === 'gauge') {
+            const tmIn = getEl('tkMetric');
+            if (tmIn) tmIn.value = tracker.metric || '';
+            const tcIn = getEl('tkComp');
+            if (tcIn) tcIn.value = tracker.completed || '';
+            const ttIn = getEl('tkTotal');
+            if (ttIn) ttIn.value = tracker.total || '';
+            const pcIn = getEl('tkPieColor');
+            if (pcIn) pcIn.value = tracker.colorVal || tracker.color1 || '#00e676';
+            const pc2In = getEl('tkPieColor2');
+            if (pc2In) pc2In.value = tracker.color2 || '#ff1744';
+        } else if (type === 'counter') {
+            const cvIn = getEl('tkCounterVal');
+            if (cvIn) cvIn.value = tracker.value || 0;
+            const csIn = getEl('tkCounterSub');
+            if (csIn) csIn.value = tracker.subtitle || '';
+            const ccIn = getEl('tkCounterColor');
+            if (ccIn) ccIn.value = tracker.color1 || '#bb86fc';
+        } else if (type === 'rag') {
+            this.selectRag(tracker.status || 'grey');
+            const rmIn = getEl('tkRagMsg');
+            if (rmIn) rmIn.value = tracker.message || '';
+        } else if (type === 'waffle') {
+            const wtIn = getEl('tkWaffleTotal');
+            if (wtIn) wtIn.value = tracker.total || 100;
+            const waIn = getEl('tkWaffleActive');
+            if (waIn) waIn.value = tracker.active || 0;
+            const wcIn = getEl('tkWaffleColorVal');
+            if (wcIn) wcIn.value = tracker.colorVal || '#03dac6';
+            const wbIn = getEl('tkWaffleColorBg');
+            if (wbIn) wbIn.value = tracker.colorBg || '#333333';
+            this.updateWafflePreview();
         }
 
         ModalManager.openModal('trackerModal');
@@ -663,14 +567,25 @@ export const TrackerManager = {
         });
     },
 
+    getContext(typeOverride) {
+        const type = typeOverride || State.currentTrackerType;
+        const isBar = type === 'bar';
+        return {
+            prefix: isBar ? 'tkBar' : 'tk',
+            tableId: isBar ? 'barTableContainer' : 'lineTableContainer',
+            btnAddId: isBar ? 'btnAddBarSeries' : 'btnAddSeries'
+        };
+    },
+
     updateTimeOptions() {
-        const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
+        const ctx = this.getContext();
+        const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
         const unit = unitRad ? unitRad.value : 'day';
         
-        const histLabel = getEl('tkHistoricLabel');
+        const histLabel = getEl(`${ctx.prefix}HistoricLabel`);
         if (histLabel) histLabel.innerText = `Historic ${unit.charAt(0).toUpperCase() + unit.slice(1)}s`;
 
-        const countSel = getEl('tkTimeCount');
+        const countSel = getEl(`${ctx.prefix}TimeCount`);
         if (!countSel) return;
         countSel.innerHTML = '';
         let opts = [];
@@ -684,16 +599,16 @@ export const TrackerManager = {
             opt.innerText = o;
             countSel.appendChild(opt);
         });
-        // Default selection logic if needed, otherwise first is selected
         this.renderTimeTable();
     },
 
     renderTimeTable(seriesOverride = null, labelsOverride = null) {
-        const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
+        const ctx = this.getContext();
+        const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
         const unit = unitRad ? unitRad.value : 'day';
-        const tcIn = getEl('tkTimeCount');
+        const tcIn = getEl(`${ctx.prefix}TimeCount`);
         const count = tcIn ? (parseInt(tcIn.value) || 5) : 5;
-        const sdIn = getEl('tkStartDate');
+        const sdIn = getEl(`${ctx.prefix}StartDate`);
         let startDateVal = sdIn ? sdIn.value : '';
         if(!startDateVal) {
              const d = new Date();
@@ -703,10 +618,12 @@ export const TrackerManager = {
              if(sdIn) sdIn.value = startDateVal;
         }
 
-        // Scrape existing series data if not overridden
         let series = seriesOverride;
         if (!series) series = this.scrapeTimeSeries();
         if (series.length === 0) series = [{name:'Series 1', color: '#03dac6', values:[]}];
+
+        const btnAdd = getEl(ctx.btnAddId);
+        if (btnAdd) btnAdd.style.display = series.length >= 6 ? 'none' : 'block';
 
         let labels = [];
         if (labelsOverride) {
@@ -715,10 +632,7 @@ export const TrackerManager = {
             const start = new Date(startDateVal);
             for(let i=0; i<count; i++) {
                 let label = '';
-                // Calculate backwards from End Date so the last one is the selected date
-                // Order is chronological: 2024, 2025, 2026 (if 2026 is end)
                 const offset = (count - 1) - i; 
-                
                 if (unit === 'year') {
                     label = (start.getFullYear() - offset).toString();
                 } else if (unit === 'month') {
@@ -734,18 +648,20 @@ export const TrackerManager = {
             }
         }
 
-        const container = getEl('lineTableContainer');
+        const container = getEl(ctx.tableId);
         if (!container) return;
         
-        // Transposed Layout: Columns are Time, Rows are Series
         let html = '<div style="overflow-x:auto;"><table style="width:100%; border-collapse: separate; border-spacing: 0;">';
         
-        // Header: Series Name Column + Date Columns
         html += '<thead><tr><th style="padding:8px; text-align:left; border-bottom:1px solid #444; position:sticky; left:0; top:0; background:var(--modal-bg); z-index:20; min-width:160px;">Series Name</th>';
         
-        labels.forEach(l => {
-            html += `<th style="padding:8px; border-bottom:1px solid #444; position:sticky; top:0; background:var(--modal-bg); z-index:10; min-width:80px; text-align:center; font-size:0.7rem; white-space:nowrap;">${l}</th>`;
+        labels.forEach((l, li) => {
+            html += `<th style="padding:8px; border-bottom:1px solid #444; position:sticky; top:0; background:var(--modal-bg); z-index:10; min-width:80px; text-align:center; font-size:0.7rem; white-space:nowrap;">
+                ${l} <span onclick="TrackerManager.removeDateColumn(${li})" style="color:var(--g-red); cursor:pointer; margin-left:2px; font-weight:bold;">&times;</span>
+            </th>`;
         });
+        
+        html += `<th style="padding:8px; text-align:center; min-width:40px; cursor:pointer; background:var(--modal-bg); border-bottom:1px solid #444; position:sticky; top:0; z-index:10;" onclick="TrackerManager.addDateColumn()" title="Add Historic Date">+</th>`;
         html += '</tr></thead><tbody>';
 
         series.forEach((s, si) => {
@@ -764,6 +680,7 @@ export const TrackerManager = {
                     <input type="number" class="ts-val" data-s="${si}" data-r="${li}" value="${val}" style="width:100%; background:transparent; border:none; color:#fff; text-align:center;">
                 </td>`;
             });
+            html += `<td style="border-bottom:1px solid #333;"></td>`;
             html += '</tr>';
         });
         html += '</tbody></table></div>';
@@ -773,9 +690,9 @@ export const TrackerManager = {
     },
 
     scrapeTimeSeries() {
-        const container = getEl('lineTableContainer');
+        const ctx = this.getContext();
+        const container = getEl(ctx.tableId);
         if (!container) return [];
-        // Rows are now Series (tr in tbody)
         const rows = container.querySelectorAll('tbody tr');
         if (rows.length === 0) return [];
 
@@ -787,7 +704,6 @@ export const TrackerManager = {
             const color = colorIn ? colorIn.value : '#03dac6';
             
             const values = [];
-            // Find values for this series row
             const valInputs = row.querySelectorAll('.ts-val');
             valInputs.forEach(inp => values.push(parseFloat(inp.value) || 0));
             
@@ -860,7 +776,8 @@ export const TrackerManager = {
         const series = this.scrapeTimeSeries();
         if (series.length === 0) return App.alert("No data to export.");
         
-        const container = getEl('lineTableContainer');
+        const ctx = this.getContext();
+        const container = getEl(ctx.tableId);
         const labels = JSON.parse(container.dataset.labels || '[]');
         
         let csv = "Date";
@@ -893,7 +810,8 @@ export const TrackerManager = {
     },
 
     deleteSelectedSeries() {
-        const container = getEl('lineTableContainer');
+        const ctx = this.getContext();
+        const container = getEl(ctx.tableId);
         if (!container) return;
         const checks = container.querySelectorAll('.ts-select:checked');
         if (checks.length === 0) return App.alert("No series selected.");
@@ -908,13 +826,14 @@ export const TrackerManager = {
     },
 
     addDateColumn() {
-        const tcIn = getEl('tkTimeCount');
-        const sdIn = getEl('tkStartDate');
+        const ctx = this.getContext();
+        const tcIn = getEl(`${ctx.prefix}TimeCount`);
+        const sdIn = getEl(`${ctx.prefix}StartDate`);
         if (tcIn && sdIn) {
              const series = this.scrapeTimeSeries();
              
              const d = new Date(sdIn.value);
-             const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
+             const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
              const unit = unitRad ? unitRad.value : 'day';
              
              if (unit === 'year') d.setFullYear(d.getFullYear() + 1);
@@ -934,7 +853,8 @@ export const TrackerManager = {
     },
 
     removeDateColumn(index) {
-        const tcIn = getEl('tkTimeCount');
+        const ctx = this.getContext();
+        const tcIn = getEl(`${ctx.prefix}TimeCount`);
         const count = parseInt(tcIn.value);
         if (count <= 1) return App.alert("Cannot remove the last date.");
         
@@ -956,10 +876,10 @@ export const TrackerManager = {
             this.renderTimeTable(series);
         } else if (index === count - 1) {
             series.forEach(s => s.values.pop());
-            const sdIn = getEl('tkStartDate');
+            const sdIn = getEl(`${ctx.prefix}StartDate`);
             if (sdIn) {
                  const d = new Date(sdIn.value);
-                 const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
+                 const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
                  const unit = unitRad ? unitRad.value : 'day';
                  if (unit === 'year') d.setFullYear(d.getFullYear() - 1);
                  else if (unit === 'month') d.setMonth(d.getMonth() - 1);
@@ -992,40 +912,6 @@ export const TrackerManager = {
         if (selected) selected.classList.add('selected');
     },
 
-    addBarSeries(name, color, vals = []) {
-        const c = getEl('barSeriesContainer');
-        if (!c) return;
-        if (c.children.length >= 10) return App.alert("Max 10 series.");
-        c.appendChild(this.createSeriesInputRow('bar', name, color, vals));
-    },
-
-    createSeriesInputRow(type, name, color, vals) {
-        const div = document.createElement('div');
-        div.style.marginBottom = '1rem';
-        div.style.border = '1px solid #444';
-        div.style.padding = '0.5rem';
-        div.style.borderRadius = '4px';
-
-        // 24 inputs for Bar
-        let valInputs = '';
-        for(let k=0; k<24; k++) {
-            valInputs += `<input type="number" class="sv-input" data-idx="${k}" value="${vals[k]||''}" placeholder="${k+1}" style="width:100%; text-align:center;">`;
-        }
-
-        div.innerHTML = `
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-                <input type="text" class="s-name" value="${name}" placeholder="Series Name" style="width:50%;">
-                <div style="display:flex; gap:5px; align-items:center;">
-                    <label style="font-size:0.7rem; color:#aaa;">Color:</label>
-                    <input type="color" class="s-color" value="${color}" style="width:30px; height:30px; padding:0; border:none; cursor:pointer;">
-                </div>
-                <button class="btn-reset" style="color:red; border-color:red;" onclick="this.parentElement.parentElement.remove()">Del</button>
-            </div>
-            <div style="display:grid; grid-template-columns:repeat(6, 1fr); gap:2px;">${valInputs}</div>
-        `;
-        return div;
-    },
-
     updateWafflePreview() {
         const wtIn = getEl('tkWaffleTotal');
         const total = wtIn ? (parseInt(wtIn.value) || 0) : 0;
@@ -1041,9 +927,9 @@ export const TrackerManager = {
     },
 
     parseCSV(type) {
-        // Simplified CSV parser for Time Series Table if type is 'line'
-        if (type === 'line') {
-            const csvIn = getEl('csvInput');
+        if (type === 'line' || type === 'bar') {
+            const ctx = this.getContext(type);
+            const csvIn = getEl(type === 'bar' ? 'csvInputBar' : 'csvInput');
             const raw = csvIn ? csvIn.value : '';
             if (!raw.trim()) return App.alert("Please paste CSV data.");
             const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
@@ -1054,7 +940,6 @@ export const TrackerManager = {
             if (seriesNames.length === 0) return App.alert("No series columns.");
             if (seriesNames.length > 6) seriesNames = seriesNames.slice(0, 6);
 
-            // Detect Unit from first data row date
             const firstRowDate = lines[1].split(/[,\t]+/)[0].trim();
             let unit = 'day';
             let dateRegex = /^\d{4}-\d{2}-\d{2}$/;
@@ -1062,20 +947,17 @@ export const TrackerManager = {
             else if (/^\d{4}-\d{2}$/.test(firstRowDate)) { unit = 'month'; dateRegex = /^\d{4}-\d{2}$/; }
             else if (!dateRegex.test(firstRowDate)) return App.alert("First row date format unrecognized (use YYYY-MM-DD, YYYY-MM, or YYYY).");
 
-            // Validate consistency
             for (let i = 1; i < lines.length; i++) {
                 const dateStr = lines[i].split(/[,\t]+/)[0].trim();
                 if (!dateRegex.test(dateStr)) return App.alert("Date format must be YYYY-MM-DD, YYYY-MM, or YYYY and must be consistent");
             }
             
-            // Update UI Radio
-            const unitRad = document.querySelector(`input[name="tkTimeUnit"][value="${unit}"]`);
+            const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${unit}"]`);
             if (unitRad) {
                 unitRad.checked = true;
-                this.updateTimeOptions(); // Refresh dropdown
+                this.updateTimeOptions(); 
             }
 
-            // Determine Max Limit
             let max = 90;
             if (unit === 'year') max = 10;
             if (unit === 'month') max = 24;
@@ -1087,9 +969,8 @@ export const TrackerManager = {
                 truncated = true;
             }
 
-            // Set Count (Historic X)
             const count = dataLines.length;
-            const tcIn = getEl('tkTimeCount');
+            const tcIn = getEl(`${ctx.prefix}TimeCount`);
             if (tcIn) {
                 let exists = false;
                 for(let opt of tcIn.options) { if(parseInt(opt.value) === count) exists = true; }
@@ -1103,9 +984,8 @@ export const TrackerManager = {
                 tcIn.value = count;
             }
 
-            // Set End Date (Last row date)
             const lastRowDate = dataLines[dataLines.length - 1].split(/[,\t]+/)[0].trim();
-            const sdIn = getEl('tkStartDate');
+            const sdIn = getEl(`${ctx.prefix}StartDate`);
             let isoDate = lastRowDate;
             if (unit === 'year') isoDate = `${lastRowDate}-01-01`;
             else if (unit === 'month') isoDate = `${lastRowDate}-01`;
@@ -1113,12 +993,13 @@ export const TrackerManager = {
             const d = new Date(isoDate);
             if (!isNaN(d.getTime()) && sdIn) {
                 sdIn.value = d.toISOString().split('T')[0];
+                sdIn.dataset.prev = sdIn.value;
             }
 
             const labels = [];
             const seriesData = seriesNames.map((n, i) => ({
                 name: n, 
-                color: ['#03dac6', '#ff4081', '#bb86fc'][i%3], 
+                color: ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'][i%8], 
                 values: []
             }));
             
@@ -1136,65 +1017,6 @@ export const TrackerManager = {
             this.renderTimeTable(seriesData, labels);
             return;
         }
-
-        // Original logic for Bar
-        const csvInBar = getEl('csvInputBar');
-        const raw = csvInBar ? csvInBar.value : '';
-        if (!raw.trim()) return App.alert("Please paste CSV data.");
-        
-        const lines = raw.trim().split(/\r?\n/).filter(l => l.trim());
-        if (lines.length < 2) return App.alert("CSV must have at least 2 lines (Header + Data).");
-
-        const headers = lines[0].split(/[\,\t]+/).map(s => s.trim());
-        const seriesNames = headers.slice(1); 
-        
-        if (seriesNames.length === 0) return App.alert("No series columns found.");
-        
-        const lblContainerId = 'barLabelsContainer';
-        const seriesContainerId = 'barSeriesContainer';
-
-        const blc = getEl(lblContainerId);
-        const bsc = getEl(seriesContainerId);
-        if (blc) blc.innerHTML = '';
-        if (bsc) bsc.innerHTML = '';
-        
-        if (blc) {
-            for(let k=0; k<24; k++) {
-                blc.innerHTML += `<input type="text" id="bLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
-            }
-        }
-
-        const labels = [];
-        const seriesData = seriesNames.map(() => []);
-        
-        const dataRows = lines.slice(1).slice(0, 24);
-        
-        dataRows.forEach((line) => {
-            const cols = line.split(/[\,\t]+/).map(s => s.trim());
-            labels.push(cols[0] || ""); 
-            
-            seriesNames.forEach((_, sIdx) => {
-                const val = parseFloat(cols[sIdx + 1]) || 0;
-                seriesData[sIdx].push(val);
-            });
-        });
-
-        // Fill X-Axis Labels
-        labels.forEach((l, k) => { 
-            const lbl = getEl(`bLbl${k}`);
-            if (lbl) lbl.value = l; 
-        });
-
-        // Create Series
-        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
-        
-        seriesNames.forEach((name, sIdx) => {
-            if (sIdx < 10) {
-                this.addBarSeries(name, colors[sIdx] || '#ffffff', seriesData[sIdx]);
-            }
-        });
-        
-        App.alert(`Parsed ${labels.length} rows and ${seriesNames.length} series.`);
     },
 
     submitTracker() {
@@ -1224,56 +1046,26 @@ export const TrackerManager = {
             newTracker.colorVal = pcIn ? pcIn.value : '#00e676'; 
             const pc2In = getEl('tkPieColor2');
             newTracker.color2 = pc2In ? pc2In.value : '#ff1744';
-        } else if (type === 'bar') {
-            const byIn = getEl('tkBarYLabel');
-            const y = byIn ? byIn.value : '';
-            const labels = [];
-            for(let k=0; k<24; k++) {
-                const lIn = getEl(`bLbl${k}`);
-                const l = lIn ? lIn.value : '';
-                if(l) labels.push(l);
-            }
-            const series = [];
-            const bsc = getEl('barSeriesContainer');
-            if (bsc) {
-                const sDivs = bsc.children;
-                for(let s of sDivs) {
-                    const snIn = s.querySelector('.s-name');
-                    const name = snIn ? snIn.value : 'Series';
-                    const scIn = s.querySelector('.s-color');
-                    const color = scIn ? scIn.value : '#03dac6';
-                    const vals = [];
-                    s.querySelectorAll('.sv-input').forEach((inp, k) => {
-                        if(k < labels.length) vals.push(parseFloat(inp.value)||0);
-                    });
-                    series.push({name, color, values: vals});
-                }
-            }
-            if(series.length === 0) return App.alert("Add at least one series");
-            newTracker.yLabel = y;
-            newTracker.labels = labels;
-            newTracker.series = series;
-        } else if (type === 'line') {
-            const lyIn = getEl('tkLineYLabel');
-            const y = lyIn ? lyIn.value : '';
-            // Get data from Table
+        } else if (type === 'line' || type === 'bar') {
+            const ctx = this.getContext();
+            const yIn = getEl(`${ctx.prefix}YLabel`);
+            newTracker.yLabel = yIn ? yIn.value : '';
+            
             const series = this.scrapeTimeSeries();
-            const container = getEl('lineTableContainer');
+            const container = getEl(ctx.tableId);
             const labels = container ? JSON.parse(container.dataset.labels || '[]') : [];
             
-            if(series.length === 0) return App.alert("Add at least one series");
+            if (series.length === 0) return App.alert("Add at least one series");
             
-            // Save config too
-            const urIn = document.querySelector('input[name="tkTimeUnit"]:checked');
+            const urIn = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
             newTracker.timeUnit = urIn ? urIn.value : 'day';
-            const sdIn = getEl('tkStartDate');
+            const sdIn = getEl(`${ctx.prefix}StartDate`);
             newTracker.startDate = sdIn ? sdIn.value : '';
-            const tcIn = getEl('tkTimeCount');
+            const tcIn = getEl(`${ctx.prefix}TimeCount`);
             newTracker.timeCount = tcIn ? parseInt(tcIn.value) : 7;
             
             newTracker.labels = labels;
             newTracker.series = series;
-            newTracker.yLabel = y;
         } else if (type === 'counter') {
             const cvIn = getEl('tkCounterVal');
             newTracker.value = cvIn ? parseFloat(cvIn.value) || 0 : 0;
@@ -1308,17 +1100,9 @@ export const TrackerManager = {
         ModalManager.closeModal('trackerModal');
         renderBoard();
         console.log("Tracker saved:", type);
-    },
-
-    deleteTracker: (index) => {
-        App.confirm("Delete tracker?", () => {
-            State.trackers.splice(index, 1);
-            renderBoard();
-        });
     }
 };
 
-// --- MODULE: USER MANAGER ---
 export const UserManager = {
     editingUserIndex: -1,
     
@@ -1334,7 +1118,6 @@ export const UserManager = {
         const mn = getEl('mName');
         if (mn) mn.value = m ? m.name : '';
         
-        // Last Week
         const ls = getEl('lwStatus');
         if (ls) ls.value = (m && m.lastWeek) ? m.lastWeek.status : 'busy';
         UserManager.setStatus((m && m.lastWeek) ? m.lastWeek.status : 'busy');
@@ -1345,7 +1128,6 @@ export const UserManager = {
             if (taskIn) taskIn.value = lwTasks[i] ? lwTasks[i].text : '';
         });
         
-        // This Week
         const nwTasks = (m && m.thisWeek && m.thisWeek.tasks) ? m.thisWeek.tasks : [];
         [1,2,3].forEach((n, i) => {
             const taskIn = getEl(`nwTask${n}`);
@@ -1355,7 +1137,6 @@ export const UserManager = {
         const nwLoad = (m && m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N'];
         nwLoad.forEach((v, i) => UserManager.setLoad(i, v));
 
-        // Next Week
         const fwTasks = (m && m.nextWeek && m.nextWeek.tasks) ? m.nextWeek.tasks : [];
         [1,2,3].forEach((n, i) => {
             const taskIn = getEl(`fwTask${n}`);
@@ -1384,7 +1165,6 @@ export const UserManager = {
             });
         };
 
-        // Preserve existing checkboxes state if editing
         const idx = UserManager.editingUserIndex;
         const oldM = idx > -1 ? State.members[idx] : null;
         
@@ -1393,12 +1173,12 @@ export const UserManager = {
             lwTasks.forEach((t, i) => { if(oldM.lastWeek.tasks[i]) t.isTeamSuccess = oldM.lastWeek.tasks[i].isTeamSuccess; });
         }
         
-        const nwTasks = getTasks('nw'); // This week
+        const nwTasks = getTasks('nw'); 
         if(oldM && oldM.thisWeek) {
             nwTasks.forEach((t, i) => { if(oldM.thisWeek.tasks[i]) t.isTeamSuccess = oldM.thisWeek.tasks[i].isTeamSuccess; });
         }
 
-        const fwTasks = getTasks('fw'); // Next week
+        const fwTasks = getTasks('fw'); 
         if(oldM && oldM.nextWeek) {
             fwTasks.forEach((t, i) => { if(oldM.nextWeek.tasks[i]) t.isTeamActivity = oldM.nextWeek.tasks[i].isTeamActivity; });
         }
@@ -1512,10 +1292,8 @@ export const UserManager = {
     }
 };
 
-// --- MODULE: OVERVIEW MANAGER ---
 export const OverviewManager = {
     handleOverviewClick: (type) => {
-       // Just visual feedback or hint? 
     },
     handleInfoClick: () => {
         if(document.body.classList.contains('publishing')) return;
@@ -1525,7 +1303,6 @@ export const OverviewManager = {
     }
 };
 
-// --- MODULE: DATA HANDLING ---
 export const DataSaver = {
     saveData: () => {
         const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(State));
@@ -1544,7 +1321,7 @@ export const DataLoader = {
         reader.onload = (e) => {
             try {
                 const json = JSON.parse(e.target.result);
-                if(json.title) State = json; // Basic validation
+                if(json.title) State = json; 
                 else App.alert("Invalid JSON format");
                 renderBoard();
                 App.alert("Data loaded successfully");
@@ -1553,7 +1330,7 @@ export const DataLoader = {
             }
         };
         reader.readAsText(file);
-        input.value = ''; // Reset
+        input.value = ''; 
     }
 };
 
