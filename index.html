@@ -299,12 +299,13 @@
                     <div class="input-group">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
                             <label>Manual Data Entry</label>
-                            <div>
-                                <button id="btnAddSeries" class="btn btn-sm" onclick="TrackerManager.addTimeSeriesColumn()">+ Add Series</button>
-                                <button class="btn btn-sm" style="margin-left:5px; color:var(--g-red); border-color:var(--g-red);" onclick="TrackerManager.deleteSelectedSeries()">- Delete Selected</button>
-                            </div>
+                            <button class="btn btn-sm" onclick="TrackerManager.addDateColumn()">+ Add New Data</button>
                         </div>
                         <div id="lineTableContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; border-radius: 4px;"></div>
+                        <div style="margin-top: 10px;">
+                            <button id="btnAddSeries" class="btn btn-sm" onclick="TrackerManager.addTimeSeriesColumn()">+ Add Series</button>
+                            <button class="btn btn-sm" style="margin-left:5px; color:var(--g-red); border-color:var(--g-red);" onclick="TrackerManager.deleteSelectedSeries()">- Delete Selected</button>
+                        </div>
                     </div>
                     <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-top: 1rem;">
                         <label>Import Data from CSV</label>
