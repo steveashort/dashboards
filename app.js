@@ -606,6 +606,10 @@ export const TrackerManager = {
             const div = getEl(`${x.toLowerCase()}Inputs`);
             if (div) div.style.display = (inputType === x.toLowerCase()) ? 'block' : 'none';
         });
+
+        if (inputType === 'line') {
+             this.renderTimeTable();
+        }
     },
 
     getContext(typeOverride) {
@@ -667,8 +671,7 @@ export const TrackerManager = {
 
         let series = seriesOverride;
         if (!series) series = this.scrapeTimeSeries();
-        if (series.length === 0) series = [{name:'Series 1', color: '#03dac6', values:[]}];
-
+        
         let labels = [];
         if (labelsOverride) {
             labels = labelsOverride;
@@ -730,8 +733,8 @@ export const TrackerManager = {
 
         if (series.length < 6) {
             html += `<tr class="add-series-row">
-                <td colspan="${labels.length + 2}" style="padding: 10px; text-align: center; border-top: 1px dashed #444;">
-                    <div onclick="TrackerManager.addTimeSeriesColumn()" style="width: 30px; height: 30px; background: var(--primary); color: #000; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; cursor: pointer; margin: 0 auto; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">+</div>
+                <td colspan="${labels.length + 2}" style="padding: 10px; border-top: 1px dashed #444; text-align: left;">
+                    <div onclick="TrackerManager.addTimeSeriesColumn()" style="width: 30px; height: 30px; background: #444; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; cursor: pointer; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">+</div>
                 </td>
             </tr>`;
         }
