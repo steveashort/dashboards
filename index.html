@@ -199,6 +199,7 @@
                     <button id="typeCounterBtn" class="type-option" onclick="TrackerManager.setType('counter')">Counter</button>
                     <button id="typeRagBtn" class="type-option" onclick="TrackerManager.setType('rag')">RAG Status</button>
                     <button id="typeWaffleBtn" class="type-option" onclick="TrackerManager.setType('waffle')">Waffle Chart</button>
+                    <button id="typeNoteBtn" class="type-option" onclick="TrackerManager.setType('note')">Note</button>
                 </div>
                 <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
                     <div class="input-group" style="flex: 2;">
@@ -362,13 +363,13 @@
 
                                                     <div class="form-row" style="margin-bottom: 0; gap: 1rem;">
 
-                                                        <div class="input-group" style="flex: 1;">
+                                                                                <div class="input-group" style="flex: 1;">
 
-                                                            <label>Counter Value</label>
+                                                                                    <label>Counter Value</label>
 
-                                                            <input type="number" id="tkCounterVal">
+                                                                                    <input type="number" id="tkCounterVal" min="0" max="9999999">
 
-                                                        </div>
+                                                                                </div>
 
                                                         <div class="input-group" style="flex: 0 0 100px;">
 
@@ -482,65 +483,17 @@
 
                                                     </div>
 
-                                                <div id="waffleInputs" style="display:none;">
+                                                                <div id="noteInputs" style="display:none;">
 
-                                                    <div class="input-group">
+                                                                    <div class="input-group">
 
-                                                        <label>Metric Unit</label>
+                                                                        <label>Content (Markdown supported)</label>
 
-                                                        <input type="text" id="tkWaffleMetric">
+                                                                        <textarea id="tkNoteContent" style="height: 200px; font-family: monospace;" placeholder="# Heading&#10;- Bullet&#10;**Bold**&#10;[Link](google.com)"></textarea>
 
-                                                    </div>
+                                                                    </div>
 
-                                                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
-
-                                                        <div class="input-group">
-
-                                                            <label>Target (Max 450)</label>
-
-                                                            <input type="number" id="tkWaffleTotal" max="450">
-
-                                                        </div>
-
-                                                        <div class="input-group">
-
-                                                            <label>Progress</label>
-
-                                                            <input type="number" id="tkWaffleActive">
-
-                                                        </div>
-
-                                                    </div>
-
-                                                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
-
-                                                        <div class="input-group">
-
-                                                            <label>Target Colour</label>
-
-                                                            <input type="color" id="tkWaffleColorBg" value="#696969">
-
-                                                        </div>
-
-                                                        <div class="input-group">
-
-                                                            <label>Progress Colour</label>
-
-                                                            <input type="color" id="tkWaffleColorVal" value="#228B22">
-
-                                                        </div>
-
-                                                    </div>
-
-                                                    <div class="input-group" style="margin-top: 1rem;">
-
-                                                        <label>Notes (Hover info - Published View)</label>
-
-                                                        <textarea id="tkWaffleNotes" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
-
-                                                    </div>
-
-                                                </div>
+                                                                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Tracker</button>

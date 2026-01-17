@@ -77,6 +77,8 @@ export const initApp = () => {
 const parseMarkdown = (t) => {
     if(!t) return '';
     let h = t.replace(/&/g,"&amp;").replace(/</g,"&lt;")
+             .replace(/^# (.*?)$/gm, '<h3>$1</h3>')
+             .replace(/^## (.*?)$/gm, '<h4>$1</h4>')
              .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
              .replace(/\*(.*?)\*/g,'<i>$1</i>')
              .replace(/\((.*?)\)\((\s*.*?\s*)\)/g, (match, text, url) => {
@@ -314,9 +316,12 @@ export const renderBoard = () => {
                 const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
                 const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
                 
-                const html = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#03dac6', t.colorBg || '#333333');
+                const html = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969');
                 visualHTML = `<div ${hoverEvents} style="width:100%;">${html}</div>`;
                 statsHTML = `<div class="tracker-stats">${t.active} / ${t.total} ${t.metric || ''}</div>`;
+            } else if (renderType === 'note') {
+                visualHTML = `<div class="note-render-container">${parseMarkdown(t.content || '')}</div>`;
+                statsHTML = '';
             }
 
             card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
@@ -440,7 +445,9 @@ export const ZoomManager = {
             const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
             content = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message || ''}</div>`;
         } else if (renderType === 'waffle') {
-            content = createWaffleHTML(100, t.active || 0, t.colorVal || '#03dac6', t.colorBg || '#333333');
+            content = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969');
+        } else if (renderType === 'note') {
+            content = `<div class="note-render-container zoomed-note">${parseMarkdown(t.content || '')}</div>`;
         } else if (renderType === 'gauge') {
             const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
             const c1 = t.colorVal || t.color1 || '#00e676'; 
@@ -628,6 +635,10 @@ export const TrackerManager = {
                 // Set Size to S
                 const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
                 if(sizeRad) sizeRad.checked = true;
+            } else if (!isEdit && type === 'note') {
+                const tcnIn = getEl('tkNoteContent'); if(tcnIn) tcnIn.value = '';
+                const sizeRad = document.querySelector('input[name="tkSize"][value="M"]');
+                if(sizeRad) sizeRad.checked = true;
             }
 
             if (type === 'gauge') {
@@ -677,6 +688,9 @@ export const TrackerManager = {
                 if (wcIn) wcIn.value = tracker ? (tracker.colorVal || '#228B22') : '#228B22';
                 const wbIn = getEl('tkWaffleColorBg');
                 if (wbIn) wbIn.value = tracker ? (tracker.colorBg || '#696969') : '#696969';
+            } else if (type === 'note') {
+                const tcnIn = getEl('tkNoteContent');
+                if (tracker && tcnIn) tcnIn.value = tracker.content || '';
             }
         }
 
@@ -687,7 +701,7 @@ export const TrackerManager = {
         State.currentTrackerType = type;
         // Map 'bar' to 'line' for input visibility
         const inputType = (type === 'bar') ? 'line' : type;
-        ['Gauge','Bar','Line','Counter','Rag','Waffle'].forEach(x => {
+        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note'].forEach(x => {
             const btn = getEl(`type${x}Btn`);
             if (btn) btn.className = (type === x.toLowerCase()) ? 'type-option active' : 'type-option';
             const div = getEl(`${x.toLowerCase()}Inputs`);
@@ -1283,7 +1297,9 @@ export const TrackerManager = {
             newTracker.displayStyle = styleRad ? styleRad.value : 'line';
         } else if (type === 'counter') {
             const cvIn = getEl('tkCounterVal');
-            newTracker.value = cvIn ? parseFloat(cvIn.value) || 0 : 0;
+            const val = cvIn ? parseFloat(cvIn.value) || 0 : 0;
+            if (val < 0 || val > 9999999) return App.alert("Counter value must be between 0 and 9,999,999.");
+            newTracker.value = val;
             const csIn = getEl('tkCounterSub');
             newTracker.subtitle = csIn ? csIn.value : '';
             const cnIn = getEl('tkCounterNotes');
@@ -1301,6 +1317,9 @@ export const TrackerManager = {
             newTracker.notes = rnIn ? rnIn.value : '';
             newTracker.size = 'S'; // Force Small Size
             newTracker.color1 = (newTracker.status === 'green' ? '#00e676' : (newTracker.status === 'amber' ? '#ffb300' : (newTracker.status === 'red' ? '#ff1744' : '#666666')));
+        } else if (type === 'note') {
+            const contentIn = getEl('tkNoteContent');
+            newTracker.content = contentIn ? contentIn.value : '';
         } else if (type === 'waffle') {
             const wmIn = getEl('tkWaffleMetric');
             const wtIn = getEl('tkWaffleTotal');
