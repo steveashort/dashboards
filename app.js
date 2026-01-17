@@ -601,8 +601,8 @@ export const TrackerManager = {
                 const twaIn = getEl('tkWaffleActive'); if(twaIn) twaIn.value = '';
                 const twnIn = getEl('tkWaffleNotes'); if(twnIn) twnIn.value = '';
                 
-                // Set Size to XL
-                const sizeRad = document.querySelector('input[name="tkSize"][value="XL"]');
+                // Set Size to S (will be re-inferred on submit)
+                const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
                 if(sizeRad) sizeRad.checked = true;
             }
 
@@ -1293,14 +1293,14 @@ export const TrackerManager = {
             const active = waIn ? (parseInt(waIn.value) || 0) : 0;
             
             if (total <= 0) return App.alert("Target must be a positive number.");
-            if (total > 500) return App.alert("Target cannot exceed 500.");
+            if (total > 450) return App.alert("Target cannot exceed 450.");
             if (active > total) return App.alert("Progress cannot exceed the Target.");
             
             newTracker.metric = wmIn ? wmIn.value : '';
             newTracker.total = total;
             newTracker.active = active;
             newTracker.notes = wnIn ? wnIn.value : '';
-            newTracker.size = 'XL'; // Force XL size
+            newTracker.size = total < 201 ? 'S' : 'M'; // Inferred size
             
             const wcIn = getEl('tkWaffleColorVal');
             newTracker.colorVal = wcIn ? wcIn.value : '#03dac6';

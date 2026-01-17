@@ -22,14 +22,13 @@ export const createGaugeSVG = (loadArr) => {
 };
 
 export const createWaffleHTML = (total, active, colorVal, colorBg) => {
-    const maxCells = Math.min(total, 500);
-    const cols = total > 100 ? 25 : 10;
-    const cellSize = total > 100 ? '8px' : '12px';
-    const gridWidth = total > 100 ? '250px' : '140px';
+    const maxCells = Math.min(total, 450);
+    const cols = total > 200 ? 25 : 15;
+    const cellSize = total > 200 ? '5px' : '7px';
+    const gridWidth = total > 200 ? '180px' : '140px';
     
     let html = `<div style="display:grid; grid-template-columns: repeat(${cols}, 1fr); gap: 2px; width: ${gridWidth}; margin: 0 auto;">`;
     for(let i=0; i<maxCells; i++) {
-        // Simple linear fill
         const isActive = i < active;
         html += `<div class="waffle-cell" style="width:${cellSize}; height:${cellSize}; ${isActive ? `background-color:${colorVal}; box-shadow: 0 0 5px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
     }
