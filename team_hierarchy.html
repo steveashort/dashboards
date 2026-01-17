@@ -139,7 +139,7 @@
         }
 
         .btn-group { display: flex; flex-direction: column; gap: 12px; }
-        button { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s; }
+        button { padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s; }
         .btn-success { background-color: #27ae60; color: white; }
         .btn-primary { background-color: var(--accent); color: white; }
         .btn-secondary { background-color: #555; color: white; }
@@ -160,7 +160,7 @@
         ul { list-style: none; padding-left: 20px; margin: 0; position: relative; }
         ul.children-list { border-left: 2px solid var(--line-color); margin-left: 15px; padding-left: 30px; }
         ul.hidden { display: none !important; }
-        li { margin: 20px 0; position: relative; }
+        li { margin: 25px 0; position: relative; }
         li::before { content: ''; position: absolute; top: 32px; left: -32px; width: 30px; height: 2px; background-color: var(--line-color); }
 
         .node-card {
@@ -207,7 +207,7 @@
 
         .matched { border: 2px solid #27ae60 !important; box-shadow: 0 0 15px rgba(39, 174, 96, 0.4) !important; }
 
-        /* PUBLISHED MODE HIDING */
+        /* READONLY MODE HIDING */
         .readonly-mode .node-actions,
         .readonly-mode .icon-btn[title="Settings"],
         .readonly-mode #toolsSection,
@@ -230,7 +230,7 @@
         .guide-text li::before { display: none; }
 
         .toast-container { position: fixed; bottom: 25px; right: 25px; z-index: 3000; }
-        .toast { background: #333; color: white; padding: 14px 24px; border-radius: 4px; border-left: 5px solid var(--accent); margin-top: 12px; }
+        .toast { background: #333; color: white; padding: 14px 24px; border-radius: 4px; border-left: 4px solid var(--accent); margin-top: 12px; }
     </style>
 </head>
 <body>
@@ -277,8 +277,8 @@
     <button class="icon-btn" onclick="expandAll()" title="Expand All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
     <button class="icon-btn" onclick="collapseAll()" title="Collapse All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
     <button class="icon-btn" onclick="toggleTheme()" title="Toggle Day/Night Mode">
-        <svg id="sunIcon" style="width:22px; height:22px; display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-        <svg id="moonIcon" style="width:22px; height:22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        <svg id="sunIcon" style="width:22px; height:22px; display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="moonIcon" style="width:22px; height:22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
     </button>
     <button class="icon-btn" onclick="openGuideModal()" title="User Guide" style="margin-top: 10px; background: var(--accent); color: white;">
         <span style="font-weight: bold; font-size: 20px;">?</span>
@@ -287,26 +287,9 @@
 
 <div class="modal-overlay" id="guideModal">
     <div class="modal">
-        <h2>User Guide</h2>
-        <div class="guide-text">
-            <p><strong>Management:</strong></p>
-            <ul>
-                <li><strong>Editing:</strong> Click on any person's card to open the editor.</li>
-                <li><strong>Adding:</strong> Hover over a card and click the green (+) button to add a child node.</li>
-                <li><strong>Deleting:</strong> Hover over a card and click the red (x) button to delete that node and its subtree.</li>
-                <li><strong>Moving:</strong> Drag and drop any card onto another card to change its parent.</li>
-            </ul>
-            <p><strong>Customization:</strong></p>
-            <ul>
-                <li><strong>Settings:</strong> Click the Gear icon to manage global Roles, Locations, Tags, and the Organization Name.</li>
-                <li><strong>Logo:</strong> Upload your company logo in Settings to embed it for publishing.</li>
-            </ul>
-            <p><strong>Viewing & Sharing:</strong></p>
-            <ul>
-                <li><strong>Searching:</strong> Type in the sidebar to filter the tree. Parents of matching nodes are always kept visible.</li>
-                <li><strong>Publishing:</strong> Click "Publish to Read-Only" to generate a standalone HTML file that hides all editing tools.</li>
-            </ul>
-        </div>
+        <h2 id="guideTitle">User Guide</h2>
+        <div class="guide-text" id="guideBody">
+            </div>
         <div style="display:flex; justify-content:flex-end; margin-top: 25px;">
             <button class="btn-primary" onclick="closeGuideModal()">Got it!</button>
         </div>
@@ -330,9 +313,9 @@
             <div><label>Engagement</label><select id="editEngagement"></select></div>
         </div>
         <div class="form-group"><label>Tags (Select Multiple)</label><select id="editTagsMulti" multiple size="6"></select></div>
-        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top: 25px;">
+        <div style="display:flex; justify-content:flex-end; gap:15px; margin-top: 35px;">
             <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-            <button class="btn-primary" onclick="saveNodeChanges()">Apply Changes</button>
+            <button class="btn-primary" onclick="saveNodeChanges()">Update Record</button>
         </div>
     </div>
 </div>
@@ -546,11 +529,11 @@
         const blob = new Blob([finalHtml], { type: 'text/html' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'published_org.html';
+        a.download = 'published_standalone_org.html';
         a.click();
     }
 
-    // --- FILTER ---
+    // --- SEARCH ENGINE ---
     function applyFilter() {
         document.querySelectorAll('ul.children-list').forEach(u => u.classList.remove('hidden'));
         document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '−');
@@ -610,6 +593,37 @@
     }
 
     // --- UI ACTIONS ---
+    function openGuideModal() { 
+        const body = document.getElementById('guideBody');
+        if (appData.isReadOnly) {
+            body.innerHTML = `
+                <p><strong>Viewing & Navigation:</strong></p>
+                <ul>
+                    <li><strong>Searching:</strong> Type in the sidebar to filter the tree. Parents of matching nodes are always kept visible.</li>
+                    <li><strong>Filtering:</strong> Use the dropdowns to isolate specific Roles, Locations, or Skills.</li>
+                    <li><strong>Subtrees:</strong> Use the (+) and (-) buttons on the left of cards to expand or collapse specific branches.</li>
+                    <li><strong>Toolbar:</strong> Use the icons on the right to Expand All, Collapse All, or toggle Day/Night mode.</li>
+                </ul>
+            `;
+        } else {
+            body.innerHTML = `
+                <p><strong>Management:</strong></p>
+                <ul>
+                    <li><strong>Editing:</strong> Click any card to open the editor.</li>
+                    <li><strong>Adding:</strong> Hover over a card and click the green (+) button to add a child.</li>
+                    <li><strong>Deleting:</strong> Hover over a card and click the red (x) button to remove a node.</li>
+                    <li><strong>Moving:</strong> Drag and drop any card onto another to change its parent.</li>
+                </ul>
+                <p><strong>Customization:</strong></p>
+                <ul>
+                    <li><strong>Settings:</strong> Click the Gear icon to manage global lists and organization name.</li>
+                    <li><strong>Publishing:</strong> Click "Publish to Read-Only" to generate a standalone shareable file.</li>
+                </ul>
+            `;
+        }
+        document.getElementById('guideModal').classList.add('active'); 
+    }
+
     function toggleTheme() {
         appData.settings.theme = (appData.settings.theme === "dark") ? "light" : "dark";
         const isDark = appData.settings.theme === "dark";
@@ -624,7 +638,7 @@
         const res = findNodeAndParent(parentId, appData.tree);
         const newId = 'n' + Date.now();
         if(!res.node.children) res.node.children = [];
-        res.node.children.push({ id: newId, name: "New Person", role: appData.settings.roles[0], children: [] });
+        res.node.children.push({ id: newId, name: "New Person", role: appData.settings.roles[0], location: appData.settings.locations[0], children: [] });
         renderTree();
         openEditModal(newId);
     }
@@ -695,7 +709,6 @@
         renderTree(); closeModal();
     }
 
-    function openGuideModal() { document.getElementById('guideModal').classList.add('active'); }
     function closeGuideModal() { document.getElementById('guideModal').classList.remove('active'); }
     function closeModal() { document.getElementById('editModal').classList.remove('active'); }
     function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('active'); }
@@ -719,7 +732,7 @@
     function expandAll() { document.querySelectorAll('ul.children-list').forEach(u => u.classList.remove('hidden')); document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '−'); }
     function collapseAll() { document.querySelectorAll('ul.children-list').forEach(u => u.classList.add('hidden')); document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '+'); }
 
-    // Init Theme based on default
+    // Init Theme
     if (appData.settings.theme === "light") { document.body.classList.add('light-theme'); document.getElementById('sunIcon').style.display = "block"; document.getElementById('moonIcon').style.display = "none"; }
     renderTree();
 </script>
