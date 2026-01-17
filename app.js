@@ -911,6 +911,93 @@ export const TrackerManager = {
         }
     },
 
+    selectRag(val) {
+        const pills = document.querySelectorAll('.rag-pill');
+        pills.forEach(p => {
+            if(p.dataset.val === val) p.classList.add('active');
+            else p.classList.remove('active');
+        });
+        const rs = getEl('tkRagStatus');
+        if(rs) rs.value = val;
+    },
+
+    updateWafflePreview() {
+        const wt = getEl('tkWaffleTotal');
+        const wa = getEl('tkWaffleActive');
+        const wc = getEl('tkWaffleColorVal');
+        const wb = getEl('tkWaffleColorBg');
+        
+        const total = wt ? (parseInt(wt.value)||100) : 100;
+        const active = wa ? (parseInt(wa.value)||0) : 0;
+        const colorVal = wc ? wc.value : '#03dac6';
+        const colorBg = wb ? wb.value : '#333333';
+        
+        const preview = getEl('wafflePreview');
+        if (preview) preview.innerHTML = createWaffleHTML(100, active, colorVal, colorBg);
+    },
+
+    parseCSV(type) {
+        const ctx = this.getContext(); 
+        const txtArea = getEl('csvInput');
+        if (!txtArea) return;
+        
+        const text = txtArea.value.trim();
+        if (!text) return App.alert("Please paste CSV data.");
+        
+        const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+        if (lines.length < 2) return App.alert("Invalid CSV format.");
+        
+        const headers = lines[0].split(',').map(h => h.trim());
+        const seriesNames = headers.slice(1);
+        
+        const labels = [];
+        const seriesData = seriesNames.map(name => ({ name: name, values: [] }));
+        
+        for(let i=1; i<lines.length; i++) {
+            const cols = lines[i].split(',').map(c => c.trim());
+            labels.push(cols[0]); 
+            
+            for(let j=0; j<seriesNames.length; j++) {
+                const val = parseFloat(cols[j+1]) || 0;
+                seriesData[j].values.push(val);
+            }
+        }
+        
+        const sdIn = getEl(`${ctx.prefix}StartDate`);
+        if(sdIn && labels.length > 0) {
+             const lastLbl = labels[labels.length-1];
+             if(/^\d{4}-\d{2}-\d{2}$/.test(lastLbl)) sdIn.value = lastLbl;
+        }
+        
+        const tcIn = getEl(`${ctx.prefix}TimeCount`);
+        if(tcIn) {
+            const count = labels.length;
+            let exists = false;
+            for(let opt of tcIn.options) if(parseInt(opt.value) === count) exists = true;
+            if(!exists) {
+                const opt = document.createElement('option');
+                opt.value = count;
+                opt.innerText = count;
+                tcIn.appendChild(opt);
+            }
+            tcIn.value = count;
+        }
+        
+        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
+        seriesData.forEach((s, i) => s.color = colors[i % colors.length]);
+        
+        this.renderTimeTable(seriesData, labels);
+        App.alert("CSV Parsed Successfully!");
+    },
+
+    deleteTracker(index) {
+        if(index < 0 || index >= State.trackers.length) return;
+        App.confirm("Are you sure you want to delete this tracker?", () => {
+            State.trackers.splice(index, 1);
+            renderBoard();
+        });
+    },
+
     submitTracker() {
         const index = State.editingTrackerIndex;
         const descIn = getEl('tkDesc');
