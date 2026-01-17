@@ -48,6 +48,7 @@
             display: flex;
             height: 100vh;
             overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
         }
 
         .sidebar {
@@ -64,12 +65,12 @@
         .main-content { 
             flex: 1; 
             padding: 40px; 
-            overflow: auto; 
+            overflow: auto; /* Required for both scrollbars */
             height: 100%;
             position: relative;
         }
 
-        /* Custom Visible Scrollbars */
+        /* FIX: Vibrant Visible Scrollbars (Both Vertical and Horizontal) */
         .main-content::-webkit-scrollbar { width: 14px; height: 14px; }
         .main-content::-webkit-scrollbar-track { background: var(--bg-color); }
         .main-content::-webkit-scrollbar-thumb { 
@@ -90,18 +91,30 @@
         }
 
         .btn-group { display: flex; flex-direction: column; gap: 10px; }
-        button { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        button { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s; }
         .btn-primary { background-color: var(--accent); color: white; }
         .btn-success { background-color: #27ae60; color: white; }
         .btn-danger { background-color: #c0392b; color: white; }
+
+        /* Theme Toggle */
+        .theme-toggle-wrapper { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--card-border); }
+        .theme-btn { background: none; border: none; cursor: pointer; color: var(--text-main); display: flex; align-items: center; justify-content: center; padding: 5px; border-radius: 50%; }
+        .theme-btn:hover { background: var(--hover-bg); }
+        .theme-btn svg { width: 22px; height: 22px; fill: currentColor; }
+        .hidden { display: none !important; }
 
         /* Floating Toolbar */
         .floating-toolbar { position: fixed; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 500; }
         .icon-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
         /* ==========================================================
-           3) TREE STRUCTURE
+           3) TREE STRUCTURE & HORIZONTAL FIX
            ========================================================== */
+        .main-tree {
+            display: table; /* FIX: Forces container to width of contents for horizontal scroll */
+            min-width: 100%;
+        }
+
         ul { list-style: none; padding-left: 20px; margin: 0; position: relative; }
         ul.children-list { border-left: 2px solid var(--line-color); margin-left: 15px; padding-left: 30px; }
         ul.hidden { display: none !important; }
@@ -109,60 +122,73 @@
         li::before { content: ''; position: absolute; top: 32px; left: -32px; width: 30px; height: 2px; background-color: var(--line-color); }
         .main-tree > ul > li::before { display: none; }
 
+        /* FIX: Node Sizing - fit-content instead of fixed width */
         .node-card {
             display: flex; align-items: center;
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            padding: 12px 15px;
+            padding: 12px 18px;
             border-radius: 6px;
-            width: fit-content; min-width: 450px;
+            width: fit-content; /* Dynamic Sizing */
+            min-width: 280px;    /* Sensible baseline */
+            max-width: 600px;    /* Prevent extreme stretching */
             cursor: grab;
             transition: all 0.2s ease;
             position: relative;
-            border-left: 5px solid var(--accent);
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border-left: 6px solid var(--accent);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
         }
         .node-card:active { cursor: grabbing; }
         .node-card.drag-over { border: 2px dashed #27ae60; background: rgba(39, 174, 96, 0.1); }
         .node-card.is-dragging { opacity: 0.4; }
-        .node-card.matched { border: 1px solid #27ae60; box-shadow: 0 0 10px rgba(39, 174, 96, 0.2); }
+        .node-card.matched { border: 2px solid #27ae60; box-shadow: 0 0 15px rgba(39, 174, 96, 0.3); }
 
-        .node-actions { position: absolute; top: -10px; right: 10px; display: flex; gap: 5px; opacity: 0; transition: opacity 0.2s; z-index: 10; }
+        .node-actions { position: absolute; top: -12px; right: 10px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s; z-index: 10; }
         .node-card:hover .node-actions { opacity: 1; }
         
-        .node-action-btn { width: 26px; height: 26px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
-        .node-action-btn svg { width: 14px; height: 14px; fill: white; pointer-events: none; }
+        .node-action-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+        .node-action-btn svg { width: 16px; height: 16px; fill: white; pointer-events: none; }
         .btn-add-child { background: #27ae60; }
         .btn-del-node { background: #c0392b; }
 
         .info { display: flex; flex-direction: column; width: 100%; pointer-events: none; }
-        .top-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
-        .name { font-weight: 700; font-size: 16px; color: var(--text-main); }
-        .engagement-pill { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); padding: 1px 6px; border-radius: 10px; text-transform: uppercase; font-weight: 600; }
-        .location-pill { font-size: 11px; color: #2ecc71; border: 1px solid #2ecc71; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; font-weight: 600; }
-        .role { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
-        .pill { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; color: white; text-transform: uppercase; }
-        .toggle-btn { margin-right: 15px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); cursor: pointer; }
+        .top-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; white-space: nowrap; }
+        .name { font-weight: 700; font-size: 17px; color: var(--text-main); }
+        .engagement-pill { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); padding: 2px 8px; border-radius: 12px; text-transform: uppercase; font-weight: 700; }
+        .location-pill { font-size: 11px; color: #2ecc71; border: 1px solid #2ecc71; padding: 2px 8px; border-radius: 12px; text-transform: uppercase; font-weight: 700; }
+        .role { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .pill { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 800; color: white; text-transform: uppercase; }
+        .toggle-btn { margin-right: 15px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); cursor: pointer; font-weight: bold; }
 
         /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-overlay.active { display: flex; }
-        .modal { background: var(--sidebar-bg); padding: 30px; border-radius: 12px; width: 500px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .modal { background: var(--sidebar-bg); padding: 30px; border-radius: 12px; width: 500px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
         .modal h2 { margin-top: 0; margin-bottom: 20px; font-size: 22px; }
         .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 3000; }
-        .toast { background: #333; color: white; padding: 12px 20px; border-radius: 4px; border-left: 4px solid var(--accent); margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .toast { background: #333; color: white; padding: 12px 20px; border-radius: 4px; border-left: 4px solid var(--accent); margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: slideIn 0.3s ease; }
+        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
     <img src="https://via.placeholder.com/280x100.png?text=Company+Logo" class="sidebar-logo">
-    <input type="text" id="appTitle" class="app-title-input" placeholder="Enter Title...">
+    
+    <div class="theme-toggle-wrapper">
+        <span style="font-size: 13px; font-weight: 600; text-transform: uppercase; color: var(--text-muted);">Theme</span>
+        <button class="theme-btn" onclick="toggleTheme()" title="Toggle Theme">
+            <svg id="sunIcon" class="hidden" viewBox="0 0 24 24"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37c-.39-.39-1.03-.39-1.41 0-.39.39-.39 1.03 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0 .39-.39.39-1.03 0-1.41l-1.06-1.06zm1.06-10.96c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36c.39-.39.39-1.03 0-1.41-.39-.39-1.03-.39-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>
+            <svg id="moonIcon" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/></svg>
+        </button>
+    </div>
+
+    <input type="text" id="appTitle" class="app-title-input" oninput="updateTitle(this.value)">
 
     <div class="control-group">
         <label>Search</label>
-        <input type="text" id="searchInput" placeholder="Name, Role, Loc, Tag..." oninput="applyFilter()">
+        <input type="text" id="searchInput" placeholder="Search hierarchy..." oninput="applyFilter()">
     </div>
 
     <div class="control-group"><label>Filter by Role</label><select id="roleFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
@@ -180,8 +206,8 @@
 </aside>
 
 <div class="floating-toolbar">
-    <button class="icon-btn" onclick="expandAll()" title="Expand All"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-    <button class="icon-btn" onclick="collapseAll()" title="Collapse All"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+    <button class="icon-btn" onclick="expandAll()" title="Expand All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+    <button class="icon-btn" onclick="collapseAll()" title="Collapse All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
 </div>
 
 <main class="main-content">
@@ -217,7 +243,7 @@
         }
     };
 
-    // --- UTILITIES ---
+    // --- CORE ENGINE ---
     function findNodeAndParent(id, currentNode, parent = null) {
         if (currentNode.id === id) return { node: currentNode, parent: parent };
         if (currentNode.children) {
@@ -251,7 +277,7 @@
         setTimeout(()=>t.remove(), 3000);
     }
 
-    // --- CORE RENDERING ---
+    // --- RENDERING ---
     function renderTree() {
         const container = document.getElementById('tree-container');
         container.innerHTML = '';
@@ -279,14 +305,12 @@
         card.dataset.nodeId = data.id;
         card.style.borderLeftColor = `var(--h-${depth % 6})`;
 
-        // Drag events
         card.addEventListener('dragstart', handleDragStart);
         card.addEventListener('dragover', handleDragOver);
         card.addEventListener('dragleave', handleDragLeave);
         card.addEventListener('drop', handleDrop);
         card.addEventListener('dragend', handleDragEnd);
 
-        // Action Buttons
         const acts = document.createElement('div');
         acts.className = 'node-actions';
         acts.innerHTML = `
@@ -295,7 +319,6 @@
         `;
         card.appendChild(acts);
 
-        // Toggle
         if (data.children && data.children.length > 0) {
             const btn = document.createElement('div');
             btn.className = 'toggle-btn'; btn.textContent = '−';
@@ -308,7 +331,6 @@
             card.appendChild(btn);
         }
 
-        // Card Content
         const info = document.createElement('div');
         info.className = 'info';
         let tagPills = tags.map(t => `<span class="pill" style="background:${stringToColor(t)}">${t}</span>`).join('');
@@ -333,7 +355,15 @@
         parentElement.appendChild(li);
     }
 
-    // --- MODAL & UPDATING ---
+    // --- THEME & UI ---
+    function toggleTheme() {
+        document.body.classList.toggle('light-theme');
+        const isLight = document.body.classList.contains('light-theme');
+        document.getElementById('sunIcon').classList.toggle('hidden', !isLight);
+        document.getElementById('moonIcon').classList.toggle('hidden', isLight);
+        showToast(isLight ? "Switched to Light Theme" : "Switched to Dark Theme");
+    }
+
     function openEditModal(id) {
         const res = findNodeAndParent(id, appData.tree);
         if (!res) return;
@@ -353,47 +383,46 @@
         const id = document.getElementById('editNodeId').value;
         const res = findNodeAndParent(id, appData.tree);
         if (res) {
-            const node = res.node;
-            node.name = document.getElementById('editName').value.trim();
-            node.role = document.getElementById('editRole').value.trim();
-            node.location = document.getElementById('editLocation').value.trim();
-            node.engagement = document.getElementById('editEngagement').value.trim();
+            const n = res.node;
+            n.name = document.getElementById('editName').value.trim();
+            n.role = document.getElementById('editRole').value.trim();
+            n.location = document.getElementById('editLocation').value.trim();
+            n.engagement = document.getElementById('editEngagement').value.trim();
             const tagStr = document.getElementById('editTags').value;
-            node.tags = tagStr ? tagStr.split(',').map(t => t.trim()).filter(t => t !== "") : [];
-            
-            renderTree(); 
-            closeModal();
-            showToast("Updated " + node.name);
+            n.tags = tagStr ? tagStr.split(',').map(t => t.trim()).filter(t => t !== "") : [];
+            renderTree(); closeModal();
+            showToast("Details Updated");
         }
     }
 
-    // --- DRAG / DROP / ADD / DEL ---
+    // --- DRAG / DROP ---
     let draggedId = null;
     function handleDragStart(e) { draggedId = this.dataset.nodeId; this.classList.add('is-dragging'); }
     function handleDragOver(e) { e.preventDefault(); this.classList.add('drag-over'); }
     function handleDragLeave() { this.classList.remove('drag-over'); }
     function handleDrop(e) {
         e.preventDefault(); this.classList.remove('drag-over');
-        const targetId = this.dataset.nodeId;
-        if (draggedId === targetId || isDescendant(draggedId, targetId)) return;
+        const tid = this.dataset.nodeId;
+        if (draggedId === tid || isDescendant(draggedId, tid)) return;
         const s = findNodeAndParent(draggedId, appData.tree);
-        const t = findNodeAndParent(targetId, appData.tree);
+        const t = findNodeAndParent(tid, appData.tree);
         if (s && t) {
             if (s.parent) s.parent.children = s.parent.children.filter(c => c.id !== draggedId);
             if (!t.node.children) t.node.children = [];
             t.node.children.push(s.node);
             renderTree();
-            showToast("Moved " + s.node.name);
+            showToast(`Moved ${s.node.name}`);
         }
     }
     function handleDragEnd() { this.classList.remove('is-dragging'); }
 
+    // --- ACTIONS ---
     function addChild(id, e) {
         e.stopPropagation();
         const res = findNodeAndParent(id, appData.tree);
         if (res) {
             if (!res.node.children) res.node.children = [];
-            res.node.children.push({ id: 'n'+Date.now(), name: "New Person", role: "New Role", children: [] });
+            res.node.children.push({ id: 'n'+Date.now(), name: "New Person", role: "Role", children: [] });
             renderTree();
         }
     }
@@ -406,10 +435,10 @@
                 res.parent.children = res.parent.children.filter(c => c.id !== id);
                 renderTree();
             }
-        } else { alert("Cannot delete root node."); }
+        }
     }
 
-    // --- FILTERS & JSON ---
+    // --- FILTERS & DATA ---
     function populateDropdowns() {
         const tags = new Set(), locs = new Set(), roles = new Set();
         function collect(n) {
@@ -431,37 +460,23 @@
         const search = document.getElementById('searchInput').value.toUpperCase();
         const role = document.getElementById('roleFilter').value;
         const loc = document.getElementById('locFilter').value;
-        const tagFilter = document.getElementById('tagFilter');
-        const selTags = Array.from(tagFilter.selectedOptions).map(o => o.value).filter(v => v !== "ALL");
-
+        const selTags = Array.from(document.getElementById('tagFilter').selectedOptions).map(o => o.value).filter(v => v !== "ALL");
         document.querySelectorAll('.tree-item').forEach(li => {
-            const nodeTags = li.dataset.tags;
-            const matchSearch = !search || li.dataset.searchText.includes(search);
-            const matchRole = role === "ALL" || li.dataset.role === role;
-            const matchLoc = loc === "ALL" || li.dataset.location === loc;
-            const matchTags = selTags.length === 0 || selTags.every(t => nodeTags.includes(t));
-
-            li.style.display = (matchSearch && matchRole && matchLoc && matchTags) ? '' : 'none';
+            const match = (!search || li.dataset.searchText.includes(search)) && (role === "ALL" || li.dataset.role === role) && (loc === "ALL" || li.dataset.location === loc) && (selTags.length === 0 || selTags.every(t => li.dataset.tags.includes(t)));
+            li.style.display = match ? '' : 'none';
         });
     }
 
+    function updateTitle(v) { appData.title = v; document.title = v; }
     function triggerUpload() { document.getElementById('jsonFileInput').click(); }
     function saveJson() {
         const blob = new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'});
-        const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='org_data.json'; a.click();
+        const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='org_hierarchy.json'; a.click();
     }
     function importJson(input) {
-        const reader = new FileReader();
-        reader.onload = (e) => { 
-            try {
-                const data = JSON.parse(e.target.result);
-                if(data.tree) { appData = data; } else { appData.tree = data; }
-                document.getElementById('appTitle').value = appData.title || "Org Viewer";
-                renderTree(); 
-                showToast("JSON Loaded Successfully");
-            } catch(err) { alert("Invalid JSON file"); }
-        };
-        reader.readAsText(input.files[0]);
+        const r = new FileReader();
+        r.onload = (e) => { appData = JSON.parse(e.target.result); document.getElementById('appTitle').value = appData.title || "Org Viewer"; renderTree(); };
+        r.readAsText(input.files[0]);
     }
     function expandAll() { document.querySelectorAll('.children-list').forEach(u => u.classList.remove('hidden')); }
     function collapseAll() { document.querySelectorAll('.children-list').forEach(u => u.classList.add('hidden')); }
