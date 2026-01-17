@@ -796,9 +796,34 @@ export const TrackerManager = {
 
     addTimeSeriesColumn() {
         const series = this.scrapeTimeSeries();
+        if (series.length >= 6) return App.alert("Max 6 series allowed.");
         const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
         const color = colors[series.length % colors.length];
         series.push({ name: `Series ${series.length+1}`, color: color, values: [] });
+        this.renderTimeTable(series);
+    },
+
+    handleCountChange(selectEl) {
+        const newCount = parseInt(selectEl.value);
+        const series = this.scrapeTimeSeries();
+        if (series.length === 0) {
+             this.renderTimeTable();
+             return;
+        }
+        
+        const oldCount = series[0].values.length;
+        const delta = newCount - oldCount;
+        
+        if (delta === 0) return;
+        
+        series.forEach(s => {
+            if (delta > 0) {
+                for(let i=0; i<delta; i++) s.values.unshift(0);
+            } else {
+                for(let i=0; i<Math.abs(delta); i++) s.values.shift();
+            }
+        });
+        
         this.renderTimeTable(series);
     },
 
@@ -819,68 +844,76 @@ export const TrackerManager = {
 
     addDateColumn() {
         const tcIn = getEl('tkTimeCount');
-        if (tcIn) {
-             const sdIn = getEl('tkStartDate');
-             if (sdIn) {
-                 const d = new Date(sdIn.value);
-                 const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
-                 const unit = unitRad ? unitRad.value : 'day';
-                 
-                 if (unit === 'year') d.setFullYear(d.getFullYear() + 1);
-                 else if (unit === 'month') d.setMonth(d.getMonth() + 1);
-                 else d.setDate(d.getDate() + 1);
-                 
-                 sdIn.value = d.toISOString().split('T')[0];
-             }
+        const sdIn = getEl('tkStartDate');
+        if (tcIn && sdIn) {
+             const series = this.scrapeTimeSeries();
              
-             const newVal = parseInt(tcIn.value) + 1;
-             let exists = false;
-             for(let opt of tcIn.options) { if(parseInt(opt.value) === newVal) exists = true; }
-             if (!exists) {
-                 const opt = document.createElement('option');
-                 opt.value = newVal;
-                 opt.innerText = newVal;
-                 tcIn.appendChild(opt);
-             }
-             tcIn.value = newVal;
-             this.renderTimeTable();
+             const d = new Date(sdIn.value);
+             const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
+             const unit = unitRad ? unitRad.value : 'day';
+             
+             if (unit === 'year') d.setFullYear(d.getFullYear() + 1);
+             else if (unit === 'month') d.setMonth(d.getMonth() + 1);
+             else d.setDate(d.getDate() + 1);
+             
+             sdIn.value = d.toISOString().split('T')[0];
+             
+             series.forEach(s => {
+                 s.values.shift(); 
+                 s.values.push(0); 
+             });
+             
+             this.renderTimeTable(series);
         }
     },
 
     removeDateColumn(index) {
         const tcIn = getEl('tkTimeCount');
         const count = parseInt(tcIn.value);
-        
         if (count <= 1) return App.alert("Cannot remove the last date.");
         
-        const newVal = count - 1;
-        let exists = false;
-        for(let opt of tcIn.options) { if(parseInt(opt.value) === newVal) exists = true; }
-        if (!exists) {
-             const opt = document.createElement('option');
-             opt.value = newVal;
-             opt.innerText = newVal;
-             tcIn.appendChild(opt);
-        }
-
+        const series = this.scrapeTimeSeries();
+        
         if (index === 0) {
-            tcIn.value = newVal;
-            this.renderTimeTable();
+            series.forEach(s => s.values.shift());
+            
+            // Ensure option exists for lower count
+            let exists = false;
+            for(let opt of tcIn.options) { if(parseInt(opt.value) === count - 1) exists = true; }
+            if (!exists) {
+                 const opt = document.createElement('option');
+                 opt.value = count - 1;
+                 opt.innerText = count - 1;
+                 tcIn.appendChild(opt);
+            }
+            
+            tcIn.value = count - 1;
+            this.renderTimeTable(series);
         } else if (index === count - 1) {
+            series.forEach(s => s.values.pop());
             const sdIn = getEl('tkStartDate');
             if (sdIn) {
                  const d = new Date(sdIn.value);
                  const unitRad = document.querySelector('input[name="tkTimeUnit"]:checked');
                  const unit = unitRad ? unitRad.value : 'day';
-                 
                  if (unit === 'year') d.setFullYear(d.getFullYear() - 1);
                  else if (unit === 'month') d.setMonth(d.getMonth() - 1);
                  else d.setDate(d.getDate() - 1);
-                 
                  sdIn.value = d.toISOString().split('T')[0];
             }
-            tcIn.value = newVal;
-            this.renderTimeTable();
+            
+            // Ensure option exists
+            let exists = false;
+            for(let opt of tcIn.options) { if(parseInt(opt.value) === count - 1) exists = true; }
+            if (!exists) {
+                 const opt = document.createElement('option');
+                 opt.value = count - 1;
+                 opt.innerText = count - 1;
+                 tcIn.appendChild(opt);
+            }
+            
+            tcIn.value = count - 1;
+            this.renderTimeTable(series);
         } else {
             App.alert("Please remove dates from the start or end of the series.");
         }
