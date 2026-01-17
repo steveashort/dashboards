@@ -38,7 +38,7 @@
         }
 
         /* ==========================================================
-           2) PAGE LAYOUT - SCROLLBAR FIXES
+           2) PAGE LAYOUT & VISIBLE SCROLLBARS
            ========================================================== */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -69,7 +69,7 @@
             position: relative;
         }
 
-        /* FIX: Vibrant Visible Scrollbars */
+        /* Custom Visible Scrollbars */
         .main-content::-webkit-scrollbar { width: 14px; height: 14px; }
         .main-content::-webkit-scrollbar-track { background: var(--bg-color); }
         .main-content::-webkit-scrollbar-thumb { 
@@ -79,10 +79,15 @@
         }
 
         .sidebar-logo { width: 100%; margin-bottom: 15px; border-radius: 4px; display: block; }
-        .app-title-input { font-size: 18px; font-weight: bold; color: var(--text-main); background: transparent; border: 1px solid transparent; padding: 4px 0; width: 100%; margin-bottom: 20px; }
+        .app-title-input { font-size: 18px; font-weight: bold; color: var(--text-main); background: transparent; border: 1px solid transparent; padding: 4px 0; width: 100%; margin-bottom: 20px; outline: none; }
+        
         .control-group { margin-bottom: 20px; }
         .control-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; text-transform: uppercase; }
-        select, input[type="text"], textarea { width: 100%; padding: 10px; background: var(--input-bg); color: var(--text-main); border: 1px solid var(--input-border); border-radius: 4px; outline: none; box-sizing: border-box; }
+        
+        select, input[type="text"], textarea { 
+            width: 100%; padding: 10px; background: var(--input-bg); color: var(--text-main); 
+            border: 1px solid var(--input-border); border-radius: 4px; outline: none; box-sizing: border-box; 
+        }
 
         .btn-group { display: flex; flex-direction: column; gap: 10px; }
         button { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; }
@@ -94,7 +99,9 @@
         .floating-toolbar { position: fixed; top: 20px; right: 20px; display: flex; gap: 10px; z-index: 500; }
         .icon-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
-        /* Tree Lines */
+        /* ==========================================================
+           3) TREE STRUCTURE
+           ========================================================== */
         ul { list-style: none; padding-left: 20px; margin: 0; position: relative; }
         ul.children-list { border-left: 2px solid var(--line-color); margin-left: 15px; padding-left: 30px; }
         ul.hidden { display: none !important; }
@@ -102,7 +109,6 @@
         li::before { content: ''; position: absolute; top: 32px; left: -32px; width: 30px; height: 2px; background-color: var(--line-color); }
         .main-tree > ul > li::before { display: none; }
 
-        /* Node Card */
         .node-card {
             display: flex; align-items: center;
             background: var(--card-bg);
@@ -114,6 +120,7 @@
             transition: all 0.2s ease;
             position: relative;
             border-left: 5px solid var(--accent);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
         .node-card:active { cursor: grabbing; }
         .node-card.drag-over { border: 2px dashed #27ae60; background: rgba(39, 174, 96, 0.1); }
@@ -122,6 +129,7 @@
 
         .node-actions { position: absolute; top: -10px; right: 10px; display: flex; gap: 5px; opacity: 0; transition: opacity 0.2s; z-index: 10; }
         .node-card:hover .node-actions { opacity: 1; }
+        
         .node-action-btn { width: 26px; height: 26px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
         .node-action-btn svg { width: 14px; height: 14px; fill: white; pointer-events: none; }
         .btn-add-child { background: #27ae60; }
@@ -130,8 +138,8 @@
         .info { display: flex; flex-direction: column; width: 100%; pointer-events: none; }
         .top-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
         .name { font-weight: 700; font-size: 16px; color: var(--text-main); }
-        .engagement-pill { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); padding: 1px 6px; border-radius: 10px; text-transform: uppercase; }
-        .location-pill { font-size: 11px; color: #2ecc71; border: 1px solid #2ecc71; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; }
+        .engagement-pill { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); padding: 1px 6px; border-radius: 10px; text-transform: uppercase; font-weight: 600; }
+        .location-pill { font-size: 11px; color: #2ecc71; border: 1px solid #2ecc71; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; font-weight: 600; }
         .role { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
         .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
         .pill { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; color: white; text-transform: uppercase; }
@@ -142,17 +150,15 @@
         .modal-overlay.active { display: flex; }
         .modal { background: var(--sidebar-bg); padding: 30px; border-radius: 12px; width: 500px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .modal h2 { margin-top: 0; margin-bottom: 20px; font-size: 22px; }
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; font-weight: 600; }
         .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 3000; }
-        .toast { background: #333; color: white; padding: 12px 20px; border-radius: 4px; border-left: 4px solid var(--accent); margin-top: 10px; }
+        .toast { background: #333; color: white; padding: 12px 20px; border-radius: 4px; border-left: 4px solid var(--accent); margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
     </style>
 </head>
 <body>
 
 <aside class="sidebar">
     <img src="https://via.placeholder.com/280x100.png?text=Company+Logo" class="sidebar-logo">
-    <input type="text" id="appTitle" class="app-title-input" oninput="updateTitle(this.value)">
+    <input type="text" id="appTitle" class="app-title-input" placeholder="Enter Title...">
 
     <div class="control-group">
         <label>Search</label>
@@ -174,8 +180,8 @@
 </aside>
 
 <div class="floating-toolbar">
-    <button class="icon-btn" onclick="expandAll()" title="Expand All"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-    <button class="icon-btn" onclick="collapseAll()" title="Collapse All"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+    <button class="icon-btn" onclick="expandAll()" title="Expand All"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+    <button class="icon-btn" onclick="collapseAll()" title="Collapse All"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
 </div>
 
 <main class="main-content">
@@ -211,7 +217,7 @@
         }
     };
 
-    // --- CORE LOGIC ---
+    // --- UTILITIES ---
     function findNodeAndParent(id, currentNode, parent = null) {
         if (currentNode.id === id) return { node: currentNode, parent: parent };
         if (currentNode.children) {
@@ -239,7 +245,13 @@
         return `hsl(${Math.abs(hash) % 360}, 65%, 40%)`;
     }
 
-    // --- RENDERING ---
+    function showToast(m) {
+        const t = document.createElement('div'); t.className='toast'; t.textContent=m;
+        document.getElementById('toastContainer').appendChild(t);
+        setTimeout(()=>t.remove(), 3000);
+    }
+
+    // --- CORE RENDERING ---
     function renderTree() {
         const container = document.getElementById('tree-container');
         container.innerHTML = '';
@@ -255,7 +267,6 @@
         li.className = "tree-item";
         li.dataset.id = data.id;
 
-        // Populate search/filter metadata
         const tags = data.tags || [];
         li.dataset.tags = tags.join(',').toUpperCase();
         li.dataset.location = (data.location || "").toUpperCase();
@@ -275,7 +286,16 @@
         card.addEventListener('drop', handleDrop);
         card.addEventListener('dragend', handleDragEnd);
 
-        // Toggle button
+        // Action Buttons
+        const acts = document.createElement('div');
+        acts.className = 'node-actions';
+        acts.innerHTML = `
+            <button class="node-action-btn btn-add-child" onclick="addChild('${data.id}', event)"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+            <button class="node-action-btn btn-del-node" onclick="deleteNode('${data.id}', event)"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+        `;
+        card.appendChild(acts);
+
+        // Toggle
         if (data.children && data.children.length > 0) {
             const btn = document.createElement('div');
             btn.className = 'toggle-btn'; btn.textContent = '−';
@@ -288,25 +308,18 @@
             card.appendChild(btn);
         }
 
-        // Action Buttons
-        const acts = document.createElement('div');
-        acts.className = 'node-actions';
-        acts.innerHTML = `
-            <button class="node-action-btn btn-add-child" onclick="addChild('${data.id}', event)"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
-            <button class="node-action-btn btn-del-node" onclick="deleteNode('${data.id}', event)"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
-        `;
-        card.appendChild(acts);
-
         // Card Content
         const info = document.createElement('div');
         info.className = 'info';
-        let pills = tags.map(t => `<span class="pill" style="background:${stringToColor(t)}">${t}</span>`).join('');
+        let tagPills = tags.map(t => `<span class="pill" style="background:${stringToColor(t)}">${t}</span>`).join('');
         info.innerHTML = `
-            <div class="top-row"><span class="name">${data.name}</span>
-            ${data.engagement ? `<span class="engagement-pill">${data.engagement}</span>`:''}
-            ${data.location ? `<span class="location-pill">${data.location}</span>`:''}</div>
+            <div class="top-row">
+                <span class="name">${data.name}</span>
+                ${data.engagement ? `<span class="engagement-pill">${data.engagement}</span>`:''}
+                ${data.location ? `<span class="location-pill">${data.location}</span>`:''}
+            </div>
             <span class="role">${data.role || ''}</span>
-            <div class="tags-row">${pills}</div>
+            <div class="tags-row">${tagPills}</div>
         `;
         card.appendChild(info);
         card.onclick = () => openEditModal(data.id);
@@ -320,7 +333,7 @@
         parentElement.appendChild(li);
     }
 
-    // --- MODAL & DATA PERSISTENCE ---
+    // --- MODAL & UPDATING ---
     function openEditModal(id) {
         const res = findNodeAndParent(id, appData.tree);
         if (!res) return;
@@ -341,12 +354,10 @@
         const res = findNodeAndParent(id, appData.tree);
         if (res) {
             const node = res.node;
-            node.name = document.getElementById('editName').value;
-            node.role = document.getElementById('editRole').value;
-            node.location = document.getElementById('editLocation').value;
-            node.engagement = document.getElementById('editEngagement').value;
-            
-            // FIX: Parse Tags string into Array
+            node.name = document.getElementById('editName').value.trim();
+            node.role = document.getElementById('editRole').value.trim();
+            node.location = document.getElementById('editLocation').value.trim();
+            node.engagement = document.getElementById('editEngagement').value.trim();
             const tagStr = document.getElementById('editTags').value;
             node.tags = tagStr ? tagStr.split(',').map(t => t.trim()).filter(t => t !== "") : [];
             
@@ -356,7 +367,7 @@
         }
     }
 
-    // --- DRAG / DROP / CRUD ---
+    // --- DRAG / DROP / ADD / DEL ---
     let draggedId = null;
     function handleDragStart(e) { draggedId = this.dataset.nodeId; this.classList.add('is-dragging'); }
     function handleDragOver(e) { e.preventDefault(); this.classList.add('drag-over'); }
@@ -372,6 +383,7 @@
             if (!t.node.children) t.node.children = [];
             t.node.children.push(s.node);
             renderTree();
+            showToast("Moved " + s.node.name);
         }
     }
     function handleDragEnd() { this.classList.remove('is-dragging'); }
@@ -380,7 +392,8 @@
         e.stopPropagation();
         const res = findNodeAndParent(id, appData.tree);
         if (res) {
-            res.node.children.push({ id: 'n'+Date.now(), name: "New Person", role: "Role", children: [] });
+            if (!res.node.children) res.node.children = [];
+            res.node.children.push({ id: 'n'+Date.now(), name: "New Person", role: "New Role", children: [] });
             renderTree();
         }
     }
@@ -393,10 +406,10 @@
                 res.parent.children = res.parent.children.filter(c => c.id !== id);
                 renderTree();
             }
-        }
+        } else { alert("Cannot delete root node."); }
     }
 
-    // --- FILTERS & EXPORTS ---
+    // --- FILTERS & JSON ---
     function populateDropdowns() {
         const tags = new Set(), locs = new Set(), roles = new Set();
         function collect(n) {
@@ -409,31 +422,45 @@
         fillSelect('tagFilter', tags); fillSelect('locFilter', locs); fillSelect('roleFilter', roles);
     }
     function fillSelect(id, set) {
-        const s = document.getElementById(id); const val = s.value;
+        const s = document.getElementById(id); const val = Array.from(s.selectedOptions).map(o => o.value);
         s.innerHTML = '<option value="ALL">Show All</option>';
         Array.from(set).sort().forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; s.appendChild(o); });
-        s.value = val;
+        Array.from(s.options).forEach(o => { if (val.includes(o.value)) o.selected = true; });
     }
     function applyFilter() {
         const search = document.getElementById('searchInput').value.toUpperCase();
         const role = document.getElementById('roleFilter').value;
         const loc = document.getElementById('locFilter').value;
+        const tagFilter = document.getElementById('tagFilter');
+        const selTags = Array.from(tagFilter.selectedOptions).map(o => o.value).filter(v => v !== "ALL");
+
         document.querySelectorAll('.tree-item').forEach(li => {
-            const match = (!search || li.dataset.searchText.includes(search)) && (role === "ALL" || li.dataset.role === role) && (loc === "ALL" || li.dataset.location === loc);
-            li.style.display = match ? '' : 'none';
+            const nodeTags = li.dataset.tags;
+            const matchSearch = !search || li.dataset.searchText.includes(search);
+            const matchRole = role === "ALL" || li.dataset.role === role;
+            const matchLoc = loc === "ALL" || li.dataset.location === loc;
+            const matchTags = selTags.length === 0 || selTags.every(t => nodeTags.includes(t));
+
+            li.style.display = (matchSearch && matchRole && matchLoc && matchTags) ? '' : 'none';
         });
     }
 
-    function updateTitle(v) { appData.title = v; document.title = v; }
-    function showToast(m) { const t = document.createElement('div'); t.className='toast'; t.textContent=m; document.getElementById('toastContainer').appendChild(t); setTimeout(()=>t.remove(), 3000); }
     function triggerUpload() { document.getElementById('jsonFileInput').click(); }
     function saveJson() {
         const blob = new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'});
-        const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='org.json'; a.click();
+        const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='org_data.json'; a.click();
     }
     function importJson(input) {
         const reader = new FileReader();
-        reader.onload = (e) => { appData = JSON.parse(e.target.result); renderTree(); };
+        reader.onload = (e) => { 
+            try {
+                const data = JSON.parse(e.target.result);
+                if(data.tree) { appData = data; } else { appData.tree = data; }
+                document.getElementById('appTitle').value = appData.title || "Org Viewer";
+                renderTree(); 
+                showToast("JSON Loaded Successfully");
+            } catch(err) { alert("Invalid JSON file"); }
+        };
         reader.readAsText(input.files[0]);
     }
     function expandAll() { document.querySelectorAll('.children-list').forEach(u => u.classList.remove('hidden')); }
