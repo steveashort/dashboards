@@ -219,10 +219,10 @@
                 </div>
                 <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
                     <div class="input-group" style="flex: 2;">
-                        <label>Tracker Title</label>
+                        <label>Chart Title</label>
                         <input type="text" id="tkDesc">
                     </div>
-                    <div class="input-group" style="flex: 1;">
+                    <div class="input-group" style="flex: 0 0 140px;">
                         <label>Size</label>
                         <select id="tkSize">
                             <option value="S">Small (5/row)</option>
@@ -252,7 +252,7 @@
                 </div>
                 <div id="barInputs" style="display:none;">
                     <div class="input-group">
-                        <label>Y-Axis Label</label>
+                        <label>Metric Label</label>
                         <input type="text" id="tkBarYLabel">
                     </div>
                      <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px;">
@@ -274,7 +274,7 @@
                 </div>
                 <div id="lineInputs" style="display:none;">
                     <div class="input-group">
-                        <label>Y-Axis Label</label>
+                        <label>Metric Label</label>
                         <input type="text" id="tkLineYLabel">
                     </div>
                     <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px;">
@@ -296,7 +296,7 @@
                             </div>
                         </div>
                         <div class="input-group">
-                            <label>Data Points</label>
+                            <label>Historic Days</label>
                             <select id="tkTimeCount" onchange="TrackerManager.renderTimeTable()" style="width: 80px; min-width: 60px;"></select>
                         </div>
                     </div>
@@ -305,7 +305,7 @@
                             <label>Series Data</label>
                             <div>
                                 <button class="btn btn-sm" onclick="TrackerManager.addTimeSeriesColumn()">+ Add Series</button>
-                                <button class="btn btn-sm" style="margin-left:5px; color:var(--g-red); border-color:var(--g-red);" onclick="TrackerManager.removeTimeSeriesColumn()">- Remove Last</button>
+                                <button class="btn btn-sm" style="margin-left:5px; color:var(--g-red); border-color:var(--g-red);" onclick="TrackerManager.deleteSelectedSeries()">- Delete Selected</button>
                             </div>
                         </div>
                         <div id="lineTableContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; border-radius: 4px;"></div>

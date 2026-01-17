@@ -724,10 +724,10 @@ export const TrackerManager = {
         let html = '<div style="overflow-x:auto;"><table style="width:100%; border-collapse: separate; border-spacing: 0;">';
         
         // Header: Series Name Column + Date Columns
-        html += '<thead><tr><th style="padding:8px; text-align:left; border-bottom:1px solid #444; position:sticky; left:0; top:0; background:var(--modal-bg); z-index:20; min-width:140px;">Series Name</th>';
+        html += '<thead><tr><th style="padding:8px; text-align:left; border-bottom:1px solid #444; position:sticky; left:0; top:0; background:var(--modal-bg); z-index:20; min-width:160px;">Series Name</th>';
         
         labels.forEach(l => {
-            html += `<th style="padding:8px; border-bottom:1px solid #444; position:sticky; top:0; background:var(--modal-bg); z-index:10; min-width:80px; text-align:center;">${l}</th>`;
+            html += `<th style="padding:8px; border-bottom:1px solid #444; position:sticky; top:0; background:var(--modal-bg); z-index:10; min-width:80px; text-align:center; font-size:0.7rem; white-space:nowrap;">${l}</th>`;
         });
         html += '</tr></thead><tbody>';
 
@@ -735,6 +735,7 @@ export const TrackerManager = {
             html += `<tr>
                 <td style="padding:8px; border-bottom:1px solid #333; position:sticky; left:0; background:var(--modal-bg); z-index:10;">
                     <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="checkbox" class="ts-select" data-idx="${si}" style="accent-color:var(--accent);">
                         <input type="color" class="ts-color" value="${s.color}" style="width:20px; height:20px; border:none; padding:0; cursor:pointer;" data-idx="${si}">
                         <input type="text" class="ts-name" value="${s.name}" style="width:100px; font-size:0.8rem; background:#222; border:1px solid #444; color:#fff; padding:2px;" data-idx="${si}">
                     </div>
@@ -780,7 +781,6 @@ export const TrackerManager = {
     },
 
     addTimeSeriesColumn() {
-        // Adds a new Series (Row)
         const series = this.scrapeTimeSeries();
         const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
         const color = colors[series.length % colors.length];
@@ -788,15 +788,19 @@ export const TrackerManager = {
         this.renderTimeTable(series);
     },
 
-    removeTimeSeriesColumn() {
-        // Removes the last Series (Row)
-        const series = this.scrapeTimeSeries();
-        if(series.length > 1) {
-            series.pop();
-            this.renderTimeTable(series);
-        } else {
-            App.alert("Must have at least one series.");
-        }
+    deleteSelectedSeries() {
+        const container = getEl('lineTableContainer');
+        if (!container) return;
+        const checks = container.querySelectorAll('.ts-select:checked');
+        if (checks.length === 0) return App.alert("No series selected.");
+        
+        const indicesToDelete = new Set();
+        checks.forEach(c => indicesToDelete.add(parseInt(c.dataset.idx)));
+        
+        const currentSeries = this.scrapeTimeSeries();
+        const newSeries = currentSeries.filter((_, i) => !indicesToDelete.has(i));
+        
+        this.renderTimeTable(newSeries);
     },
 
     selectRag(val) {

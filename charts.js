@@ -70,7 +70,9 @@ export const Visuals = {
 
         let lbls = '';
         // Always rotate 45 deg for dates to ensure fit
+        const skip = labels.length > 30 ? Math.ceil(labels.length / 20) : 1;
         labels.forEach((l, i) => {
+            if (i % skip !== 0) return;
             const x = pSide + (i*gw);
             const txt = fmt(l);
             lbls += `<text transform="translate(${x}, ${h-35}) rotate(45)" text-anchor="start" fill="#aaa" font-size="9">${txt}</text>`;
