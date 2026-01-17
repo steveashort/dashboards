@@ -299,13 +299,13 @@ export const renderBoard = () => {
                 } else {
                     labels = t.labels; series = t.series;
                 }
-                visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createLineChartSVG(labels, series, t.yLabel)}</div>`;
+                visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createLineChartSVG(labels, series, t.yLabel, t.size)}</div>`;
             } else if (renderType === 'bar') {
                 if (t.series) {
-                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createMultiBarChartSVG(t.labels, t.series)}</div>`;
+                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createMultiBarChartSVG(t.labels, t.series, t.size)}</div>`;
                 } else {
                     // Legacy Simple Bar
-                    const svg = Visuals.createBarChartSVG(t.data, t.yLabel, t.color1);
+                    const svg = Visuals.createBarChartSVG(t.data, t.yLabel, t.color1, t.size);
                     visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${svg}</div>`;
                 }
             } else {
@@ -456,10 +456,10 @@ export const ZoomManager = {
             } else {
                 labels = t.labels; series = t.series;
             }
-            content = Visuals.createLineChartSVG(labels, series, t.yLabel);
+            content = Visuals.createLineChartSVG(labels, series, t.yLabel, 'XL');
         } else if (renderType === 'bar') {
-            if (t.series) content = Visuals.createMultiBarChartSVG(t.labels, t.series);
-            else content = Visuals.createBarChartSVG(t.data, t.yLabel, t.color1);
+            if (t.series) content = Visuals.createMultiBarChartSVG(t.labels, t.series, 'XL');
+            else content = Visuals.createBarChartSVG(t.data, t.yLabel, t.color1, 'XL');
         } else {
             const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
             const c1 = t.colorVal || t.color1 || '#00e676'; 
