@@ -690,6 +690,15 @@ export const TrackerManager = {
             html += `<td style="border-bottom:1px solid #333;"></td>`;
             html += '</tr>';
         });
+
+        if (series.length < 6) {
+            html += `<tr>
+                <td colspan="${labels.length + 2}" style="padding: 8px; text-align: center; cursor: pointer; background: rgba(255, 255, 255, 0.05); color: var(--accent);" onclick="TrackerManager.addTimeSeriesColumn()">
+                    + Add Series
+                </td>
+            </tr>`;
+        }
+
         html += '</tbody></table></div>';
         
         container.innerHTML = html;
@@ -970,13 +979,50 @@ export const TrackerManager = {
                 seriesData[j].values.push(val);
             }
         }
-        
+
+        // Infer Unit
+        let unit = 'day';
+        if (labels.length > 0) {
+            const sample = labels.slice(0, 5);
+            if (sample.every(d => /^\d{4}$/.test(d))) {
+                unit = 'year';
+            } else if (sample.every(d => /^\d{4}-\d{2}$/.test(d))) {
+                unit = 'month';
+            } else if (sample.every(d => /^\d{4}-\d{2}-\d{2}$/.test(d))) {
+                 if (labels.length > 1) {
+                     const d1 = new Date(labels[0]);
+                     const d2 = new Date(labels[1]);
+                     const diff = Math.abs((d2 - d1) / (1000 * 60 * 60 * 24));
+                     if (diff >= 28 && diff <= 32) unit = 'month';
+                 }
+            }
+        }
+
+        // Set Unit Radio
+        const rad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${unit}"]`);
+        if(rad) rad.checked = true;
+
+        // Reset Options based on new unit
+        this.updateTimeOptions();
+
+        // Update Start Date (End Date in UI)
         const sdIn = getEl(`${ctx.prefix}StartDate`);
         if(sdIn && labels.length > 0) {
              const lastLbl = labels[labels.length-1];
-             if(/^\d{4}-\d{2}-\d{2}$/.test(lastLbl)) sdIn.value = lastLbl;
+             let dateStr = lastLbl;
+             // Normalize to YYYY-MM-DD
+             if (unit === 'year' && /^\d{4}$/.test(lastLbl)) dateStr = `${lastLbl}-01-01`;
+             if (unit === 'month' && /^\d{4}-\d{2}$/.test(lastLbl)) dateStr = `${lastLbl}-01`;
+             
+             // Ensure valid date object
+             const d = new Date(dateStr);
+             if(!isNaN(d.getTime())) {
+                 sdIn.value = d.toISOString().split('T')[0];
+                 sdIn.dataset.prev = sdIn.value;
+             }
         }
         
+        // Update Time Count
         const tcIn = getEl(`${ctx.prefix}TimeCount`);
         if(tcIn) {
             const count = labels.length;
