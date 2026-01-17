@@ -40,8 +40,15 @@ export const Visuals = {
         let max = 0;
         series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
         if(max===0) max=10;
-        const w=getWidth(size); const h=180; const pTop=30; const pBot=45; const pSide=20; 
+        const w=getWidth(size); const h=180; const pTop=30; const pBot=45; const pSide=30; 
         const gw=(w-(pSide*2))/(labels.length-1||1), uh=h-pTop-pBot;
+
+        let yGrid = '';
+        [0, 0.25, 0.5, 0.75, 1].forEach(p => {
+            const y = h - pBot - (p * uh);
+            const val = Math.round(max * p);
+            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="#333" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="9">${val}</text>`;
+        });
 
         let paths = '';
         let points = '';
@@ -59,12 +66,12 @@ export const Visuals = {
 
         // Date Formatter
         const fmt = (s) => {
-            if (/^\d{4}$/.test(s)) return "'" + s.substring(2); // yyyy -> 'YY
-            if (/^\d{4}-\d{2}$/.test(s)) { // yyyy-mm -> MMM YY
+            if (/^\d{4}$/.test(s)) return "'" + s.substring(2); 
+            if (/^\d{4}-\d{2}$/.test(s)) { 
                 const d = new Date(s + "-01");
                 return d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }); 
             }
-            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { // yyyy-mm-dd -> dd MMM
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { 
                 const d = new Date(s);
                 return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
             }
@@ -93,7 +100,7 @@ export const Visuals = {
         
         const yAxisLabel = yLabel ? `<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>` : '';
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yAxisLabel}${paths}${points}${lbls}${legHTML}<text x="${pSide-2}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-2}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yGrid}${yAxisLabel}${paths}${points}${lbls}${legHTML}</svg>`;
     },
 
     createMultiBarChartSVG: (labels, series, size = 'M') => {
@@ -101,10 +108,17 @@ export const Visuals = {
         series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
         if(max === 0) max = 10;
 
-        const w=getWidth(size); const h=180; const pTop=20; const pBot=45; const pSide=20;
+        const w=getWidth(size); const h=180; const pTop=20; const pBot=45; const pSide=30; // Increased pSide
         const groupWidth = (w-(pSide*2)) / labels.length;
         const barWidth = (groupWidth * 0.8) / series.length; 
         const uh = h-pTop-pBot;
+
+        let yGrid = '';
+        [0, 0.25, 0.5, 0.75, 1].forEach(p => {
+            const y = h - pBot - (p * uh);
+            const val = Math.round(max * p);
+            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="#333" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="9">${val}</text>`;
+        });
 
         let rects = '';
         series.forEach((s, si) => {
@@ -138,15 +152,23 @@ export const Visuals = {
             legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
         });
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${rects}${lbls}${legHTML}<text x="${pSide-2}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-2}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yGrid}${rects}${lbls}${legHTML}</svg>`;
     },
 
     createBarChartSVG: (data, yLabel, color, size = 'M') => {
         let max = 0; 
         data.forEach(d => { if(d.val > max) max = d.val; }); 
         if(max === 0) max = 10;
-        const w=getWidth(size); const h=180; const pTop=20; const pBot=45; const pSide=25; 
+        const w=getWidth(size); const h=180; const pTop=20; const pBot=45; const pSide=30; // Increased pSide
         const bw=(w-(pSide*2))/data.length, uh=h-pTop-pBot;
+
+        let yGrid = '';
+        [0, 0.25, 0.5, 0.75, 1].forEach(p => {
+            const y = h - pBot - (p * uh);
+            const val = Math.round(max * p);
+            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="#333" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="9">${val}</text>`;
+        });
+
         let bars='';
         const fill = color || 'var(--chart-1)';
         data.forEach((d, i) => {
@@ -162,6 +184,6 @@ export const Visuals = {
                 bars+=`<text x="${x+(bw-10)/2}" y="${h-15}" text-anchor="middle" fill="#aaa" font-size="10">${d.label.substring(0,5)}</text>`;
             }
         });
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/><text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>${bars}</svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yGrid}<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>${bars}</svg>`;
     }
 };
