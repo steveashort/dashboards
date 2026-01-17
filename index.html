@@ -211,7 +211,6 @@
                 <input type="hidden" id="editTrackerIndex" value="-1">
                 <div class="type-selector" id="trackerTypeSelector">
                     <button id="typeGaugeBtn" class="type-option active" onclick="TrackerManager.setType('gauge')">Gauge (Pie)</button>
-                    <button id="typeBarBtn" class="type-option" onclick="TrackerManager.setType('bar')">Bar Graph</button>
                     <button id="typeLineBtn" class="type-option" onclick="TrackerManager.setType('line')">Time Series</button>
                     <button id="typeCounterBtn" class="type-option" onclick="TrackerManager.setType('counter')">Counter</button>
                     <button id="typeRagBtn" class="type-option" onclick="TrackerManager.setType('rag')">RAG Status</button>
@@ -295,9 +294,18 @@
                     </div>
                 </div>
                 <div id="lineInputs" style="display:none;">
-                    <div class="input-group">
-                        <label>Metric Label</label>
-                        <input type="text" id="tkLineYLabel">
+                    <div class="form-row" style="margin-bottom: 1rem; gap: 2rem;">
+                        <div class="input-group">
+                            <label>Metric Label</label>
+                            <input type="text" id="tkLineYLabel">
+                        </div>
+                        <div class="input-group">
+                            <label>Chart Style</label>
+                            <div style="display:flex; gap:15px; margin-top:5px;">
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="line" checked> Line Chart</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="bar"> Bar Chart</label>
+                            </div>
+                        </div>
                     </div>
                     <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end; display: flex; gap: 2rem;">
                         <div class="input-group">
