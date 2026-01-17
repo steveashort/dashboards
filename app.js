@@ -299,7 +299,7 @@ export const renderBoard = () => {
                 visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
                 statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
             } else if (renderType === 'rag' || renderType === 'ryg') {
-                const status = (renderType === 'ryg') ? t.status : (t.color1 === '#ff1744' ? 'red' : (t.color1 === '#ffb300' ? 'amber' : 'green'));
+                const status = t.status || 'grey';
                 
                 const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
                 const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
