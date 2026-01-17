@@ -277,14 +277,22 @@
                         <label>Y-Axis Label</label>
                         <input type="text" id="tkLineYLabel">
                     </div>
+                    <div class="input-group">
+                        <label>Time Unit</label>
+                        <select id="tkTimeUnit" onchange="TrackerManager.updateTimePlaceholders()">
+                            <option value="year">Years (YYYY)</option>
+                            <option value="month">Months (YYYY-MM)</option>
+                            <option value="day">Days (YYYY-MM-DD)</option>
+                        </select>
+                    </div>
                      <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px;">
                         <label>Import Data from CSV</label>
-                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Label, Series1, Series2...&#10;Jan, 10, 20&#10;Feb, 15, 25" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
+                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Label, Series1, Series2...&#10;2023-01, 10, 20&#10;2023-02, 15, 25" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
                         <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
                     </div>
                     <div class="input-group">
-                        <label>Time Points (yyyy, yyyy-mm, yyyy-mm-dd)</label>
-                        <div id="lineLabelsContainer" class="grid-24"></div>
+                        <label>Time Series (max 90)</label>
+                        <div id="lineLabelsContainer" class="grid-24" style="max-height: 200px; overflow-y: auto;"></div>
                     </div>
                     <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
