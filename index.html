@@ -212,7 +212,7 @@
                 <div class="type-selector" id="trackerTypeSelector">
                     <button id="typeGaugeBtn" class="type-option active" onclick="TrackerManager.setType('gauge')">Gauge (Pie)</button>
                     <button id="typeBarBtn" class="type-option" onclick="TrackerManager.setType('bar')">Bar Graph</button>
-                    <button id="typeLineBtn" class="type-option" onclick="TrackerManager.setType('line')">Line Graph</button>
+                    <button id="typeLineBtn" class="type-option" onclick="TrackerManager.setType('line')">Time Series</button>
                     <button id="typeCounterBtn" class="type-option" onclick="TrackerManager.setType('counter')">Counter</button>
                     <button id="typeRagBtn" class="type-option" onclick="TrackerManager.setType('rag')">RAG Status</button>
                     <button id="typeWaffleBtn" class="type-option" onclick="TrackerManager.setType('waffle')">Waffle Chart</button>
@@ -283,7 +283,7 @@
                         <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
                     </div>
                     <div class="input-group">
-                        <label>X-Axis Labels (Up to 24)</label>
+                        <label>Time Points (yyyy, yyyy-mm, yyyy-mm-dd)</label>
                         <div id="lineLabelsContainer" class="grid-24"></div>
                     </div>
                     <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">

@@ -728,7 +728,12 @@ export const TrackerManager = {
                 const l = getEl(`lLbl${k}`).value;
                 if(l) labels.push(l);
             }
-            if(labels.length < 2) return App.alert("Add at least 2 X-Axis labels");
+            if(labels.length < 2) return App.alert("Add at least 2 Time Points");
+
+            // Validate Date Formats
+            const validDate = (s) => /^\d{4}$/.test(s) || /^\d{4}-\d{2}$/.test(s) || /^\d{4}-\d{2}-\d{2}$/.test(s);
+            const invalid = labels.find(l => !validDate(l));
+            if(invalid) return App.alert(`Invalid date format: "${invalid}". Use yyyy, yyyy-mm, or yyyy-mm-dd.`);
 
             const series = [];
             const sDivs = getEl('lineSeriesContainer').children;
@@ -744,6 +749,7 @@ export const TrackerManager = {
             if(series.length === 0) return App.alert("Add at least one series");
             newTracker.labels = labels;
             newTracker.series = series;
+            newTracker.yLabel = y;
         } else if (type === 'counter') {
             newTracker.value = parseFloat(getEl('tkCounterVal').value) || 0;
             newTracker.subtitle = getEl('tkCounterSub').value;

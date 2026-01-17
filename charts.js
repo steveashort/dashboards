@@ -54,15 +54,26 @@ export const Visuals = {
             paths += `<path d="${p}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
         });
 
+        // Date Formatter
+        const fmt = (s) => {
+            if (/^\d{4}$/.test(s)) return "'" + s.substring(2); // yyyy -> 'YY
+            if (/^\d{4}-\d{2}$/.test(s)) { // yyyy-mm -> MMM YY
+                const d = new Date(s + "-01");
+                return d.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' }); 
+            }
+            if (/^\d{4}-\d{2}-\d{2}$/.test(s)) { // yyyy-mm-dd -> dd MMM
+                const d = new Date(s);
+                return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+            }
+            return s; 
+        };
+
         let lbls = '';
-        const rotate = labels.some(l => l.length > 4);
+        // Always rotate 45 deg for dates to ensure fit
         labels.forEach((l, i) => {
             const x = pSide + (i*gw);
-            if (rotate) {
-                lbls += `<text transform="translate(${x}, ${h-35}) rotate(45)" text-anchor="start" fill="#aaa" font-size="9">${l.substring(0,8)}</text>`;
-            } else {
-                lbls += `<text x="${x}" y="${h-25}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
-            }
+            const txt = fmt(l);
+            lbls += `<text transform="translate(${x}, ${h-35}) rotate(45)" text-anchor="start" fill="#aaa" font-size="9">${txt}</text>`;
         });
 
         let legHTML = '';
