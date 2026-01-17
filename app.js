@@ -254,7 +254,7 @@ export const renderBoard = () => {
 
             card.onclick = () => {
                  if (document.body.classList.contains('publishing')) {
-                     if (t.type !== 'gauge' && t.type !== 'waffle') ZoomManager.openChartModal(i);
+                     if (t.type !== 'gauge' && t.type !== 'waffle' && t.type !== 'rag') ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
                  }
@@ -301,7 +301,11 @@ export const renderBoard = () => {
             } else if (renderType === 'rag' || renderType === 'ryg') {
                 const status = (renderType === 'ryg') ? t.status : (t.color1 === '#ff1744' ? 'red' : (t.color1 === '#ffb300' ? 'amber' : 'green'));
                 const icon = status === 'red' ? '!' : (status === 'amber' ? '⚠' : (status === 'green' ? '✓' : '?'));
-                visualHTML = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; box-shadow: 0 0 15px ${t.color1}">${icon}</div>`;
+                
+                const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
+                const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
+                
+                visualHTML = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; box-shadow: 0 0 15px ${t.color1}" ${hoverEvents}>${icon}</div>`;
                 statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
             } else if (renderType === 'waffle') {
                 const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
@@ -604,6 +608,14 @@ export const TrackerManager = {
                 // Set Size to S (will be re-inferred on submit)
                 const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
                 if(sizeRad) sizeRad.checked = true;
+            } else if (!isEdit && type === 'rag') {
+                // Reset RAG defaults for new trackers
+                const trmIn = getEl('tkRagMsg'); if(trmIn) trmIn.value = '';
+                const trnIn = getEl('tkRagNotes'); if(trnIn) trnIn.value = '';
+                
+                // Set Size to S
+                const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
+                if(sizeRad) sizeRad.checked = true;
             }
 
             if (type === 'gauge') {
@@ -634,7 +646,9 @@ export const TrackerManager = {
             } else if (type === 'rag') {
                 this.selectRag(tracker ? (tracker.status || 'grey') : 'grey');
                 const rmIn = getEl('tkRagMsg');
-                if (rmIn) rmIn.value = tracker ? (tracker.message || '') : '';
+                if (tracker && rmIn) rmIn.value = tracker.message || '';
+                const rnIn = getEl('tkRagNotes');
+                if (tracker && rnIn) rnIn.value = tracker.notes || '';
             } else if (type === 'waffle') {
                 const twmIn = getEl('tkWaffleMetric');
                 if (tracker && twmIn) twmIn.value = tracker.metric || '';
@@ -667,7 +681,7 @@ export const TrackerManager = {
         });
 
         const sizeCont = getEl('sizeContainer');
-        if(sizeCont) sizeCont.style.display = (type === 'gauge' || type === 'waffle') ? 'none' : 'block';
+        if(sizeCont) sizeCont.style.display = (type === 'gauge' || type === 'waffle' || type === 'rag') ? 'none' : 'block';
 
         if (inputType === 'line') {
              this.renderTimeTable();
@@ -1266,6 +1280,9 @@ export const TrackerManager = {
             newTracker.status = rsIn ? rsIn.value : 'grey';
             const rmIn = getEl('tkRagMsg');
             newTracker.message = rmIn ? rmIn.value : '';
+            const rnIn = getEl('tkRagNotes');
+            newTracker.notes = rnIn ? rnIn.value : '';
+            newTracker.size = 'S'; // Force Small Size
             newTracker.color1 = (newTracker.status === 'green' ? '#00e676' : (newTracker.status === 'amber' ? '#ffb300' : (newTracker.status === 'red' ? '#ff1744' : '#666666')));
         } else if (type === 'waffle') {
             const wmIn = getEl('tkWaffleMetric');
