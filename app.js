@@ -637,7 +637,7 @@ export const TrackerManager = {
         if (hasData) {
             App.confirm("Changing the Time Unit will clear existing data. Proceed?", () => {
                 if(container) container.dataset.currentUnit = newUnit;
-                this.updateTimeOptions();
+                this.updateTimeOptions(true);
             });
             // Revert immediately, will be re-checked if confirmed
             // But App.confirm is async-like in UI but sync in code if using standard confirm, 
@@ -651,7 +651,7 @@ export const TrackerManager = {
         }
     },
 
-    updateTimeOptions() {
+    updateTimeOptions(clearData = false) {
         const ctx = this.getContext();
         const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
         const unit = unitRad ? unitRad.value : 'day';
@@ -685,8 +685,13 @@ export const TrackerManager = {
         }
         
         // When changing unit, we must reset the table to match the new unit's dates
-        // This implicitly clears data as requested
-        this.renderTimeTable();
+        if (clearData) {
+             const currentSeries = this.scrapeTimeSeries();
+             const clearedSeries = currentSeries.map(s => ({ ...s, values: [] }));
+             this.renderTimeTable(clearedSeries);
+        } else {
+             this.renderTimeTable();
+        }
     },
 
     renderTimeTable(seriesOverride = null, labelsOverride = null) {
