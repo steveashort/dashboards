@@ -621,9 +621,9 @@ export const TrackerManager = {
                 if (tracker && nIn) nIn.value = tracker.notes || '';
                 
                 const pcIn = getEl('tkPieColor');
-                if (pcIn) pcIn.value = tracker ? (tracker.colorVal || tracker.color1 || '#03dac6') : '#03dac6';
+                if (pcIn) pcIn.value = tracker ? (tracker.colorVal || tracker.color1 || '#696969') : '#696969';
                 const pc2In = getEl('tkPieColor2');
-                if (pc2In) pc2In.value = tracker ? (tracker.color2 || '#ff1744') : '#ff1744';
+                if (pc2In) pc2In.value = tracker ? (tracker.color2 || '#228B22') : '#228B22';
             } else if (type === 'counter') {
                 const cvIn = getEl('tkCounterVal');
                 if (cvIn) cvIn.value = tracker ? (tracker.value || 0) : 0;
@@ -646,9 +646,9 @@ export const TrackerManager = {
                 if (tracker && twnIn) twnIn.value = tracker.notes || '';
                 
                 const wcIn = getEl('tkWaffleColorVal');
-                if (wcIn) wcIn.value = tracker ? (tracker.colorVal || '#03dac6') : '#03dac6';
+                if (wcIn) wcIn.value = tracker ? (tracker.colorVal || '#228B22') : '#228B22';
                 const wbIn = getEl('tkWaffleColorBg');
-                if (wbIn) wbIn.value = tracker ? (tracker.colorBg || '#333333') : '#333333';
+                if (wbIn) wbIn.value = tracker ? (tracker.colorBg || '#696969') : '#696969';
             }
         }
 
