@@ -65,12 +65,12 @@
         .main-content { 
             flex: 1; 
             padding: 40px; 
-            overflow: auto; /* Required for both scrollbars */
+            overflow: auto; /* FIX: Enable both vertical and horizontal scroll */
             height: 100%;
             position: relative;
         }
 
-        /* FIX: Vibrant Visible Scrollbars (Both Vertical and Horizontal) */
+        /* Visible Scrollbars */
         .main-content::-webkit-scrollbar { width: 14px; height: 14px; }
         .main-content::-webkit-scrollbar-track { background: var(--bg-color); }
         .main-content::-webkit-scrollbar-thumb { 
@@ -91,15 +91,12 @@
         }
 
         .btn-group { display: flex; flex-direction: column; gap: 10px; }
-        button { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s; }
-        .btn-primary { background-color: var(--accent); color: white; }
+        button { padding: 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; font-size: 13px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-success { background-color: #27ae60; color: white; }
-        .btn-danger { background-color: #c0392b; color: white; }
+        .btn-primary { background-color: var(--accent); color: white; }
 
-        /* Theme Toggle */
         .theme-toggle-wrapper { display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--card-border); }
         .theme-btn { background: none; border: none; cursor: pointer; color: var(--text-main); display: flex; align-items: center; justify-content: center; padding: 5px; border-radius: 50%; }
-        .theme-btn:hover { background: var(--hover-bg); }
         .theme-btn svg { width: 22px; height: 22px; fill: currentColor; }
         .hidden { display: none !important; }
 
@@ -108,10 +105,10 @@
         .icon-btn { width: 44px; height: 44px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
 
         /* ==========================================================
-           3) TREE STRUCTURE & HORIZONTAL FIX
+           3) TREE STRUCTURE
            ========================================================== */
         .main-tree {
-            display: table; /* FIX: Forces container to width of contents for horizontal scroll */
+            display: inline-block; /* FIX: Crucial for horizontal scroll to work */
             min-width: 100%;
         }
 
@@ -122,16 +119,13 @@
         li::before { content: ''; position: absolute; top: 32px; left: -32px; width: 30px; height: 2px; background-color: var(--line-color); }
         .main-tree > ul > li::before { display: none; }
 
-        /* FIX: Node Sizing - fit-content instead of fixed width */
         .node-card {
             display: flex; align-items: center;
             background: var(--card-bg);
             border: 1px solid var(--card-border);
             padding: 12px 18px;
             border-radius: 6px;
-            width: fit-content; /* Dynamic Sizing */
-            min-width: 280px;    /* Sensible baseline */
-            max-width: 600px;    /* Prevent extreme stretching */
+            width: fit-content; min-width: 280px; max-width: 600px;
             cursor: grab;
             transition: all 0.2s ease;
             position: relative;
@@ -145,30 +139,29 @@
 
         .node-actions { position: absolute; top: -12px; right: 10px; display: flex; gap: 6px; opacity: 0; transition: opacity 0.2s; z-index: 10; }
         .node-card:hover .node-actions { opacity: 1; }
-        
         .node-action-btn { width: 28px; height: 28px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
-        .node-action-btn svg { width: 16px; height: 16px; fill: white; pointer-events: none; }
         .btn-add-child { background: #27ae60; }
         .btn-del-node { background: #c0392b; }
+        .node-action-btn svg { width: 14px; height: 14px; fill: white; pointer-events: none; }
 
         .info { display: flex; flex-direction: column; width: 100%; pointer-events: none; }
-        .top-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; white-space: nowrap; }
-        .name { font-weight: 700; font-size: 17px; color: var(--text-main); }
-        .engagement-pill { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); padding: 2px 8px; border-radius: 12px; text-transform: uppercase; font-weight: 700; }
-        .location-pill { font-size: 11px; color: #2ecc71; border: 1px solid #2ecc71; padding: 2px 8px; border-radius: 12px; text-transform: uppercase; font-weight: 700; }
-        .role { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
-        .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-        .pill { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 800; color: white; text-transform: uppercase; }
-        .toggle-btn { margin-right: 15px; width: 26px; height: 26px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); cursor: pointer; font-weight: bold; }
+        .top-row { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+        .name { font-weight: 700; font-size: 16px; color: var(--text-main); }
+        .engagement-pill { font-size: 11px; color: var(--accent); border: 1px solid var(--accent); padding: 1px 6px; border-radius: 10px; text-transform: uppercase; font-weight: 600; }
+        .location-pill { font-size: 11px; color: #2ecc71; border: 1px solid #2ecc71; padding: 1px 6px; border-radius: 10px; text-transform: uppercase; font-weight: 600; }
+        .role { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
+        .tags-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 5px; }
+        .pill { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; color: white; text-transform: uppercase; }
+        .toggle-btn { margin-right: 15px; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--input-border); border-radius: 4px; background: var(--input-bg); cursor: pointer; }
 
         /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-overlay.active { display: flex; }
-        .modal { background: var(--sidebar-bg); padding: 30px; border-radius: 12px; width: 500px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0,0,0,0.6); }
-        .modal h2 { margin-top: 0; margin-bottom: 20px; font-size: 22px; }
+        .modal { background: var(--sidebar-bg); padding: 30px; border-radius: 12px; width: 500px; border: 1px solid var(--card-border); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 12px; color: var(--text-muted); margin-bottom: 5px; text-transform: uppercase; font-weight: 600; }
         .toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 3000; }
-        .toast { background: #333; color: white; padding: 12px 20px; border-radius: 4px; border-left: 4px solid var(--accent); margin-top: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); animation: slideIn 0.3s ease; }
-        @keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .toast { background: #333; color: white; padding: 12px 20px; border-radius: 4px; border-left: 4px solid var(--accent); margin-top: 10px; }
     </style>
 </head>
 <body>
@@ -184,16 +177,16 @@
         </button>
     </div>
 
-    <input type="text" id="appTitle" class="app-title-input" oninput="updateTitle(this.value)">
+    <input type="text" id="appTitle" class="app-title-input" placeholder="Title...">
 
     <div class="control-group">
         <label>Search</label>
-        <input type="text" id="searchInput" placeholder="Search hierarchy..." oninput="applyFilter()">
+        <input type="text" id="searchInput" placeholder="Search..." oninput="applyFilter()">
     </div>
 
     <div class="control-group"><label>Filter by Role</label><select id="roleFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
     <div class="control-group"><label>Filter by Location</label><select id="locFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
-    <div class="control-group"><label>Filter by Tag</label><select id="tagFilter" multiple size="5" onchange="applyFilter()"></select></div>
+    <div class="control-group"><label>Filter by Tag</label><select id="tagFilter" multiple size="6" onchange="applyFilter()"></select></div>
 
     <div class="control-group" style="margin-top: auto; border-top: 1px solid var(--card-border); padding-top: 20px;">
         <label>Data Management</label>
@@ -243,7 +236,6 @@
         }
     };
 
-    // --- CORE ENGINE ---
     function findNodeAndParent(id, currentNode, parent = null) {
         if (currentNode.id === id) return { node: currentNode, parent: parent };
         if (currentNode.children) {
@@ -355,13 +347,13 @@
         parentElement.appendChild(li);
     }
 
-    // --- THEME & UI ---
+    // --- MODAL & LOGIC ---
     function toggleTheme() {
         document.body.classList.toggle('light-theme');
         const isLight = document.body.classList.contains('light-theme');
         document.getElementById('sunIcon').classList.toggle('hidden', !isLight);
         document.getElementById('moonIcon').classList.toggle('hidden', isLight);
-        showToast(isLight ? "Switched to Light Theme" : "Switched to Dark Theme");
+        showToast(isLight ? "Light Theme" : "Dark Theme");
     }
 
     function openEditModal(id) {
@@ -391,7 +383,6 @@
             const tagStr = document.getElementById('editTags').value;
             n.tags = tagStr ? tagStr.split(',').map(t => t.trim()).filter(t => t !== "") : [];
             renderTree(); closeModal();
-            showToast("Details Updated");
         }
     }
 
@@ -411,7 +402,6 @@
             if (!t.node.children) t.node.children = [];
             t.node.children.push(s.node);
             renderTree();
-            showToast(`Moved ${s.node.name}`);
         }
     }
     function handleDragEnd() { this.classList.remove('is-dragging'); }
@@ -438,7 +428,7 @@
         }
     }
 
-    // --- FILTERS & DATA ---
+    // --- FILTERING ---
     function populateDropdowns() {
         const tags = new Set(), locs = new Set(), roles = new Set();
         function collect(n) {
@@ -456,27 +446,76 @@
         Array.from(set).sort().forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = v; s.appendChild(o); });
         Array.from(s.options).forEach(o => { if (val.includes(o.value)) o.selected = true; });
     }
+
+    // FIX: SMARTER FILTERING - Node is visible if it matches OR any child matches
     function applyFilter() {
         const search = document.getElementById('searchInput').value.toUpperCase();
         const role = document.getElementById('roleFilter').value;
         const loc = document.getElementById('locFilter').value;
         const selTags = Array.from(document.getElementById('tagFilter').selectedOptions).map(o => o.value).filter(v => v !== "ALL");
-        document.querySelectorAll('.tree-item').forEach(li => {
-            const match = (!search || li.dataset.searchText.includes(search)) && (role === "ALL" || li.dataset.role === role) && (loc === "ALL" || li.dataset.location === loc) && (selTags.length === 0 || selTags.every(t => li.dataset.tags.includes(t)));
-            li.style.display = match ? '' : 'none';
+
+        const items = Array.from(document.querySelectorAll('.tree-item'));
+        
+        // 1. Calculate base visibility for each node
+        const nodeMap = {};
+        items.forEach(li => {
+            const id = li.dataset.id;
+            const nodeTags = li.dataset.tags;
+            const matchSearch = !search || li.dataset.searchText.includes(search);
+            const matchRole = role === "ALL" || li.dataset.role === role;
+            const matchLoc = loc === "ALL" || li.dataset.location === loc;
+            const matchTags = selTags.length === 0 || selTags.every(t => nodeTags.includes(t));
+
+            nodeMap[id] = {
+                li: li,
+                selfMatch: matchSearch && matchRole && matchLoc && matchTags,
+                shouldBeVisible: false
+            };
+        });
+
+        // 2. Propagation: If node matches, it and all ancestors are visible
+        function markVisible(id) {
+            const entry = nodeMap[id];
+            if (!entry || entry.shouldBeVisible) return;
+            entry.shouldBeVisible = true;
+            // Find parent and mark them too
+            const res = findNodeAndParent(id, appData.tree);
+            if (res && res.parent) markVisible(res.parent.id);
+        }
+
+        Object.keys(nodeMap).forEach(id => {
+            if (nodeMap[id].selfMatch) markVisible(id);
+        });
+
+        // 3. Apply styles
+        Object.keys(nodeMap).forEach(id => {
+            const entry = nodeMap[id];
+            entry.li.style.display = entry.shouldBeVisible ? '' : 'none';
+            const card = entry.li.querySelector('.node-card');
+            if (entry.selfMatch && (search || selTags.length > 0 || role !== "ALL" || loc !== "ALL")) {
+                card.classList.add('matched');
+            } else {
+                card.classList.remove('matched');
+            }
         });
     }
 
-    function updateTitle(v) { appData.title = v; document.title = v; }
     function triggerUpload() { document.getElementById('jsonFileInput').click(); }
     function saveJson() {
         const blob = new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'});
-        const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='org_hierarchy.json'; a.click();
+        const a = document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='org_data.json'; a.click();
     }
     function importJson(input) {
-        const r = new FileReader();
-        r.onload = (e) => { appData = JSON.parse(e.target.result); document.getElementById('appTitle').value = appData.title || "Org Viewer"; renderTree(); };
-        r.readAsText(input.files[0]);
+        const reader = new FileReader();
+        reader.onload = (e) => { 
+            try {
+                const data = JSON.parse(e.target.result);
+                appData = data.tree ? data : { title: "Imported Org", tree: data };
+                document.getElementById('appTitle').value = appData.title || "Org Viewer";
+                renderTree(); 
+            } catch(err) { alert("Invalid JSON"); }
+        };
+        reader.readAsText(input.files[0]);
     }
     function expandAll() { document.querySelectorAll('.children-list').forEach(u => u.classList.remove('hidden')); }
     function collapseAll() { document.querySelectorAll('.children-list').forEach(u => u.classList.add('hidden')); }
