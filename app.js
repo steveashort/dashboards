@@ -472,9 +472,12 @@ export const TrackerManager = {
         getEl('csvInput').value = ''; 
         getEl('csvInputBar').value = '';
         
-        // Fill 24 inputs
+        // Fill 24 inputs for bar
         for(let k=0; k<24; k++) {
             getEl('barLabelsContainer').innerHTML += `<input type="text" id="bLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
+        }
+        // Fill 90 inputs for line
+        for(let k=0; k<90; k++) {
             getEl('lineLabelsContainer').innerHTML += `<input type="text" id="lLbl${k}" placeholder="L${k+1}" style="text-align:center;">`;
         }
 
@@ -566,6 +569,34 @@ export const TrackerManager = {
         });
     },
 
+    updateTimePlaceholders() {
+        const unit = getEl('tkTimeUnit').value;
+        const inputs = getEl('lineLabelsContainer').querySelectorAll('input');
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1;
+
+        inputs.forEach((inp, i) => {
+            let placeholder = '';
+            if (unit === 'year') placeholder = (year + i).toString();
+            else if (unit === 'month') {
+                let m = (month + i - 1) % 12 + 1;
+                let y = year + Math.floor((month + i - 1) / 12);
+                placeholder = `${y}-${m.toString().padStart(2, '0')}`;
+            } else {
+                let d = new Date(now);
+                d.setDate(d.getDate() + i);
+                placeholder = d.toISOString().split('T')[0];
+            }
+            inp.placeholder = placeholder;
+        });
+        
+        const csvEx = unit === 'year' ? `Label, Series1\n${year}, 10\n${year+1}, 20` : 
+                      unit === 'month' ? `Label, Series1\n${year}-01, 10\n${year}-02, 20` :
+                      `Label, Series1\n${year}-01-01, 10\n${year}-01-02, 20`;
+        getEl('csvInput').placeholder = "Paste CSV data here...\n" + csvEx;
+    },
+
     selectRag(val) {
         getEl('tkRagStatus').value = val;
         document.querySelectorAll('.rag-pill').forEach(p => p.classList.remove('selected'));
@@ -592,9 +623,9 @@ export const TrackerManager = {
         div.style.padding = '0.5rem';
         div.style.borderRadius = '4px';
 
-        // 24 inputs
+        const limit = type === 'line' ? 90 : 24;
         let valInputs = '';
-        for(let k=0; k<24; k++) {
+        for(let k=0; k<limit; k++) {
             valInputs += `<input type="number" class="sv-input" data-idx="${k}" value="${vals[k]||''}" placeholder="${k+1}" style="width:100%; text-align:center;">`;
         }
 
@@ -636,11 +667,12 @@ export const TrackerManager = {
         
         const lblContainerId = type === 'bar' ? 'barLabelsContainer' : 'lineLabelsContainer';
         const seriesContainerId = type === 'bar' ? 'barSeriesContainer' : 'lineSeriesContainer';
+        const limit = type === 'bar' ? 24 : 90;
 
         // Clear existing inputs
         getEl(lblContainerId).innerHTML = '';
         getEl(seriesContainerId).innerHTML = '';
-        for(let k=0; k<24; k++) {
+        for(let k=0; k<limit; k++) {
             const prefix = type === 'bar' ? 'bLbl' : 'lLbl';
             getEl(lblContainerId).innerHTML += `<input type="text" id="${prefix}${k}" placeholder="L${k+1}" style="text-align:center;">`;
         }
@@ -648,7 +680,7 @@ export const TrackerManager = {
         const labels = [];
         const seriesData = seriesNames.map(() => []);
         
-        const dataRows = lines.slice(1).slice(0, 24);
+        const dataRows = lines.slice(1).slice(0, limit);
         
         dataRows.forEach((line) => {
             const cols = line.split(/[,\t]+/).map(s => s.trim());
@@ -724,7 +756,7 @@ export const TrackerManager = {
         } else if (type === 'line') {
             const y = getEl('tkLineYLabel').value;
             const labels = [];
-            for(let k=0; k<24; k++) {
+            for(let k=0; k<90; k++) {
                 const l = getEl(`lLbl${k}`).value;
                 if(l) labels.push(l);
             }
