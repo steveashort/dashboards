@@ -287,7 +287,8 @@ export const renderBoard = () => {
                 const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
                 const c1 = t.colorVal || t.color1 || '#00e676'; 
                 const c2 = t.color2 || '#ff1744';
-                const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
+                // c2 is Progress Colour, c1 is Target Colour
+                const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
                 visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
                 statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
             } else if (renderType === 'counter') {
@@ -430,7 +431,8 @@ export const ZoomManager = {
             const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
             const c1 = t.colorVal || t.color1 || '#00e676'; 
             const c2 = t.color2 || '#ff1744';
-            const grad = `conic-gradient(${c1} 0% ${pct}%, ${c2} ${pct}% 100%)`;
+            // c2 is Progress Colour, c1 is Target Colour
+            const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
             content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
         }
 
@@ -575,16 +577,29 @@ export const TrackerManager = {
                 // Clear table to ensure fresh start
                 const tableContainer = getEl('lineTableContainer');
                 if(tableContainer) tableContainer.innerHTML = '';
+            } else if (!isEdit && type === 'gauge') {
+                // Reset Gauge defaults for new trackers
+                const tmIn = getEl('tkMetric'); if(tmIn) tmIn.value = '';
+                const tcIn = getEl('tkComp'); if(tcIn) tcIn.value = '';
+                const ttIn = getEl('tkTotal'); if(ttIn) ttIn.value = '';
+                
+                // Set Size to S
+                const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
+                if(sizeRad) sizeRad.checked = true;
             }
             // For editing non-line types, we don't need to do anything special for line inputs yet.
             // ... existing code for gauge/counter etc ...
             if (type === 'gauge') {
                 const tmIn = getEl('tkMetric');
-                if (tmIn) tmIn.value = tracker ? (tracker.metric || '') : '';
+                // Only populate if tracker exists, otherwise keep blank (from reset above)
+                if (tracker && tmIn) tmIn.value = tracker.metric || '';
+                
                 const tcIn = getEl('tkComp');
-                if (tcIn) tcIn.value = tracker ? (tracker.completed || '') : '';
+                if (tracker && tcIn) tcIn.value = tracker.completed || '';
+                
                 const ttIn = getEl('tkTotal');
-                if (ttIn) ttIn.value = tracker ? (tracker.total || '') : '';
+                if (tracker && ttIn) ttIn.value = tracker.total || '';
+                
                 const pcIn = getEl('tkPieColor');
                 if (pcIn) pcIn.value = tracker ? (tracker.colorVal || tracker.color1 || '#00e676') : '#00e676';
                 const pc2In = getEl('tkPieColor2');
