@@ -38,7 +38,7 @@
         }
 
         /* ==========================================================
-           2) PAGE LAYOUT
+           2) PAGE LAYOUT & ROBUST SCROLLING
            ========================================================== */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -138,26 +138,27 @@
            ========================================================== */
         .main-tree {
             display: inline-block;
-            min-width: max-content; /* FIX: Mandatory for horizontal scroll */
+            min-width: max-content; /* FIX: Forces horizontal scrollbar visibility */
             padding-right: 250px; 
             padding-bottom: 250px; 
         }
         ul { list-style: none; padding-left: 20px; margin: 0; position: relative; }
         ul.children-list { border-left: 2px solid var(--line-color); margin-left: 15px; padding-left: 30px; }
         ul.hidden { display: none !important; }
-        li { margin: 20px 0; position: relative; }
+        li { margin: 25px 0; position: relative; }
         li::before { content: ''; position: absolute; top: 32px; left: -32px; width: 30px; height: 2px; background-color: var(--line-color); }
 
         .node-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            padding: 18px;
+            padding: 20px;
             border-radius: 8px;
             width: fit-content; min-width: 320px;
             cursor: pointer;
             position: relative;
             border-left: 6px solid var(--accent);
             box-shadow: 0 6px 12px rgba(0,0,0,0.25);
+            white-space: normal;
         }
         
         .node-actions { position: absolute; top: -14px; right: 10px; display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; z-index: 10; }
@@ -165,13 +166,14 @@
         .node-action-btn { width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
         .btn-add-child { background: #27ae60; }
         .btn-del-node { background: #c0392b; }
+        .node-action-btn svg { width: 14px; height: 14px; fill: white; pointer-events: none; }
 
         .info { display: flex; flex-direction: column; pointer-events: none; }
-        .name { font-weight: 700; font-size: 18px; color: var(--text-main); }
+        .name { font-weight: 700; font-size: 18px; letter-spacing: -0.2px; color: var(--text-main); }
         .role { font-size: 13px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
         .contact-info { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
         
-        .pills-row { display: flex; gap: 8px; margin-top: 8px; }
+        .pills-row { display: flex; gap: 8px; margin-top: 10px; }
         .engagement-pill { font-size: 10px; color: var(--accent); border: 1px solid var(--accent); padding: 2px 8px; border-radius: 12px; font-weight: 700; text-transform: uppercase; }
         .location-pill { font-size: 10px; color: #2ecc71; border: 1px solid #2ecc71; padding: 2px 8px; border-radius: 12px; font-weight: 700; text-transform: uppercase; }
         
@@ -182,7 +184,7 @@
         .bw-tags .pill { background: #444 !important; border: 1px solid #666; color: #eee !important; }
 
         .toggle-btn { 
-            position: absolute; left: -14px; top: 18px; width: 26px; height: 26px; 
+            position: absolute; left: -14px; top: 20px; width: 26px; height: 26px; 
             display: flex; align-items: center; justify-content: center; 
             border: 2px solid var(--input-border); border-radius: 4px; 
             background: var(--input-bg); cursor: pointer; font-weight: bold; z-index: 15;
@@ -206,6 +208,7 @@
 <div class="app-container">
     <aside class="sidebar">
         <img src="company-logo.png" alt="Company Logo" class="sidebar-logo">
+        
         <div class="control-group">
             <label>Search Hierarchy</label>
             <input type="text" id="searchInput" placeholder="Search any field..." oninput="applyFilter()">
@@ -236,7 +239,7 @@
 </div>
 
 <div class="floating-toolbar">
-    <button class="icon-btn" onclick="openSettingsModal()" title="Settings">
+    <button class="icon-btn" onclick="openSettingsModal()" title="Global Settings">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </button>
     <button class="icon-btn" onclick="expandAll()" title="Expand All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
@@ -259,10 +262,13 @@
             <div><label>Location</label><select id="editLocation"></select></div>
             <div><label>Engagement</label><select id="editEngagement"></select></div>
         </div>
-        <div class="form-group"><label>Assigned Tags</label><select id="editTagsMulti" multiple size="6"></select></div>
+        <div class="form-group">
+            <label>Skills & Tags</label>
+            <select id="editTagsMulti" multiple size="6"></select>
+        </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top: 25px;">
             <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-            <button class="btn-primary" onclick="saveNodeChanges()">Update Record</button>
+            <button class="btn-primary" onclick="saveNodeChanges()">Apply Changes</button>
         </div>
     </div>
 </div>
@@ -271,6 +277,7 @@
     <div class="modal">
         <h2>Configuration</h2>
         <div class="form-group"><label>Organization Name</label><input type="text" id="setOrgName"></div>
+        
         <div class="form-row">
             <div>
                 <label>Theme</label>
@@ -281,17 +288,19 @@
                 </button>
             </div>
             <div>
-                <label>Toggles</label>
+                <label>Options</label>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setShowTags"> Show Skills & Tags</label>
-                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setBWTags"> Monochrome Mode</label>
+                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setShowTags"> Show Tags</label>
+                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setBWTags"> Monochrome Tags</label>
                 </div>
             </div>
         </div>
+
         <div class="form-group"><label>Roles (CSV)</label><textarea id="setRoles" rows="2"></textarea></div>
         <div class="form-group"><label>Locations (CSV)</label><textarea id="setLocs" rows="2"></textarea></div>
         <div class="form-group"><label>Tags (CSV)</label><textarea id="setTags" rows="2"></textarea></div>
         <div class="form-group"><label>Engagement (CSV)</label><textarea id="setEng" rows="2"></textarea></div>
+
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top: 25px;">
             <button class="btn-secondary" onclick="closeSettingsModal()">Discard</button>
             <button class="btn-primary" onclick="saveSettings()">Apply Global Changes</button>
@@ -317,6 +326,7 @@
         }
     };
 
+    // --- LOGIC UTILS ---
     function findNodeAndParent(id, currentNode, parent = null) {
         if (currentNode.id === id) return { node: currentNode, parent: parent };
         if (currentNode.children) {
@@ -334,6 +344,13 @@
         return `hsl(${Math.abs(hash) % 360}, 65%, 40%)`;
     }
 
+    function showToast(m) {
+        const t = document.createElement('div'); t.className='toast'; t.textContent=m;
+        document.getElementById('toastContainer').appendChild(t);
+        setTimeout(()=>t.remove(), 3000);
+    }
+
+    // --- RENDERING ---
     function renderTree() {
         document.getElementById('headerOrgName').textContent = appData.title;
         const main = document.getElementById('mainDisplay');
@@ -357,7 +374,6 @@
         li.dataset.tags = tags.join(',').toUpperCase();
         li.dataset.location = (data.location || "").toUpperCase();
         li.dataset.role = (data.role || "").toUpperCase();
-        // CASE INSENSITIVE SEARCH STRING
         li.dataset.searchText = `${data.name} ${data.role} ${data.location} ${data.engagement} ${data.email} ${data.phone} ${tags.join(' ')}`.toUpperCase();
 
         const card = document.createElement('div');
@@ -378,8 +394,8 @@
 
         const cardContent = `
             <div class="node-actions">
-                <button class="node-action-btn btn-add-child" onclick="addChild('${data.id}', event)"><svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
-                <button class="node-action-btn btn-del-node" onclick="deleteNode('${data.id}', event)"><svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+                <button class="node-action-btn btn-add-child" onclick="addChild('${data.id}', event)"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+                <button class="node-action-btn btn-del-node" onclick="deleteNode('${data.id}', event)"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
             </div>
             <div class="info">
                 <div class="top-row">
@@ -418,8 +434,11 @@
         parentElement.appendChild(li);
     }
 
-    // --- RECURSIVE FILTER ENGINE ---
+    // --- RECURSIVE SEARCH ENGINE ---
     function applyFilter() {
+        // Tweak: Auto-expand everything before running filter
+        expandAllSilently();
+
         const search = document.getElementById('searchInput').value.toUpperCase();
         const role = document.getElementById('roleFilter').value;
         const loc = document.getElementById('locFilter').value;
@@ -428,7 +447,6 @@
         const items = Array.from(document.querySelectorAll('.tree-item'));
         const nodeMap = {};
 
-        // 1. Mark matches
         items.forEach(li => {
             const id = li.dataset.id;
             const matchSearch = !search || li.dataset.searchText.includes(search);
@@ -443,20 +461,16 @@
             };
         });
 
-        // 2. Propagate matches upwards
-        function showAncestors(id) {
+        function showPath(id) {
             const entry = nodeMap[id];
             if (!entry || entry.visible) return;
             entry.visible = true;
             const res = findNodeAndParent(id, appData.tree);
-            if (res && res.parent) showAncestors(res.parent.id);
+            if (res && res.parent) showPath(res.parent.id);
         }
 
-        Object.keys(nodeMap).forEach(id => {
-            if (nodeMap[id].selfMatch) showAncestors(id);
-        });
+        Object.keys(nodeMap).forEach(id => { if (nodeMap[id].selfMatch) showPath(id); });
 
-        // 3. Update DOM
         Object.keys(nodeMap).forEach(id => {
             const entry = nodeMap[id];
             entry.li.style.display = entry.visible ? '' : 'none';
@@ -465,6 +479,11 @@
                 card.classList.add('matched');
             } else { card.classList.remove('matched'); }
         });
+    }
+
+    function expandAllSilently() {
+        document.querySelectorAll('ul.children-list').forEach(u => u.classList.remove('hidden'));
+        document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '−');
     }
 
     // --- CRUD ---
@@ -487,7 +506,7 @@
         }
     }
 
-    // --- SETTINGS & EDIT ---
+    // --- SETTINGS & UI ---
     function saveSettings() {
         appData.title = document.getElementById('setOrgName').value;
         appData.settings.showTags = document.getElementById('setShowTags').checked;
@@ -563,9 +582,9 @@
         tf.innerHTML = appData.settings.tags.map(t => `<option value="${t.toUpperCase()}" ${tval.includes(t.toUpperCase())?'selected':''}>${t}</option>`).join('');
     }
     function triggerUpload() { document.getElementById('jsonFileInput').click(); }
-    function saveJson() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'})); a.download='org.json'; a.click(); }
+    function saveJson() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'})); a.download='hierarchy.json'; a.click(); }
     function importJson(i) { const r = new FileReader(); r.onload = (e) => { appData = JSON.parse(e.target.result); renderTree(); }; r.readAsText(i.files[0]); }
-    function expandAll() { document.querySelectorAll('ul.children-list').forEach(u => u.classList.remove('hidden')); document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '−'); }
+    function expandAll() { expandAllSilently(); }
     function collapseAll() { document.querySelectorAll('ul.children-list').forEach(u => u.classList.add('hidden')); document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '+'); }
 
     renderTree();
