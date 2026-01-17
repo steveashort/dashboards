@@ -265,6 +265,7 @@ body.publishing .tracker-card { cursor: zoom-in; }
 body.publishing .tracker-card.type-gauge { cursor: default; }
 body.publishing .tracker-card.type-waffle { cursor: default; }
 body.publishing .tracker-card.type-rag { cursor: default; }
+body.publishing .tracker-card.type-counter { cursor: default; }
 body.publishing .member-card { cursor: default; }
 body.publishing #appTitle { pointer-events: none; border-bottom: none; }
 body.publishing .overview-col.interactive { pointer-events: auto; }

@@ -254,7 +254,7 @@ export const renderBoard = () => {
 
             card.onclick = () => {
                  if (document.body.classList.contains('publishing')) {
-                     if (t.type !== 'gauge' && t.type !== 'waffle' && t.type !== 'rag') ZoomManager.openChartModal(i);
+                     if (t.type !== 'gauge' && t.type !== 'waffle' && t.type !== 'rag' && t.type !== 'counter') ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
                  }
@@ -296,7 +296,10 @@ export const renderBoard = () => {
                 visualHTML = `<div class="pie-chart" style="background:${grad}" ${hoverEvents}><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
                 statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
             } else if (renderType === 'counter') {
-                visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
+                const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
+                const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
+                
+                visualHTML = `<div class="counter-display" style="color:${t.color1}" ${hoverEvents}>${t.value}</div>`;
                 statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
             } else if (renderType === 'rag' || renderType === 'ryg') {
                 const status = t.status || 'grey';
@@ -616,6 +619,15 @@ export const TrackerManager = {
                 // Set Size to S
                 const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
                 if(sizeRad) sizeRad.checked = true;
+            } else if (!isEdit && type === 'counter') {
+                // Reset Counter defaults for new trackers
+                const tcsIn = getEl('tkCounterSub'); if(tcsIn) tcsIn.value = '';
+                const tcnIn = getEl('tkCounterNotes'); if(tcnIn) tcnIn.value = '';
+                const tcvIn = getEl('tkCounterVal'); if(tcvIn) tcvIn.value = 0;
+                
+                // Set Size to S
+                const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
+                if(sizeRad) sizeRad.checked = true;
             }
 
             if (type === 'gauge') {
@@ -638,9 +650,11 @@ export const TrackerManager = {
                 if (pc2In) pc2In.value = tracker ? (tracker.color2 || '#228B22') : '#228B22';
             } else if (type === 'counter') {
                 const cvIn = getEl('tkCounterVal');
-                if (cvIn) cvIn.value = tracker ? (tracker.value || 0) : 0;
+                if (tracker && cvIn) cvIn.value = tracker.value || 0;
                 const csIn = getEl('tkCounterSub');
-                if (csIn) csIn.value = tracker ? (tracker.subtitle || '') : '';
+                if (tracker && csIn) csIn.value = tracker.subtitle || '';
+                const cnIn = getEl('tkCounterNotes');
+                if (tracker && cnIn) cnIn.value = tracker.notes || '';
                 const ccIn = getEl('tkCounterColor');
                 if (ccIn) ccIn.value = tracker ? (tracker.color1 || '#bb86fc') : '#bb86fc';
             } else if (type === 'rag') {
@@ -681,7 +695,7 @@ export const TrackerManager = {
         });
 
         const sizeCont = getEl('sizeContainer');
-        if(sizeCont) sizeCont.style.display = (type === 'gauge' || type === 'waffle' || type === 'rag') ? 'none' : 'block';
+        if(sizeCont) sizeCont.style.display = (type === 'gauge' || type === 'waffle' || type === 'rag' || type === 'counter') ? 'none' : 'block';
 
         if (inputType === 'line') {
              this.renderTimeTable();
@@ -1272,6 +1286,9 @@ export const TrackerManager = {
             newTracker.value = cvIn ? parseFloat(cvIn.value) || 0 : 0;
             const csIn = getEl('tkCounterSub');
             newTracker.subtitle = csIn ? csIn.value : '';
+            const cnIn = getEl('tkCounterNotes');
+            newTracker.notes = cnIn ? cnIn.value : '';
+            newTracker.size = 'S'; // Force Small Size
             const ccIn = getEl('tkCounterColor');
             newTracker.color1 = ccIn ? ccIn.value : '#bb86fc';
         } else if (type === 'rag') {
