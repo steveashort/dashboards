@@ -277,29 +277,33 @@
                         <label>Y-Axis Label</label>
                         <input type="text" id="tkLineYLabel">
                     </div>
-                    <div class="input-group">
-                        <label>Time Unit</label>
-                        <select id="tkTimeUnit" onchange="TrackerManager.updateTimePlaceholders()">
-                            <option value="year">Years (YYYY)</option>
-                            <option value="month">Months (YYYY-MM)</option>
-                            <option value="day">Days (YYYY-MM-DD)</option>
-                        </select>
-                    </div>
-                     <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px;">
-                        <label>Import Data from CSV</label>
-                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Label, Series1, Series2...&#10;2023-01, 10, 20&#10;2023-02, 15, 25" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
-                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
-                    </div>
-                    <div class="input-group">
-                        <label>Time Series (max 90)</label>
-                        <div id="lineLabelsContainer" class="grid-24" style="max-height: 200px; overflow-y: auto;"></div>
-                    </div>
-                    <div class="input-group" style="border-top:1px solid #333; padding-top:1rem;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                            <label style="margin:0;">Data Series (Up to 10)</label>
-                            <button class="btn btn-sm" onclick="TrackerManager.addLineSeries('New Series', '#03dac6')">+ Add Series</button>
+                    <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end;">
+                        <div class="input-group">
+                            <label>Time Unit</label>
+                            <div style="display: flex; gap: 15px; margin-top: 5px;">
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="day" checked onchange="TrackerManager.updateTimeOptions()"> Days</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="month" onchange="TrackerManager.updateTimeOptions()"> Months</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="year" onchange="TrackerManager.updateTimeOptions()"> Years</label>
+                            </div>
                         </div>
-                        <div id="lineSeriesContainer"></div>
+                        <div class="input-group">
+                            <label>Start Date</label>
+                            <input type="date" id="tkStartDate" onchange="TrackerManager.renderTimeTable()">
+                        </div>
+                        <div class="input-group">
+                            <label>Data Points</label>
+                            <select id="tkTimeCount" onchange="TrackerManager.renderTimeTable()"></select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <label>Series Data</label>
+                            <div>
+                                <button class="btn btn-sm" onclick="TrackerManager.addTimeSeriesColumn()">+ Add Series</button>
+                                <button class="btn btn-sm" style="margin-left:5px; color:var(--g-red); border-color:var(--g-red);" onclick="TrackerManager.removeTimeSeriesColumn()">- Remove Last</button>
+                            </div>
+                        </div>
+                        <div id="lineTableContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; border-radius: 4px;"></div>
                     </div>
                 </div>
                 <div id="counterInputs" style="display:none;">
