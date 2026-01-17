@@ -649,7 +649,6 @@ export const TrackerManager = {
                 if (wcIn) wcIn.value = tracker ? (tracker.colorVal || '#03dac6') : '#03dac6';
                 const wbIn = getEl('tkWaffleColorBg');
                 if (wbIn) wbIn.value = tracker ? (tracker.colorBg || '#333333') : '#333333';
-                this.updateWafflePreview();
             }
         }
 
@@ -1081,21 +1080,6 @@ export const TrackerManager = {
         });
         const rs = getEl('tkRagStatus');
         if(rs) rs.value = val;
-    },
-
-    updateWafflePreview() {
-        const wt = getEl('tkWaffleTotal');
-        const wa = getEl('tkWaffleActive');
-        const wc = getEl('tkWaffleColorVal');
-        const wb = getEl('tkWaffleColorBg');
-        
-        const total = wt ? (parseInt(wt.value)||100) : 100;
-        const active = wa ? (parseInt(wa.value)||0) : 0;
-        const colorVal = wc ? wc.value : '#03dac6';
-        const colorBg = wb ? wb.value : '#333333';
-        
-        const preview = getEl('wafflePreview');
-        if (preview) preview.innerHTML = createWaffleHTML(total, active, colorVal, colorBg);
     },
 
     parseCSV(type) {

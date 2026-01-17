@@ -422,75 +422,65 @@
 
                                 </div>
 
-                                <div id="waffleInputs" style="display:none;">
+                                                <div id="waffleInputs" style="display:none;">
 
-                                    <div class="input-group">
+                                                    <div class="input-group">
 
-                                        <label>Metric Unit</label>
+                                                        <label>Metric Unit</label>
 
-                                        <input type="text" id="tkWaffleMetric" oninput="TrackerManager.updateWafflePreview()">
+                                                        <input type="text" id="tkWaffleMetric">
 
-                                    </div>
+                                                    </div>
 
-                                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
+                                                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
 
-                                                                <div class="input-group">
+                                                        <div class="input-group">
 
-                                                                    <label>Target (Max 450)</label>
+                                                            <label>Target (Max 450)</label>
 
-                                                                    <input type="number" id="tkWaffleTotal" max="450" oninput="TrackerManager.updateWafflePreview()">
+                                                            <input type="number" id="tkWaffleTotal" max="450">
 
-                                                                </div>
+                                                        </div>
 
-                                        <div class="input-group">
+                                                        <div class="input-group">
 
-                                            <label>Progress</label>
+                                                            <label>Progress</label>
 
-                                            <input type="number" id="tkWaffleActive" oninput="TrackerManager.updateWafflePreview()">
+                                                            <input type="number" id="tkWaffleActive">
 
-                                        </div>
+                                                        </div>
 
-                                    </div>
+                                                    </div>
 
-                                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
+                                                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
 
-                                        <div class="input-group">
+                                                        <div class="input-group">
 
-                                            <label>Target Colour</label>
+                                                            <label>Target Colour</label>
 
-                                            <input type="color" id="tkWaffleColorBg" value="#333333" oninput="TrackerManager.updateWafflePreview()">
+                                                            <input type="color" id="tkWaffleColorBg" value="#333333">
 
-                                        </div>
+                                                        </div>
 
-                                        <div class="input-group">
+                                                        <div class="input-group">
 
-                                            <label>Progress Colour</label>
+                                                            <label>Progress Colour</label>
 
-                                            <input type="color" id="tkWaffleColorVal" value="#03dac6" oninput="TrackerManager.updateWafflePreview()">
+                                                            <input type="color" id="tkWaffleColorVal" value="#03dac6">
 
-                                        </div>
+                                                        </div>
 
-                                    </div>
+                                                    </div>
 
-                                    <div class="input-group" style="margin-top: 1rem;">
+                                                    <div class="input-group" style="margin-top: 1rem;">
 
-                                        <label>Notes (Hover info - Published View)</label>
+                                                        <label>Notes (Hover info - Published View)</label>
 
-                                        <textarea id="tkWaffleNotes" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..." oninput="TrackerManager.updateWafflePreview()"></textarea>
+                                                        <textarea id="tkWaffleNotes" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
 
-                                    </div>
+                                                    </div>
 
-                                    <div style="margin-top:20px; padding:10px; border:1px dashed #444; border-radius:4px; text-align:center;">
-
-                                        <label style="font-size:0.7rem; text-transform:uppercase; color:#aaa;">Preview</label>
-
-                                        <div id="wafflePreview">
-
-                                        </div>
-
-                                    </div>
-
-                                </div>
+                                                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Tracker</button>
