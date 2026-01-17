@@ -495,24 +495,21 @@ export const TrackerManager = {
              const rad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${unit}"]`);
              if(rad) rad.checked = true;
              
-             const d = new Date();
-             const day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1); 
-             const monday = new Date(d.setDate(diff));
-             const defDate = monday.toISOString().split('T')[0];
-             
-             const sdIn = getEl(`${ctx.prefix}StartDate`);
-             if (sdIn) {
-                 sdIn.value = tracker ? (tracker.startDate || defDate) : defDate;
-                 sdIn.dataset.prev = sdIn.value;
-             }
-             
-             const yIn = getEl(`${ctx.prefix}YLabel`);
-             if (yIn) yIn.value = tracker ? (tracker.yLabel || '') : '';
-             
-             this.updateTimeOptions();
-             const tcIn = getEl(`${ctx.prefix}TimeCount`);
-             if (tcIn && tracker) tcIn.value = tracker.timeCount || 7;
-             
+                           const d = new Date();
+                           const defDate = d.toISOString().split('T')[0];
+                           
+                           const sdIn = getEl(`${ctx.prefix}StartDate`);
+                           if (sdIn) {
+                               sdIn.value = tracker ? (tracker.startDate || defDate) : defDate;
+                               sdIn.dataset.prev = sdIn.value;
+                           }
+                           
+                           const yIn = getEl(`${ctx.prefix}YLabel`);
+                           if (yIn) yIn.value = tracker ? (tracker.yLabel || '') : '';
+                           
+                           this.updateTimeOptions();
+                           const tcIn = getEl(`${ctx.prefix}TimeCount`);
+                           if (tcIn) tcIn.value = (tracker && tracker.timeCount) ? tracker.timeCount : 7;             
              let series = [];
              if (tracker) {
                  if (tracker.series) series = tracker.series;
@@ -628,9 +625,6 @@ export const TrackerManager = {
         let series = seriesOverride;
         if (!series) series = this.scrapeTimeSeries();
         if (series.length === 0) series = [{name:'Series 1', color: '#03dac6', values:[]}];
-
-        const btnAdd = getEl(ctx.btnAddId);
-        if (btnAdd) btnAdd.style.display = series.length >= 6 ? 'none' : 'block';
 
         let labels = [];
         if (labelsOverride) {

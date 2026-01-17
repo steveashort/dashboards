@@ -207,13 +207,12 @@
                     </div>
                     <div class="input-group" style="flex: 0 0 180px;">
                         <label>Size</label>
-                        <div id="tkSize" style="display:flex; gap:5px;">
-                            <label class="size-opt"><input type="radio" name="tkSize" value="S"> S</label>
-                            <label class="size-opt"><input type="radio" name="tkSize" value="M" checked> M</label>
-                            <label class="size-opt"><input type="radio" name="tkSize" value="L"> L</label>
-                            <label class="size-opt"><input type="radio" name="tkSize" value="XL"> XL</label>
+                        <div id="tkSize" style="display:flex; gap:15px; margin-top:5px;">
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="S"> S</label>
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="M" checked> M</label>
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="L"> L</label>
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="XL"> XL</label>
                         </div>
-                        <style>.size-opt { flex:1; text-align:center; padding:5px; border:1px solid #444; border-radius:4px; cursor:pointer; font-size:0.8rem; background:var(--input-bg); } .size-opt:has(input:checked) { background:var(--accent); color:#000; border-color:var(--accent); } .size-opt input { display:none; }</style>
                     </div>
                 </div>
 
@@ -239,7 +238,7 @@
                     <div class="form-row" style="margin-bottom: 1rem; gap: 2rem;">
                         <div class="input-group">
                             <label>Metric Label</label>
-                            <input type="text" id="tkLineYLabel">
+                            <input type="text" id="tkYLabel">
                         </div>
                         <div class="input-group">
                             <label>Chart Style</label>
@@ -270,12 +269,10 @@
                     <div class="input-group">
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
                             <label>Manual Data Entry</label>
-                            <button class="btn btn-sm" onclick="TrackerManager.addDateColumn()">+ Add New Data</button>
                         </div>
                         <div id="lineTableContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; border-radius: 4px;"></div>
-                        <div style="margin-top: 10px;">
-                            <button id="btnAddSeries" class="btn btn-sm" onclick="TrackerManager.addTimeSeriesColumn()">+ Add Series</button>
-                            <button class="btn btn-sm" style="margin-left:5px; color:var(--g-red); border-color:var(--g-red);" onclick="TrackerManager.deleteSelectedSeries()">- Delete Selected</button>
+                        <div style="margin-top: 10px; display:flex; justify-content:flex-end;">
+                            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red);" onclick="TrackerManager.deleteSelectedSeries()">Delete Series</button>
                         </div>
                     </div>
                     <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-top: 1rem;">

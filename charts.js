@@ -36,6 +36,20 @@ export const createWaffleHTML = (total, active, colorVal, colorBg) => {
 };
 
 export const Visuals = {
+    showTooltip: (evt, text) => {
+        const tt = document.getElementById('globalTooltip');
+        if (tt) {
+            tt.innerHTML = text;
+            tt.style.display = 'block';
+            tt.style.left = (evt.pageX + 15) + 'px';
+            tt.style.top = (evt.pageY + 15) + 'px';
+        }
+    },
+    hideTooltip: () => {
+        const tt = document.getElementById('globalTooltip');
+        if (tt) tt.style.display = 'none';
+    },
+
     createLineChartSVG: (labels, series, yLabel, size = 'M') => {
         let max = 0;
         series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
@@ -59,7 +73,9 @@ export const Visuals = {
                 const x = pSide + (i*gw);
                 const y = h-pBot - (v/max)*uh;
                 p += (i===0?'M':'L') + `${x},${y} `;
-                points += `<circle cx="${x}" cy="${y}" r="3" fill="${s.color}"/>`;
+                
+                const tooltipText = `${labels[i]}: ${v}`;
+                points += `<circle cx="${x}" cy="${y}" r="4" fill="${s.color}" style="cursor:pointer;" onmousemove="Visuals.showTooltip(evt, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></circle>`;
             });
             paths += `<path d="${p}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
         });
@@ -103,12 +119,12 @@ export const Visuals = {
         return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yGrid}${yAxisLabel}${paths}${points}${lbls}${legHTML}</svg>`;
     },
 
-    createMultiBarChartSVG: (labels, series, size = 'M') => {
+    createMultiBarChartSVG: (labels, series, yLabel, size = 'M') => {
         let max = 0;
         series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
         if(max === 0) max = 10;
 
-        const w=getWidth(size); const h=180; const pTop=20; const pBot=45; const pSide=30; // Increased pSide
+        const w=getWidth(size); const h=180; const pTop=20; const pBot=45; const pSide=30; 
         const groupWidth = (w-(pSide*2)) / labels.length;
         const barWidth = (groupWidth * 0.8) / series.length; 
         const uh = h-pTop-pBot;
@@ -126,7 +142,8 @@ export const Visuals = {
                 const bh = (v/max) * uh;
                 const x = pSide + (i * groupWidth) + (groupWidth * 0.1) + (si * barWidth); 
                 const y = h-pBot-bh;
-                rects += `<rect x="${x}" y="${y}" width="${barWidth-1}" height="${bh}" fill="${s.color}" rx="1"/>`;
+                const tooltipText = `${labels[i]}: ${v}`;
+                rects += `<rect x="${x}" y="${y}" width="${barWidth-1}" height="${bh}" fill="${s.color}" rx="1" style="cursor:pointer;" onmousemove="Visuals.showTooltip(evt, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></rect>`;
             });
         });
 
@@ -152,14 +169,16 @@ export const Visuals = {
             legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
         });
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yGrid}${rects}${lbls}${legHTML}</svg>`;
+        const yAxisLabel = yLabel ? `<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>` : '';
+
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yGrid}${yAxisLabel}${rects}${lbls}${legHTML}</svg>`;
     },
 
     createBarChartSVG: (data, yLabel, color, size = 'M') => {
         let max = 0; 
         data.forEach(d => { if(d.val > max) max = d.val; }); 
         if(max === 0) max = 10;
-        const w=getWidth(size); const h=180; const pTop=20; const pBot=45; const pSide=30; // Increased pSide
+        const w=getWidth(size); const h=180; const pTop=20; const pBot=45; const pSide=30; 
         const bw=(w-(pSide*2))/data.length, uh=h-pTop-pBot;
 
         let yGrid = '';
@@ -175,7 +194,8 @@ export const Visuals = {
             const bh=(d.val/max)*uh; 
             const x=pSide+(i*bw)+5; 
             const y=h-pBot-bh;
-            bars+=`<rect x="${x}" y="${y}" width="${bw-10}" height="${bh}" fill="${fill}" rx="2"/><text x="${x+(bw-10)/2}" y="${y-5}" text-anchor="middle" fill="#fff" font-size="10">${d.val}</text>`;
+            const tooltipText = `${d.label}: ${d.val}`;
+            bars+=`<rect x="${x}" y="${y}" width="${bw-10}" height="${bh}" fill="${fill}" rx="2" style="cursor:pointer;" onmousemove="Visuals.showTooltip(evt, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></rect><text x="${x+(bw-10)/2}" y="${y-5}" text-anchor="middle" fill="#fff" font-size="10">${d.val}</text>`;
             
             const rotate = d.label.length > 4;
             if (rotate) {
