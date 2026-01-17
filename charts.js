@@ -239,5 +239,56 @@ export const Visuals = {
             </svg>`;
         }
         return `<div style="display:flex; justify-content:center; align-items:center;">${svg}</div>`;
+    },
+
+    createDonutChartSVG: (labels, values, size = 'M') => {
+        const w = getWidth(size);
+        const h = 180;
+        const centerX = w / 2;
+        const centerY = h / 2;
+        const radius = 60;
+        const thickness = 20;
+        const innerRadius = radius - thickness;
+
+        const total = values.reduce((a, b) => a + b, 0);
+        if (total === 0) return `<svg width="${w}" height="${h}"><circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="none" stroke="#333" stroke-width="${thickness}"/><text x="${centerX}" y="${centerY}" text-anchor="middle" dominant-baseline="middle" fill="#666" font-size="12">No Data</text></svg>`;
+
+        let startAngle = 0;
+        let paths = '';
+        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#03a9f4', '#ffeb3b'];
+
+        values.forEach((v, i) => {
+            const percentage = (v / total);
+            const angle = percentage * 360;
+            const endAngle = startAngle + angle;
+
+            const x1 = centerX + radius * Math.cos((startAngle - 90) * Math.PI / 180);
+            const y1 = centerY + radius * Math.sin((startAngle - 90) * Math.PI / 180);
+            const x2 = centerX + radius * Math.cos((endAngle - 90) * Math.PI / 180);
+            const y2 = centerY + radius * Math.sin((endAngle - 90) * Math.PI / 180);
+
+            const ix1 = centerX + innerRadius * Math.cos((startAngle - 90) * Math.PI / 180);
+            const iy1 = centerY + innerRadius * Math.sin((startAngle - 90) * Math.PI / 180);
+            const ix2 = centerX + innerRadius * Math.cos((endAngle - 90) * Math.PI / 180);
+            const iy2 = centerY + innerRadius * Math.sin((endAngle - 90) * Math.PI / 180);
+
+            const largeArcFlag = angle > 180 ? 1 : 0;
+
+            const d = `
+                M ${x1} ${y1}
+                A ${radius} ${radius} 0 ${largeArcFlag} 1 ${x2} ${y2}
+                L ${ix2} ${iy2}
+                A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${ix1} ${iy1}
+                Z
+            `;
+
+            const color = colors[i % colors.length];
+            const tooltipText = `${labels[i]}: ${Math.round(percentage * 100)}%`;
+            paths += `<path d="${d}" fill="${color}" stroke="#1e1e1e" stroke-width="1" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></path>`;
+
+            startAngle = endAngle;
+        });
+
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${paths}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/></svg>`;
     }
 };

@@ -256,7 +256,7 @@ export const renderBoard = () => {
 
             card.onclick = () => {
                  if (document.body.classList.contains('publishing')) {
-                     if (t.type !== 'gauge' && t.type !== 'waffle' && t.type !== 'rag' && t.type !== 'counter') ZoomManager.openChartModal(i);
+                     if (t.type !== 'gauge' && t.type !== 'waffle' && t.type !== 'rag' && t.type !== 'counter' && t.type !== 'donut') ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
                  }
@@ -321,6 +321,15 @@ export const renderBoard = () => {
                 statsHTML = `<div class="tracker-stats">${t.active} / ${t.total} ${t.metric || ''}</div>`;
             } else if (renderType === 'note') {
                 visualHTML = `<div class="note-render-container">${parseMarkdown(t.content || '')}</div>`;
+                statsHTML = '';
+            } else if (renderType === 'donut') {
+                const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
+                const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
+                
+                const labels = (t.dataPoints || []).map(dp => dp.label);
+                const values = (t.dataPoints || []).map(dp => dp.value);
+                const html = Visuals.createDonutChartSVG(labels, values, t.size);
+                visualHTML = `<div ${hoverEvents} style="width:100%;">${html}</div>`;
                 statsHTML = '';
             }
 
@@ -637,6 +646,15 @@ export const TrackerManager = {
                 if(sizeRad) sizeRad.checked = true;
             } else if (!isEdit && type === 'note') {
                 const tcnIn = getEl('tkNoteContent'); if(tcnIn) tcnIn.value = '';
+                // Set Size to M
+                const sizeRad = document.querySelector('input[name="tkSize"][value="M"]');
+                if(sizeRad) sizeRad.checked = true;
+            } else if (!isEdit && type === 'donut') {
+                const container = getEl('donutDataContainer');
+                if(container) container.innerHTML = '';
+                const notesIn = getEl('tkDonutNotes');
+                if(notesIn) notesIn.value = '';
+                // Default Size M
                 const sizeRad = document.querySelector('input[name="tkSize"][value="M"]');
                 if(sizeRad) sizeRad.checked = true;
             }
@@ -691,6 +709,14 @@ export const TrackerManager = {
             } else if (type === 'note') {
                 const tcnIn = getEl('tkNoteContent');
                 if (tracker && tcnIn) tcnIn.value = tracker.content || '';
+            } else if (type === 'donut') {
+                const container = getEl('donutDataContainer');
+                if (container) container.innerHTML = '';
+                if (tracker && tracker.dataPoints) {
+                    tracker.dataPoints.forEach(dp => this.addDonutRow(dp.label, dp.value));
+                }
+                const notesIn = getEl('tkDonutNotes');
+                if (tracker && notesIn) notesIn.value = tracker.notes || '';
             }
         }
 
@@ -701,7 +727,7 @@ export const TrackerManager = {
         State.currentTrackerType = type;
         // Map 'bar' to 'line' for input visibility
         const inputType = (type === 'bar') ? 'line' : type;
-        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note'].forEach(x => {
+        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut'].forEach(x => {
             const btn = getEl(`type${x}Btn`);
             if (btn) btn.className = (type === x.toLowerCase()) ? 'type-option active' : 'type-option';
             const div = getEl(`${x.toLowerCase()}Inputs`);
@@ -709,7 +735,7 @@ export const TrackerManager = {
         });
 
         const sizeCont = getEl('sizeContainer');
-        if(sizeCont) sizeCont.style.display = (type === 'gauge' || type === 'waffle' || type === 'rag' || type === 'counter') ? 'none' : 'block';
+        if(sizeCont) sizeCont.style.display = (type === 'gauge' || type === 'waffle' || type === 'rag' || type === 'counter' || type === 'donut') ? 'none' : 'block';
 
         if (inputType === 'line') {
              this.renderTimeTable();
@@ -1124,6 +1150,28 @@ export const TrackerManager = {
         if(rs) rs.value = val;
     },
 
+    addDonutRow(label = '', value = '') {
+        const container = getEl('donutDataContainer');
+        if (!container) return;
+        if (container.children.length >= 10) return App.alert("Max 10 data points allowed.");
+
+        const div = document.createElement('div');
+        div.className = 'donut-row';
+        div.style.display = 'flex';
+        div.style.gap = '10px';
+        div.style.marginBottom = '5px';
+        div.innerHTML = `
+            <input type="text" class="dr-label" placeholder="Label" value="${label}" style="flex: 2;">
+            <input type="number" class="dr-value" placeholder="Value" value="${value}" style="flex: 1;">
+            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeDonutRow(this)">&times;</button>
+        `;
+        container.appendChild(div);
+    },
+
+    removeDonutRow(btn) {
+        btn.parentElement.remove();
+    },
+
     parseCSV(type) {
         const ctx = this.getContext(); 
         const txtArea = getEl('csvInput');
@@ -1340,9 +1388,22 @@ export const TrackerManager = {
             newTracker.size = total < 201 ? 'S' : 'M'; // Inferred size
             
             const wcIn = getEl('tkWaffleColorVal');
-            newTracker.colorVal = wcIn ? wcIn.value : '#03dac6';
+            newTracker.colorVal = wcIn ? wcIn.value : '#228B22';
             const wbIn = getEl('tkWaffleColorBg');
-            newTracker.colorBg = wbIn ? wbIn.value : '#333333';
+            newTracker.colorBg = wbIn ? wbIn.value : '#696969';
+        } else if (type === 'donut') {
+            const rows = document.querySelectorAll('.donut-row');
+            const dataPoints = [];
+            rows.forEach(row => {
+                const label = row.querySelector('.dr-label').value.trim();
+                const value = parseFloat(row.querySelector('.dr-value').value) || 0;
+                if (label) dataPoints.push({ label, value });
+            });
+            if (dataPoints.length === 0) return App.alert("At least one data point with a label is required.");
+            newTracker.dataPoints = dataPoints;
+            const notesIn = getEl('tkDonutNotes');
+            newTracker.notes = notesIn ? notesIn.value : '';
+            newTracker.size = 'M'; // Force Size M
         }
 
         if(index === -1) {

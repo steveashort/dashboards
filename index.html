@@ -176,6 +176,20 @@
                         </div>
                     </div>
                 </div>
+
+                <div id="donutInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Data Points (Max 10)</label>
+                        <div id="donutDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+                            <!-- Rows will be added here -->
+                        </div>
+                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addDonutRow()">+ Add Data Point</button>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes (Hover info - Published View)</label>
+                        <textarea id="tkDonutNotes" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="UserManager.deleteUser()" id="deleteBtn">Delete</button>
@@ -199,6 +213,7 @@
                     <button id="typeRagBtn" class="type-option" onclick="TrackerManager.setType('rag')">RAG Status</button>
                     <button id="typeWaffleBtn" class="type-option" onclick="TrackerManager.setType('waffle')">Waffle Chart</button>
                     <button id="typeNoteBtn" class="type-option" onclick="TrackerManager.setType('note')">Note</button>
+                    <button id="typeDonutBtn" class="type-option" onclick="TrackerManager.setType('donut')">Donut Chart</button>
                 </div>
                 <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
                     <div class="input-group" style="flex: 2;">
@@ -358,7 +373,38 @@
 
                                 </div>
 
-                                                <div id="counterInputs" style="display:none;">
+                                                <div id="waffleInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Metric Unit</label>
+                        <input type="text" id="tkWaffleMetric">
+                    </div>
+                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
+                        <div class="input-group">
+                            <label>Target (Max 450)</label>
+                            <input type="number" id="tkWaffleTotal" max="450">
+                        </div>
+                        <div class="input-group">
+                            <label>Progress</label>
+                            <input type="number" id="tkWaffleActive">
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Target Colour</label>
+                            <input type="color" id="tkWaffleColorBg" value="#696969">
+                        </div>
+                        <div class="input-group">
+                            <label>Progress Colour</label>
+                            <input type="color" id="tkWaffleColorVal" value="#228B22">
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes (Hover info - Published View)</label>
+                        <textarea id="tkWaffleNotes" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
+
+                <div id="counterInputs" style="display:none;">
 
                                                     <div class="form-row" style="margin-bottom: 0; gap: 1rem;">
 
