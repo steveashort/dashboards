@@ -607,7 +607,6 @@ export const TrackerManager = {
             }
 
             if (type === 'gauge') {
-            if (type === 'gauge') {
                 const tmIn = getEl('tkMetric');
                 // Only populate if tracker exists, otherwise keep blank (from reset above)
                 if (tracker && tmIn) tmIn.value = tracker.metric || '';
