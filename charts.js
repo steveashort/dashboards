@@ -75,7 +75,7 @@ export const Visuals = {
                 p += (i===0?'M':'L') + `${x},${y} `;
                 
                 const tooltipText = `${s.name} • ${labels[i]}: ${v}`;
-                points += `<circle cx="${x}" cy="${y}" r="4" fill="${s.color}" style="cursor:pointer;" onmousemove="Visuals.showTooltip(evt, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></circle>`;
+                points += `<circle cx="${x}" cy="${y}" r="4" fill="${s.color}" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></circle>`;
             });
             paths += `<path d="${p}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
         });
@@ -143,7 +143,7 @@ export const Visuals = {
                 const x = pSide + (i * groupWidth) + (groupWidth * 0.1) + (si * barWidth); 
                 const y = h-pBot-bh;
                 const tooltipText = `${s.name} • ${labels[i]}: ${v}`;
-                rects += `<rect x="${x}" y="${y}" width="${barWidth-1}" height="${bh}" fill="${s.color}" rx="1" style="cursor:pointer;" onmousemove="Visuals.showTooltip(evt, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></rect>`;
+                rects += `<rect x="${x}" y="${y}" width="${barWidth-1}" height="${bh}" fill="${s.color}" rx="1" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></rect>`;
             });
         });
 
@@ -195,7 +195,7 @@ export const Visuals = {
             const x=pSide+(i*bw)+5; 
             const y=h-pBot-bh;
             const tooltipText = `${d.label}: ${d.val}`;
-            bars+=`<rect x="${x}" y="${y}" width="${bw-10}" height="${bh}" fill="${fill}" rx="2" style="cursor:pointer;" onmousemove="Visuals.showTooltip(evt, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></rect><text x="${x+(bw-10)/2}" y="${y-5}" text-anchor="middle" fill="#fff" font-size="10">${d.val}</text>`;
+            bars+=`<rect x="${x}" y="${y}" width="${bw-10}" height="${bh}" fill="${fill}" rx="2" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></rect><text x="${x+(bw-10)/2}" y="${y-5}" text-anchor="middle" fill="#fff" font-size="10">${d.val}</text>`;
             
             const rotate = d.label.length > 4;
             if (rotate) {

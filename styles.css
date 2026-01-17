@@ -261,6 +261,7 @@ body.publishing .header-actions, body.publishing .btn-del-tracker, body.publishi
 body.publishing #publishToggleBtn { display: block !important; position: fixed; top: 20px; right: 20px; z-index: 9999; }
 body.publishing .auto-item b { display: none; }
 body.publishing .tracker-card { cursor: zoom-in; }
+body.publishing .tracker-card.type-gauge { cursor: default; }
 body.publishing .member-card { cursor: default; }
 body.publishing #appTitle { pointer-events: none; border-bottom: none; }
 body.publishing .overview-col.interactive { pointer-events: auto; }

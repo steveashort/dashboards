@@ -245,7 +245,7 @@ export const renderBoard = () => {
         
         State.trackers.forEach((t, i) => {
             const card = document.createElement('div');
-            card.className = `tracker-card size-${t.size || 'M'}`;
+            card.className = `tracker-card size-${t.size || 'M'} type-${t.type}`;
             card.dataset.index = i;
             
             if (!document.body.classList.contains('publishing')) {
@@ -254,7 +254,7 @@ export const renderBoard = () => {
 
             card.onclick = () => {
                  if (document.body.classList.contains('publishing')) {
-                     ZoomManager.openChartModal(i);
+                     if (t.type !== 'gauge') ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
                  }
@@ -290,8 +290,8 @@ export const renderBoard = () => {
                 // c2 is Progress Colour, c1 is Target Colour
                 const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
                 
-                const noteText = (t.notes || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
-                const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(evt, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
+                const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
+                const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
                 
                 visualHTML = `<div class="pie-chart" style="background:${grad}" ${hoverEvents}><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
                 statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
@@ -586,6 +586,7 @@ export const TrackerManager = {
                 const tmIn = getEl('tkMetric'); if(tmIn) tmIn.value = '';
                 const tcIn = getEl('tkComp'); if(tcIn) tcIn.value = '';
                 const ttIn = getEl('tkTotal'); if(ttIn) ttIn.value = '';
+                const nIn = getEl('tkNotes'); if(nIn) nIn.value = '';
                 
                 // Set Size to S
                 const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
@@ -603,6 +604,9 @@ export const TrackerManager = {
                 
                 const ttIn = getEl('tkTotal');
                 if (tracker && ttIn) ttIn.value = tracker.total || '';
+
+                const nIn = getEl('tkNotes');
+                if (tracker && nIn) nIn.value = tracker.notes || '';
                 
                 const pcIn = getEl('tkPieColor');
                 if (pcIn) pcIn.value = tracker ? (tracker.colorVal || tracker.color1 || '#00e676') : '#00e676';
