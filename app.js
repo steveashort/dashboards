@@ -509,7 +509,26 @@ export const TrackerManager = {
                            
                            this.updateTimeOptions();
                            const tcIn = getEl(`${ctx.prefix}TimeCount`);
-                           if (tcIn) tcIn.value = (tracker && tracker.timeCount) ? tracker.timeCount : 30;             
+                           
+                           // Fix: Calculate count from labels length or timeCount, and ensure option exists
+                           let countVal = 30;
+                           if (tracker) {
+                               if (tracker.labels && tracker.labels.length > 0) countVal = tracker.labels.length;
+                               else if (tracker.timeCount) countVal = tracker.timeCount;
+                           }
+                           
+                           if (tcIn) {
+                               let exists = false;
+                               for(let opt of tcIn.options) { if(parseInt(opt.value) === countVal) exists = true; }
+                               if (!exists) {
+                                   const opt = document.createElement('option');
+                                   opt.value = countVal;
+                                   opt.innerText = countVal;
+                                   tcIn.appendChild(opt);
+                               }
+                               tcIn.value = countVal;
+                           }
+                           
              let series = [];
              if (tracker) {
                  if (tracker.series) series = tracker.series;
@@ -557,7 +576,8 @@ export const TrackerManager = {
                 const tableContainer = getEl('lineTableContainer');
                 if(tableContainer) tableContainer.innerHTML = '';
             }
-
+            // For editing non-line types, we don't need to do anything special for line inputs yet.
+            // ... existing code for gauge/counter etc ...
             if (type === 'gauge') {
                 const tmIn = getEl('tkMetric');
                 if (tmIn) tmIn.value = tracker ? (tracker.metric || '') : '';

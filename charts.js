@@ -74,7 +74,7 @@ export const Visuals = {
                 const y = h-pBot - (v/max)*uh;
                 p += (i===0?'M':'L') + `${x},${y} `;
                 
-                const tooltipText = `${labels[i]}: ${v}`;
+                const tooltipText = `${s.name} • ${labels[i]}: ${v}`;
                 points += `<circle cx="${x}" cy="${y}" r="4" fill="${s.color}" style="cursor:pointer;" onmousemove="Visuals.showTooltip(evt, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></circle>`;
             });
             paths += `<path d="${p}" fill="none" stroke="${s.color}" stroke-width="2"/>`;
@@ -142,7 +142,7 @@ export const Visuals = {
                 const bh = (v/max) * uh;
                 const x = pSide + (i * groupWidth) + (groupWidth * 0.1) + (si * barWidth); 
                 const y = h-pBot-bh;
-                const tooltipText = `${labels[i]}: ${v}`;
+                const tooltipText = `${s.name} • ${labels[i]}: ${v}`;
                 rects += `<rect x="${x}" y="${y}" width="${barWidth-1}" height="${bh}" fill="${s.color}" rx="1" style="cursor:pointer;" onmousemove="Visuals.showTooltip(evt, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></rect>`;
             });
         });
