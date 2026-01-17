@@ -38,7 +38,7 @@
         }
 
         /* ==========================================================
-           2) PAGE LAYOUT
+           2) PAGE LAYOUT & SCROLLBARS
            ========================================================== */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -61,7 +61,7 @@
             width: 300px;
             background-color: var(--sidebar-bg);
             border-right: 1px solid var(--card-border);
-            padding: 30px; /* Increased Spacing */
+            padding: 30px;
             display: flex;
             flex-direction: column;
             flex-shrink: 0;
@@ -72,7 +72,7 @@
             width: 100%;
             max-height: 100px;
             object-fit: contain;
-            margin-bottom: 30px; /* Spacing below logo */
+            margin-bottom: 30px;
         }
 
         .main-window {
@@ -84,7 +84,7 @@
         }
 
         .main-header {
-            height: 70px; /* Increased Height */
+            height: 70px;
             background: var(--bg-color);
             border-bottom: 1px solid var(--card-border);
             display: flex;
@@ -107,7 +107,7 @@
             position: relative;
         }
 
-        /* High-Visibility Scrollbars */
+        /* Scrollbars */
         .main-content::-webkit-scrollbar { width: 14px; height: 14px; }
         .main-content::-webkit-scrollbar-track { background: var(--bg-color); }
         .main-content::-webkit-scrollbar-thumb { 
@@ -116,7 +116,7 @@
             border: 3px solid var(--bg-color); 
         }
 
-        .control-group { margin-bottom: 25px; } /* Increased Spacing */
+        .control-group { margin-bottom: 25px; }
         .control-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
         
         select, input[type="text"], textarea { 
@@ -152,10 +152,10 @@
         .node-card {
             background: var(--card-bg);
             border: 1px solid var(--card-border);
-            padding: 18px; /* Increased Spacing */
+            padding: 18px;
             border-radius: 8px;
             width: fit-content; min-width: 320px;
-            cursor: grab;
+            cursor: pointer;
             position: relative;
             border-left: 6px solid var(--accent);
             box-shadow: 0 6px 12px rgba(0,0,0,0.25);
@@ -187,7 +187,7 @@
             position: absolute; left: -14px; top: 18px; width: 26px; height: 26px; 
             display: flex; align-items: center; justify-content: center; 
             border: 2px solid var(--input-border); border-radius: 4px; 
-            background: var(--input-bg); cursor: pointer; font-weight: bold; z-index: 5;
+            background: var(--input-bg); cursor: pointer; font-weight: bold; z-index: 15;
         }
 
         /* Modal */
@@ -215,7 +215,7 @@
         <div class="control-group"><label>Filter by Tag</label><select id="tagFilter" multiple size="8" onchange="applyFilter()"></select></div>
 
         <div class="control-group" style="margin-top: auto;">
-            <label>Storage & Data</label>
+            <label>Hierarchy Tools</label>
             <input type="file" id="jsonFileInput" accept=".json" style="display: none;" onchange="importJson(this)">
             <div class="btn-group">
                 <button class="btn-success" onclick="triggerUpload()">Load Hierarchy</button>
@@ -238,8 +238,8 @@
     <button class="icon-btn" onclick="openSettingsModal()" title="Settings">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </button>
-    <button class="icon-btn" onclick="expandAll()" title="Expand All Subtrees"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
-    <button class="icon-btn" onclick="collapseAll()" title="Collapse All Subtrees"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+    <button class="icon-btn" onclick="expandAll()" title="Expand All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+    <button class="icon-btn" onclick="collapseAll()" title="Collapse All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
 </div>
 
 <div class="modal-overlay" id="editModal">
@@ -247,61 +247,61 @@
         <h2>Edit Individual</h2>
         <input type="hidden" id="editNodeId">
         <div class="form-row">
-            <div><label>Name</label><input type="text" id="editName"></div>
-            <div><label>Role</label><select id="editRole"></select></div>
+            <div><label>Full Name</label><input type="text" id="editName"></div>
+            <div><label>Job Title / Role</label><select id="editRole"></select></div>
         </div>
         <div class="form-row">
             <div><label>Email Address</label><input type="text" id="editEmail"></div>
-            <div><label>Phone Number</label><input type="text" id="editPhone"></div>
+            <div><label>Mobile / Phone</label><input type="text" id="editPhone"></div>
         </div>
         <div class="form-row">
-            <div><label>Location</label><select id="editLocation"></select></div>
+            <div><label>Primary Location</label><select id="editLocation"></select></div>
             <div><label>Engagement Type</label><select id="editEngagement"></select></div>
         </div>
         <div class="form-group">
-            <label>Tags (Select Multiple)</label>
+            <label>Assigned Tags</label>
             <select id="editTagsMulti" multiple size="6"></select>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top: 25px;">
             <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-            <button class="btn-primary" onclick="saveNodeChanges()">Update Record</button>
+            <button class="btn-primary" onclick="saveNodeChanges()">Apply Changes</button>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
-        <h2>Global App Settings</h2>
-        <div class="form-group"><label>Organization Identity</label><input type="text" id="setOrgName"></div>
+        <h2>System Configuration</h2>
+        <div class="form-group"><label>Display Organization Name</label><input type="text" id="setOrgName"></div>
         
         <div class="form-row">
             <div>
-                <label>Theme Preference</label>
+                <label>Day/Night Toggle</label>
                 <div style="display:flex; gap:10px; align-items:center;">
                     <button id="themeToggleBtn" class="btn-secondary" onclick="toggleTheme()" style="flex:1;">
                         <span id="themeBtnText">Night Mode</span>
                         <svg id="sunIcon" style="width:18px; height:18px; display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                        <svg id="moonIcon" style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                        <svg id="moonIcon" style="width:18px; height:18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
                     </button>
                 </div>
             </div>
             <div>
-                <label>View Preferences</label>
+                <label>Node Visibility</label>
                 <div style="display:flex; gap:10px; flex-direction:column;">
-                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setShowTags"> Show Skills/Tags</label>
-                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setBWTags"> Mono-color Tags</label>
+                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setShowTags"> Show Skills & Tags</label>
+                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setBWTags"> Monochrome Tags</label>
                 </div>
             </div>
         </div>
 
-        <div class="form-group"><label>Standard Roles (CSV)</label><textarea id="setRoles" rows="2"></textarea></div>
-        <div class="form-group"><label>Office Locations (CSV)</label><textarea id="setLocs" rows="2"></textarea></div>
-        <div class="form-group"><label>Technical Tags (CSV)</label><textarea id="setTags" rows="2"></textarea></div>
-        <div class="form-group"><label>Engagement Models (CSV)</label><textarea id="setEng" rows="2"></textarea></div>
+        <div class="form-group"><label>Role Master List (CSV)</label><textarea id="setRoles" rows="2"></textarea></div>
+        <div class="form-group"><label>Location Master List (CSV)</label><textarea id="setLocs" rows="2"></textarea></div>
+        <div class="form-group"><label>Technical Tag Master List (CSV)</label><textarea id="setTags" rows="2"></textarea></div>
+        <div class="form-group"><label>Engagement Master List (CSV)</label><textarea id="setEng" rows="2"></textarea></div>
 
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top: 25px;">
             <button class="btn-secondary" onclick="closeSettingsModal()">Discard</button>
-            <button class="btn-primary" onclick="saveSettings()">Apply Changes</button>
+            <button class="btn-primary" onclick="saveSettings()">Apply Global Changes</button>
         </div>
     </div>
 </div>
@@ -369,19 +369,16 @@
         li.dataset.searchText = `${data.name} ${data.role} ${data.location} ${tags.join(' ')}`.toUpperCase();
 
         const card = document.createElement('div');
-        card.className = 'node-card'; card.draggable = true; card.dataset.nodeId = data.id;
+        card.className = 'node-card'; card.dataset.nodeId = data.id;
         card.style.borderLeftColor = `var(--h-${depth % 6})`;
 
-        card.addEventListener('dragstart', handleDragStart);
-        card.addEventListener('dragover', handleDragOver);
-        card.addEventListener('drop', handleDrop);
-
-        // Expand/Collapse Toggle
+        // Expand/Collapse Toggle Logic
         if (data.children && data.children.length > 0) {
             const toggle = document.createElement('div');
-            toggle.className = 'toggle-btn'; toggle.textContent = '−';
+            toggle.className = 'toggle-btn'; 
+            toggle.textContent = '−';
             toggle.onclick = (e) => {
-                e.stopPropagation();
+                e.stopPropagation(); // Stop from opening modal
                 const childUl = li.querySelector('ul.children-list');
                 const isHidden = childUl.classList.toggle('hidden');
                 toggle.textContent = isHidden ? '+' : '−';
@@ -389,7 +386,8 @@
             card.appendChild(toggle);
         }
 
-        card.innerHTML += `
+        // Use insertAdjacentHTML instead of innerHTML+= to keep event listeners alive
+        const cardContent = `
             <div class="node-actions">
                 <button class="node-action-btn btn-add-child" onclick="addChild('${data.id}', event)"><svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
                 <button class="node-action-btn btn-del-node" onclick="deleteNode('${data.id}', event)"><svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
@@ -405,7 +403,24 @@
                 <div class="tags-row">${tags.map(t => `<span class="pill" style="background:${stringToColor(t)}">${t}</span>`).join('')}</div>
             </div>
         `;
+        card.insertAdjacentHTML('beforeend', cardContent);
         card.onclick = () => openEditModal(data.id);
+        
+        // Drag events
+        card.draggable = true;
+        card.addEventListener('dragstart', (e) => e.dataTransfer.setData("text", data.id));
+        card.addEventListener('dragover', (e) => e.preventDefault());
+        card.addEventListener('drop', (e) => {
+            e.preventDefault();
+            const sourceId = e.dataTransfer.getData("text");
+            const targetId = data.id;
+            if (sourceId === targetId) return;
+            const source = findNodeAndParent(sourceId, appData.tree);
+            if (source.parent) source.parent.children = source.parent.children.filter(c => c.id !== sourceId);
+            data.children.push(source.node);
+            renderTree();
+        });
+
         li.appendChild(card);
 
         if (data.children && data.children.length > 0) {
@@ -438,7 +453,7 @@
         appData.settings.tags = clean('setTags');
         appData.settings.engagements = clean('setEng');
         renderTree();
-        document.getElementById('settingsModal').classList.remove('active');
+        closeSettingsModal();
     }
 
     function toggleTheme() {
@@ -477,7 +492,7 @@
         n.location = document.getElementById('editLocation').value;
         n.engagement = document.getElementById('editEngagement').value;
         n.tags = Array.from(document.getElementById('editTagsMulti').selectedOptions).map(o => o.value);
-        renderTree(); document.getElementById('editModal').classList.remove('active');
+        renderTree(); closeModal();
     }
 
     function populateSidebarFilters() {
@@ -506,20 +521,6 @@
         });
     }
 
-    function handleDragStart(e) { e.dataTransfer.setData("text", e.target.closest('.node-card').dataset.nodeId); }
-    function handleDrop(e) {
-        e.preventDefault();
-        const sourceId = e.dataTransfer.getData("text");
-        const targetId = e.target.closest('.node-card').dataset.nodeId;
-        const source = findNodeAndParent(sourceId, appData.tree);
-        const target = findNodeAndParent(targetId, appData.tree);
-        if (!source || !target || sourceId === targetId) return;
-        if (source.parent) source.parent.children = source.parent.children.filter(c => c.id !== sourceId);
-        if (!target.node.children) target.node.children = [];
-        target.node.children.push(source.node);
-        renderTree();
-    }
-    function handleDragOver(e) { e.preventDefault(); }
     function addChild(id, e) {
         e.stopPropagation();
         const n = findNodeAndParent(id, appData.tree).node;
@@ -528,6 +529,7 @@
         n.children.push({ id: newId, name: "New Person", role: appData.settings.roles[0], location: appData.settings.locations[0], children: [] });
         renderTree(); openEditModal(newId);
     }
+
     function deleteNode(id, e) {
         e.stopPropagation();
         const res = findNodeAndParent(id, appData.tree);
@@ -536,6 +538,7 @@
             renderTree();
         }
     }
+
     function closeModal() { document.getElementById('editModal').classList.remove('active'); }
     function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('active'); }
     function triggerUpload() { document.getElementById('jsonFileInput').click(); }
