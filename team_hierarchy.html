@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Org Viewer Pro</title>
     <style>
         /* ==========================================================
@@ -128,16 +129,21 @@
             border: 3px solid var(--bg-color); 
         }
 
+        /* Sidebar Controls */
         .control-group { margin-bottom: 25px; }
-        .control-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .sidebar .control-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
         
-        select, input[type="text"], textarea { 
-            width: 100%; padding: 12px; background: var(--input-bg); color: var(--text-main); 
-            border: 1px solid var(--input-border); border-radius: 4px; outline: none; box-sizing: border-box; 
+        /* General Inputs */
+        select, input[type="text"], textarea, input[type="file"] {
+            width: 100%; padding: 14px; background: var(--input-bg); color: var(--text-main);
+            border: 1px solid var(--input-border); border-radius: 6px; outline: none; box-sizing: border-box;
+            font-size: 14px;
         }
+        textarea { resize: vertical; }
 
         .btn-group { display: flex; flex-direction: column; gap: 12px; }
-        button { padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s; }
+        button { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; transition: opacity 0.2s, transform 0.1s; }
+        button:active { transform: scale(0.98); }
         .btn-success { background-color: #27ae60; color: white; }
         .btn-primary { background-color: var(--accent); color: white; }
         .btn-secondary { background-color: #555; color: white; }
@@ -145,7 +151,8 @@
 
         /* Floating Toolbar */
         .floating-toolbar { position: fixed; top: 90px; right: 30px; display: flex; flex-direction: column; gap: 12px; z-index: 500; }
-        .icon-btn { width: 46px; height: 46px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
+        .icon-btn { width: 46px; height: 46px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4); transition: background-color 0.2s; }
+        .icon-btn:hover { background-color: var(--hover-bg); }
 
         /* ==========================================================
            3) TREE & NODES
@@ -173,7 +180,9 @@
             border-left: 6px solid var(--accent);
             box-shadow: 0 6px 12px rgba(0,0,0,0.25);
             white-space: normal;
+            transition: transform 0.2s, box-shadow 0.2s;
         }
+        .node-card:hover { transform: translateY(-2px); box-shadow: 0 8px 16px rgba(0,0,0,0.3); }
         
         .node-actions { position: absolute; top: -14px; right: 10px; display: flex; gap: 8px; opacity: 0; transition: opacity 0.2s; z-index: 10; }
         .node-card:hover .node-actions { opacity: 1; }
@@ -201,8 +210,9 @@
             display: flex; align-items: center; justify-content: center; 
             border: 2px solid var(--input-border); border-radius: 4px; 
             background: var(--input-bg); cursor: pointer; font-weight: bold; z-index: 15;
-            color: var(--text-muted);
+            color: var(--text-muted); transition: color 0.2s, border-color 0.2s;
         }
+        .toggle-btn:hover { color: var(--accent); border-color: var(--accent); }
 
         .matched { border: 2px solid #27ae60 !important; box-shadow: 0 0 15px rgba(39, 174, 96, 0.4) !important; }
 
@@ -214,14 +224,38 @@
             display: none !important;
         }
 
-        /* Modal Settings */
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; }
+        /* ==========================================================
+           4) MODALS & TOASTS (SPACED OUT)
+           ========================================================== */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(2px); }
         .modal-overlay.active { display: flex; }
-        .modal { background: var(--sidebar-bg); padding: 35px; border-radius: 12px; width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--card-border); }
-        .form-row { display: flex; gap: 20px; margin-bottom: 20px; }
+        
+        /* Increased padding and width for better spacing */
+        .modal { 
+            background: var(--sidebar-bg); 
+            padding: 45px; 
+            border-radius: 12px; 
+            width: 700px; /* Wider modal */
+            max-height: 90vh; 
+            overflow-y: auto; 
+            border: 1px solid var(--card-border);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .modal h2 { margin-top: 0; margin-bottom: 30px; font-size: 24px; }
+
+        /* Increased spacing between rows and groups */
+        .form-row { display: flex; gap: 30px; margin-bottom: 30px; }
         .form-row > div { flex: 1; }
+        .form-group { margin-bottom: 30px; }
+
+        /* Better label spacing */
+        .modal label { display: block; margin-bottom: 12px; font-weight: 600; letter-spacing: 0.5px; color: var(--text-main); }
+        .modal small { display: block; margin-top: 8px; }
+
         .toast-container { position: fixed; bottom: 25px; right: 25px; z-index: 3000; }
-        .toast { background: #333; color: white; padding: 14px 24px; border-radius: 4px; border-left: 5px solid var(--accent); margin-top: 12px; }
+        .toast { background: #333; color: white; padding: 14px 24px; border-radius: 4px; border-left: 5px solid var(--accent); margin-top: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
@@ -237,9 +271,9 @@
 
         <div class="control-group"><label>Filter by Role</label><select id="roleFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
         <div class="control-group"><label>Filter by Location</label><select id="locFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
-        <div class="control-group"><label>Filter by Tag</label><select id="tagFilter" multiple size="8" onchange="handleTagSelection(this)"></select></div>
+        <div class="control-group"><label>Filter by Tag</label><select id="tagFilter" multiple size="10" onchange="handleTagSelection(this)"></select></div>
 
-        <div id="toolsSection" class="control-group" style="margin-top: auto;">
+        <div id="toolsSection" class="control-group" style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--card-border);">
             <label>Hierarchy Tools</label>
             <input type="file" id="jsonFileInput" accept=".json" style="display: none;" onchange="importJson(this)">
             <div class="btn-group">
@@ -267,6 +301,7 @@
     </button>
     <button class="icon-btn" onclick="expandAll()" title="Expand All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
     <button class="icon-btn" onclick="collapseAll()" title="Collapse All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+    
     <button class="icon-btn" onclick="toggleTheme()" title="Toggle Day/Night Mode">
         <svg id="sunIcon" style="width:22px; height:22px; display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         <svg id="moonIcon" style="width:22px; height:22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -290,7 +325,7 @@
             <div><label>Engagement</label><select id="editEngagement"></select></div>
         </div>
         <div class="form-group"><label>Tags (Select Multiple)</label><select id="editTagsMulti" multiple size="6"></select></div>
-        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top: 25px;">
+        <div style="display:flex; justify-content:flex-end; gap:15px; margin-top: 35px;">
             <button class="btn-secondary" onclick="closeModal()">Cancel</button>
             <button class="btn-primary" onclick="saveNodeChanges()">Update Record</button>
         </div>
@@ -302,26 +337,26 @@
         <h2>Configuration</h2>
         <div class="form-group"><label>Organization Name</label><input type="text" id="setOrgName"></div>
         
-        <div class="form-group">
-            <label>Embed Company Logo (PNG/JPG)</label>
-            <input type="file" id="setLogoFile" accept="image/*" onchange="handleLogoUpload(this)">
-            <small style="color:var(--text-muted)">This embeds the image into the file for standalone publishing.</small>
+        <div class="form-group" style="padding: 20px; border: 2px dashed var(--card-border); border-radius: 8px; text-align: center;">
+            <label style="margin-bottom: 15px;">Embed Company Logo for Publishing</label>
+            <input type="file" id="setLogoFile" accept="image/*" onchange="handleLogoUpload(this)" style="max-width: 300px; margin: 0 auto;">
+            <small style="color:var(--text-muted); display:block; margin-top:10px;">Select a PNG or JPG. It will be embedded in the published file.</small>
         </div>
 
-        <div class="form-row">
+        <div class="form-row" style="margin-top: 30px;">
             <div>
-                <label>Options</label>
-                <div style="display:flex; flex-direction:column; gap:8px;">
-                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setShowTags"> Show Tags Row</label>
-                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setBWTags"> Monochrome Mode</label>
+                <label>View Options</label>
+                <div style="display:flex; flex-direction:column; gap:12px; padding: 10px 0;">
+                    <label style="text-transform:none; font-size:14px; font-weight:normal; display:flex; align-items:center; gap:10px;"><input type="checkbox" id="setShowTags" style="width:auto; margin:0;"> Show Tags Row</label>
+                    <label style="text-transform:none; font-size:14px; font-weight:normal; display:flex; align-items:center; gap:10px;"><input type="checkbox" id="setBWTags" style="width:auto; margin:0;"> Monochrome Mode</label>
                 </div>
             </div>
         </div>
-        <div class="form-group"><label>Roles (CSV)</label><textarea id="setRoles" rows="2"></textarea></div>
-        <div class="form-group"><label>Locations (CSV)</label><textarea id="setLocs" rows="2"></textarea></div>
-        <div class="form-group"><label>Tags (CSV)</label><textarea id="setTags" rows="2"></textarea></div>
-        <div class="form-group"><label>Engagement (CSV)</label><textarea id="setEng" rows="2"></textarea></div>
-        <div style="display:flex; justify-content:flex-end; gap:12px; margin-top: 25px;">
+        <div class="form-group"><label>Roles (CSV)</label><textarea id="setRoles" rows="3"></textarea></div>
+        <div class="form-group"><label>Locations (CSV)</label><textarea id="setLocs" rows="3"></textarea></div>
+        <div class="form-group"><label>Tags (CSV)</label><textarea id="setTags" rows="3"></textarea></div>
+        <div class="form-group"><label>Engagement (CSV)</label><textarea id="setEng" rows="3"></textarea></div>
+        <div style="display:flex; justify-content:flex-end; gap:15px; margin-top: 35px;">
             <button class="btn-secondary" onclick="closeSettingsModal()">Discard</button>
             <button class="btn-primary" onclick="saveSettings()">Save & Refresh</button>
         </div>
@@ -382,7 +417,7 @@
         reader.onload = (e) => {
             appData.logoData = e.target.result;
             updateLogoDisplay();
-            showToast("Logo embedded successfully.");
+            showToast("Logo embedded ready for publishing.");
         };
         reader.readAsDataURL(file);
     }
@@ -511,9 +546,7 @@
 
     // --- SEARCH ENGINE ---
     function applyFilter() {
-        document.querySelectorAll('ul.children-list').forEach(u => u.classList.remove('hidden'));
-        document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '−');
-
+        expandAllSilently();
         const search = document.getElementById('searchInput').value.toUpperCase();
         const role = document.getElementById('roleFilter').value;
         const loc = document.getElementById('locFilter').value;
@@ -583,7 +616,7 @@
         const res = findNodeAndParent(parentId, appData.tree);
         const newId = 'n' + Date.now();
         if(!res.node.children) res.node.children = [];
-        res.node.children.push({ id: newId, name: "New Person", role: appData.settings.roles[0], children: [] });
+        res.node.children.push({ id: newId, name: "New Person", role: appData.settings.roles[0], location: appData.settings.locations[0], children: [] });
         renderTree();
         openEditModal(newId);
     }
@@ -619,7 +652,7 @@
         appData.settings.tags = clean('setTags');
         appData.settings.engagements = clean('setEng');
         renderTree();
-        document.getElementById('settingsModal').classList.remove('active');
+        closeSettingsModal();
     }
 
     function openEditModal(id) {
@@ -673,7 +706,8 @@
     function triggerUpload() { document.getElementById('jsonFileInput').click(); }
     function saveJson() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'})); a.download='org.json'; a.click(); }
     function importJson(i) { const r = new FileReader(); r.onload = (e) => { appData = JSON.parse(e.target.result); renderTree(); }; r.readAsText(i.files[0]); }
-    function expandAll() { document.querySelectorAll('ul.children-list').forEach(u => u.classList.remove('hidden')); document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '−'); }
+    function expandAllSilently() { document.querySelectorAll('ul.children-list').forEach(u => u.classList.remove('hidden')); document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '−'); }
+    function expandAll() { expandAllSilently(); }
     function collapseAll() { document.querySelectorAll('ul.children-list').forEach(u => u.classList.add('hidden')); document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '+'); }
 
     renderTree();
