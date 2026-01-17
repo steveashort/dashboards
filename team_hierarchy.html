@@ -106,7 +106,7 @@
             position: relative;
         }
 
-        /* Scrollbars */
+        /* High-Visibility Scrollbars */
         .main-content::-webkit-scrollbar { width: 14px; height: 14px; }
         .main-content::-webkit-scrollbar-track { background: var(--bg-color); }
         .main-content::-webkit-scrollbar-thumb { 
@@ -127,9 +127,7 @@
         button { padding: 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; }
         .btn-success { background-color: #27ae60; color: white; }
         .btn-primary { background-color: var(--accent); color: white; }
-        .btn-secondary { background-color: #555; color: white; }
 
-        /* Floating Toolbar */
         .floating-toolbar { position: fixed; top: 90px; right: 30px; display: flex; gap: 12px; z-index: 500; }
         .icon-btn { width: 46px; height: 46px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
 
@@ -138,7 +136,7 @@
            ========================================================== */
         .main-tree {
             display: inline-block;
-            min-width: max-content; /* FIX: Forces horizontal scrollbar visibility */
+            min-width: max-content; 
             padding-right: 250px; 
             padding-bottom: 250px; 
         }
@@ -166,10 +164,9 @@
         .node-action-btn { width: 30px; height: 30px; border-radius: 50%; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
         .btn-add-child { background: #27ae60; }
         .btn-del-node { background: #c0392b; }
-        .node-action-btn svg { width: 14px; height: 14px; fill: white; pointer-events: none; }
 
         .info { display: flex; flex-direction: column; pointer-events: none; }
-        .name { font-weight: 700; font-size: 18px; letter-spacing: -0.2px; color: var(--text-main); }
+        .name { font-weight: 700; font-size: 18px; color: var(--text-main); }
         .role { font-size: 13px; color: var(--text-muted); text-transform: uppercase; margin-top: 4px; }
         .contact-info { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
         
@@ -193,14 +190,13 @@
 
         .matched { border: 2px solid #27ae60 !important; box-shadow: 0 0 15px rgba(39, 174, 96, 0.4) !important; }
 
-        /* Modals */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-overlay.active { display: flex; }
         .modal { background: var(--sidebar-bg); padding: 35px; border-radius: 12px; width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--card-border); }
         .form-row { display: flex; gap: 20px; margin-bottom: 20px; }
         .form-row > div { flex: 1; }
         .toast-container { position: fixed; bottom: 25px; right: 25px; z-index: 3000; }
-        .toast { background: #333; color: white; padding: 14px 24px; border-radius: 4px; border-left: 5px solid var(--accent); margin-top: 12px; }
+        .toast { background: #333; color: white; padding: 14px 24px; border-radius: 4px; border-left: 4px solid var(--accent); margin-top: 12px; }
     </style>
 </head>
 <body>
@@ -208,7 +204,6 @@
 <div class="app-container">
     <aside class="sidebar">
         <img src="company-logo.png" alt="Company Logo" class="sidebar-logo">
-        
         <div class="control-group">
             <label>Search Hierarchy</label>
             <input type="text" id="searchInput" placeholder="Search any field..." oninput="applyFilter()">
@@ -216,7 +211,7 @@
 
         <div class="control-group"><label>Filter by Role</label><select id="roleFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
         <div class="control-group"><label>Filter by Location</label><select id="locFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
-        <div class="control-group"><label>Filter by Tag</label><select id="tagFilter" multiple size="8" onchange="applyFilter()"></select></div>
+        <div class="control-group"><label>Filter by Tag</label><select id="tagFilter" multiple size="10" onchange="handleTagSelection(this)"></select></div>
 
         <div class="control-group" style="margin-top: auto;">
             <label>Storage & Data</label>
@@ -239,8 +234,8 @@
 </div>
 
 <div class="floating-toolbar">
-    <button class="icon-btn" onclick="openSettingsModal()" title="Global Settings">
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    <button class="icon-btn" onclick="openSettingsModal()" title="Settings">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </button>
     <button class="icon-btn" onclick="expandAll()" title="Expand All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
     <button class="icon-btn" onclick="collapseAll()" title="Collapse All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
@@ -263,21 +258,20 @@
             <div><label>Engagement</label><select id="editEngagement"></select></div>
         </div>
         <div class="form-group">
-            <label>Skills & Tags</label>
+            <label>Assigned Tags</label>
             <select id="editTagsMulti" multiple size="6"></select>
         </div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top: 25px;">
             <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-            <button class="btn-primary" onclick="saveNodeChanges()">Apply Changes</button>
+            <button class="btn-primary" onclick="saveNodeChanges()">Update Record</button>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
-        <h2>Configuration</h2>
+        <h2>Global Configuration</h2>
         <div class="form-group"><label>Organization Name</label><input type="text" id="setOrgName"></div>
-        
         <div class="form-row">
             <div>
                 <label>Theme</label>
@@ -288,22 +282,20 @@
                 </button>
             </div>
             <div>
-                <label>Options</label>
+                <label>Node Options</label>
                 <div style="display:flex; flex-direction:column; gap:8px;">
-                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setShowTags"> Show Tags</label>
-                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setBWTags"> Monochrome Tags</label>
+                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setShowTags"> Show Skills & Tags</label>
+                    <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setBWTags"> Monochrome Mode</label>
                 </div>
             </div>
         </div>
-
         <div class="form-group"><label>Roles (CSV)</label><textarea id="setRoles" rows="2"></textarea></div>
         <div class="form-group"><label>Locations (CSV)</label><textarea id="setLocs" rows="2"></textarea></div>
         <div class="form-group"><label>Tags (CSV)</label><textarea id="setTags" rows="2"></textarea></div>
         <div class="form-group"><label>Engagement (CSV)</label><textarea id="setEng" rows="2"></textarea></div>
-
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top: 25px;">
             <button class="btn-secondary" onclick="closeSettingsModal()">Discard</button>
-            <button class="btn-primary" onclick="saveSettings()">Apply Global Changes</button>
+            <button class="btn-primary" onclick="saveSettings()">Save & Refresh</button>
         </div>
     </div>
 </div>
@@ -394,8 +386,8 @@
 
         const cardContent = `
             <div class="node-actions">
-                <button class="node-action-btn btn-add-child" onclick="addChild('${data.id}', event)"><svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
-                <button class="node-action-btn btn-del-node" onclick="deleteNode('${data.id}', event)"><svg viewBox="0 0 24 24"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
+                <button class="node-action-btn btn-add-child" onclick="addChild('${data.id}', event)"><svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg></button>
+                <button class="node-action-btn btn-del-node" onclick="deleteNode('${data.id}', event)"><svg viewBox="0 0 24 24" width="14" height="14" fill="white"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg></button>
             </div>
             <div class="info">
                 <div class="top-row">
@@ -434,15 +426,16 @@
         parentElement.appendChild(li);
     }
 
-    // --- RECURSIVE SEARCH ENGINE ---
+    // --- SEARCH & SMART FILTERS ---
     function applyFilter() {
-        // Tweak: Auto-expand everything before running filter
         expandAllSilently();
-
         const search = document.getElementById('searchInput').value.toUpperCase();
         const role = document.getElementById('roleFilter').value;
         const loc = document.getElementById('locFilter').value;
-        const selTags = Array.from(document.getElementById('tagFilter').selectedOptions).map(o => o.value);
+        const tagFilterEl = document.getElementById('tagFilter');
+        
+        let selTags = Array.from(tagFilterEl.selectedOptions).map(o => o.value);
+        if (selTags.includes("ALL")) selTags = [];
 
         const items = Array.from(document.querySelectorAll('.tree-item'));
         const nodeMap = {};
@@ -452,7 +445,8 @@
             const matchSearch = !search || li.dataset.searchText.includes(search);
             const matchRole = role === "ALL" || li.dataset.role === role;
             const matchLoc = loc === "ALL" || li.dataset.location === loc;
-            const matchTags = selTags.length === 0 || selTags.every(t => li.dataset.tags.includes(t));
+            const nodeTags = li.dataset.tags;
+            const matchTags = selTags.length === 0 || selTags.every(t => nodeTags.includes(t));
 
             nodeMap[id] = {
                 li: li,
@@ -481,12 +475,30 @@
         });
     }
 
+    function handleTagSelection(select) {
+        const options = Array.from(select.options);
+        const allSelected = options.find(o => o.value === "ALL" && o.selected);
+        
+        // If ALL is selected, deselect others
+        if (allSelected && select.dataset.lastAll !== "true") {
+            options.forEach(o => { if (o.value !== "ALL") o.selected = false; });
+            select.dataset.lastAll = "true";
+        } else if (!allSelected) {
+            select.dataset.lastAll = "false";
+        } else if (allSelected && options.some(o => o.selected && o.value !== "ALL")) {
+            // If others are selected while ALL is on, deselect ALL
+            allSelected.selected = false;
+            select.dataset.lastAll = "false";
+        }
+        applyFilter();
+    }
+
     function expandAllSilently() {
         document.querySelectorAll('ul.children-list').forEach(u => u.classList.remove('hidden'));
         document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '−');
     }
 
-    // --- CRUD ---
+    // --- ACTIONS ---
     function addChild(parentId, e) {
         e.stopPropagation();
         const res = findNodeAndParent(parentId, appData.tree);
@@ -506,7 +518,7 @@
         }
     }
 
-    // --- SETTINGS & UI ---
+    // --- SETTINGS & EDIT ---
     function saveSettings() {
         appData.title = document.getElementById('setOrgName').value;
         appData.settings.showTags = document.getElementById('setShowTags').checked;
@@ -551,6 +563,7 @@
         document.getElementById('setEng').value = appData.settings.engagements.join(', ');
         document.getElementById('settingsModal').classList.add('active');
     }
+
     function openEditModal(id) {
         const n = findNodeAndParent(id, appData.tree).node;
         document.getElementById('editNodeId').value = id;
@@ -568,8 +581,10 @@
         tagS.innerHTML = appData.settings.tags.map(t => `<option value="${t}" ${(n.tags||[]).includes(t) ? 'selected':''}>${t}</option>`).join('');
         document.getElementById('editModal').classList.add('active');
     }
+
     function closeModal() { document.getElementById('editModal').classList.remove('active'); }
     function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('active'); }
+    
     function populateSidebarFilters() {
         const fill = (id, list) => {
             const s = document.getElementById(id); const val = s.value;
@@ -578,11 +593,13 @@
         };
         fill('roleFilter', appData.settings.roles);
         fill('locFilter', appData.settings.locations);
-        const tf = document.getElementById('tagFilter'); const tval = Array.from(tf.selectedOptions).map(o=>o.value);
-        tf.innerHTML = appData.settings.tags.map(t => `<option value="${t.toUpperCase()}" ${tval.includes(t.toUpperCase())?'selected':''}>${t}</option>`).join('');
+        const tf = document.getElementById('tagFilter'); 
+        const tval = Array.from(tf.selectedOptions).map(o=>o.value);
+        tf.innerHTML = '<option value="ALL">Show All</option>' + appData.settings.tags.map(t => `<option value="${t.toUpperCase()}" ${tval.includes(t.toUpperCase())?'selected':''}>${t}</option>`).join('');
     }
+
     function triggerUpload() { document.getElementById('jsonFileInput').click(); }
-    function saveJson() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'})); a.download='hierarchy.json'; a.click(); }
+    function saveJson() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'})); a.download='org_hierarchy.json'; a.click(); }
     function importJson(i) { const r = new FileReader(); r.onload = (e) => { appData = JSON.parse(e.target.result); renderTree(); }; r.readAsText(i.files[0]); }
     function expandAll() { expandAllSilently(); }
     function collapseAll() { document.querySelectorAll('ul.children-list').forEach(u => u.classList.add('hidden')); document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '+'); }
