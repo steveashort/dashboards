@@ -756,7 +756,7 @@ export const TrackerManager = {
                 </td>`;
             
             labels.forEach((l, li) => {
-                const val = (s.values && s.values[li] !== undefined) ? s.values[li] : '';
+                const val = (s.values && s.values[li] !== undefined) ? s.values[li] : 0;
                 html += `<td style="padding:2px; border-bottom:1px solid #333;">
                     <input type="number" class="ts-val" data-s="${si}" data-r="${li}" value="${val}" style="width:100%; background:transparent; border:none; color:#fff; text-align:center;">
                 </td>`;
@@ -833,7 +833,16 @@ export const TrackerManager = {
                  sdIn.value = d.toISOString().split('T')[0];
              }
              
-             tcIn.value = parseInt(tcIn.value) + 1;
+             const newVal = parseInt(tcIn.value) + 1;
+             let exists = false;
+             for(let opt of tcIn.options) { if(parseInt(opt.value) === newVal) exists = true; }
+             if (!exists) {
+                 const opt = document.createElement('option');
+                 opt.value = newVal;
+                 opt.innerText = newVal;
+                 tcIn.appendChild(opt);
+             }
+             tcIn.value = newVal;
              this.renderTimeTable();
         }
     },
@@ -843,9 +852,19 @@ export const TrackerManager = {
         const count = parseInt(tcIn.value);
         
         if (count <= 1) return App.alert("Cannot remove the last date.");
+        
+        const newVal = count - 1;
+        let exists = false;
+        for(let opt of tcIn.options) { if(parseInt(opt.value) === newVal) exists = true; }
+        if (!exists) {
+             const opt = document.createElement('option');
+             opt.value = newVal;
+             opt.innerText = newVal;
+             tcIn.appendChild(opt);
+        }
 
         if (index === 0) {
-            tcIn.value = count - 1;
+            tcIn.value = newVal;
             this.renderTimeTable();
         } else if (index === count - 1) {
             const sdIn = getEl('tkStartDate');
@@ -860,7 +879,7 @@ export const TrackerManager = {
                  
                  sdIn.value = d.toISOString().split('T')[0];
             }
-            tcIn.value = count - 1;
+            tcIn.value = newVal;
             this.renderTimeTable();
         } else {
             App.alert("Please remove dates from the start or end of the series.");
