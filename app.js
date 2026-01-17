@@ -889,8 +889,16 @@ export const TrackerManager = {
             // Detect Unit from first data row date
             const firstRowDate = lines[1].split(/[,\t]+/)[0].trim();
             let unit = 'day';
-            if (/^\d{4}$/.test(firstRowDate)) unit = 'year';
-            else if (/^\d{4}-\d{2}$/.test(firstRowDate)) unit = 'month';
+            let dateRegex = /^\d{4}-\d{2}-\d{2}$/;
+            if (/^\d{4}$/.test(firstRowDate)) { unit = 'year'; dateRegex = /^\d{4}$/; }
+            else if (/^\d{4}-\d{2}$/.test(firstRowDate)) { unit = 'month'; dateRegex = /^\d{4}-\d{2}$/; }
+            else if (!dateRegex.test(firstRowDate)) return App.alert("First row date format unrecognized (use YYYY-MM-DD, YYYY-MM, or YYYY).");
+
+            // Validate consistency
+            for (let i = 1; i < lines.length; i++) {
+                const dateStr = lines[i].split(/[,\t]+/)[0].trim();
+                if (!dateRegex.test(dateStr)) return App.alert("Date format must be YYYY-MM-DD, YYYY-MM, or YYYY and must be consistent");
+            }
             
             // Update UI Radio
             const unitRad = document.querySelector(`input[name="tkTimeUnit"][value="${unit}"]`);
