@@ -289,7 +289,11 @@ export const renderBoard = () => {
                 const c2 = t.color2 || '#ff1744';
                 // c2 is Progress Colour, c1 is Target Colour
                 const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
-                visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
+                
+                const noteText = (t.notes || '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
+                const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(evt, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
+                
+                visualHTML = `<div class="pie-chart" style="background:${grad}" ${hoverEvents}><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
                 statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
             } else if (renderType === 'counter') {
                 visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
@@ -641,6 +645,9 @@ export const TrackerManager = {
             const div = getEl(`${x.toLowerCase()}Inputs`);
             if (div) div.style.display = (inputType === x.toLowerCase()) ? 'block' : 'none';
         });
+
+        const sizeCont = getEl('sizeContainer');
+        if(sizeCont) sizeCont.style.display = (type === 'gauge') ? 'none' : 'block';
 
         if (inputType === 'line') {
              this.renderTimeTable();
@@ -1203,14 +1210,17 @@ export const TrackerManager = {
             const mIn = getEl('tkMetric');
             const cIn = getEl('tkComp');
             const tIn = getEl('tkTotal');
+            const nIn = getEl('tkNotes'); // Capture Notes
             const m = mIn ? mIn.value : '';
             const c = cIn ? parseFloat(cIn.value) || 0 : 0;
             const t = tIn ? parseFloat(tIn.value) || 0 : 0;
-            if(t<=0) return App.alert("Total > 0 required");
-            if(c>t) return App.alert("Completed value cannot exceed Total value.");
+            if(t<=0) return App.alert("Target must be a positive number.");
+            if(c>t) return App.alert("Progress cannot exceed the Target.");
             newTracker.metric = m;
             newTracker.completed = c;
             newTracker.total = t;
+            newTracker.notes = nIn ? nIn.value : '';
+            newTracker.size = 'S'; // Force Small Size
             const pcIn = getEl('tkPieColor');
             newTracker.colorVal = pcIn ? pcIn.value : '#00e676'; 
             const pc2In = getEl('tkPieColor2');

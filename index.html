@@ -205,7 +205,7 @@
                         <label>Chart Title</label>
                         <input type="text" id="tkDesc">
                     </div>
-                    <div class="input-group" style="flex: 0 0 180px;">
+                    <div class="input-group" style="flex: 0 0 180px;" id="sizeContainer">
                         <label>Size</label>
                         <div id="tkSize" style="display:flex; gap:15px; margin-top:5px;">
                             <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="S"> S</label>
@@ -231,6 +231,10 @@
                             <label>Progress Colour</label>
                             <input type="color" id="tkPieColor2" value="#ff1744">
                         </div>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes (Hover info - Published View)</label>
+                        <textarea id="tkNotes" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
                     </div>
                 </div>
                 
