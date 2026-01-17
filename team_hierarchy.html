@@ -38,7 +38,7 @@
         }
 
         /* ==========================================================
-           2) PAGE LAYOUT & ROBUST SCROLLING
+           2) PAGE LAYOUT
            ========================================================== */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -106,7 +106,7 @@
             position: relative;
         }
 
-        /* High-Visibility Scrollbars */
+        /* Scrollbars */
         .main-content::-webkit-scrollbar { width: 14px; height: 14px; }
         .main-content::-webkit-scrollbar-track { background: var(--bg-color); }
         .main-content::-webkit-scrollbar-thumb { 
@@ -130,7 +130,8 @@
         .btn-secondary { background-color: #555; color: white; }
         .btn-publish { background-color: #8e44ad; color: white; }
 
-        .floating-toolbar { position: fixed; top: 90px; right: 30px; display: flex; gap: 12px; z-index: 500; }
+        /* Floating Toolbar */
+        .floating-toolbar { position: fixed; top: 90px; right: 30px; display: flex; flex-direction: column; gap: 12px; z-index: 500; }
         .icon-btn { width: 46px; height: 46px; border-radius: 50%; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-main); cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.4); }
 
         /* ==========================================================
@@ -180,7 +181,7 @@
         .hide-tags .tags-row { display: none !important; }
         
         .pill { display: inline-block; padding: 4px 10px; border-radius: 4px; font-size: 10px; font-weight: 800; color: white; text-transform: uppercase; }
-        .bw-tags .pill { background: #444 !important; border: 1px solid #666; color: #eee !important; }
+        .bw-tags .pill { background: #444 !important; border: 1px solid #666; }
 
         .toggle-btn { 
             position: absolute; left: -14px; top: 20px; width: 26px; height: 26px; 
@@ -192,39 +193,40 @@
 
         .matched { border: 2px solid #27ae60 !important; box-shadow: 0 0 15px rgba(39, 174, 96, 0.4) !important; }
 
-        /* READ-ONLY OVERRIDES */
-        .readonly-mode .node-actions, 
-        .readonly-mode .btn-group button:not(.btn-secondary),
-        .readonly-mode .icon-btn[title="Settings"] {
+        /* PUBLISHED MODE HIDING */
+        .readonly-mode .node-actions,
+        .readonly-mode .icon-btn[title="Settings"],
+        .readonly-mode #toolsSection {
             display: none !important;
         }
-        .readonly-mode .node-card { cursor: default; }
 
-        /* Modals */
+        /* Modal Settings */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 1000; }
         .modal-overlay.active { display: flex; }
         .modal { background: var(--sidebar-bg); padding: 35px; border-radius: 12px; width: 600px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--card-border); }
         .form-row { display: flex; gap: 20px; margin-bottom: 20px; }
         .form-row > div { flex: 1; }
         .toast-container { position: fixed; bottom: 25px; right: 25px; z-index: 3000; }
-        .toast { background: #333; color: white; padding: 14px 24px; border-radius: 4px; border-left: 5px solid var(--accent); margin-top: 12px; }
+        .toast { background: #333; color: white; padding: 14px 24px; border-radius: 4px; border-left: 4px solid var(--accent); margin-top: 12px; }
+        .hidden { display: none !important; }
     </style>
 </head>
 <body>
 
 <div class="app-container">
     <aside class="sidebar">
-        <img src="company-logo.png" alt="Company Logo" class="sidebar-logo">
+        <img src="company-logo.png" alt="Logo" class="sidebar-logo">
+        
         <div class="control-group">
             <label>Search Hierarchy</label>
-            <input type="text" id="searchInput" placeholder="Search any field..." oninput="applyFilter()">
+            <input type="text" id="searchInput" placeholder="Search..." oninput="applyFilter()">
         </div>
 
         <div class="control-group"><label>Filter by Role</label><select id="roleFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
         <div class="control-group"><label>Filter by Location</label><select id="locFilter" onchange="applyFilter()"><option value="ALL">Show All</option></select></div>
-        <div class="control-group"><label>Filter by Tag</label><select id="tagFilter" multiple size="10" onchange="handleTagSelection(this)"></select></div>
+        <div class="control-group"><label>Filter by Tag</label><select id="tagFilter" multiple size="8" onchange="handleTagSelection(this)"></select></div>
 
-        <div class="control-group" style="margin-top: auto;">
+        <div id="toolsSection" class="control-group" style="margin-top: auto;">
             <label>Hierarchy Tools</label>
             <input type="file" id="jsonFileInput" accept=".json" style="display: none;" onchange="importJson(this)">
             <div class="btn-group">
@@ -251,6 +253,11 @@
     </button>
     <button class="icon-btn" onclick="expandAll()" title="Expand All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
     <button class="icon-btn" onclick="collapseAll()" title="Collapse All"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="5" y1="12" x2="19" y2="12"></line></svg></button>
+    
+    <button class="icon-btn" onclick="toggleTheme()" title="Toggle Day/Night Mode">
+        <svg id="sunIcon" style="width:22px; height:22px; display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="moonIcon" style="width:22px; height:22px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
 </div>
 
 <div class="modal-overlay" id="editModal">
@@ -258,40 +265,32 @@
         <h2>Edit Individual</h2>
         <input type="hidden" id="editNodeId">
         <div class="form-row">
-            <div><label>Full Name</label><input type="text" id="editName"></div>
-            <div><label>Job Title</label><select id="editRole"></select></div>
+            <div><label>Name</label><input type="text" id="editName"></div>
+            <div><label>Role</label><select id="editRole"></select></div>
         </div>
         <div class="form-row">
-            <div><label>Email Address</label><input type="text" id="editEmail"></div>
-            <div><label>Phone Number</label><input type="text" id="editPhone"></div>
+            <div><label>Email</label><input type="text" id="editEmail"></div>
+            <div><label>Phone</label><input type="text" id="editPhone"></div>
         </div>
         <div class="form-row">
             <div><label>Location</label><select id="editLocation"></select></div>
             <div><label>Engagement</label><select id="editEngagement"></select></div>
         </div>
-        <div class="form-group"><label>Assigned Tags</label><select id="editTagsMulti" multiple size="6"></select></div>
+        <div class="form-group"><label>Tags (Select Multiple)</label><select id="editTagsMulti" multiple size="6"></select></div>
         <div style="display:flex; justify-content:flex-end; gap:12px; margin-top: 25px;">
             <button class="btn-secondary" onclick="closeModal()">Cancel</button>
-            <button class="btn-primary" onclick="saveNodeChanges()">Update Record</button>
+            <button class="btn-primary" onclick="saveNodeChanges()">Apply Changes</button>
         </div>
     </div>
 </div>
 
 <div class="modal-overlay" id="settingsModal">
     <div class="modal">
-        <h2>Global Configuration</h2>
-        <div class="form-group"><label>Organization Name</label><input type="text" id="setOrgName"></div>
+        <h2>System Configuration</h2>
+        <div class="form-group"><label>Org Name</label><input type="text" id="setOrgName"></div>
         <div class="form-row">
             <div>
-                <label>Theme</label>
-                <button id="themeToggleBtn" class="btn-secondary" onclick="toggleTheme()" style="width:100%; border: 1px solid var(--input-border);">
-                    <span id="themeBtnText">Night Mode</span>
-                    <svg id="sunIcon" style="width:20px; height:20px; display:none; margin-left: 10px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
-                    <svg id="moonIcon" style="width:20px; height:20px; margin-left: 10px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
-                </button>
-            </div>
-            <div>
-                <label>Options</label>
+                <label>Node Visibility</label>
                 <div style="display:flex; flex-direction:column; gap:8px;">
                     <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setShowTags"> Show Tags</label>
                     <label style="text-transform:none; font-size:13px; font-weight:normal;"><input type="checkbox" id="setBWTags"> Monochrome Tags</label>
@@ -330,7 +329,6 @@
     };
     // END_DATA_ANCHOR
 
-    // --- LOGIC UTILS ---
     function findNodeAndParent(id, currentNode, parent = null) {
         if (currentNode.id === id) return { node: currentNode, parent: parent };
         if (currentNode.children) {
@@ -348,13 +346,6 @@
         return `hsl(${Math.abs(hash) % 360}, 65%, 40%)`;
     }
 
-    function showToast(m) {
-        const t = document.createElement('div'); t.className='toast'; t.textContent=m;
-        document.getElementById('toastContainer').appendChild(t);
-        setTimeout(()=>t.remove(), 3000);
-    }
-
-    // --- RENDERING ---
     function renderTree() {
         if (appData.isReadOnly) document.body.classList.add('readonly-mode');
         
@@ -442,39 +433,31 @@
         parentElement.appendChild(li);
     }
 
-    // --- PUBLISH ENGINE ---
+    // --- PUBLISH TO READONLY ---
     function publishHierarchy() {
-        // Clone data and lock it
         let publishedData = JSON.parse(JSON.stringify(appData));
         publishedData.isReadOnly = true;
-        
         const fullSource = document.documentElement.outerHTML;
         const scriptStart = "// START_DATA_ANCHOR";
         const scriptEnd = "// END_DATA_ANCHOR";
-        
         const startIndex = fullSource.indexOf(scriptStart);
         const endIndex = fullSource.indexOf(scriptEnd) + scriptEnd.length;
-        
         const injectedScript = `${scriptStart}\n    let appData = ${JSON.stringify(publishedData, null, 4)};\n    ${scriptEnd}`;
-        
         const finalHtml = fullSource.substring(0, startIndex) + injectedScript + fullSource.substring(endIndex);
-        
         const blob = new Blob([finalHtml], { type: 'text/html' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = 'published_org_hierarchy.html';
+        a.download = 'published_org.html';
         a.click();
-        showToast("Published read-only version generated.");
     }
 
-    // --- FILTER ENGINE ---
+    // --- SEARCH & FILTER ---
     function applyFilter() {
         expandAllSilently();
         const search = document.getElementById('searchInput').value.toUpperCase();
         const role = document.getElementById('roleFilter').value;
         const loc = document.getElementById('locFilter').value;
         const tagFilterEl = document.getElementById('tagFilter');
-        
         let selTags = Array.from(tagFilterEl.selectedOptions).map(o => o.value);
         if (selTags.includes("ALL")) selTags = [];
 
@@ -486,14 +469,8 @@
             const matchSearch = !search || li.dataset.searchText.includes(search);
             const matchRole = role === "ALL" || li.dataset.role === role;
             const matchLoc = loc === "ALL" || li.dataset.location === loc;
-            const nodeTags = li.dataset.tags;
-            const matchTags = selTags.length === 0 || selTags.every(t => nodeTags.includes(t));
-
-            nodeMap[id] = {
-                li: li,
-                selfMatch: matchSearch && matchRole && matchLoc && matchTags,
-                visible: false
-            };
+            const matchTags = selTags.length === 0 || selTags.every(t => li.dataset.tags.includes(t));
+            nodeMap[id] = { li: li, selfMatch: matchSearch && matchRole && matchLoc && matchTags, visible: false };
         });
 
         function showPath(id) {
@@ -531,19 +508,21 @@
         applyFilter();
     }
 
-    function expandAllSilently() {
-        document.querySelectorAll('ul.children-list').forEach(u => u.classList.remove('hidden'));
-        document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '−');
+    function toggleTheme() {
+        appData.settings.theme = (appData.settings.theme === "dark") ? "light" : "dark";
+        const isDark = appData.settings.theme === "dark";
+        document.body.classList.toggle('light-theme', !isDark);
+        document.getElementById('sunIcon').style.display = isDark ? "none" : "block";
+        document.getElementById('moonIcon').style.display = isDark ? "block" : "none";
     }
 
-    // --- ACTIONS ---
     function addChild(parentId, e) {
         if (appData.isReadOnly) return;
         e.stopPropagation();
         const res = findNodeAndParent(parentId, appData.tree);
         const newId = 'n' + Date.now();
         if(!res.node.children) res.node.children = [];
-        res.node.children.push({ id: newId, name: "New Person", role: appData.settings.roles[0], children: [] });
+        res.node.children.push({ id: newId, name: "New Person", role: appData.settings.roles[0], location: appData.settings.locations[0], children: [] });
         renderTree();
         openEditModal(newId);
     }
@@ -558,41 +537,6 @@
         }
     }
 
-    // --- SETTINGS & EDIT ---
-    function saveSettings() {
-        appData.title = document.getElementById('setOrgName').value;
-        appData.settings.showTags = document.getElementById('setShowTags').checked;
-        appData.settings.bwTags = document.getElementById('setBWTags').checked;
-        const dedup = (id) => [...new Set(document.getElementById(id).value.split(',').map(s => s.trim()).filter(s => s))];
-        appData.settings.roles = dedup('setRoles');
-        appData.settings.locations = dedup('setLocs');
-        appData.settings.tags = dedup('setTags');
-        appData.settings.engagements = dedup('setEng');
-        renderTree(); closeSettingsModal();
-    }
-
-    function saveNodeChanges() {
-        const id = document.getElementById('editNodeId').value;
-        const n = findNodeAndParent(id, appData.tree).node;
-        n.name = document.getElementById('editName').value;
-        n.email = document.getElementById('editEmail').value;
-        n.phone = document.getElementById('editPhone').value;
-        n.role = document.getElementById('editRole').value;
-        n.location = document.getElementById('editLocation').value;
-        n.engagement = document.getElementById('editEngagement').value;
-        n.tags = Array.from(document.getElementById('editTagsMulti').selectedOptions).map(o => o.value);
-        renderTree(); closeModal();
-    }
-
-    function toggleTheme() {
-        appData.settings.theme = (appData.settings.theme === "dark") ? "light" : "dark";
-        const isDark = appData.settings.theme === "dark";
-        document.body.classList.toggle('light-theme', !isDark);
-        document.getElementById('themeBtnText').textContent = isDark ? "Night Mode" : "Day Mode";
-        document.getElementById('sunIcon').style.display = isDark ? "none" : "block";
-        document.getElementById('moonIcon').style.display = isDark ? "block" : "none";
-    }
-
     function openSettingsModal() {
         document.getElementById('setOrgName').value = appData.title;
         document.getElementById('setShowTags').checked = appData.settings.showTags;
@@ -602,6 +546,19 @@
         document.getElementById('setTags').value = appData.settings.tags.join(', ');
         document.getElementById('setEng').value = appData.settings.engagements.join(', ');
         document.getElementById('settingsModal').classList.add('active');
+    }
+
+    function saveSettings() {
+        appData.title = document.getElementById('setOrgName').value;
+        appData.settings.showTags = document.getElementById('setShowTags').checked;
+        appData.settings.bwTags = document.getElementById('setBWTags').checked;
+        const dedup = (id) => [...new Set(document.getElementById(id).value.split(',').map(s => s.trim()).filter(s => s))];
+        appData.settings.roles = dedup('setRoles');
+        appData.settings.locations = dedup('setLocs');
+        appData.settings.tags = dedup('setTags');
+        appData.settings.engagements = dedup('setEng');
+        renderTree();
+        closeSettingsModal();
     }
 
     function openEditModal(id) {
@@ -623,9 +580,21 @@
         document.getElementById('editModal').classList.add('active');
     }
 
+    function saveNodeChanges() {
+        const id = document.getElementById('editNodeId').value;
+        const n = findNodeAndParent(id, appData.tree).node;
+        n.name = document.getElementById('editName').value;
+        n.email = document.getElementById('editEmail').value;
+        n.phone = document.getElementById('editPhone').value;
+        n.role = document.getElementById('editRole').value;
+        n.location = document.getElementById('editLocation').value;
+        n.engagement = document.getElementById('editEngagement').value;
+        n.tags = Array.from(document.getElementById('editTagsMulti').selectedOptions).map(o => o.value);
+        renderTree(); closeModal();
+    }
+
     function closeModal() { document.getElementById('editModal').classList.remove('active'); }
     function closeSettingsModal() { document.getElementById('settingsModal').classList.remove('active'); }
-    
     function populateSidebarFilters() {
         const fill = (id, list) => {
             const s = document.getElementById(id); const val = s.value;
@@ -638,10 +607,10 @@
         const tval = Array.from(tf.selectedOptions).map(o=>o.value);
         tf.innerHTML = '<option value="ALL">Show All</option>' + appData.settings.tags.map(t => `<option value="${t.toUpperCase()}" ${tval.includes(t.toUpperCase())?'selected':''}>${t}</option>`).join('');
     }
-
     function triggerUpload() { document.getElementById('jsonFileInput').click(); }
-    function saveJson() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'})); a.download='org_hierarchy.json'; a.click(); }
+    function saveJson() { const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([JSON.stringify(appData, null, 2)], {type:'application/json'})); a.download='hierarchy.json'; a.click(); }
     function importJson(i) { const r = new FileReader(); r.onload = (e) => { appData = JSON.parse(e.target.result); renderTree(); }; r.readAsText(i.files[0]); }
+    function expandAllSilently() { document.querySelectorAll('ul.children-list').forEach(u => u.classList.remove('hidden')); document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '−'); }
     function expandAll() { expandAllSilently(); }
     function collapseAll() { document.querySelectorAll('ul.children-list').forEach(u => u.classList.add('hidden')); document.querySelectorAll('.toggle-btn').forEach(t => t.textContent = '+'); }
 
