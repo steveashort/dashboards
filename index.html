@@ -31,7 +31,6 @@
             <button class="btn" onclick="DataSaver.saveData()">Save JSON</button>
             <button class="btn" onclick="DataExporter.exportCSV()">Export CSV</button>
             <button class="btn" onclick="App.togglePublishMode()">Publish View</button>
-            <button class="btn btn-primary" onclick="UserManager.openUserModal()">+ Add User</button>
         </div>
     </header>
 
@@ -64,6 +63,7 @@
 
         <div class="section-header">
             <h3 style="color:var(--accent); font-weight:300;">Team Members</h3>
+            <button class="btn btn-primary" onclick="UserManager.openUserModal()">+ Add User</button>
         </div>
         <div class="team-grid" id="teamGrid"></div>
     </div>
@@ -281,7 +281,7 @@
                     <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end; display: flex; gap: 2rem;">
                         <div class="input-group">
                             <label>End Date</label>
-                            <input type="date" id="tkStartDate" onchange="TrackerManager.renderTimeTable()" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                            <input type="date" id="tkStartDate" onchange="TrackerManager.handleEndDateChange(this)" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
                         </div>
                         <div class="input-group">
                             <label>Time Unit</label>
@@ -308,7 +308,10 @@
                         </div>
                     </div>
                     <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-top: 1rem;">
-                        <label>Import Data from CSV</label>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <label style="margin:0;">Import / Export Data</label>
+                            <button class="btn btn-sm" onclick="TrackerManager.exportTimeSeriesCSV()">Export Table to CSV</button>
+                        </div>
                         <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
                         <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
                     </div>

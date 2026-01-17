@@ -541,7 +541,10 @@ export const TrackerManager = {
              const defDate = monday.toISOString().split('T')[0];
              
              const sdIn = getEl('tkStartDate');
-             if (sdIn) sdIn.value = tracker ? (tracker.startDate || defDate) : defDate;
+             if (sdIn) {
+                 sdIn.value = tracker ? (tracker.startDate || defDate) : defDate;
+                 sdIn.dataset.prev = sdIn.value;
+             }
              
              const lyIn = getEl('tkLineYLabel');
              if (lyIn) lyIn.value = tracker ? (tracker.yLabel || '') : '';
@@ -827,6 +830,68 @@ export const TrackerManager = {
         this.renderTimeTable(series);
     },
 
+    handleEndDateChange(input) {
+        const series = this.scrapeTimeSeries();
+        let hasData = false;
+        series.forEach(s => {
+            if (s.values.some(v => v !== 0)) hasData = true;
+        });
+
+        const newVal = input.value;
+        const prevVal = input.dataset.prev;
+
+        if (!hasData) {
+            input.dataset.prev = newVal;
+            this.renderTimeTable();
+            return;
+        }
+
+        input.value = prevVal; 
+
+        App.confirm("Changing the End Date will clear existing manual data. Proceed?", () => {
+            input.value = newVal;
+            input.dataset.prev = newVal;
+            const clearedSeries = series.map(s => ({ name: s.name, color: s.color, values: [] }));
+            this.renderTimeTable(clearedSeries);
+        });
+    },
+
+    exportTimeSeriesCSV() {
+        const series = this.scrapeTimeSeries();
+        if (series.length === 0) return App.alert("No data to export.");
+        
+        const container = getEl('lineTableContainer');
+        const labels = JSON.parse(container.dataset.labels || '[]');
+        
+        let csv = "Date";
+        series.forEach(s => csv += `,${s.name}`);
+        csv += "\n";
+        
+        labels.forEach((date, dateIdx) => {
+            csv += `${date}`;
+            series.forEach(s => {
+                const val = (s.values && s.values[dateIdx] !== undefined) ? s.values[dateIdx] : 0;
+                csv += `,${val}`;
+            });
+            csv += "\n";
+        });
+        
+        const title = getEl('tkDesc').value || "chart_data";
+        const filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".csv";
+        
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    },
+
     deleteSelectedSeries() {
         const container = getEl('lineTableContainer');
         if (!container) return;
@@ -857,6 +922,7 @@ export const TrackerManager = {
              else d.setDate(d.getDate() + 1);
              
              sdIn.value = d.toISOString().split('T')[0];
+             sdIn.dataset.prev = sdIn.value;
              
              series.forEach(s => {
                  s.values.shift(); 
@@ -877,7 +943,6 @@ export const TrackerManager = {
         if (index === 0) {
             series.forEach(s => s.values.shift());
             
-            // Ensure option exists for lower count
             let exists = false;
             for(let opt of tcIn.options) { if(parseInt(opt.value) === count - 1) exists = true; }
             if (!exists) {
@@ -900,9 +965,9 @@ export const TrackerManager = {
                  else if (unit === 'month') d.setMonth(d.getMonth() - 1);
                  else d.setDate(d.getDate() - 1);
                  sdIn.value = d.toISOString().split('T')[0];
+                 sdIn.dataset.prev = sdIn.value;
             }
             
-            // Ensure option exists
             let exists = false;
             for(let opt of tcIn.options) { if(parseInt(opt.value) === count - 1) exists = true; }
             if (!exists) {
