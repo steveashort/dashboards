@@ -340,22 +340,24 @@ export const Visuals = {
             paths += `<path d="${d}" fill="${colors[i % colors.length]}" stroke="#1e1e1e" stroke-width="2" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"/>`;
 
             // Callout
-            const radMid = (midAngle - 90) * Math.PI / 180;
-            const lx1 = cx + r * Math.cos(radMid);
-            const ly1 = cy + r * Math.sin(radMid);
-            const lx2 = cx + rEnd * Math.cos(radMid);
-            const ly2 = cy + rEnd * Math.sin(radMid);
+            if (pct > 0.05) {
+                const radMid = (midAngle - 90) * Math.PI / 180;
+                const lx1 = cx + r * Math.cos(radMid);
+                const ly1 = cy + r * Math.sin(radMid);
+                const lx2 = cx + rEnd * Math.cos(radMid);
+                const ly2 = cy + rEnd * Math.sin(radMid);
 
-            const isLeft = midAngle > 180;
-            const lx3 = isLeft ? lx2 - 30 : lx2 + 30;
+                const isLeft = midAngle > 180;
+                const lx3 = isLeft ? lx2 - 30 : lx2 + 30;
 
-            annotations += `<polyline points="${lx1},${ly1} ${lx2},${ly2} ${lx3},${ly2}" fill="none" stroke="${colors[i % colors.length]}" stroke-width="1.5"/>`;
+                annotations += `<polyline points="${lx1},${ly1} ${lx2},${ly2} ${lx3},${ly2}" fill="none" stroke="${colors[i % colors.length]}" stroke-width="1.5"/>`;
 
-            const tx = isLeft ? lx3 - 8 : lx3 + 8;
-            const anchor = isLeft ? 'end' : 'start';
+                const tx = isLeft ? lx3 - 8 : lx3 + 8;
+                const anchor = isLeft ? 'end' : 'start';
 
-            annotations += `<text x="${tx}" y="${ly2}" dy="4" text-anchor="${anchor}" fill="#eee" font-size="14" font-weight="bold">${labels[i]}</text>`;
-            annotations += `<text x="${tx}" y="${ly2 + 18}" dy="4" text-anchor="${anchor}" fill="#aaa" font-size="12">${val} (${Math.round(pct * 100)}%)</text>`;
+                annotations += `<text x="${tx}" y="${ly2}" dy="4" text-anchor="${anchor}" fill="#eee" font-size="14" font-weight="bold">${labels[i]}</text>`;
+                annotations += `<text x="${tx}" y="${ly2 + 18}" dy="4" text-anchor="${anchor}" fill="#aaa" font-size="12">${val} (${Math.round(pct * 100)}%)</text>`;
+            }
 
             startAngle = endAngle;
         });
