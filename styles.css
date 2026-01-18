@@ -317,9 +317,9 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 .w-pill:hover { opacity: 0.8; }
 .w-pill.selected { opacity: 1; border-color: #fff; box-shadow: 0 0 5px rgba(255,255,255,0.2); }
 
-.wp-l { background-color: var(--g-amber); } /* Yellow */
-.wp-n { background-color: var(--g-green); } /* Green */
-.wp-r { background-color: var(--g-red); color: #fff; }   /* Red */
+.wp-l { background-color: var(--g-red); color: #fff; } /* Low = Red */
+.wp-n { background-color: var(--g-amber); color: #000; } /* Med = Amber */
+.wp-r { background-color: var(--g-green); color: #000; }   /* High = Green */
 .wp-x { background-color: var(--accent); }  /* Purple */
 
 .status-select-col { display: flex; flex-direction: column; gap: 5px; width: 30%; }
@@ -328,9 +328,9 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
     font-weight: bold; font-size: 0.8rem; opacity: 0.5; border: 1px solid #444; color: #000;
 }
 .status-option.selected { opacity: 1; border-color: #fff; }
-.so-busy { background-color: var(--g-green); }
-.so-under { background-color: var(--g-amber); }
-.so-over { background-color: var(--g-red); color: #fff; }
+.so-busy { background-color: var(--g-amber); color: #000; }
+.so-under { background-color: var(--g-red); color: #fff; }
+.so-over { background-color: var(--g-green); color: #000; }
 .so-absent { background-color: var(--accent); color: #fff; opacity: 0.7; }
 
 .daily-mini-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 15px; padding: 0 10px; }
@@ -345,9 +345,9 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 }
 
 /* Fix val-L rendering if used in pills or text */
-.val-L { color: #000 !important; background-color: var(--g-amber); padding: 2px 5px; border-radius: 4px; }
-.val-N { color: #000 !important; background-color: var(--g-green); padding: 2px 5px; border-radius: 4px; }
-.val-R { color: #fff !important; background-color: var(--g-red); padding: 2px 5px; border-radius: 4px; }
+.val-L { color: #fff !important; background-color: var(--g-red); padding: 2px 5px; border-radius: 4px; }
+.val-N { color: #000 !important; background-color: var(--g-amber); padding: 2px 5px; border-radius: 4px; }
+.val-R { color: #000 !important; background-color: var(--g-green); padding: 2px 5px; border-radius: 4px; }
 .val-X { color: #fff !important; background-color: var(--accent); opacity: 0.7; font-weight: normal; padding: 2px 5px; border-radius: 4px; }
 
 /* 3-Column User Card Layout */
@@ -368,9 +368,9 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 .card-task-li { margin-bottom: 0.8rem; display: flex; gap: 10px; align-items: flex-start; line-height: 1.4; }
 .card-task-li input[type="checkbox"] { margin-top: 4px; accent-color: var(--accent); transform: scale(1.2); }
 
-.status-under { background-color: var(--g-amber); color: #000; }
-.status-busy { background-color: var(--g-green); color: #000; }
-.status-over { background-color: var(--g-red); color: #fff; }
+.status-under { background-color: var(--g-red); color: #fff; }
+.status-busy { background-color: var(--g-amber); color: #000; }
+.status-over { background-color: var(--g-green); color: #000; }
 .status-absent { background-color: var(--accent); color: #fff; opacity: 0.8; }
 
 .note-render-container {
