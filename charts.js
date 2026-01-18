@@ -313,7 +313,7 @@ export const Visuals = {
         const w = 800;
         const h = 500;
         const cx = w / 2;
-        const cy = h / 2;
+        const cy = 200;
         const r = 95;
         const thickness = 35;
         const rLabel = r + 25;
@@ -376,7 +376,7 @@ export const Visuals = {
 
         // Legend
         let legHTML = '';
-        const legY = h - 30;
+        const legY = h - 50;
         const legItemW = 100;
         const maxCols = Math.floor(w / legItemW);
         const rows = Math.ceil(labels.length / maxCols);
