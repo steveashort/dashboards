@@ -255,12 +255,26 @@ export const renderBoard = () => {
             }
 
             card.onclick = () => {
+                 console.log("Card clicked. Type:", t.type, "Publishing:", document.body.classList.contains('publishing'));
                  if (document.body.classList.contains('publishing')) {
-                     if (t.type !== 'gauge' && t.type !== 'waffle' && t.type !== 'rag' && t.type !== 'counter') ZoomManager.openChartModal(i);
+                     // Zoom requested for: Time Series (line/bar), Note Tracker (note), Date Tracker (rag/ryg), Schedule Tracker (waffle)
+                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle'].includes(t.type);
+                     if (canZoom) ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
                  }
             };
+
+            const noteText = (t.notes || t.content || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
+            if (noteText) {
+                card.onmousemove = (e) => {
+                    if (!document.body.classList.contains('publishing')) return;
+                    // Prevent overwriting specific tooltips on chart points/bars
+                    if (e.target.closest('circle, rect')) return;
+                    Visuals.showTooltip(e, noteText);
+                };
+                card.onmouseout = () => Visuals.hideTooltip();
+            }
 
             let visualHTML = '';
             let statsHTML = '';
@@ -292,44 +306,28 @@ export const renderBoard = () => {
                 // c2 is Progress Colour, c1 is Target Colour
                 const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
                 
-                const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
-                const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
-                
-                visualHTML = `<div class="pie-chart" style="background:${grad}" ${hoverEvents}><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
+                visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
                 statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
             } else if (renderType === 'counter') {
-                const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
-                const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
-                
-                visualHTML = `<div class="counter-display" style="color:${t.color1}" ${hoverEvents}>${t.value}</div>`;
+                visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
                 statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
             } else if (renderType === 'rag' || renderType === 'ryg') {
                 const status = t.status || 'grey';
-                
-                const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
-                const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
-                
                 const iconHTML = Visuals.createRAGIconHTML(status);
-                visualHTML = `<div class="ryg-icon-wrapper" ${hoverEvents}>${iconHTML}</div>`;
+                visualHTML = `<div class="ryg-icon-wrapper">${iconHTML}</div>`;
                 statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
             } else if (renderType === 'waffle') {
-                const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
-                const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
-                
                 const html = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969');
-                visualHTML = `<div ${hoverEvents} style="width:100%;">${html}</div>`;
+                visualHTML = `<div style="width:100%;">${html}</div>`;
                 statsHTML = `<div class="tracker-stats">${t.active} / ${t.total} ${t.metric || ''}</div>`;
             } else if (renderType === 'note') {
                 visualHTML = `<div class="note-render-container">${parseMarkdown(t.content || '')}</div>`;
                 statsHTML = '';
             } else if (renderType === 'donut') {
-                const noteText = (t.notes || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
-                const hoverEvents = noteText ? `onmousemove="if(document.body.classList.contains('publishing')) Visuals.showTooltip(event, '${noteText}')" onmouseout="Visuals.hideTooltip()"` : '';
-                
                 const labels = (t.dataPoints || []).map(dp => dp.label);
                 const values = (t.dataPoints || []).map(dp => dp.value);
                 const html = Visuals.createDonutChartSVG(labels, values, t.size);
-                visualHTML = `<div ${hoverEvents} style="width:100%;">${html}</div>`;
+                visualHTML = `<div style="width:100%;">${html}</div>`;
                 statsHTML = '';
             }
 
@@ -428,6 +426,7 @@ export const renderBoard = () => {
 
 export const ZoomManager = {
     openChartModal: (index) => {
+        console.log("ZoomManager.openChartModal called for index:", index);
         const t = State.trackers[index];
         if(!t) return;
 
@@ -473,7 +472,18 @@ export const ZoomManager = {
         const bodyEl = getEl('zoomBody');
         if (bodyEl) {
             bodyEl.className = 'zoom-body-chart';
-            bodyEl.innerHTML = `<div style="width:100%; height:100%;">${content}</div>`;
+            let html = `<div style="width:100%; height:100%; display:flex; flex-direction:column;">`;
+            html += `<div style="flex: 1; min-height: 300px; display:flex; align-items:center; justify-content:center;">${content}</div>`;
+            
+            if (t.notes || t.content) {
+                const notesHtml = parseMarkdown(t.notes || t.content || '');
+                html += `<div class="zoom-notes-section" style="margin-top:20px; padding:20px; border-top:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px;">
+                            <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
+                            <div style="font-size:1.1rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
+                         </div>`;
+            }
+            html += `</div>`;
+            bodyEl.innerHTML = html;
         }
         ModalManager.openModal('zoomModal');
     }
