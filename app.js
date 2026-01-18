@@ -437,13 +437,14 @@ export const renderBoard = () => {
                 (loadArr||[]).forEach(v => {
                     if(v === 'L') { score += 1; count++; } 
                     else if(v === 'N') { score += 2; count++; } 
-                    else if(v === 'R') { score += 3; count++; } 
+                    else if(v === 'R') { score += 3; count++; }
+                    else { count++; } // Absent counts as 0, but increments count
                 });
                 const avg = count === 0 ? 0 : score / count;
-                let text = 'Medium'; let cls = 'status-busy';
-                if(avg > 0 && avg < 1.6) { text = 'Low'; cls = 'status-under'; } 
-                else if(avg > 2.4) { text = 'High'; cls = 'status-over'; } 
-                else if(avg === 0) { text = 'None'; cls = 'status-under'; } 
+                let text = 'Medium'; let cls = 'status-busy'; // Default Amber
+                if(avg > 2.4) { text = 'High'; cls = 'status-over'; } // Green
+                else if(avg <= 1.4) { text = 'Low'; cls = 'status-under'; } // Red
+                
                 return `<div class="status-pill ${cls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${text}</div>`;
             };
 
@@ -474,9 +475,6 @@ export const renderBoard = () => {
             }).join('');
 
             c.innerHTML = `<div class="member-header">${m.name}</div>`;
-            if (m.notes) {
-                c.innerHTML += `<div style="padding: 0 1.5rem; font-size: 0.75rem; color: #aaa; font-style: italic; margin-top: 5px;">${m.notes}</div>`;
-            }
             
             let content = `<div class="member-card-content">`;
             content += `<div class="card-col"><div class="col-header">Last Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().last.split(' - ')[0]})</span></div>`;
@@ -497,6 +495,11 @@ export const renderBoard = () => {
             content += `</div>`;
 
             content += `</div>`;
+            
+            if (m.notes) {
+                content += `<div style="padding: 10px 1.5rem; border-top: 1px solid #333; font-size: 0.85rem; color: #ccc;">${m.notes}</div>`;
+            }
+            
             c.innerHTML += content;
 
             grid.appendChild(c);

@@ -389,3 +389,12 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 .zoomed-content ul { list-style: none; font-size: 1.5rem; line-height: 2; padding-left: 1rem; }
 .zoomed-content li { margin-bottom: 1rem; position: relative; padding-left: 2rem; }
 .zoomed-content li::before { content: "★"; position: absolute; left: 0; color: gold; font-size: 1.5rem; line-height: 2; }
+
+@keyframes flash {
+    0% { opacity: 1; filter: drop-shadow(0 0 5px #00FFFF); }
+    50% { opacity: 0.5; filter: none; }
+    100% { opacity: 1; filter: drop-shadow(0 0 5px #00FFFF); }
+}
+.flash-icon {
+    animation: flash 1s infinite;
+}

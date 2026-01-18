@@ -452,15 +452,17 @@ export const Visuals = {
             combined.forEach((val, d) => {
                 const x = nameColWidth + (d * colWidth);
                 if (val === 'X') {
-                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#bb86fc" rx="3" opacity="0.8"><title>Absent</title></rect>`;
+                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#bb86fc" rx="4" opacity="0.8"><title>Absent</title></rect>`;
                 } else if (val === 'L') {
-                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#ffb300" rx="3" opacity="0.6"><title>Low Load</title></rect>`;
+                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#ff1744" rx="12" opacity="0.8"><title>Low Availability</title></rect>`;
+                } else if (val === 'N') {
+                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#ffb300" rx="12" opacity="0.8"><title>Medium Availability</title></rect>`;
                 } else if (val === 'R') {
-                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#ff1744" rx="3" opacity="0.6"><title>High Load</title></rect>`;
+                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#00e676" rx="12" opacity="0.8"><title>High Availability</title></rect>`;
                 }
                 
                 if (combinedOnCall[d]) {
-                    svg += `<text x="${x + colWidth/2}" y="${y + rowHeight/2 + 5}" text-anchor="middle" font-size="14" fill="#00FFFF" style="font-weight:bold;">☎</text>`;
+                    svg += `<text x="${x + colWidth - 12}" y="${y + rowHeight - 5}" text-anchor="middle" font-size="14" fill="#00FFFF" style="font-weight:bold;" class="flash-icon">☎</text>`;
                 }
             });
             
