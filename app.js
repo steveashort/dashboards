@@ -1643,6 +1643,8 @@ export const UserManager = {
         thisOnCall.forEach((v, i) => { const el = getEl('nwOc'+i); if(el) el.checked = v; });
         nextOnCall.forEach((v, i) => { const el = getEl('fwOc'+i); if(el) el.checked = v; });
 
+        getEl('mNotes').value = m.notes || '';
+
         getEl('deleteBtn').style.display = isEdit ? 'block' : 'none';
         ModalManager.openModal('userModal');
     },
@@ -1688,6 +1690,7 @@ export const UserManager = {
 
         const member = {
             name,
+            notes: getEl('mNotes').value.trim(),
             lastWeek: {
                 status: getEl('lwStatus').value,
                 onCall: (idx > -1 && State.members[idx].lastWeek?.onCall) ? State.members[idx].lastWeek.onCall : [],

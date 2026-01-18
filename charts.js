@@ -434,6 +434,12 @@ export const Visuals = {
             (m.thisWeek?.tasks || []).forEach(t => { if(t.text) tooltip += `• ${t.text}<br>`; });
             tooltip += `<br><u>Next Week Plans:</u><br>`;
             (m.nextWeek?.tasks || []).forEach(t => { if(t.text) tooltip += `• ${t.text}<br>`; });
+            
+            if (m.notes) {
+                tooltip += `<br><u>Notes:</u><br>${m.notes}<br>`;
+            }
+            
+            // Escape quotes for attribute
             const safeTooltip = tooltip.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
 
             // Name

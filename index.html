@@ -135,7 +135,6 @@
                             <input type="text" class="mb-2" id="lwTask3" style="margin-top:5px" placeholder="3. Bug fix...">
                         </div>
                         <div class="input-group">
-                            <label>Utilisation</label>
                             <input type="hidden" id="lwStatus">
                             <div class="status-select-col">
                                 <div class="status-option so-under" onclick="UserManager.setStatus('under')">Low</div>
@@ -154,7 +153,7 @@
                             <input type="text" class="mb-2" id="nwTask3" style="margin-top:5px" placeholder="3. Code Review...">
                         </div>
                         <div class="input-group">
-                            <label>Workload</label>
+                            <label>Availability <span style="font-size:0.7rem; font-weight:normal; color:#888;">(Checkbox = On-Call)</span></label>
                             <div class="load-select-row">
                                 <div class="ls-box"><label>M</label><input type="hidden" id="nw0" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(0,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(0,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(0,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(0,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc0" title="On Call"></div></div>
                                 <div class="ls-box"><label>T</label><input type="hidden" id="nw1" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(1,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(1,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(1,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(1,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc1" title="On Call"></div></div>
@@ -175,7 +174,7 @@
                             <input type="text" class="mb-2" id="fwTask3" style="margin-top:5px" placeholder="3. Future Task...">
                         </div>
                         <div class="input-group">
-                            <label>Workload</label>
+                            <label>Availability <span style="font-size:0.7rem; font-weight:normal; color:#888;">(Checkbox = On-Call)</span></label>
                             <div class="load-select-row">
                                 <div class="ls-box"><label>M</label><input type="hidden" id="fw0" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(0,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(0,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(0,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(0,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc0" title="On Call"></div></div>
                                 <div class="ls-box"><label>T</label><input type="hidden" id="fw1" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(1,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(1,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(1,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(1,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc1" title="On Call"></div></div>
@@ -187,6 +186,11 @@
                             </div>
                         </div>
                     </div>
+                </div>
+                <div class="input-group" style="margin-top: 1rem;">
+                    <label>Notes (Max 200 chars)</label>
+                    <textarea id="mNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="General notes, key updates..."></textarea>
+                </div>
                 </div>
             </div>
             <div class="modal-footer">
