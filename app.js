@@ -256,7 +256,7 @@ export const renderBoard = () => {
 
             card.onclick = () => {
                  if (document.body.classList.contains('publishing')) {
-                     if (t.type !== 'gauge' && t.type !== 'waffle' && t.type !== 'rag' && t.type !== 'counter' && t.type !== 'donut') ZoomManager.openChartModal(i);
+                     if (t.type !== 'gauge' && t.type !== 'waffle' && t.type !== 'rag' && t.type !== 'counter') ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
                  }
@@ -464,6 +464,10 @@ export const ZoomManager = {
             // c2 is Progress Colour, c1 is Target Colour
             const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
             content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
+        } else if (renderType === 'donut') {
+            const labels = (t.dataPoints || []).map(dp => dp.label);
+            const values = (t.dataPoints || []).map(dp => dp.value);
+            content = Visuals.createDonutChartWithCalloutsSVG(labels, values);
         }
 
         const bodyEl = getEl('zoomBody');

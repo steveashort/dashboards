@@ -290,5 +290,73 @@ export const Visuals = {
         });
 
         return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${paths}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/></svg>`;
+    },
+
+    createDonutChartWithCalloutsSVG: (labels, values) => {
+        const w = 800;
+        const h = 500;
+        const cx = w / 2;
+        const cy = h / 2;
+        const r = 120;
+        const thickness = 45;
+        const rLabel = r + 30;
+        const rEnd = r + 80;
+
+        const total = values.reduce((a, b) => a + b, 0);
+        if (total === 0) return `<svg width="${w}" height="${h}"><text x="${cx}" y="${cy}" text-anchor="middle" fill="#aaa">No Data</text></svg>`;
+
+        let startAngle = 0;
+        let paths = '';
+        let annotations = '';
+        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#03a9f4', '#ffeb3b'];
+
+        values.forEach((v, i) => {
+            const val = v;
+            const pct = val / total;
+            const angle = pct * 360;
+            const endAngle = startAngle + angle;
+            const midAngle = startAngle + (angle / 2);
+
+            const radStart = (startAngle - 90) * Math.PI / 180;
+            const radEnd = (endAngle - 90) * Math.PI / 180;
+
+            const x1 = cx + r * Math.cos(radStart);
+            const y1 = cy + r * Math.sin(radStart);
+            const x2 = cx + r * Math.cos(radEnd);
+            const y2 = cy + r * Math.sin(radEnd);
+
+            const ix1 = cx + (r - thickness) * Math.cos(radStart);
+            const iy1 = cy + (r - thickness) * Math.sin(radStart);
+            const ix2 = cx + (r - thickness) * Math.cos(radEnd);
+            const iy2 = cy + (r - thickness) * Math.sin(radEnd);
+
+            const largeArc = angle > 180 ? 1 : 0;
+
+            const d = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${r - thickness} ${r - thickness} 0 ${largeArc} 0 ${ix1} ${iy1} Z`;
+
+            paths += `<path d="${d}" fill="${colors[i % colors.length]}" stroke="#1e1e1e" stroke-width="2"/>`;
+
+            // Callout
+            const radMid = (midAngle - 90) * Math.PI / 180;
+            const lx1 = cx + r * Math.cos(radMid);
+            const ly1 = cy + r * Math.sin(radMid);
+            const lx2 = cx + rEnd * Math.cos(radMid);
+            const ly2 = cy + rEnd * Math.sin(radMid);
+
+            const isLeft = midAngle > 180;
+            const lx3 = isLeft ? lx2 - 30 : lx2 + 30;
+
+            annotations += `<polyline points="${lx1},${ly1} ${lx2},${ly2} ${lx3},${ly2}" fill="none" stroke="${colors[i % colors.length]}" stroke-width="1.5"/>`;
+
+            const tx = isLeft ? lx3 - 8 : lx3 + 8;
+            const anchor = isLeft ? 'end' : 'start';
+
+            annotations += `<text x="${tx}" y="${ly2}" dy="4" text-anchor="${anchor}" fill="#eee" font-size="14" font-weight="bold">${labels[i]}</text>`;
+            annotations += `<text x="${tx}" y="${ly2 + 18}" dy="4" text-anchor="${anchor}" fill="#aaa" font-size="12">${val} (${Math.round(pct * 100)}%)</text>`;
+
+            startAngle = endAngle;
+        });
+
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">${paths}${annotations}<circle cx="${cx}" cy="${cy}" r="${r - thickness}" fill="transparent"/></svg>`;
     }
 };
