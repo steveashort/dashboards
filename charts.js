@@ -314,10 +314,10 @@ export const Visuals = {
         const h = 500;
         const cx = w / 2;
         const cy = h / 2;
-        const r = 120;
-        const thickness = 45;
-        const rLabel = r + 30;
-        const rEnd = r + 80;
+        const r = 95;
+        const thickness = 35;
+        const rLabel = r + 25;
+        const rEnd = r + 65;
 
         const total = values.reduce((a, b) => a + b, 0);
         if (total === 0) return `<svg width="${w}" height="${h}"><text x="${cx}" y="${cy}" text-anchor="middle" fill="#aaa">No Data</text></svg>`;
