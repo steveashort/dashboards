@@ -314,10 +314,10 @@ export const Visuals = {
         const h = 500;
         const cx = w / 2;
         const cy = 200;
-        const r = 95;
-        const thickness = 35;
-        const rLabel = r + 25;
-        const rEnd = r + 65;
+        const r = 75;
+        const thickness = 28;
+        const rLabel = r + 20;
+        const rEnd = r + 50;
 
         const total = values.reduce((a, b) => a + b, 0);
         if (total === 0) return `<svg width="${w}" height="${h}"><text x="${cx}" y="${cy}" text-anchor="middle" fill="#aaa">No Data</text></svg>`;
@@ -374,23 +374,6 @@ export const Visuals = {
             startAngle = endAngle;
         });
 
-        // Legend
-        let legHTML = '';
-        const legY = h - 50;
-        const legItemW = 100;
-        const maxCols = Math.floor(w / legItemW);
-        const rows = Math.ceil(labels.length / maxCols);
-        const totalW = Math.min(labels.length, maxCols) * legItemW;
-        const startX = (w - totalW) / 2;
-        
-        labels.forEach((l, i) => {
-            const row = Math.floor(i / maxCols);
-            const col = i % maxCols;
-            const lx = startX + (col * legItemW);
-            const ly = legY - ((rows - 1 - row) * 20);
-            legHTML += `<circle cx="${lx}" cy="${ly}" r="5" fill="${colors[i % colors.length]}"/><text x="${lx+15}" y="${ly+5}" fill="#aaa" font-size="12" text-anchor="start">${l.substring(0,12)}</text>`;
-        });
-
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">${paths}${annotations}<circle cx="${cx}" cy="${cy}" r="${r - thickness}" fill="transparent"/>${legHTML}</svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">${paths}${annotations}<circle cx="${cx}" cy="${cy}" r="${r - thickness}" fill="transparent"/></svg>`;
     }
 };

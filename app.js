@@ -475,12 +475,12 @@ export const ZoomManager = {
             let html = '';
             
             if (renderType === 'donut') {
-                 html = `<div style="width:100%; height:100%; display:flex; flex-direction:row; gap:20px;">`;
-                 html += `<div style="flex: 2; display:flex; align-items:center; justify-content:center; min-height: 400px;">${content}</div>`;
+                 html = `<div style="width:100%; height:100%; display:flex; flex-direction:column; gap:10px;">`;
+                 html += `<div style="flex: 1; display:flex; align-items:center; justify-content:center; min-height: 350px;">${content}</div>`;
                  
                  if (t.notes || t.content) {
                      const notesHtml = parseMarkdown(t.notes || t.content || '');
-                     html += `<div class="zoom-notes-section" style="flex: 1; padding:20px; border-left:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px; overflow-y:auto;">
+                     html += `<div class="zoom-notes-section" style="padding:20px; border-top:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px;">
                                  <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
                                  <div style="font-size:1.1rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
                               </div>`;
