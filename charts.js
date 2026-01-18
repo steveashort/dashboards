@@ -246,8 +246,8 @@ export const Visuals = {
         const h = 180;
         const centerX = w / 2;
         const centerY = h / 2;
-        const radius = 50;
-        const thickness = 20;
+        const radius = 80;
+        const thickness = 30;
         const innerRadius = radius - thickness;
 
         const total = values.reduce((a, b) => a + b, 0);
@@ -289,7 +289,9 @@ export const Visuals = {
             startAngle = endAngle;
         });
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${paths}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/></svg>`;
+        const totalText = `<text x="${centerX}" y="${centerY}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="24" font-weight="bold">${total}</text>`;
+
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${paths}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/>${totalText}</svg>`;
     },
 
     createDonutChartWithCalloutsSVG: (labels, values) => {
@@ -358,6 +360,8 @@ export const Visuals = {
             startAngle = endAngle;
         });
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">${paths}${annotations}<circle cx="${cx}" cy="${cy}" r="${r - thickness}" fill="transparent"/></svg>`;
+        const totalText = `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="48" font-weight="bold">${total}</text>`;
+
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">${paths}${annotations}<circle cx="${cx}" cy="${cy}" r="${r - thickness}" fill="transparent"/>${totalText}</svg>`;
     }
 };
