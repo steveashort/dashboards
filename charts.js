@@ -426,7 +426,16 @@ export const Visuals = {
 
         // Rows
         members.forEach((m, i) => {
-...
+            const y = headerHeight + (i * rowHeight);
+            if (i % 2 === 0) svg += `<rect x="0" y="${y}" width="${width}" height="${rowHeight}" fill="rgba(255,255,255,0.01)"/>`;
+
+            // Tooltip generation
+            let tooltip = `<b>${m.name}</b><br><br><u>Current Priorities:</u><br>`;
+            (m.thisWeek?.tasks || []).forEach(t => { if(t.text) tooltip += `• ${t.text}<br>`; });
+            tooltip += `<br><u>Next Week Plans:</u><br>`;
+            (m.nextWeek?.tasks || []).forEach(t => { if(t.text) tooltip += `• ${t.text}<br>`; });
+            const safeTooltip = tooltip.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
+
             // Name
             svg += `<text x="15" y="${y + rowHeight - 8}" fill="#e0e0e0" font-size="12" style="cursor:help; font-weight:500;" onmousemove="Visuals.showTooltip(event, '${safeTooltip}')" onmouseout="Visuals.hideTooltip()">${m.name}</text>`;
             
