@@ -589,7 +589,21 @@ export const TrackerManager = {
         const tableContainer = getEl('lineTableContainer');
         if (tableContainer) tableContainer.innerHTML = '';
         const csvIn = getEl('csvInput');
-        if (csvIn) csvIn.value = '';
+        if (csvIn) {
+            csvIn.value = '';
+            csvIn.ondragover = (e) => { e.preventDefault(); csvIn.style.borderColor = 'var(--accent)'; csvIn.style.background = 'rgba(255,255,255,0.1)'; };
+            csvIn.ondragleave = (e) => { e.preventDefault(); csvIn.style.borderColor = ''; csvIn.style.background = ''; };
+            csvIn.ondrop = (e) => {
+                e.preventDefault();
+                csvIn.style.borderColor = '';
+                csvIn.style.background = '';
+                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (ev) => { csvIn.value = ev.target.result; };
+                    reader.readAsText(e.dataTransfer.files[0]);
+                }
+            };
+        }
 
         const tracker = isEdit ? State.trackers[index] : null;
         let type = tracker ? tracker.type : 'gauge';
