@@ -334,7 +334,7 @@ export const renderBoard = () => {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
                 const values = (t.dataPoints || []).map(dp => dp.value);
                 const html = Visuals.createDonutChartSVG(labels, values, displaySize);
-                visualHTML = `<div style="width:100%;">${html}</div>`;
+                visualHTML = `<div class="donut-chart">${html}</div>`;
                 statsHTML = '';
             }
 
@@ -1243,7 +1243,7 @@ export const TrackerManager = {
         div.style.gap = '10px';
         div.style.marginBottom = '5px';
         div.innerHTML = `
-            <input type="text" class="dr-label" placeholder="Label" value="${label}" style="flex: 2;">
+            <input type="text" class="dr-label" maxlength="15" placeholder="Label" value="${label}" style="flex: 2;">
             <input type="number" class="dr-value" placeholder="Value" value="${value}" style="flex: 1;">
             <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeDonutRow(this)">&times;</button>
         `;
