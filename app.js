@@ -196,7 +196,47 @@ export const App = {
     },
     togglePublishMode: () => {
         document.body.classList.toggle('publishing');
+        const isPub = document.body.classList.contains('publishing');
+        const btn = getEl('expandTeamBtn');
+        if(btn) {
+            btn.style.display = isPub ? 'inline-block' : 'none';
+            btn.innerText = "Expand Team Data";
+        }
+        
+        const ganttSec = getEl('ganttSection');
+        const teamHead = getEl('teamSectionHeader');
+        const teamGrid = getEl('teamGrid');
+        
+        if (ganttSec) ganttSec.style.display = 'none';
+        if (teamHead) teamHead.style.display = isPub ? 'none' : 'flex';
+        if (teamGrid) teamGrid.style.display = isPub ? 'none' : 'grid';
+        
         renderBoard();
+    },
+    toggleTeamData: () => {
+        const ganttSec = getEl('ganttSection');
+        const teamHead = getEl('teamSectionHeader');
+        const teamGrid = getEl('teamGrid');
+        const btn = getEl('expandTeamBtn');
+        
+        const isHidden = ganttSec.style.display === 'none';
+        
+        if (isHidden) {
+            ganttSec.style.display = 'block';
+            if (teamHead) teamHead.style.display = 'flex';
+            if (teamGrid) teamGrid.style.display = 'grid';
+            if (btn) btn.innerText = "Collapse Team Data";
+            
+            // Render Gantt
+            const r = getRanges();
+            const svg = Visuals.createGanttChartSVG(State.members, r.current, r.next);
+            getEl('ganttContainer').innerHTML = svg;
+        } else {
+            ganttSec.style.display = 'none';
+            if (teamHead) teamHead.style.display = 'none';
+            if (teamGrid) teamGrid.style.display = 'none';
+            if (btn) btn.innerText = "Expand Team Data";
+        }
     },
     saveTitle: () => {
         const titleEl = getEl('appTitle');
@@ -365,17 +405,7 @@ export const renderBoard = () => {
         });
     }
 
-    const ganttSec = getEl('ganttSection');
-    if (ganttSec) {
-        if (document.body.classList.contains('publishing')) {
-            ganttSec.style.display = 'block';
-            const r = getRanges();
-            const svg = Visuals.createGanttChartSVG(State.members, r.current, r.next);
-            getEl('ganttContainer').innerHTML = svg;
-        } else {
-            ganttSec.style.display = 'none';
-        }
-    }
+
 
     const grid = getEl('teamGrid');
     if (grid) {

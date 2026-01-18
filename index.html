@@ -29,6 +29,7 @@
             <input type="file" id="fileInput" style="display: none;" accept=".json,.csv" onchange="DataLoader.loadFromFile(this)">
             <button class="btn" onclick="document.getElementById('fileInput').click()">Load Data</button>
             <button class="btn" onclick="DataSaver.saveData()">Save JSON</button>
+            <button id="expandTeamBtn" class="btn" onclick="App.toggleTeamData()" style="display:none;">Expand Team Data</button>
             <button class="btn" onclick="App.togglePublishMode()">Publish View</button>
         </div>
     </header>
@@ -62,12 +63,12 @@
 
         <div id="ganttSection" style="margin-bottom: 3rem; display: none;">
             <div class="section-header">
-                <h3 style="color:var(--accent); font-weight:300;">Absenteeism Tracker</h3>
+                <h3 style="color:var(--accent); font-weight:300;">Resource Planner</h3>
             </div>
             <div id="ganttContainer" style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem; overflow-x:auto;"></div>
         </div>
 
-        <div class="section-header">
+        <div class="section-header" id="teamSectionHeader">
             <h3 style="color:var(--accent); font-weight:300;">Team Members</h3>
             <button class="btn btn-primary" onclick="UserManager.openUserModal()">+ Add User</button>
         </div>
