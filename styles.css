@@ -375,6 +375,9 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 .note-render-container::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
 .note-render-container::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
 
+.note-render-container ul { padding-left: 20px; margin-bottom: 10px; }
+.note-render-container li { margin-bottom: 5px; list-style-type: disc; }
+
 .zoomed-content ul { list-style: none; font-size: 1.5rem; line-height: 2; padding-left: 1rem; }
 .zoomed-content li { margin-bottom: 1rem; position: relative; padding-left: 2rem; }
 .zoomed-content li::before { content: "★"; position: absolute; left: 0; color: gold; font-size: 1.5rem; line-height: 2; }
