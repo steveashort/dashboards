@@ -60,6 +60,13 @@
         </div>
         <div class="tracker-grid" id="trackerGrid"></div>
 
+        <div id="ganttSection" style="margin-bottom: 3rem; display: none;">
+            <div class="section-header">
+                <h3 style="color:var(--accent); font-weight:300;">Absenteeism Tracker</h3>
+            </div>
+            <div id="ganttContainer" style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem; overflow-x:auto;"></div>
+        </div>
+
         <div class="section-header">
             <h3 style="color:var(--accent); font-weight:300;">Team Members</h3>
             <button class="btn btn-primary" onclick="UserManager.openUserModal()">+ Add User</button>

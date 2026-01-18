@@ -390,35 +390,52 @@ export const Visuals = {
     },
 
     createGanttChartSVG: (members, currentRange, nextRange) => {
-        const rowHeight = 30;
-        const headerHeight = 40;
-        const width = 800;
+        const rowHeight = 40;
+        const headerHeight = 60;
+        const width = 1200;
         const height = headerHeight + (members.length * rowHeight);
-        const colWidth = (width - 150) / 14; // 150px for names, 14 days
+        const nameColWidth = 200;
+        const colWidth = (width - nameColWidth) / 14; 
         
         let svg = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}">`;
         
-        // Header
-        const days = ['M','T','W','T','F','S','S'];
-        const allDays = [...days, ...days];
-        
-        svg += `<text x="10" y="${headerHeight/2 + 5}" fill="#aaa" font-size="12" font-weight="bold">Team Member</text>`;
+        // Background
+        svg += `<rect x="0" y="0" width="${width}" height="${height}" fill="#1e1e1e" rx="4"/>`;
+
+        // Column Backgrounds (Alternating weeks)
+        // Current Week
+        svg += `<rect x="${nameColWidth}" y="${headerHeight}" width="${colWidth * 7}" height="${height - headerHeight}" fill="rgba(255,255,255,0.02)"/>`;
+        // Next Week
+        svg += `<rect x="${nameColWidth + (colWidth * 7)}" y="${headerHeight}" width="${colWidth * 7}" height="${height - headerHeight}" fill="rgba(0,0,0,0.2)"/>`;
+
+        // Header Text
+        svg += `<text x="15" y="${headerHeight/2 + 5}" fill="#bb86fc" font-size="14" font-weight="bold" style="text-transform:uppercase;">Team Member</text>`;
         
         // Week headers
-        svg += `<text x="${150 + (colWidth * 3.5)}" y="15" fill="#accent" font-size="10" text-anchor="middle" fill="#bb86fc">Current Week</text>`;
-        svg += `<line x1="${150 + (colWidth * 7)}" y1="0" x2="${150 + (colWidth * 7)}" y2="${height}" stroke="#444" stroke-dasharray="4"/>`;
-        svg += `<text x="${150 + (colWidth * 10.5)}" y="15" fill="#accent" font-size="10" text-anchor="middle" fill="#bb86fc">Next Week</text>`;
+        svg += `<text x="${nameColWidth + (colWidth * 3.5)}" y="25" fill="#bb86fc" font-size="14" text-anchor="middle" font-weight="bold">Current Week (${currentRange})</text>`;
+        svg += `<line x1="${nameColWidth + (colWidth * 7)}" y1="10" x2="${nameColWidth + (colWidth * 7)}" y2="${height}" stroke="#444" stroke-dasharray="4"/>`;
+        svg += `<text x="${nameColWidth + (colWidth * 10.5)}" y="25" fill="#bb86fc" font-size="14" text-anchor="middle" font-weight="bold">Next Week (${nextRange})</text>`;
 
+        // Day Headers
+        const days = ['M','T','W','T','F','S','S'];
+        const allDays = [...days, ...days];
         allDays.forEach((d, i) => {
-            const x = 150 + (i * colWidth);
-            svg += `<text x="${x + colWidth/2}" y="${headerHeight - 5}" fill="#666" font-size="10" text-anchor="middle">${d}</text>`;
+            const x = nameColWidth + (i * colWidth);
+            svg += `<text x="${x + colWidth/2}" y="${headerHeight - 10}" fill="#aaa" font-size="12" text-anchor="middle">${d}</text>`;
+            // Vertical grid lines
+            svg += `<line x1="${x}" y1="${headerHeight}" x2="${x}" y2="${height}" stroke="#333" stroke-width="1"/>`;
         });
-        svg += `<line x1="0" y1="${headerHeight}" x2="${width}" y2="${headerHeight}" stroke="#444"/>`;
+        svg += `<line x1="0" y1="${headerHeight}" x2="${width}" y2="${headerHeight}" stroke="#444" stroke-width="2"/>`;
 
+        // Rows
         members.forEach((m, i) => {
             const y = headerHeight + (i * rowHeight);
+            
+            // Zebra Striping
+            if (i % 2 === 0) svg += `<rect x="0" y="${y}" width="${width}" height="${rowHeight}" fill="rgba(255,255,255,0.01)"/>`;
+
             // Name
-            svg += `<text x="10" y="${y + 20}" fill="#eee" font-size="12">${m.name}</text>`;
+            svg += `<text x="15" y="${y + 25}" fill="#e0e0e0" font-size="14">${m.name}</text>`;
             
             // Data
             const defaultLoad = ['N','N','N','N','N','X','X'];
@@ -427,21 +444,20 @@ export const Visuals = {
             const combined = [...thisLoad, ...nextLoad];
             
             combined.forEach((val, d) => {
+                const x = nameColWidth + (d * colWidth);
                 if (val === 'X') {
-                    const x = 150 + (d * colWidth);
-                    // Check if it's weekend (indexes 5,6, 12,13) to style differently?
-                    // "based on the user data when a day has been selected as 'A'".
-                    // 'A' maps to 'X'. Weekend default is 'X'.
-                    // Maybe render absent 'A' in Red and default Weekend 'X' in Grey?
-                    // But the storage doesn't distinguish 'A' pill vs 'X' default if they both save 'X'.
-                    // Wait, `setLoad(..., 'X')` sets value 'X'.
-                    // If the user explicitly sets 'A', it is 'X'.
-                    // So we can't distinguish. I'll render all 'X's as blocks.
-                    svg += `<rect x="${x+2}" y="${y+5}" width="${colWidth-4}" height="${rowHeight-10}" fill="#ff1744" rx="2" opacity="0.6"><title>Absent</title></rect>`;
+                    // Absent Block
+                    svg += `<rect x="${x+4}" y="${y+6}" width="${colWidth-8}" height="${rowHeight-12}" fill="#cf6679" rx="4" opacity="0.8"><title>Absent</title></rect>`;
+                } else if (val === 'L') {
+                    // Low load indicator (optional visual enhancement)
+                    svg += `<circle cx="${x + colWidth/2}" cy="${y + rowHeight/2}" r="3" fill="#ffb300" opacity="0.5"/>`;
+                } else if (val === 'R') {
+                    // High load indicator
+                    svg += `<circle cx="${x + colWidth/2}" cy="${y + rowHeight/2}" r="3" fill="#ff1744" opacity="0.5"/>`;
                 }
             });
             
-            svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="#333" stroke-width="0.5"/>`;
+            svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="#333" stroke-width="1"/>`;
         });
         
         svg += `</svg>`;

@@ -363,20 +363,17 @@ export const renderBoard = () => {
             
             tGrid.appendChild(card);
         });
+    }
 
+    const ganttSec = getEl('ganttSection');
+    if (ganttSec) {
         if (document.body.classList.contains('publishing')) {
-            const ganttCard = document.createElement('div');
-            ganttCard.className = 'tracker-card size-S type-gantt'; // Default to S per request for consistency, or M? User didn't specify size, but "displayed when in PMode". S fits nicely.
-            ganttCard.innerHTML = `<div class="tracker-desc">Absenteeism</div>
-                                   <div class="tracker-viz-container" style="color:#aaa; font-size:0.8rem; display:flex; flex-direction:column; justify-content:center; align-items:center;">
-                                     <div style="font-size:3rem; opacity:0.5;">📅</div>
-                                     <div style="margin-top:10px;">Click to view Gantt</div>
-                                   </div>
-                                   <div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
-            ganttCard.onclick = () => ZoomManager.openGanttModal();
-            // Apply cursor style
-            ganttCard.style.cursor = 'zoom-in';
-            tGrid.appendChild(ganttCard);
+            ganttSec.style.display = 'block';
+            const r = getRanges();
+            const svg = Visuals.createGanttChartSVG(State.members, r.current, r.next);
+            getEl('ganttContainer').innerHTML = svg;
+        } else {
+            ganttSec.style.display = 'none';
         }
     }
 
