@@ -59,7 +59,7 @@ export const Visuals = {
         let max = 0;
         series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
         if(max===0) max=10;
-        const w=getWidth(size); const h=180; const pTop=15; const pBot=45; const pSide=15; 
+        const w=getWidth(size); const h=180; const pTop=15; const pBot=45; const pSide=40; 
         const gw=(w-(pSide*2))/(labels.length-1||1), uh=h-pTop-pBot;
 
         let yGrid = '';
@@ -129,7 +129,7 @@ export const Visuals = {
         series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
         if(max === 0) max = 10;
 
-        const w=getWidth(size); const h=180; const pTop=15; const pBot=45; const pSide=15; 
+        const w=getWidth(size); const h=180; const pTop=15; const pBot=45; const pSide=40; 
         const groupWidth = (w-(pSide*2)) / labels.length;
         const barWidth = (groupWidth * 0.8) / series.length; 
         const uh = h-pTop-pBot;
@@ -249,18 +249,21 @@ export const Visuals = {
         const radius = 80;
         const thickness = 30;
         const innerRadius = radius - thickness;
+        const rEnd = radius + 15;
 
         const total = values.reduce((a, b) => a + b, 0);
         if (total === 0) return `<svg width="${w}" height="${h}"><circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="none" stroke="#333" stroke-width="${thickness}"/><text x="${centerX}" y="${centerY}" text-anchor="middle" dominant-baseline="middle" fill="#666" font-size="12">No Data</text></svg>`;
 
         let startAngle = 0;
         let paths = '';
+        let annotations = '';
         const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#03a9f4', '#ffeb3b'];
 
         values.forEach((v, i) => {
             const percentage = (v / total);
             const angle = percentage * 360;
             const endAngle = startAngle + angle;
+            const midAngle = startAngle + (angle / 2);
 
             const x1 = centerX + radius * Math.cos((startAngle - 90) * Math.PI / 180);
             const y1 = centerY + radius * Math.sin((startAngle - 90) * Math.PI / 180);
@@ -286,12 +289,31 @@ export const Visuals = {
             const tooltipText = `${labels[i]}: ${v}`;
             paths += `<path d="${d}" fill="${color}" stroke="#1e1e1e" stroke-width="1" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></path>`;
 
+            // Callout
+            if (percentage > 0.05) {
+                const radMid = (midAngle - 90) * Math.PI / 180;
+                const lx1 = centerX + radius * Math.cos(radMid);
+                const ly1 = centerY + radius * Math.sin(radMid);
+                const lx2 = centerX + rEnd * Math.cos(radMid);
+                const ly2 = centerY + rEnd * Math.sin(radMid);
+
+                const isLeft = midAngle > 180;
+                const lx3 = isLeft ? lx2 - 10 : lx2 + 10;
+
+                annotations += `<polyline points="${lx1},${ly1} ${lx2},${ly2} ${lx3},${ly2}" fill="none" stroke="${color}" stroke-width="1"/>`;
+
+                const tx = isLeft ? lx3 - 4 : lx3 + 4;
+                const anchor = isLeft ? 'end' : 'start';
+
+                annotations += `<text x="${tx}" y="${ly2}" dy="3" text-anchor="${anchor}" fill="#eee" font-size="10" font-weight="bold">${labels[i]}</text>`;
+            }
+
             startAngle = endAngle;
         });
 
         const totalText = `<text x="${centerX}" y="${centerY}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="24" font-weight="bold">${total}</text>`;
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${paths}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/>${totalText}</svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${paths}${annotations}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/>${totalText}</svg>`;
     },
 
     createDonutChartWithCalloutsSVG: (labels, values) => {
