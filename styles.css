@@ -230,7 +230,7 @@ input[type="text"], input[type="number"], input[type="date"], textarea {
     color: #fff; border-radius: 4px; font-size: 0.9rem;
 }
 input:focus, textarea:focus { border-color: var(--accent); outline: none; }
-.load-select-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+.load-select-row { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; }
 .ls-box { text-align: center; } .ls-box label { font-size: 0.7rem; margin-bottom: 2px; }
 select { width: 100%; padding: 4px; background: var(--input-bg); color: #fff; border: 1px solid var(--border); text-align: center; border-radius: 4px; cursor: pointer; }
 option { background: var(--input-bg); color: #fff; }
@@ -332,7 +332,7 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 .so-over { background-color: var(--g-red); color: #fff; }
 .so-absent { background-color: var(--accent); color: #fff; opacity: 0.7; }
 
-.daily-mini-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; margin-top: 15px; padding: 0 10px; }
+.daily-mini-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; margin-top: 15px; padding: 0 10px; }
 .dm-box { text-align: center; background: var(--input-bg); padding: 6px 2px; border-radius: 4px; }
 .dm-day { font-size: 0.65rem; color: var(--text-muted); display: block; margin-bottom: 2px; }
 .dm-val { font-size: 0.85rem; font-weight: bold; }

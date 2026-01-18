@@ -363,6 +363,21 @@ export const renderBoard = () => {
             
             tGrid.appendChild(card);
         });
+
+        if (document.body.classList.contains('publishing')) {
+            const ganttCard = document.createElement('div');
+            ganttCard.className = 'tracker-card size-S type-gantt'; // Default to S per request for consistency, or M? User didn't specify size, but "displayed when in PMode". S fits nicely.
+            ganttCard.innerHTML = `<div class="tracker-desc">Absenteeism</div>
+                                   <div class="tracker-viz-container" style="color:#aaa; font-size:0.8rem; display:flex; flex-direction:column; justify-content:center; align-items:center;">
+                                     <div style="font-size:3rem; opacity:0.5;">📅</div>
+                                     <div style="margin-top:10px;">Click to view Gantt</div>
+                                   </div>
+                                   <div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
+            ganttCard.onclick = () => ZoomManager.openGanttModal();
+            // Apply cursor style
+            ganttCard.style.cursor = 'zoom-in';
+            tGrid.appendChild(ganttCard);
+        }
     }
 
     const grid = getEl('teamGrid');
@@ -450,6 +465,21 @@ export const renderBoard = () => {
 };
 
 export const ZoomManager = {
+    openGanttModal: () => {
+        const titleEl = getEl('zoomTitle');
+        if (titleEl) titleEl.innerText = "Absenteeism Tracker";
+        
+        const r = getRanges();
+        const content = Visuals.createGanttChartSVG(State.members, r.current, r.next);
+        
+        const bodyEl = getEl('zoomBody');
+        if (bodyEl) {
+            bodyEl.className = 'zoom-body-chart';
+            bodyEl.innerHTML = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; overflow:auto;">${content}</div>`;
+        }
+        ModalManager.openModal('zoomModal');
+    },
+
     openChartModal: (index) => {
         console.log("ZoomManager.openChartModal called for index:", index);
         const t = State.trackers[index];
@@ -1554,8 +1584,8 @@ export const UserManager = {
         const m = isEdit ? State.members[index] : {
             name: '',
             lastWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], status: 'busy' },
-            thisWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], load: ['N','N','N','N','N'] },
-            nextWeek: { tasks: [{text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}], load: ['N','N','N','N','N'] }
+            thisWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], load: ['N','N','N','N','N','X','X'] },
+            nextWeek: { tasks: [{text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}], load: ['N','N','N','N','N','X','X'] }
         };
 
         getEl('mName').value = m.name || '';
@@ -1571,8 +1601,10 @@ export const UserManager = {
         UserManager.setStatus(m.lastWeek.status || 'busy');
 
         // Loads
-        const thisLoad = m.thisWeek.load || ['N','N','N','N','N'];
-        const nextLoad = m.nextWeek.load || ['N','N','N','N','N'];
+        const defaultLoad = ['N','N','N','N','N','X','X'];
+        const thisLoad = (m.thisWeek && m.thisWeek.load) ? [...m.thisWeek.load, ...defaultLoad.slice(m.thisWeek.load.length)] : defaultLoad;
+        const nextLoad = (m.nextWeek && m.nextWeek.load) ? [...m.nextWeek.load, ...defaultLoad.slice(m.nextWeek.load.length)] : defaultLoad;
+        
         thisLoad.forEach((v, i) => UserManager.setLoad(i, v));
         nextLoad.forEach((v, i) => UserManager.setFutureLoad(i, v));
 
@@ -1630,7 +1662,10 @@ export const UserManager = {
                 ]
             },
             thisWeek: {
-                load: [getEl('nw0').value, getEl('nw1').value, getEl('nw2').value, getEl('nw3').value, getEl('nw4').value],
+                load: [
+                    getEl('nw0').value, getEl('nw1').value, getEl('nw2').value, getEl('nw3').value, getEl('nw4').value,
+                    getEl('nw5').value, getEl('nw6').value
+                ],
                 tasks: [
                     { text: getEl('nwTask1').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[0]?.isTeamSuccess || false) : false },
                     { text: getEl('nwTask2').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[1]?.isTeamSuccess || false) : false },
@@ -1638,7 +1673,10 @@ export const UserManager = {
                 ]
             },
             nextWeek: {
-                load: [getEl('fw0').value, getEl('fw1').value, getEl('fw2').value, getEl('fw3').value, getEl('fw4').value],
+                load: [
+                    getEl('fw0').value, getEl('fw1').value, getEl('fw2').value, getEl('fw3').value, getEl('fw4').value,
+                    getEl('fw5').value, getEl('fw6').value
+                ],
                 tasks: [
                     { text: getEl('fwTask1').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[0]?.isTeamActivity || false) : false },
                     { text: getEl('fwTask2').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[1]?.isTeamActivity || false) : false },
@@ -1780,7 +1818,7 @@ export const DataLoader = {
                             {text:'', [isSuccess?'isTeamSuccess':'isTeamActivity']:false},
                             {text:'', [isSuccess?'isTeamSuccess':'isTeamActivity']:false}
                         ];
-                        const emptyLoad = ['N','N','N','N','N'];
+                        const emptyLoad = ['N','N','N','N','N','X','X'];
 
                         data.members.forEach(m => {
                             if (diffWeeks === 1) {

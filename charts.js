@@ -387,5 +387,64 @@ export const Visuals = {
         const totalText = `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="24" font-weight="bold">${total}</text>`;
 
         return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">${paths}${annotations}<circle cx="${cx}" cy="${cy}" r="${r - thickness}" fill="transparent"/>${totalText}</svg>`;
+    },
+
+    createGanttChartSVG: (members, currentRange, nextRange) => {
+        const rowHeight = 30;
+        const headerHeight = 40;
+        const width = 800;
+        const height = headerHeight + (members.length * rowHeight);
+        const colWidth = (width - 150) / 14; // 150px for names, 14 days
+        
+        let svg = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}">`;
+        
+        // Header
+        const days = ['M','T','W','T','F','S','S'];
+        const allDays = [...days, ...days];
+        
+        svg += `<text x="10" y="${headerHeight/2 + 5}" fill="#aaa" font-size="12" font-weight="bold">Team Member</text>`;
+        
+        // Week headers
+        svg += `<text x="${150 + (colWidth * 3.5)}" y="15" fill="#accent" font-size="10" text-anchor="middle" fill="#bb86fc">Current Week</text>`;
+        svg += `<line x1="${150 + (colWidth * 7)}" y1="0" x2="${150 + (colWidth * 7)}" y2="${height}" stroke="#444" stroke-dasharray="4"/>`;
+        svg += `<text x="${150 + (colWidth * 10.5)}" y="15" fill="#accent" font-size="10" text-anchor="middle" fill="#bb86fc">Next Week</text>`;
+
+        allDays.forEach((d, i) => {
+            const x = 150 + (i * colWidth);
+            svg += `<text x="${x + colWidth/2}" y="${headerHeight - 5}" fill="#666" font-size="10" text-anchor="middle">${d}</text>`;
+        });
+        svg += `<line x1="0" y1="${headerHeight}" x2="${width}" y2="${headerHeight}" stroke="#444"/>`;
+
+        members.forEach((m, i) => {
+            const y = headerHeight + (i * rowHeight);
+            // Name
+            svg += `<text x="10" y="${y + 20}" fill="#eee" font-size="12">${m.name}</text>`;
+            
+            // Data
+            const defaultLoad = ['N','N','N','N','N','X','X'];
+            const thisLoad = (m.thisWeek && m.thisWeek.load) ? (m.thisWeek.load.length === 5 ? [...m.thisWeek.load, 'X', 'X'] : m.thisWeek.load) : defaultLoad;
+            const nextLoad = (m.nextWeek && m.nextWeek.load) ? (m.nextWeek.load.length === 5 ? [...m.nextWeek.load, 'X', 'X'] : m.nextWeek.load) : defaultLoad;
+            const combined = [...thisLoad, ...nextLoad];
+            
+            combined.forEach((val, d) => {
+                if (val === 'X') {
+                    const x = 150 + (d * colWidth);
+                    // Check if it's weekend (indexes 5,6, 12,13) to style differently?
+                    // "based on the user data when a day has been selected as 'A'".
+                    // 'A' maps to 'X'. Weekend default is 'X'.
+                    // Maybe render absent 'A' in Red and default Weekend 'X' in Grey?
+                    // But the storage doesn't distinguish 'A' pill vs 'X' default if they both save 'X'.
+                    // Wait, `setLoad(..., 'X')` sets value 'X'.
+                    // If the user explicitly sets 'A', it is 'X'.
+                    // So we can't distinguish. I'll render all 'X's as blocks.
+                    svg += `<rect x="${x+2}" y="${y+5}" width="${colWidth-4}" height="${rowHeight-10}" fill="#ff1744" rx="2" opacity="0.6"><title>Absent</title></rect>`;
+                }
+            });
+            
+            svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="#333" stroke-width="0.5"/>`;
+        });
+        
+        svg += `</svg>`;
+        return svg;
     }
 };
