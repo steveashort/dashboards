@@ -328,7 +328,7 @@ export const renderBoard = () => {
                 visualHTML = `<div style="width:100%;">${html}</div>`;
                 statsHTML = `<div class="tracker-stats">${t.active} / ${t.total} ${t.metric || ''}</div>`;
             } else if (renderType === 'note') {
-                visualHTML = `<div class="note-render-container">${parseMarkdown(t.content || '')}</div>`;
+                visualHTML = `<div class="note-render-container" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
                 statsHTML = '';
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
@@ -462,7 +462,7 @@ export const ZoomManager = {
         } else if (renderType === 'waffle') {
             content = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969');
         } else if (renderType === 'note') {
-            content = `<div class="note-render-container zoomed-note">${parseMarkdown(t.content || '')}</div>`;
+            content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
         } else if (renderType === 'gauge') {
             const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
             const c1 = t.colorVal || t.color1 || '#00e676'; 
@@ -728,6 +728,9 @@ export const TrackerManager = {
                 if(sizeRad) sizeRad.checked = true;
             } else if (!isEdit && type === 'note') {
                 const tcnIn = getEl('tkNoteContent'); if(tcnIn) tcnIn.value = '';
+                // Default Align Left
+                const alignRad = document.querySelector('input[name="tkNoteAlign"][value="left"]');
+                if(alignRad) alignRad.checked = true;
                 // Set Size to M
                 const sizeRad = document.querySelector('input[name="tkSize"][value="M"]');
                 if(sizeRad) sizeRad.checked = true;
@@ -791,6 +794,10 @@ export const TrackerManager = {
             } else if (type === 'note') {
                 const tcnIn = getEl('tkNoteContent');
                 if (tracker && tcnIn) tcnIn.value = tracker.content || '';
+                
+                const align = tracker ? (tracker.align || 'left') : 'left';
+                const alignRad = document.querySelector(`input[name="tkNoteAlign"][value="${align}"]`);
+                if(alignRad) alignRad.checked = true;
             } else if (type === 'donut') {
                 const container = getEl('donutDataContainer');
                 if (container) container.innerHTML = '';
@@ -1453,6 +1460,9 @@ export const TrackerManager = {
         } else if (type === 'note') {
             const contentIn = getEl('tkNoteContent');
             newTracker.content = contentIn ? contentIn.value : '';
+            const alignRad = document.querySelector('input[name="tkNoteAlign"]:checked');
+            newTracker.align = alignRad ? alignRad.value : 'left';
+            newTracker.notes = ''; // No notes for Note Tracker
         } else if (type === 'waffle') {
             const wmIn = getEl('tkWaffleMetric');
             const wtIn = getEl('tkWaffleTotal');

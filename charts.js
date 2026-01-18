@@ -46,8 +46,8 @@ export const Visuals = {
         if (tt) {
             tt.innerHTML = text;
             tt.style.display = 'block';
-            tt.style.left = (evt.pageX + 15) + 'px';
-            tt.style.top = (evt.pageY + 15) + 'px';
+            tt.style.left = (evt.clientX + 15) + 'px';
+            tt.style.top = (evt.clientY + 15) + 'px';
         }
     },
     hideTooltip: () => {
