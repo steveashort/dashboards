@@ -616,6 +616,9 @@ export const TrackerManager = {
                            const yIn = getEl(`${ctx.prefix}YLabel`);
                            if (yIn) yIn.value = tracker ? (tracker.yLabel || '') : '';
                            
+                           const lnIn = getEl('tkLineNotes');
+                           if (tracker && lnIn) lnIn.value = tracker.notes || '';
+                           
                            this.updateTimeOptions();
                            const tcIn = getEl(`${ctx.prefix}TimeCount`);
                            
@@ -684,6 +687,8 @@ export const TrackerManager = {
                 // Clear table to ensure fresh start
                 const tableContainer = getEl('lineTableContainer');
                 if(tableContainer) tableContainer.innerHTML = '';
+                
+                const lnIn = getEl('tkLineNotes'); if(lnIn) lnIn.value = '';
             } else if (!isEdit && type === 'gauge') {
                 // Reset Gauge defaults for new trackers
                 const tmIn = getEl('tkMetric'); if(tmIn) tmIn.value = '';
@@ -1420,6 +1425,9 @@ export const TrackerManager = {
             
             const styleRad = document.querySelector('input[name="tkDisplayStyle"]:checked');
             newTracker.displayStyle = styleRad ? styleRad.value : 'line';
+            
+            const lnIn = getEl('tkLineNotes');
+            newTracker.notes = lnIn ? lnIn.value : '';
         } else if (type === 'counter') {
             const cvIn = getEl('tkCounterVal');
             const val = cvIn ? parseFloat(cvIn.value) || 0 : 0;
