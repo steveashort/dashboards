@@ -351,7 +351,8 @@ export const Visuals = {
 
             const d = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${r - thickness} ${r - thickness} 0 ${largeArc} 0 ${ix1} ${iy1} Z`;
 
-            paths += `<path d="${d}" fill="${colors[i % colors.length]}" stroke="#1e1e1e" stroke-width="2"/>`;
+            const tooltipText = `${labels[i]} • ${val} (${Math.round(pct * 100)}%)`;
+            paths += `<path d="${d}" fill="${colors[i % colors.length]}" stroke="#1e1e1e" stroke-width="2" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"/>`;
 
             // Callout
             const radMid = (midAngle - 90) * Math.PI / 180;
