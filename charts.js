@@ -299,8 +299,8 @@ export const Visuals = {
         const h = 500;
         const cx = w / 2;
         const cy = 200;
-        const r = 75;
-        const thickness = 28;
+        const r = 90;
+        const thickness = 33;
         const rLabel = r + 20;
         const rEnd = r + 50;
 
@@ -360,7 +360,7 @@ export const Visuals = {
             startAngle = endAngle;
         });
 
-        const totalText = `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="48" font-weight="bold">${total}</text>`;
+        const totalText = `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="24" font-weight="bold">${total}</text>`;
 
         return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">${paths}${annotations}<circle cx="${cx}" cy="${cy}" r="${r - thickness}" fill="transparent"/>${totalText}</svg>`;
     }
