@@ -173,6 +173,13 @@ header {
 }
 .member-card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.6); }
 
+.member-header {
+    padding: 1.5rem 0 0 1.5rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: var(--accent);
+}
+
 /* 3-Column User Card Layout */
 .member-card-content {
     display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.5rem; padding: 1.5rem; flex-grow: 1;

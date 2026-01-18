@@ -26,17 +26,17 @@ const getRanges = () => {
     const cm = new Date(today);
     cm.setDate(today.getDate() + diff);
     const cf = new Date(cm);
-    cf.setDate(cm.getDate() + 4);
+    cf.setDate(cm.getDate() + 6);
     
     const nm = new Date(cm);
     nm.setDate(cm.getDate() + 7);
     const nf = new Date(nm);
-    nf.setDate(nm.getDate() + 4);
+    nf.setDate(nm.getDate() + 6);
     
     const lm = new Date(cm);
     lm.setDate(cm.getDate() - 7);
     const lf = new Date(lm);
-    lf.setDate(lm.getDate() + 4);
+    lf.setDate(lm.getDate() + 6);
 
     return { 
         current: `${formatDate(cm)} - ${formatDate(cf)}`, 
@@ -51,7 +51,7 @@ export const initApp = () => {
     const updateDateUI = () => {
         const r = getRanges();
         const drd = getEl('dateRangeDisplay');
-        if (drd) drd.innerText = `Current: ${r.current} | Next: ${r.next}`;
+        if (drd) drd.innerText = `Last: ${r.last} | Current: ${r.current} | Next: ${r.next}`;
         
         const otc = getEl('overviewTitleCurrent');
         if (otc) otc.innerHTML = `Top 5 Team Achievements <span class="date-suffix">${r.current}</span>`;
@@ -63,7 +63,7 @@ export const initApp = () => {
         if(lwt) lwt.innerText = `Last Week (${r.last})`;
         
         const twt = getEl('thisWeekTitle');
-        if(twt) twt.innerText = `This Week (${r.current})`;
+        if(twt) twt.innerText = `Current Week (${r.current})`;
         
         const nwt = getEl('nextWeekTitle');
         if(nwt) nwt.innerText = `Next Week (${r.next})`;
@@ -429,7 +429,7 @@ export const renderBoard = () => {
             content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${lw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
             content += `</div>`;
 
-            content += `<div class="card-col"><div class="col-header">This Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().current.split(' - ')[0]})</span></div>`;
+            content += `<div class="card-col"><div class="col-header">Current Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().current.split(' - ')[0]})</span></div>`;
             content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.thisWeek ? m.thisWeek.load : [])}</div>`;
             content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${tw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
             content += `<div class="daily-mini-grid" style="margin-top:auto;">${mgThis}</div>`;
@@ -1714,7 +1714,14 @@ export const OverviewManager = {
 
 export const DataSaver = {
     saveData: () => {
-        const data = JSON.stringify(State, null, 2);
+        const today = new Date();
+        const d = today.getDay();
+        const diff = d === 0 ? -6 : 1 - d;
+        const cm = new Date(today);
+        cm.setDate(today.getDate() + diff);
+        const savedDate = cm.toISOString().split('T')[0];
+
+        const data = JSON.stringify({ ...State, savedDate }, null, 2);
         const blob = new Blob([data], { type: 'application/json' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -1734,13 +1741,89 @@ export const DataLoader = {
             try {
                 const data = JSON.parse(e.target.result);
                 if(data.trackers && data.members) {
+                    
+                    // Migration Logic
+                    const today = new Date();
+                    const d = today.getDay();
+                    const diff = d === 0 ? -6 : 1 - d;
+                    const cm = new Date(today);
+                    cm.setDate(today.getDate() + diff);
+                    const currentMonday = new Date(cm.toISOString().split('T')[0]);
+                    
+                    const savedDateStr = data.savedDate || cm.toISOString().split('T')[0];
+                    const savedDate = new Date(savedDateStr);
+                    
+                    // Diff in weeks (round to nearest integer)
+                    const timeDiff = currentMonday - savedDate;
+                    const diffWeeks = Math.round(timeDiff / (1000 * 60 * 60 * 24 * 7));
+                    
+                    if (diffWeeks > 0) {
+                        console.log(`Migrating data: ${diffWeeks} weeks difference.`);
+                        
+                        const getStatusFromLoad = (load) => {
+                            if(!load) return 'busy';
+                            let score=0, count=0;
+                            load.forEach(v => {
+                                if(v==='L'){score+=1;count++}
+                                else if(v==='N'){score+=2;count++}
+                                else if(v==='R'){score+=3;count++}
+                            });
+                            if(count===0) return 'busy';
+                            const avg = score/count;
+                            if(avg < 1.6) return 'under';
+                            if(avg > 2.4) return 'over';
+                            return 'busy';
+                        };
+
+                        const emptyTasks = (isSuccess) => [
+                            {text:'', [isSuccess?'isTeamSuccess':'isTeamActivity']:false},
+                            {text:'', [isSuccess?'isTeamSuccess':'isTeamActivity']:false},
+                            {text:'', [isSuccess?'isTeamSuccess':'isTeamActivity']:false}
+                        ];
+                        const emptyLoad = ['N','N','N','N','N'];
+
+                        data.members.forEach(m => {
+                            if (diffWeeks === 1) {
+                                // Move This -> Last
+                                m.lastWeek = {
+                                    status: getStatusFromLoad(m.thisWeek.load),
+                                    tasks: m.thisWeek.tasks.map(t => ({ text: t.text, isTeamSuccess: t.isTeamSuccess }))
+                                };
+                                // Move Next -> This
+                                m.thisWeek = {
+                                    load: m.nextWeek.load,
+                                    tasks: m.nextWeek.tasks.map(t => ({ text: t.text, isTeamSuccess: t.isTeamActivity })) // map isTeamActivity to isTeamSuccess logic if needed, or just boolean
+                                };
+                                // Clear Next
+                                m.nextWeek = { load: [...emptyLoad], tasks: emptyTasks(false) };
+                            } else if (diffWeeks === 2) {
+                                // Move Next -> Last
+                                m.lastWeek = {
+                                    status: getStatusFromLoad(m.nextWeek.load),
+                                    tasks: m.nextWeek.tasks.map(t => ({ text: t.text, isTeamSuccess: t.isTeamActivity }))
+                                };
+                                // Clear This & Next
+                                m.thisWeek = { load: [...emptyLoad], tasks: emptyTasks(true) };
+                                m.nextWeek = { load: [...emptyLoad], tasks: emptyTasks(false) };
+                            } else {
+                                // Clear All (> 2 weeks)
+                                m.lastWeek = { status: 'busy', tasks: emptyTasks(true) };
+                                m.thisWeek = { load: [...emptyLoad], tasks: emptyTasks(true) };
+                                m.nextWeek = { load: [...emptyLoad], tasks: emptyTasks(false) };
+                            }
+                        });
+                        App.alert(`Data loaded and migrated (${diffWeeks} week(s) forward).`);
+                    } else {
+                        App.alert("Data loaded successfully.");
+                    }
+
                     State = { ...State, ...data };
                     renderBoard();
-                    App.alert("Data loaded successfully.");
                 } else {
                     App.alert("Invalid data format.");
                 }
             } catch(err) {
+                console.error(err);
                 App.alert("Error parsing file.");
             }
         };
