@@ -485,14 +485,54 @@ export const ZoomManager = {
                  html = `<div style="width:100%; height:100%; display:flex; flex-direction:row; gap:20px;">`;
                  html += `<div style="flex: 2; display:flex; align-items:center; justify-content:center; min-height: 400px;">${content}</div>`;
                  
+                 html += `<div class="zoom-notes-section" style="flex: 1; padding:20px; border-left:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px; overflow-y:auto; display:flex; flex-direction:column; gap:20px;">`;
+                 
                  if (t.notes || t.content) {
                      const notesHtml = parseMarkdown(t.notes || t.content || '');
-                     html += `<div class="zoom-notes-section" style="flex: 1; padding:20px; border-left:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px; overflow-y:auto;">
+                     html += `<div>
                                  <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
                                  <div style="font-size:1.1rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
                               </div>`;
                  }
-                 html += `</div>`;
+
+                 // Data Table
+                 const labels = (t.dataPoints || []).map(dp => dp.label);
+                 const values = (t.dataPoints || []).map(dp => dp.value);
+                 const total = values.reduce((a, b) => a + b, 0);
+                 
+                 if (labels.length > 0) {
+                     let tableHtml = `<h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Data Details</h4>
+                                      <table style="width:100%; border-collapse: collapse; font-size:0.9rem; color:#ddd;">
+                                        <thead>
+                                            <tr style="border-bottom: 1px solid #444;">
+                                                <th style="text-align:left; padding:8px;">Label</th>
+                                                <th style="text-align:right; padding:8px;">Value</th>
+                                                <th style="text-align:right; padding:8px;">%</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>`;
+                     
+                     labels.forEach((l, i) => {
+                         const v = values[i];
+                         const pct = total > 0 ? Math.round((v / total) * 100) : 0;
+                         tableHtml += `<tr style="border-bottom: 1px solid #333;">
+                                         <td style="padding:8px;">${l}</td>
+                                         <td style="text-align:right; padding:8px;">${v}</td>
+                                         <td style="text-align:right; padding:8px;">${pct}%</td>
+                                       </tr>`;
+                     });
+                     
+                     tableHtml += `<tr style="font-weight:bold; background:rgba(255,255,255,0.05);">
+                                     <td style="padding:8px;">Total</td>
+                                     <td style="text-align:right; padding:8px;">${total}</td>
+                                     <td style="text-align:right; padding:8px;">100%</td>
+                                   </tr>`;
+                     
+                     tableHtml += `</tbody></table>`;
+                     html += `<div>${tableHtml}</div>`;
+                 }
+                 
+                 html += `</div></div>`;
             } else {
                 html = `<div style="width:100%; height:100%; display:flex; flex-direction:column;">`;
                 html += `<div style="flex: 1; min-height: 300px; display:flex; align-items:center; justify-content:center;">${content}</div>`;
