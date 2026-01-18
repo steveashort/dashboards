@@ -452,12 +452,6 @@ export const renderBoard = () => {
             c.className = 'member-card';
             c.onclick = () => UserManager.openUserModal(i);
             
-            const statusMap = { 'under': 'Low', 'busy': 'Medium', 'over': 'High', 'absent': 'Absent' };
-            const statusVal = (m.lastWeek && m.lastWeek.status) ? m.lastWeek.status : 'busy';
-            const statusText = statusMap[statusVal] || 'Medium';
-            const statusCls = statusVal === 'absent' ? 'status-absent' : `status-${statusVal}`;
-            const pillHTML = `<div class="status-pill ${statusCls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${statusText}</div>`;
-
             const mapDisplay = (v) => {
                 if (v === 'R') return 'H';
                 if (v === 'N') return 'M';
@@ -486,7 +480,6 @@ export const renderBoard = () => {
             
             let content = `<div class="member-card-content">`;
             content += `<div class="card-col"><div class="col-header">Last Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().last.split(' - ')[0]})</span></div>`;
-            content += `<div style="text-align:center; margin-bottom:5px;">${pillHTML}</div>`;
             content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${lw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
             content += `</div>`;
 
@@ -1634,7 +1627,7 @@ export const UserManager = {
         
         const m = isEdit ? State.members[index] : {
             name: '',
-            lastWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], status: 'busy' },
+            lastWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}] },
             thisWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], load: ['N','N','N','N','N','X','X'] },
             nextWeek: { tasks: [{text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}], load: ['N','N','N','N','N','X','X'] }
         };
@@ -1647,9 +1640,6 @@ export const UserManager = {
             getEl('nwTask'+i).value = m.thisWeek.tasks[i-1]?.text || '';
             getEl('fwTask'+i).value = m.nextWeek.tasks[i-1]?.text || '';
         }
-
-        // Status
-        UserManager.setStatus(m.lastWeek.status || 'busy');
 
         // Loads
         const defaultLoad = ['N','N','N','N','N','X','X'];
@@ -1716,7 +1706,6 @@ export const UserManager = {
             name,
             notes: getEl('mNotes').value.trim(),
             lastWeek: {
-                status: getEl('lwStatus').value,
                 onCall: (idx > -1 && State.members[idx].lastWeek?.onCall) ? State.members[idx].lastWeek.onCall : [],
                 tasks: [
                     { text: getEl('lwTask1').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[0]?.isTeamSuccess || false) : false },
