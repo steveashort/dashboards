@@ -2,8 +2,8 @@
  * SERVER PLATFORMS TRACKER - VISUALIZATIONS MODULE
  */
 
-const sizeMap = { 'S': 200, 'M': 300, 'L': 600, 'XL': 1000 };
-const getWidth = (s) => sizeMap[s] || 300;
+const sizeMap = { 'S': 300, 'M': 500, 'L': 900, 'XL': 1200 };
+const getWidth = (s) => sizeMap[s] || 500;
 
 export const getColor = (s) => s >= 90 ? '#ff1744' : s >= 51 ? '#ffb300' : '#00e676';
 
@@ -59,7 +59,7 @@ export const Visuals = {
         let max = 0;
         series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
         if(max===0) max=10;
-        const w=getWidth(size); const h=180; const pTop=30; const pBot=45; const pSide=30; 
+        const w=getWidth(size); const h=180; const pTop=15; const pBot=30; const pSide=15; 
         const gw=(w-(pSide*2))/(labels.length-1||1), uh=h-pTop-pBot;
 
         let yGrid = '';
@@ -129,7 +129,7 @@ export const Visuals = {
         series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
         if(max === 0) max = 10;
 
-        const w=getWidth(size); const h=180; const pTop=20; const pBot=45; const pSide=30; 
+        const w=getWidth(size); const h=180; const pTop=15; const pBot=30; const pSide=15; 
         const groupWidth = (w-(pSide*2)) / labels.length;
         const barWidth = (groupWidth * 0.8) / series.length; 
         const uh = h-pTop-pBot;
