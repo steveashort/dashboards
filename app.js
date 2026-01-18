@@ -247,7 +247,9 @@ export const renderBoard = () => {
         
         State.trackers.forEach((t, i) => {
             const card = document.createElement('div');
-            card.className = `tracker-card size-${t.size || 'M'} type-${t.type}`;
+            // Force Donut to always be Small
+            const displaySize = t.type === 'donut' ? 'S' : (t.size || 'M');
+            card.className = `tracker-card size-${displaySize} type-${t.type}`;
             card.dataset.index = i;
             
             if (!document.body.classList.contains('publishing')) {
@@ -264,6 +266,11 @@ export const renderBoard = () => {
                      TrackerManager.openModal(i);
                  }
             };
+
+            // Zoom Icon
+            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut'].includes(t.type)) {
+                card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
+            }
 
             const noteText = (t.notes || t.content || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
             if (noteText) {
@@ -326,7 +333,7 @@ export const renderBoard = () => {
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
                 const values = (t.dataPoints || []).map(dp => dp.value);
-                const html = Visuals.createDonutChartSVG(labels, values, t.size);
+                const html = Visuals.createDonutChartSVG(labels, values, displaySize);
                 visualHTML = `<div style="width:100%;">${html}</div>`;
                 statsHTML = '';
             }
