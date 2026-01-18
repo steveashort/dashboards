@@ -460,7 +460,7 @@ export const Visuals = {
                 }
                 
                 if (combinedOnCall[d]) {
-                    svg += `<text x="${x + colWidth/2}" y="${y + rowHeight/2 + 4}" text-anchor="middle" font-size="12" filter="drop-shadow(0 0 1px #000)">📞</text>`;
+                    svg += `<text x="${x + colWidth/2}" y="${y + rowHeight/2 + 5}" text-anchor="middle" font-size="14" fill="#00FFFF" style="font-weight:bold;">☎</text>`;
                 }
             });
             
