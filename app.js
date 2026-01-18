@@ -472,17 +472,33 @@ export const ZoomManager = {
         const bodyEl = getEl('zoomBody');
         if (bodyEl) {
             bodyEl.className = 'zoom-body-chart';
-            let html = `<div style="width:100%; height:100%; display:flex; flex-direction:column;">`;
-            html += `<div style="flex: 1; min-height: 300px; display:flex; align-items:center; justify-content:center;">${content}</div>`;
+            let html = '';
             
-            if (t.notes || t.content) {
-                const notesHtml = parseMarkdown(t.notes || t.content || '');
-                html += `<div class="zoom-notes-section" style="margin-top:20px; padding:20px; border-top:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px;">
-                            <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
-                            <div style="font-size:1.1rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
-                         </div>`;
+            if (renderType === 'donut') {
+                 html = `<div style="width:100%; height:100%; display:flex; flex-direction:row; gap:20px;">`;
+                 html += `<div style="flex: 2; display:flex; align-items:center; justify-content:center; min-height: 400px;">${content}</div>`;
+                 
+                 if (t.notes || t.content) {
+                     const notesHtml = parseMarkdown(t.notes || t.content || '');
+                     html += `<div class="zoom-notes-section" style="flex: 1; padding:20px; border-left:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px; overflow-y:auto;">
+                                 <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
+                                 <div style="font-size:1.1rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
+                              </div>`;
+                 }
+                 html += `</div>`;
+            } else {
+                html = `<div style="width:100%; height:100%; display:flex; flex-direction:column;">`;
+                html += `<div style="flex: 1; min-height: 300px; display:flex; align-items:center; justify-content:center;">${content}</div>`;
+                
+                if (t.notes || t.content) {
+                    const notesHtml = parseMarkdown(t.notes || t.content || '');
+                    html += `<div class="zoom-notes-section" style="margin-top:20px; padding:20px; border-top:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px;">
+                                <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
+                                <div style="font-size:1.1rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
+                             </div>`;
+                }
+                html += `</div>`;
             }
-            html += `</div>`;
             bodyEl.innerHTML = html;
         }
         ModalManager.openModal('zoomModal');
@@ -668,8 +684,8 @@ export const TrackerManager = {
                 if(container) container.innerHTML = '';
                 const notesIn = getEl('tkDonutNotes');
                 if(notesIn) notesIn.value = '';
-                // Default Size M
-                const sizeRad = document.querySelector('input[name="tkSize"][value="M"]');
+                // Default Size S
+                const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
                 if(sizeRad) sizeRad.checked = true;
             }
 
@@ -1417,7 +1433,7 @@ export const TrackerManager = {
             newTracker.dataPoints = dataPoints;
             const notesIn = getEl('tkDonutNotes');
             newTracker.notes = notesIn ? notesIn.value : '';
-            newTracker.size = 'M'; // Force Size M
+            newTracker.size = size; // Use selected size
         }
 
         if(index === -1) {

@@ -289,7 +289,24 @@ export const Visuals = {
             startAngle = endAngle;
         });
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${paths}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/></svg>`;
+        // Legend
+        let legHTML = '';
+        const legY = h - 15;
+        const legItemW = 60;
+        const maxCols = Math.floor(w / legItemW);
+        const rows = Math.ceil(labels.length / maxCols);
+        const totalW = Math.min(labels.length, maxCols) * legItemW;
+        const startX = (w - totalW) / 2;
+        
+        labels.forEach((l, i) => {
+            const row = Math.floor(i / maxCols);
+            const col = i % maxCols;
+            const lx = startX + (col * legItemW);
+            const ly = legY - ((rows - 1 - row) * 12);
+            legHTML += `<circle cx="${lx}" cy="${ly}" r="3" fill="${colors[i % colors.length]}"/><text x="${lx+10}" y="${ly+3}" fill="#aaa" font-size="8" text-anchor="start">${l.substring(0,8)}</text>`;
+        });
+
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${paths}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/>${legHTML}</svg>`;
     },
 
     createDonutChartWithCalloutsSVG: (labels, values) => {
@@ -357,6 +374,23 @@ export const Visuals = {
             startAngle = endAngle;
         });
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">${paths}${annotations}<circle cx="${cx}" cy="${cy}" r="${r - thickness}" fill="transparent"/></svg>`;
+        // Legend
+        let legHTML = '';
+        const legY = h - 30;
+        const legItemW = 100;
+        const maxCols = Math.floor(w / legItemW);
+        const rows = Math.ceil(labels.length / maxCols);
+        const totalW = Math.min(labels.length, maxCols) * legItemW;
+        const startX = (w - totalW) / 2;
+        
+        labels.forEach((l, i) => {
+            const row = Math.floor(i / maxCols);
+            const col = i % maxCols;
+            const lx = startX + (col * legItemW);
+            const ly = legY - ((rows - 1 - row) * 20);
+            legHTML += `<circle cx="${lx}" cy="${ly}" r="5" fill="${colors[i % colors.length]}"/><text x="${lx+15}" y="${ly+5}" fill="#aaa" font-size="12" text-anchor="start">${l.substring(0,12)}</text>`;
+        });
+
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">${paths}${annotations}<circle cx="${cx}" cy="${cy}" r="${r - thickness}" fill="transparent"/>${legHTML}</svg>`;
     }
 };
