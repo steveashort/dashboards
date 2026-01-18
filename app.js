@@ -86,7 +86,25 @@ const parseMarkdown = (t) => {
                  if(!/^https?:\/\//i.test(finalUrl)) finalUrl = 'https://' + finalUrl;
                  return `<a href="${finalUrl}" target="_blank">${text}</a>`;
              });
-    return h.split('\n').map(l=>l.trim().startsWith('- ')?`<li>${l.substring(2)}</li>`:l+'<br>').join('').replace(/<\/li><br><li>/g,'</li><li>').replace(/<br><li>/g,'<ul><li>').replace(/<\/li><br>/g,'</li></ul>');
+    
+    // Simple List Parsing
+    let lines = h.split('\n');
+    let output = '';
+    let inList = false;
+    
+    lines.forEach(line => {
+        let trimmed = line.trim();
+        if (trimmed.startsWith('- ')) {
+            if (!inList) { output += '<ul>'; inList = true; }
+            output += `<li>${trimmed.substring(2)}</li>`;
+        } else {
+            if (inList) { output += '</ul>'; inList = false; }
+            if (trimmed.length > 0) output += trimmed + '<br>';
+        }
+    });
+    if (inList) output += '</ul>';
+    
+    return output;
 };
 
 export const App = {
@@ -537,7 +555,7 @@ export const ZoomManager = {
                 html = `<div style="width:100%; height:100%; display:flex; flex-direction:column; padding:20px;">`;
                 html += `<div style="flex: 1; min-height: 300px; display:flex; align-items:center; justify-content:center;">${content}</div>`;
                 
-                if (t.notes || t.content) {
+                if ((t.notes || t.content) && t.type !== 'note') {
                     const notesHtml = parseMarkdown(t.notes || t.content || '');
                     html += `<div class="zoom-notes-section" style="margin-top:20px; padding:20px; border-top:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px;">
                                 <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>

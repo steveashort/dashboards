@@ -365,6 +365,16 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 .status-over { background-color: var(--g-red); color: #fff; }
 .status-absent { background-color: var(--accent); color: #fff; opacity: 0.8; }
 
+.note-render-container {
+    max-height: 100%; overflow-y: auto; width: 100%; height: 100%;
+    padding: 10px; font-size: 0.9rem; line-height: 1.4; color: var(--text-main);
+}
+/* Purple Scrollbar for Note Container */
+.note-render-container::-webkit-scrollbar { width: 6px; }
+.note-render-container::-webkit-scrollbar-track { background: rgba(255,255,255,0.05); }
+.note-render-container::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 3px; }
+.note-render-container::-webkit-scrollbar-thumb:hover { background: var(--accent-hover); }
+
 .zoomed-content ul { list-style: none; font-size: 1.5rem; line-height: 2; padding-left: 1rem; }
 .zoomed-content li { margin-bottom: 1rem; position: relative; padding-left: 2rem; }
 .zoomed-content li::before { content: "★"; position: absolute; left: 0; color: gold; font-size: 1.5rem; line-height: 2; }
