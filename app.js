@@ -491,7 +491,7 @@ export const ZoomManager = {
                      const notesHtml = parseMarkdown(t.notes || t.content || '');
                      html += `<div>
                                  <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
-                                 <div style="font-size:1.1rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
+                                 <div style="font-size:0.9rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
                               </div>`;
                  }
 
@@ -534,14 +534,14 @@ export const ZoomManager = {
                  
                  html += `</div></div>`;
             } else {
-                html = `<div style="width:100%; height:100%; display:flex; flex-direction:column;">`;
+                html = `<div style="width:100%; height:100%; display:flex; flex-direction:column; padding:20px;">`;
                 html += `<div style="flex: 1; min-height: 300px; display:flex; align-items:center; justify-content:center;">${content}</div>`;
                 
                 if (t.notes || t.content) {
                     const notesHtml = parseMarkdown(t.notes || t.content || '');
                     html += `<div class="zoom-notes-section" style="margin-top:20px; padding:20px; border-top:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px;">
                                 <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
-                                <div style="font-size:1.1rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
+                                <div style="font-size:0.9rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
                              </div>`;
                 }
                 html += `</div>`;

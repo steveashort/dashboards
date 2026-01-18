@@ -59,7 +59,7 @@ export const Visuals = {
         let max = 0;
         series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
         if(max===0) max=10;
-        const w=getWidth(size); const h=180; const pTop=15; const pBot=30; const pSide=15; 
+        const w=getWidth(size); const h=180; const pTop=15; const pBot=45; const pSide=15; 
         const gw=(w-(pSide*2))/(labels.length-1||1), uh=h-pTop-pBot;
 
         let yGrid = '';
@@ -129,7 +129,7 @@ export const Visuals = {
         series.forEach(s => s.values.forEach(v => { if(v > max) max = v; }));
         if(max === 0) max = 10;
 
-        const w=getWidth(size); const h=180; const pTop=15; const pBot=30; const pSide=15; 
+        const w=getWidth(size); const h=180; const pTop=15; const pBot=45; const pSide=15; 
         const groupWidth = (w-(pSide*2)) / labels.length;
         const barWidth = (groupWidth * 0.8) / series.length; 
         const uh = h-pTop-pBot;
