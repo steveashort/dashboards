@@ -283,30 +283,13 @@ export const Visuals = {
             `;
 
             const color = colors[i % colors.length];
-            const tooltipText = `${labels[i]}: ${Math.round(percentage * 100)}%`;
+            const tooltipText = `${labels[i]}: ${v}`;
             paths += `<path d="${d}" fill="${color}" stroke="#1e1e1e" stroke-width="1" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></path>`;
 
             startAngle = endAngle;
         });
 
-        // Legend
-        let legHTML = '';
-        const legY = h - 15;
-        const legItemW = 60;
-        const maxCols = Math.floor(w / legItemW);
-        const rows = Math.ceil(labels.length / maxCols);
-        const totalW = Math.min(labels.length, maxCols) * legItemW;
-        const startX = (w - totalW) / 2;
-        
-        labels.forEach((l, i) => {
-            const row = Math.floor(i / maxCols);
-            const col = i % maxCols;
-            const lx = startX + (col * legItemW);
-            const ly = legY - ((rows - 1 - row) * 12);
-            legHTML += `<circle cx="${lx}" cy="${ly}" r="3" fill="${colors[i % colors.length]}"/><text x="${lx+10}" y="${ly+3}" fill="#aaa" font-size="8" text-anchor="start">${l.substring(0,8)}</text>`;
-        });
-
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${paths}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/>${legHTML}</svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${paths}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/></svg>`;
     },
 
     createDonutChartWithCalloutsSVG: (labels, values) => {

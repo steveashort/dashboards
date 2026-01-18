@@ -269,8 +269,8 @@ export const renderBoard = () => {
             if (noteText) {
                 card.onmousemove = (e) => {
                     if (!document.body.classList.contains('publishing')) return;
-                    // Prevent overwriting specific tooltips on chart points/bars
-                    if (e.target.closest('circle, rect')) return;
+                    // Prevent overwriting specific tooltips on chart points/bars/segments
+                    if (e.target.closest('circle, rect, path')) return;
                     Visuals.showTooltip(e, noteText);
                 };
                 card.onmouseout = () => Visuals.hideTooltip();
