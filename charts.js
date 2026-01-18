@@ -390,8 +390,8 @@ export const Visuals = {
     },
 
     createGanttChartSVG: (members, currentRange, nextRange) => {
-        const rowHeight = 40;
-        const headerHeight = 60;
+        const rowHeight = 25;
+        const headerHeight = 45;
         const width = 1200;
         const height = headerHeight + (members.length * rowHeight);
         const nameColWidth = 200;
@@ -407,22 +407,22 @@ export const Visuals = {
         svg += `<rect x="${nameColWidth + (colWidth * 7)}" y="${headerHeight}" width="${colWidth * 7}" height="${height - headerHeight}" fill="rgba(0,0,0,0.2)"/>`;
 
         // Header Text
-        svg += `<text x="15" y="${headerHeight/2 + 5}" fill="#bb86fc" font-size="12" font-weight="bold" style="text-transform:uppercase;">Team Member</text>`;
+        svg += `<text x="15" y="${headerHeight/2 + 5}" fill="#bb86fc" font-size="11" font-weight="bold" style="text-transform:uppercase;">Team Member</text>`;
         
         // Week headers
-        svg += `<text x="${nameColWidth + (colWidth * 3.5)}" y="25" fill="#bb86fc" font-size="12" text-anchor="middle" font-weight="bold">Current Week (${currentRange})</text>`;
-        svg += `<line x1="${nameColWidth + (colWidth * 7)}" y1="10" x2="${nameColWidth + (colWidth * 7)}" y2="${height}" stroke="#444" stroke-dasharray="4"/>`;
-        svg += `<text x="${nameColWidth + (colWidth * 10.5)}" y="25" fill="#bb86fc" font-size="12" text-anchor="middle" font-weight="bold">Next Week (${nextRange})</text>`;
+        svg += `<text x="${nameColWidth + (colWidth * 3.5)}" y="18" fill="#bb86fc" font-size="11" text-anchor="middle" font-weight="bold">Current Week (${currentRange})</text>`;
+        svg += `<line x1="${nameColWidth + (colWidth * 7)}" y1="5" x2="${nameColWidth + (colWidth * 7)}" y2="${height}" stroke="#444" stroke-dasharray="4"/>`;
+        svg += `<text x="${nameColWidth + (colWidth * 10.5)}" y="18" fill="#bb86fc" font-size="11" text-anchor="middle" font-weight="bold">Next Week (${nextRange})</text>`;
 
         // Day Headers
         const days = ['M','T','W','T','F','S','S'];
         const allDays = [...days, ...days];
         allDays.forEach((d, i) => {
             const x = nameColWidth + (i * colWidth);
-            svg += `<text x="${x + colWidth/2}" y="${headerHeight - 10}" fill="#aaa" font-size="10" text-anchor="middle">${d}</text>`;
+            svg += `<text x="${x + colWidth/2}" y="${headerHeight - 8}" fill="#aaa" font-size="9" text-anchor="middle">${d}</text>`;
             svg += `<line x1="${x}" y1="${headerHeight}" x2="${x}" y2="${height}" stroke="#333" stroke-width="1"/>`;
         });
-        svg += `<line x1="0" y1="${headerHeight}" x2="${width}" y2="${headerHeight}" stroke="#444" stroke-width="2"/>`;
+        svg += `<line x1="0" y1="${headerHeight}" x2="${width}" y2="${headerHeight}" stroke="#444" stroke-width="1"/>`;
 
         // Rows
         members.forEach((m, i) => {
@@ -434,43 +434,37 @@ export const Visuals = {
             (m.thisWeek?.tasks || []).forEach(t => { if(t.text) tooltip += `• ${t.text}<br>`; });
             tooltip += `<br><u>Next Week Plans:</u><br>`;
             (m.nextWeek?.tasks || []).forEach(t => { if(t.text) tooltip += `• ${t.text}<br>`; });
-            
-            // Escape quotes for attribute
             const safeTooltip = tooltip.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
 
             // Name
-            svg += `<text x="15" y="${y + 25}" fill="#e0e0e0" font-size="11" style="cursor:help; font-weight:500;" onmousemove="Visuals.showTooltip(event, '${safeTooltip}')" onmouseout="Visuals.hideTooltip()">${m.name}</text>`;
+            svg += `<text x="15" y="${y + rowHeight - 8}" fill="#e0e0e0" font-size="10" style="cursor:help; font-weight:500;" onmousemove="Visuals.showTooltip(event, '${safeTooltip}')" onmouseout="Visuals.hideTooltip()">${m.name}</text>`;
             
             // Data
             const defaultLoad = ['N','N','N','N','N','X','X'];
             const defaultOnCall = [false, false, false, false, false, false, false];
-            
             const thisLoad = (m.thisWeek && m.thisWeek.load) ? (m.thisWeek.load.length === 5 ? [...m.thisWeek.load, 'X', 'X'] : m.thisWeek.load) : defaultLoad;
             const nextLoad = (m.nextWeek && m.nextWeek.load) ? (m.nextWeek.load.length === 5 ? [...m.nextWeek.load, 'X', 'X'] : m.nextWeek.load) : defaultLoad;
-            
             const thisOnCall = (m.thisWeek && m.thisWeek.onCall) ? (m.thisWeek.onCall.length === 5 ? [...m.thisWeek.onCall, false, false] : m.thisWeek.onCall) : defaultOnCall;
             const nextOnCall = (m.nextWeek && m.nextWeek.onCall) ? (m.nextWeek.onCall.length === 5 ? [...m.nextWeek.onCall, false, false] : m.nextWeek.onCall) : defaultOnCall;
-
             const combined = [...thisLoad, ...nextLoad];
             const combinedOnCall = [...thisOnCall, ...nextOnCall];
             
             combined.forEach((val, d) => {
                 const x = nameColWidth + (d * colWidth);
                 if (val === 'X') {
-                    svg += `<rect x="${x+4}" y="${y+6}" width="${colWidth-8}" height="${rowHeight-12}" fill="#bb86fc" rx="4" opacity="0.8"><title>Absent</title></rect>`;
+                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#bb86fc" rx="3" opacity="0.8"><title>Absent</title></rect>`;
                 } else if (val === 'L') {
-                    svg += `<rect x="${x+4}" y="${y+6}" width="${colWidth-8}" height="${rowHeight-12}" fill="#ffb300" rx="4" opacity="0.6"><title>Low Load</title></rect>`;
+                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#ffb300" rx="3" opacity="0.6"><title>Low Load</title></rect>`;
                 } else if (val === 'R') {
-                    svg += `<rect x="${x+4}" y="${y+6}" width="${colWidth-8}" height="${rowHeight-12}" fill="#ff1744" rx="4" opacity="0.6"><title>High Load</title></rect>`;
+                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#ff1744" rx="3" opacity="0.6"><title>High Load</title></rect>`;
                 }
                 
-                // On Call Indicator
                 if (combinedOnCall[d]) {
-                    svg += `<circle cx="${x + colWidth - 8}" cy="${y + 8}" r="4" fill="#03dac6" stroke="#1e1e1e" stroke-width="1"><title>On Call</title></circle>`;
+                    svg += `<text x="${x + colWidth/2}" y="${y + rowHeight/2 + 4}" text-anchor="middle" font-size="12" filter="drop-shadow(0 0 1px #000)">📞</text>`;
                 }
             });
             
-            svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="#333" stroke-width="1"/>`;
+            svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="#333" stroke-width="0.5"/>`;
         });
         
         svg += `</svg>`;
