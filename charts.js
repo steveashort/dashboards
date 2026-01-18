@@ -407,43 +407,28 @@ export const Visuals = {
         svg += `<rect x="${nameColWidth + (colWidth * 7)}" y="${headerHeight}" width="${colWidth * 7}" height="${height - headerHeight}" fill="rgba(0,0,0,0.2)"/>`;
 
         // Header Text
-        svg += `<text x="15" y="${headerHeight/2 + 5}" fill="#bb86fc" font-size="11" font-weight="bold" style="text-transform:uppercase;">Team Member</text>`;
+        svg += `<text x="15" y="${headerHeight/2 + 5}" fill="#bb86fc" font-size="13" font-weight="bold" style="text-transform:uppercase;">Team Member</text>`;
         
         // Week headers
-        svg += `<text x="${nameColWidth + (colWidth * 3.5)}" y="18" fill="#bb86fc" font-size="11" text-anchor="middle" font-weight="bold">Current Week (${currentRange})</text>`;
+        svg += `<text x="${nameColWidth + (colWidth * 3.5)}" y="18" fill="#bb86fc" font-size="14" text-anchor="middle" font-weight="bold">CURRENT WEEK (${currentRange})</text>`;
         svg += `<line x1="${nameColWidth + (colWidth * 7)}" y1="5" x2="${nameColWidth + (colWidth * 7)}" y2="${height}" stroke="#444" stroke-dasharray="4"/>`;
-        svg += `<text x="${nameColWidth + (colWidth * 10.5)}" y="18" fill="#bb86fc" font-size="11" text-anchor="middle" font-weight="bold">Next Week (${nextRange})</text>`;
+        svg += `<text x="${nameColWidth + (colWidth * 10.5)}" y="18" fill="#bb86fc" font-size="14" text-anchor="middle" font-weight="bold">NEXT WEEK (${nextRange})</text>`;
 
         // Day Headers
         const days = ['M','T','W','T','F','S','S'];
         const allDays = [...days, ...days];
         allDays.forEach((d, i) => {
             const x = nameColWidth + (i * colWidth);
-            svg += `<text x="${x + colWidth/2}" y="${headerHeight - 8}" fill="#aaa" font-size="9" text-anchor="middle">${d}</text>`;
+            svg += `<text x="${x + colWidth/2}" y="${headerHeight - 8}" fill="#aaa" font-size="11" text-anchor="middle">${d}</text>`;
             svg += `<line x1="${x}" y1="${headerHeight}" x2="${x}" y2="${height}" stroke="#333" stroke-width="1"/>`;
         });
         svg += `<line x1="0" y1="${headerHeight}" x2="${width}" y2="${headerHeight}" stroke="#444" stroke-width="1"/>`;
 
         // Rows
         members.forEach((m, i) => {
-            const y = headerHeight + (i * rowHeight);
-            if (i % 2 === 0) svg += `<rect x="0" y="${y}" width="${width}" height="${rowHeight}" fill="rgba(255,255,255,0.01)"/>`;
-
-            // Tooltip generation
-            let tooltip = `<b>${m.name}</b><br><br><u>Current Priorities:</u><br>`;
-            (m.thisWeek?.tasks || []).forEach(t => { if(t.text) tooltip += `• ${t.text}<br>`; });
-            tooltip += `<br><u>Next Week Plans:</u><br>`;
-            (m.nextWeek?.tasks || []).forEach(t => { if(t.text) tooltip += `• ${t.text}<br>`; });
-            
-            if (m.notes) {
-                tooltip += `<br><u>Notes:</u><br>${m.notes}<br>`;
-            }
-            
-            // Escape quotes for attribute
-            const safeTooltip = tooltip.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-
+...
             // Name
-            svg += `<text x="15" y="${y + rowHeight - 8}" fill="#e0e0e0" font-size="10" style="cursor:help; font-weight:500;" onmousemove="Visuals.showTooltip(event, '${safeTooltip}')" onmouseout="Visuals.hideTooltip()">${m.name}</text>`;
+            svg += `<text x="15" y="${y + rowHeight - 8}" fill="#e0e0e0" font-size="12" style="cursor:help; font-weight:500;" onmousemove="Visuals.showTooltip(event, '${safeTooltip}')" onmouseout="Visuals.hideTooltip()">${m.name}</text>`;
             
             // Data
             const defaultLoad = ['N','N','N','N','N','X','X'];

@@ -457,13 +457,26 @@ export const renderBoard = () => {
             const statusCls = statusVal === 'absent' ? 'status-absent' : `status-${statusVal}`;
             const pillHTML = `<div class="status-pill ${statusCls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${statusText}</div>`;
 
-            const thisLoad = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N'];
-            const mgThis = thisLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
+            const thisLoadRaw = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N','X','X'];
+            const thisLoad = thisLoadRaw.length === 5 ? [...thisLoadRaw, 'X', 'X'] : thisLoadRaw;
+            const thisOc = (m.thisWeek && m.thisWeek.onCall) ? m.thisWeek.onCall : [false,false,false,false,false,false,false];
+            const mgThis = thisLoad.map((v,k) => {
+                const isOc = thisOc[k] ? '<div style="font-size:0.5rem; position:absolute; bottom:1px; right:1px;">☎</div>' : '';
+                return `<div class="dm-box" style="position:relative;"><span class="dm-day">${['M','T','W','T','F','S','S'][k]}</span><span class="dm-val val-${v}">${v}</span>${isOc}</div>`;
+            }).join('');
 
-            const nextLoad = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N'];
-            const mgNext = nextLoad.map((v,k) => `<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
+            const nextLoadRaw = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N','X','X'];
+            const nextLoad = nextLoadRaw.length === 5 ? [...nextLoadRaw, 'X', 'X'] : nextLoadRaw;
+            const nextOc = (m.nextWeek && m.nextWeek.onCall) ? m.nextWeek.onCall : [false,false,false,false,false,false,false];
+            const mgNext = nextLoad.map((v,k) => {
+                const isOc = nextOc[k] ? '<div style="font-size:0.5rem; position:absolute; bottom:1px; right:1px;">☎</div>' : '';
+                return `<div class="dm-box" style="position:relative;"><span class="dm-day">${['M','T','W','T','F','S','S'][k]}</span><span class="dm-val val-${v}">${v}</span>${isOc}</div>`;
+            }).join('');
 
             c.innerHTML = `<div class="member-header">${m.name}</div>`;
+            if (m.notes) {
+                c.innerHTML += `<div style="padding: 0 1.5rem; font-size: 0.75rem; color: #aaa; font-style: italic; margin-top: 5px;">${m.notes}</div>`;
+            }
             
             let content = `<div class="member-card-content">`;
             content += `<div class="card-col"><div class="col-header">Last Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().last.split(' - ')[0]})</span></div>`;
