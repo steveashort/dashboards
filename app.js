@@ -258,7 +258,7 @@ export const renderBoard = () => {
                  console.log("Card clicked. Type:", t.type, "Publishing:", document.body.classList.contains('publishing'));
                  if (document.body.classList.contains('publishing')) {
                      // Zoom requested for: Time Series (line/bar), Note Tracker (note), Date Tracker (rag/ryg), Schedule Tracker (waffle)
-                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle'].includes(t.type);
+                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut'].includes(t.type);
                      if (canZoom) ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);

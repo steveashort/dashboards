@@ -246,7 +246,7 @@ export const Visuals = {
         const h = 180;
         const centerX = w / 2;
         const centerY = h / 2;
-        const radius = 60;
+        const radius = 50;
         const thickness = 20;
         const innerRadius = radius - thickness;
 
