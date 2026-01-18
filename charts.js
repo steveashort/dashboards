@@ -298,11 +298,11 @@ export const Visuals = {
         const w = 800;
         const h = 500;
         const cx = w / 2;
-        const cy = 200;
-        const r = 90;
-        const thickness = 33;
-        const rLabel = r + 20;
-        const rEnd = r + 50;
+        const cy = 250;
+        const r = 110;
+        const thickness = 40;
+        const rLabel = r + 25;
+        const rEnd = r + 60;
 
         const total = values.reduce((a, b) => a + b, 0);
         if (total === 0) return `<svg width="${w}" height="${h}"><text x="${cx}" y="${cy}" text-anchor="middle" fill="#aaa">No Data</text></svg>`;
