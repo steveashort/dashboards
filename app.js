@@ -331,7 +331,7 @@ export const renderBoard = () => {
             }
 
             const noteText = (t.notes || t.content || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
-            if (noteText) {
+            if (noteText && t.type !== 'note') {
                 card.onmousemove = (e) => {
                     if (!document.body.classList.contains('publishing')) return;
                     // Prevent overwriting specific tooltips on chart points/bars/segments
@@ -1635,6 +1635,14 @@ export const UserManager = {
         thisLoad.forEach((v, i) => UserManager.setLoad(i, v));
         nextLoad.forEach((v, i) => UserManager.setFutureLoad(i, v));
 
+        // On Call
+        const defaultOnCall = [false, false, false, false, false, false, false];
+        const thisOnCall = (m.thisWeek && m.thisWeek.onCall) ? [...m.thisWeek.onCall, ...defaultOnCall.slice(m.thisWeek.onCall.length)] : defaultOnCall;
+        const nextOnCall = (m.nextWeek && m.nextWeek.onCall) ? [...m.nextWeek.onCall, ...defaultOnCall.slice(m.nextWeek.onCall.length)] : defaultOnCall;
+
+        thisOnCall.forEach((v, i) => { const el = getEl('nwOc'+i); if(el) el.checked = v; });
+        nextOnCall.forEach((v, i) => { const el = getEl('fwOc'+i); if(el) el.checked = v; });
+
         getEl('deleteBtn').style.display = isEdit ? 'block' : 'none';
         ModalManager.openModal('userModal');
     },
@@ -1682,6 +1690,7 @@ export const UserManager = {
             name,
             lastWeek: {
                 status: getEl('lwStatus').value,
+                onCall: (idx > -1 && State.members[idx].lastWeek?.onCall) ? State.members[idx].lastWeek.onCall : [],
                 tasks: [
                     { text: getEl('lwTask1').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[0]?.isTeamSuccess || false) : false },
                     { text: getEl('lwTask2').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[1]?.isTeamSuccess || false) : false },
@@ -1693,6 +1702,10 @@ export const UserManager = {
                     getEl('nw0').value, getEl('nw1').value, getEl('nw2').value, getEl('nw3').value, getEl('nw4').value,
                     getEl('nw5').value, getEl('nw6').value
                 ],
+                onCall: [
+                    getEl('nwOc0').checked, getEl('nwOc1').checked, getEl('nwOc2').checked, getEl('nwOc3').checked, getEl('nwOc4').checked,
+                    getEl('nwOc5').checked, getEl('nwOc6').checked
+                ],
                 tasks: [
                     { text: getEl('nwTask1').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[0]?.isTeamSuccess || false) : false },
                     { text: getEl('nwTask2').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[1]?.isTeamSuccess || false) : false },
@@ -1703,6 +1716,10 @@ export const UserManager = {
                 load: [
                     getEl('fw0').value, getEl('fw1').value, getEl('fw2').value, getEl('fw3').value, getEl('fw4').value,
                     getEl('fw5').value, getEl('fw6').value
+                ],
+                onCall: [
+                    getEl('fwOc0').checked, getEl('fwOc1').checked, getEl('fwOc2').checked, getEl('fwOc3').checked, getEl('fwOc4').checked,
+                    getEl('fwOc5').checked, getEl('fwOc6').checked
                 ],
                 tasks: [
                     { text: getEl('fwTask1').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[0]?.isTeamActivity || false) : false },
@@ -1846,35 +1863,39 @@ export const DataLoader = {
                             {text:'', [isSuccess?'isTeamSuccess':'isTeamActivity']:false}
                         ];
                         const emptyLoad = ['N','N','N','N','N','X','X'];
+                        const emptyOnCall = [false, false, false, false, false, false, false];
 
                         data.members.forEach(m => {
                             if (diffWeeks === 1) {
                                 // Move This -> Last
                                 m.lastWeek = {
                                     status: getStatusFromLoad(m.thisWeek.load),
+                                    onCall: m.thisWeek.onCall || [...emptyOnCall],
                                     tasks: m.thisWeek.tasks.map(t => ({ text: t.text, isTeamSuccess: t.isTeamSuccess }))
                                 };
                                 // Move Next -> This
                                 m.thisWeek = {
                                     load: m.nextWeek.load,
-                                    tasks: m.nextWeek.tasks.map(t => ({ text: t.text, isTeamSuccess: t.isTeamActivity })) // map isTeamActivity to isTeamSuccess logic if needed, or just boolean
+                                    onCall: m.nextWeek.onCall || [...emptyOnCall],
+                                    tasks: m.nextWeek.tasks.map(t => ({ text: t.text, isTeamSuccess: t.isTeamActivity }))
                                 };
                                 // Clear Next
-                                m.nextWeek = { load: [...emptyLoad], tasks: emptyTasks(false) };
+                                m.nextWeek = { load: [...emptyLoad], onCall: [...emptyOnCall], tasks: emptyTasks(false) };
                             } else if (diffWeeks === 2) {
                                 // Move Next -> Last
                                 m.lastWeek = {
                                     status: getStatusFromLoad(m.nextWeek.load),
+                                    onCall: m.nextWeek.onCall || [...emptyOnCall],
                                     tasks: m.nextWeek.tasks.map(t => ({ text: t.text, isTeamSuccess: t.isTeamActivity }))
                                 };
                                 // Clear This & Next
-                                m.thisWeek = { load: [...emptyLoad], tasks: emptyTasks(true) };
-                                m.nextWeek = { load: [...emptyLoad], tasks: emptyTasks(false) };
+                                m.thisWeek = { load: [...emptyLoad], onCall: [...emptyOnCall], tasks: emptyTasks(true) };
+                                m.nextWeek = { load: [...emptyLoad], onCall: [...emptyOnCall], tasks: emptyTasks(false) };
                             } else {
                                 // Clear All (> 2 weeks)
-                                m.lastWeek = { status: 'busy', tasks: emptyTasks(true) };
-                                m.thisWeek = { load: [...emptyLoad], tasks: emptyTasks(true) };
-                                m.nextWeek = { load: [...emptyLoad], tasks: emptyTasks(false) };
+                                m.lastWeek = { status: 'busy', onCall: [...emptyOnCall], tasks: emptyTasks(true) };
+                                m.thisWeek = { load: [...emptyLoad], onCall: [...emptyOnCall], tasks: emptyTasks(true) };
+                                m.nextWeek = { load: [...emptyLoad], onCall: [...emptyOnCall], tasks: emptyTasks(false) };
                             }
                         });
                         App.alert(`Data loaded and migrated (${diffWeeks} week(s) forward).`);

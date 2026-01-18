@@ -443,9 +443,16 @@ export const Visuals = {
             
             // Data
             const defaultLoad = ['N','N','N','N','N','X','X'];
+            const defaultOnCall = [false, false, false, false, false, false, false];
+            
             const thisLoad = (m.thisWeek && m.thisWeek.load) ? (m.thisWeek.load.length === 5 ? [...m.thisWeek.load, 'X', 'X'] : m.thisWeek.load) : defaultLoad;
             const nextLoad = (m.nextWeek && m.nextWeek.load) ? (m.nextWeek.load.length === 5 ? [...m.nextWeek.load, 'X', 'X'] : m.nextWeek.load) : defaultLoad;
+            
+            const thisOnCall = (m.thisWeek && m.thisWeek.onCall) ? (m.thisWeek.onCall.length === 5 ? [...m.thisWeek.onCall, false, false] : m.thisWeek.onCall) : defaultOnCall;
+            const nextOnCall = (m.nextWeek && m.nextWeek.onCall) ? (m.nextWeek.onCall.length === 5 ? [...m.nextWeek.onCall, false, false] : m.nextWeek.onCall) : defaultOnCall;
+
             const combined = [...thisLoad, ...nextLoad];
+            const combinedOnCall = [...thisOnCall, ...nextOnCall];
             
             combined.forEach((val, d) => {
                 const x = nameColWidth + (d * colWidth);
@@ -455,6 +462,11 @@ export const Visuals = {
                     svg += `<rect x="${x+4}" y="${y+6}" width="${colWidth-8}" height="${rowHeight-12}" fill="#ffb300" rx="4" opacity="0.6"><title>Low Load</title></rect>`;
                 } else if (val === 'R') {
                     svg += `<rect x="${x+4}" y="${y+6}" width="${colWidth-8}" height="${rowHeight-12}" fill="#ff1744" rx="4" opacity="0.6"><title>High Load</title></rect>`;
+                }
+                
+                // On Call Indicator
+                if (combinedOnCall[d]) {
+                    svg += `<circle cx="${x + colWidth - 8}" cy="${y + 8}" r="4" fill="#03dac6" stroke="#1e1e1e" stroke-width="1"><title>On Call</title></circle>`;
                 }
             });
             
