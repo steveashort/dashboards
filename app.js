@@ -1,5 +1,5 @@
 /**
- * SERVER PLATFORMS TRACKER v31
+ * SERVER PLATFORMS TRACKER v32
  * ES6 MODULE STRUCTURE
  */
 export { createGaugeSVG, createWaffleHTML, Visuals } from './charts.js';
@@ -48,6 +48,23 @@ const getRanges = () => {
     };
 };
 
+const getTwoWeeksDates = () => {
+    const today = new Date();
+    const d = today.getDay();
+    const diff = d === 0 ? -6 : 1 - d;
+    // Current Monday
+    const cm = new Date(today);
+    cm.setDate(today.getDate() + diff);
+
+    const dates = [];
+    for(let i=0; i<14; i++) {
+        const date = new Date(cm);
+        date.setDate(cm.getDate() + i);
+        dates.push(date);
+    }
+    return dates;
+};
+
 // --- APEXCHARTS HELPERS ---
 const cleanupCharts = () => {
     chartInstances.forEach(chart => chart.destroy());
@@ -58,18 +75,19 @@ const getCommonApexOptions = (isZoomed = false) => ({
     chart: {
         background: 'transparent',
         toolbar: { show: isZoomed },
-        animations: { enabled: true }
+        animations: { enabled: true },
+        fontFamily: 'Segoe UI, sans-serif'
     },
     theme: { mode: 'dark', palette: 'palette1' },
     dataLabels: { enabled: false },
     grid: { borderColor: '#333', strokeDashArray: 2 },
     xaxis: {
-        labels: { style: { colors: '#a0a0a0', fontSize: '10px', fontFamily: 'Segoe UI' } },
+        labels: { style: { colors: '#a0a0a0', fontSize: '12px', fontFamily: 'Segoe UI' } },
         axisBorder: { show: false },
         axisTicks: { color: '#333' }
     },
     yaxis: {
-        labels: { style: { colors: '#a0a0a0', fontSize: '10px', fontFamily: 'Segoe UI' } }
+        labels: { style: { colors: '#a0a0a0', fontSize: '12px', fontFamily: 'Segoe UI' } }
     },
     legend: { labels: { colors: '#e0e0e0' }, position: 'bottom' },
     tooltip: { theme: 'dark' }
@@ -258,9 +276,7 @@ export const App = {
             if (btn) btn.innerText = "Collapse Team Data";
             
             // Render Gantt
-            const r = getRanges();
-            const svg = Visuals.createGanttChartSVG(State.members, r.current, r.next);
-            getEl('ganttContainer').innerHTML = svg;
+            Visuals.renderResourcePlanner(State.members);
         } else {
             ganttSec.style.display = 'none';
             if (teamHead) teamHead.style.display = 'none';
@@ -272,6 +288,154 @@ export const App = {
         const titleEl = getEl('appTitle');
         if (titleEl) State.title = titleEl.innerText;
         console.log("Title saved");
+    }
+};
+
+// Override Visuals.renderResourcePlanner to use ApexCharts
+// Extending the imported Visuals object directly is tricky with ES modules if it's not mutable or if we want to replace it.
+// Instead, we'll attach a new method to the Visuals object if it's exported as an object, or just define a local function.
+// Since Visuals is imported, we can add properties to it if it's an object.
+Visuals.renderResourcePlanner = (members) => {
+    // 1. Aggregate Data
+    const dates = getTwoWeeksDates();
+    const dateLabels = dates.map(d => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' }));
+
+    // Calculate Totals
+    const dailyTotals = new Array(14).fill(0);
+
+    // Prepare Heatmap Data
+    const heatmapSeries = [];
+
+    // Mapping: L=1, N=2, R=3, X=0. OnCall adds 10.
+    const valMap = { 'L': 1, 'N': 2, 'R': 3, 'X': 0 };
+
+    members.forEach(m => {
+        const thisLoad = (m.thisWeek && m.thisWeek.load) ? (m.thisWeek.load.length === 5 ? [...m.thisWeek.load, 'X', 'X'] : m.thisWeek.load) : ['N','N','N','N','N','X','X'];
+        const nextLoad = (m.nextWeek && m.nextWeek.load) ? (m.nextWeek.load.length === 5 ? [...m.nextWeek.load, 'X', 'X'] : m.nextWeek.load) : ['N','N','N','N','N','X','X'];
+        const thisOc = (m.thisWeek && m.thisWeek.onCall) ? (m.thisWeek.onCall.length === 5 ? [...m.thisWeek.onCall, false, false] : m.thisWeek.onCall) : [false,false,false,false,false,false,false];
+        const nextOc = (m.nextWeek && m.nextWeek.onCall) ? (m.nextWeek.onCall.length === 5 ? [...m.nextWeek.onCall, false, false] : m.nextWeek.onCall) : [false,false,false,false,false,false,false];
+
+        const combinedLoad = [...thisLoad, ...nextLoad];
+        const combinedOc = [...thisOc, ...nextOc];
+
+        const dataPoints = combinedLoad.map((val, i) => {
+            const score = valMap[val] || 0;
+            // Add to daily total (simple score sum)
+            dailyTotals[i] += score;
+
+            // Encode for heatmap
+            let encodedVal = score;
+            if (combinedOc[i]) encodedVal += 10;
+
+            return {
+                x: dateLabels[i],
+                y: encodedVal
+            };
+        });
+
+        heatmapSeries.push({
+            name: m.name,
+            data: dataPoints
+        });
+    });
+
+    // --- RENDER AGGREGATE CHART ---
+    const aggContainer = getEl('resourceAggregateChart');
+    if (aggContainer) {
+        aggContainer.innerHTML = '';
+        const aggOptions = {
+            ...getCommonApexOptions(),
+            chart: {
+                type: 'bar',
+                height: 200,
+                background: 'transparent',
+                toolbar: { show: false }
+            },
+            series: [{ name: 'Total Capacity', data: dailyTotals }],
+            xaxis: { categories: dateLabels },
+            yaxis: { title: { text: 'Capacity Score' } },
+            colors: ['#bb86fc'],
+            plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } },
+            title: { text: 'Team Availability Forecast', style: { color: '#bb86fc', fontSize: '14px', fontFamily: 'Segoe UI' } }
+        };
+        const aggChart = new ApexCharts(aggContainer, aggOptions);
+        aggChart.render();
+        chartInstances.push(aggChart);
+    }
+
+    // --- RENDER DETAILED HEATMAP ---
+    const ganttContainer = getEl('ganttContainer');
+    if (ganttContainer) {
+        ganttContainer.innerHTML = '';
+
+        // Define Color Ranges
+        // 0=Absent, 1=Low, 2=Med, 3=High
+        // +10 for OnCall
+        const ranges = [
+            { from: 0, to: 0, color: '#333333', name: 'Absent' }, // Grey
+            { from: 1, to: 1, color: '#ff1744', name: 'Low' },    // Red
+            { from: 2, to: 2, color: '#ffb300', name: 'Medium' }, // Amber
+            { from: 3, to: 3, color: '#00e676', name: 'High' },   // Green
+
+            // On Call Variants (Same colors, icon handled by formatter)
+            { from: 10, to: 10, color: '#333333', name: 'Absent (On Call)' },
+            { from: 11, to: 11, color: '#ff1744', name: 'Low (On Call)' },
+            { from: 12, to: 12, color: '#ffb300', name: 'Medium (On Call)' },
+            { from: 13, to: 13, color: '#00e676', name: 'High (On Call)' }
+        ];
+
+        // Shade Weekends
+        const annotations = {
+            xaxis: [
+                { x: dateLabels[5], x2: dateLabels[6], fillColor: '#ffffff', opacity: 0.1, label: { text: '' } }, // Current Sat-Sun
+                { x: dateLabels[12], x2: dateLabels[13], fillColor: '#ffffff', opacity: 0.1, label: { text: '' } } // Next Sat-Sun
+            ]
+        };
+
+        const detailOptions = {
+            ...getCommonApexOptions(),
+            chart: {
+                type: 'heatmap',
+                height: Math.max(250, members.length * 40 + 50),
+                background: 'transparent',
+                toolbar: { show: false },
+                fontFamily: 'Segoe UI, sans-serif'
+            },
+            series: heatmapSeries,
+            plotOptions: {
+                heatmap: {
+                    shadeIntensity: 0.5,
+                    radius: 2,
+                    useFillColorAsStroke: false,
+                    colorScale: {
+                        ranges: ranges
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function(val, opts) {
+                    if (val >= 10) return '☎';
+                    return '';
+                },
+                style: {
+                    colors: ['#fff'],
+                    fontSize: '16px'
+                }
+            },
+            annotations: annotations,
+            xaxis: {
+                categories: dateLabels,
+                labels: { style: { colors: '#a0a0a0', fontSize: '11px' } },
+                position: 'top'
+            },
+            stroke: { width: 1, colors: ['#1e1e1e'] },
+            title: { text: 'Individual Availability & On-Call', style: { color: '#bb86fc', fontSize: '14px', fontFamily: 'Segoe UI' } }
+        };
+
+        const detailChart = new ApexCharts(ganttContainer, detailOptions);
+        detailChart.render();
+        chartInstances.push(detailChart);
     }
 };
 
@@ -1024,706 +1188,6 @@ export const TrackerManager = {
         }
 
         ModalManager.openModal('trackerModal');
-    },
-
-    setType(type) {
-        State.currentTrackerType = type;
-        // Map 'bar' to 'line' for input visibility
-        const inputType = (type === 'bar') ? 'line' : type;
-        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut'].forEach(x => {
-            const btn = getEl(`type${x}Btn`);
-            if (btn) btn.className = (type === x.toLowerCase()) ? 'type-option active' : 'type-option';
-            const div = getEl(`${x.toLowerCase()}Inputs`);
-            if (div) div.style.display = (inputType === x.toLowerCase()) ? 'block' : 'none';
-        });
-
-        const sizeCont = getEl('sizeContainer');
-        if(sizeCont) sizeCont.style.display = (type === 'gauge' || type === 'waffle' || type === 'rag' || type === 'counter' || type === 'donut') ? 'none' : 'block';
-
-        if (inputType === 'line') {
-             this.renderTimeTable();
-        }
-    },
-
-    getContext(typeOverride) {
-        const type = typeOverride || State.currentTrackerType;
-        // Always use 'tk' (Line) inputs now, as Bar inputs are removed
-        return {
-            prefix: 'tk',
-            tableId: 'lineTableContainer',
-            btnAddId: 'btnAddSeries'
-        };
-    },
-
-    handleTimeUnitChange(input) {
-        const ctx = this.getContext();
-        const container = document.getElementById('tkTimeUnitContainer');
-        const prevUnit = container ? container.dataset.currentUnit : 'day';
-        const newUnit = input.value;
-
-        if (prevUnit === newUnit) return;
-
-        const series = this.scrapeTimeSeries();
-        let hasData = false;
-        series.forEach(s => { if (s.values.some(v => v !== 0)) hasData = true; });
-
-        if (hasData) {
-            App.confirm("Changing the Time Unit will clear existing data. Proceed?", () => {
-                if(container) container.dataset.currentUnit = newUnit;
-                this.updateTimeOptions(true);
-            });
-            // Revert immediately, will be re-checked if confirmed
-            // But App.confirm is async-like in UI but sync in code if using standard confirm, 
-            // but here App.confirm is custom modal.
-            // So we must revert the radio button visually now.
-            const prevRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${prevUnit}"]`);
-            if (prevRad) prevRad.checked = true;
-        } else {
-            if(container) container.dataset.currentUnit = newUnit;
-            this.updateTimeOptions();
-        }
-    },
-
-    updateTimeOptions(clearData = false) {
-        const ctx = this.getContext();
-        const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
-        const unit = unitRad ? unitRad.value : 'day';
-        
-        // Ensure dataset is synced if updateTimeOptions called directly (e.g. from openModal)
-        const container = document.getElementById('tkTimeUnitContainer');
-        if(container) container.dataset.currentUnit = unit;
-
-        const histLabel = getEl(`${ctx.prefix}HistoricLabel`);
-        if (histLabel) histLabel.innerText = `Historic ${unit.charAt(0).toUpperCase() + unit.slice(1)}s`;
-
-        const countSel = getEl(`${ctx.prefix}TimeCount`);
-        if (!countSel) return;
-        const currentVal = countSel.value;
-        countSel.innerHTML = '';
-        let opts = [];
-        if (unit === 'year') opts = [3, 5, 10];
-        else if (unit === 'month') opts = [3, 6, 12, 24];
-        else opts = [5, 7, 14, 30, 60, 90];
-        
-        opts.forEach(o => {
-            const opt = document.createElement('option');
-            opt.value = o;
-            opt.innerText = o;
-            countSel.appendChild(opt);
-        });
-        if (currentVal && opts.includes(parseInt(currentVal))) {
-            countSel.value = currentVal;
-        } else if (unit === 'day') {
-            countSel.value = 30;
-        }
-        
-        // When changing unit, we must reset the table to match the new unit's dates
-        if (clearData) {
-             const currentSeries = this.scrapeTimeSeries();
-             const clearedSeries = currentSeries.map(s => ({ ...s, values: [] }));
-             this.renderTimeTable(clearedSeries);
-        } else {
-             this.renderTimeTable();
-        }
-    },
-
-    renderTimeTable(seriesOverride = null, labelsOverride = null) {
-        const ctx = this.getContext();
-        const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
-        const unit = unitRad ? unitRad.value : 'day';
-        const tcIn = getEl(`${ctx.prefix}TimeCount`);
-        const count = tcIn ? (parseInt(tcIn.value) || 5) : 5;
-        const sdIn = getEl(`${ctx.prefix}StartDate`);
-        let startDateVal = sdIn ? sdIn.value : '';
-        if(!startDateVal) {
-             const d = new Date();
-             const day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1); 
-             const monday = new Date(d.setDate(diff));
-             startDateVal = monday.toISOString().split('T')[0];
-             if(sdIn) sdIn.value = startDateVal;
-        }
-
-        let series = seriesOverride;
-        if (!series) series = this.scrapeTimeSeries();
-        
-        let labels = [];
-        if (labelsOverride) {
-            labels = labelsOverride;
-        } else {
-            const start = new Date(startDateVal);
-            for(let i=0; i<count; i++) {
-                let label = '';
-                const offset = (count - 1) - i; 
-                if (unit === 'year') {
-                    label = (start.getFullYear() - offset).toString();
-                } else if (unit === 'month') {
-                    let d = new Date(start.getFullYear(), start.getMonth() - offset, 1);
-                    let m = d.getMonth() + 1;
-                    label = `${d.getFullYear()}-${m.toString().padStart(2, '0')}`;
-                } else {
-                    let d = new Date(start);
-                    d.setDate(d.getDate() - offset);
-                    label = d.toISOString().split('T')[0];
-                }
-                labels.push(label);
-            }
-        }
-
-        const container = getEl(ctx.tableId);
-        if (!container) return;
-        
-        let html = '<table style="width:100%; border-collapse: separate; border-spacing: 0;">';
-        
-        html += '<thead><tr><th style="padding:8px; text-align:left; border-bottom:1px solid #444; position:sticky; left:0; top:0; background:var(--modal-bg); z-index:20; min-width:160px;">Series Name</th>';
-        
-        labels.forEach((l, li) => {
-            html += `<th style="padding:8px; border-bottom:1px solid #444; position:sticky; top:0; background:var(--modal-bg); z-index:10; min-width:80px; text-align:center; font-size:0.7rem; white-space:nowrap;">
-                ${l} <span onclick="TrackerManager.removeDateColumn(${li})" style="color:var(--g-red); cursor:pointer; margin-left:2px; font-weight:bold;">&times;</span>
-            </th>`;
-        });
-        
-        html += `<th style="padding:8px; text-align:center; min-width:40px; cursor:pointer; background:var(--modal-bg); border-bottom:1px solid #444; position:sticky; top:0; z-index:10;" onclick="TrackerManager.addDateColumn()" title="Add Historic Date">+</th>`;
-        html += '</tr></thead><tbody>';
-
-        series.forEach((s, si) => {
-            html += `<tr>
-                <td style="padding:8px; border-bottom:1px solid #333; position:sticky; left:0; background:var(--modal-bg); z-index:10;">
-                    <div style="display:flex; align-items:center; gap:5px;">
-                        <input type="checkbox" class="ts-select" data-idx="${si}" style="accent-color:var(--accent);" onchange="TrackerManager.updateDeleteSeriesButtonVisibility()">
-                        <input type="color" class="ts-color" value="${s.color}" style="width:20px; height:20px; border:none; padding:0; cursor:pointer;" data-idx="${si}">
-                        <input type="text" class="ts-name" value="${s.name}" style="width:100px; font-size:0.8rem; background:#222; border:1px solid #444; color:#fff; padding:2px;" data-idx="${si}">
-                    </div>
-                </td>`;
-            
-            labels.forEach((l, li) => {
-                const val = (s.values && s.values[li] !== undefined) ? s.values[li] : 0;
-                html += `<td style="padding:2px; border-bottom:1px solid #333;">
-                    <input type="number" class="ts-val" data-s="${si}" data-r="${li}" value="${val}" style="width:100%; background:transparent; border:none; color:#fff; text-align:center;">
-                </td>`;
-            });
-            html += `<td style="border-bottom:1px solid #333;"></td>`;
-            html += '</tr>';
-        });
-
-        if (series.length < 6) {
-            html += `<tr class="add-series-row">
-                <td colspan="${labels.length + 2}" style="padding: 10px; border-top: 1px dashed #444; text-align: left;">
-                    <div onclick="TrackerManager.addTimeSeriesColumn()" style="width: 30px; height: 30px; background: #444; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; cursor: pointer; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">+</div>
-                </td>
-            </tr>`;
-        }
-
-        html += '</tbody></table>';
-        
-        container.innerHTML = html;
-        container.dataset.labels = JSON.stringify(labels);
-        this.updateDeleteSeriesButtonVisibility();
-    },
-
-    updateDeleteSeriesButtonVisibility() {
-        const btnDelete = document.querySelector('button[onclick="TrackerManager.deleteSelectedSeries()"]');
-        if (!btnDelete) return;
-        const checks = document.querySelectorAll('.ts-select:checked');
-        btnDelete.style.display = checks.length > 0 ? 'inline-block' : 'none';
-    },
-
-    scrapeTimeSeries() {
-        const ctx = this.getContext();
-        const container = getEl(ctx.tableId);
-        if (!container) return [];
-        const rows = container.querySelectorAll('tbody tr');
-        if (rows.length === 0) return [];
-
-        const series = [];
-        rows.forEach((row, si) => {
-            if (row.classList.contains('add-series-row')) return;
-            const nameIn = row.querySelector('.ts-name');
-            const colorIn = row.querySelector('.ts-color');
-            const name = nameIn ? nameIn.value : `Series ${si+1}`;
-            const color = colorIn ? colorIn.value : '#03dac6';
-            
-            const values = [];
-            const valInputs = row.querySelectorAll('.ts-val');
-            valInputs.forEach(inp => values.push(parseFloat(inp.value) || 0));
-            
-            series.push({ name, color, values });
-        });
-        
-        return series;
-    },
-
-    addTimeSeriesColumn() {
-        const series = this.scrapeTimeSeries();
-        if (series.length >= 6) return App.alert("Max 6 series allowed.");
-        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
-        const color = colors[series.length % colors.length];
-        series.push({ name: `Series ${series.length+1}`, color: color, values: [] });
-        this.renderTimeTable(series);
-    },
-
-    handleCountChange(selectEl) {
-        const newCount = parseInt(selectEl.value);
-        const series = this.scrapeTimeSeries();
-        if (series.length === 0) {
-             this.renderTimeTable();
-             return;
-        }
-        
-        const oldCount = series[0].values.length;
-        const delta = newCount - oldCount;
-        
-        if (delta === 0) return;
-        
-        series.forEach(s => {
-            if (delta > 0) {
-                for(let i=0; i<delta; i++) s.values.unshift(0);
-            } else {
-                for(let i=0; i<Math.abs(delta); i++) s.values.shift();
-            }
-        });
-        
-        this.renderTimeTable(series);
-    },
-
-    handleEndDateChange(input) {
-        const series = this.scrapeTimeSeries();
-        let hasData = false;
-        series.forEach(s => {
-            if (s.values.some(v => v !== 0)) hasData = true;
-        });
-
-        const newVal = input.value;
-        const prevVal = input.dataset.prev;
-
-        if (!hasData) {
-            input.dataset.prev = newVal;
-            this.renderTimeTable();
-            return;
-        }
-
-        input.value = prevVal; 
-
-        App.confirm("Changing the End Date will clear existing manual data. Proceed?", () => {
-            input.value = newVal;
-            input.dataset.prev = newVal;
-            const clearedSeries = series.map(s => ({ name: s.name, color: s.color, values: [] }));
-            this.renderTimeTable(clearedSeries);
-        });
-    },
-
-    exportTimeSeriesCSV() {
-        const series = this.scrapeTimeSeries();
-        if (series.length === 0) return App.alert("No data to export.");
-        
-        const ctx = this.getContext();
-        const container = getEl(ctx.tableId);
-        const labels = JSON.parse(container.dataset.labels || '[]');
-        
-        let csv = "Date";
-        series.forEach(s => csv += `,${s.name}`);
-        csv += "\n";
-        
-        labels.forEach((date, dateIdx) => {
-            csv += `${date}`;
-            series.forEach(s => {
-                const val = (s.values && s.values[dateIdx] !== undefined) ? s.values[dateIdx] : 0;
-                csv += `,${val}`;
-            });
-            csv += "\n";
-        });
-        
-        const title = getEl('tkDesc').value || "chart_data";
-        const filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".csv";
-        
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const link = document.createElement("a");
-        if (link.download !== undefined) {
-            const url = URL.createObjectURL(blob);
-            link.setAttribute("href", url);
-            link.setAttribute("download", filename);
-            link.style.visibility = 'hidden';
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-        }
-    },
-
-    deleteSelectedSeries() {
-        const ctx = this.getContext();
-        const container = getEl(ctx.tableId);
-        if (!container) return;
-        const checks = container.querySelectorAll('.ts-select:checked');
-        if (checks.length === 0) return App.alert("No series selected.");
-        
-        const indicesToDelete = new Set();
-        checks.forEach(c => indicesToDelete.add(parseInt(c.dataset.idx)));
-        
-        const currentSeries = this.scrapeTimeSeries();
-        const newSeries = currentSeries.filter((_, i) => !indicesToDelete.has(i));
-        
-        this.renderTimeTable(newSeries);
-    },
-
-    addDateColumn() {
-        const ctx = this.getContext();
-        const tcIn = getEl(`${ctx.prefix}TimeCount`);
-        const sdIn = getEl(`${ctx.prefix}StartDate`);
-        if (tcIn && sdIn) {
-             const series = this.scrapeTimeSeries();
-             
-             const d = new Date(sdIn.value);
-             const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
-             const unit = unitRad ? unitRad.value : 'day';
-             
-             if (unit === 'year') d.setFullYear(d.getFullYear() + 1);
-             else if (unit === 'month') d.setMonth(d.getMonth() + 1);
-             else d.setDate(d.getDate() + 1);
-             
-             sdIn.value = d.toISOString().split('T')[0];
-             sdIn.dataset.prev = sdIn.value;
-             
-             series.forEach(s => {
-                 s.values.shift(); 
-                 s.values.push(0); 
-             });
-             
-             this.renderTimeTable(series);
-        }
-    },
-
-    removeDateColumn(index) {
-        const ctx = this.getContext();
-        const tcIn = getEl(`${ctx.prefix}TimeCount`);
-        const count = parseInt(tcIn.value);
-        if (count <= 1) return App.alert("Cannot remove the last date.");
-        
-        const series = this.scrapeTimeSeries();
-        
-        if (index === 0) {
-            series.forEach(s => s.values.shift());
-            
-            let exists = false;
-            for(let opt of tcIn.options) { if(parseInt(opt.value) === count - 1) exists = true; }
-            if (!exists) {
-                 const opt = document.createElement('option');
-                 opt.value = count - 1;
-                 opt.innerText = count - 1;
-                 tcIn.appendChild(opt);
-            }
-            
-            tcIn.value = count - 1;
-            this.renderTimeTable(series);
-        } else if (index === count - 1) {
-            series.forEach(s => s.values.pop());
-            const sdIn = getEl(`${ctx.prefix}StartDate`);
-            if (sdIn) {
-                 const d = new Date(sdIn.value);
-                 const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
-                 const unit = unitRad ? unitRad.value : 'day';
-                 if (unit === 'year') d.setFullYear(d.getFullYear() - 1);
-                 else if (unit === 'month') d.setMonth(d.getMonth() - 1);
-                 else d.setDate(d.getDate() - 1);
-                 sdIn.value = d.toISOString().split('T')[0];
-                 sdIn.dataset.prev = sdIn.value;
-            }
-            
-            let exists = false;
-            for(let opt of tcIn.options) { if(parseInt(opt.value) === count - 1) exists = true; }
-            if (!exists) {
-                 const opt = document.createElement('option');
-                 opt.value = count - 1;
-                 opt.innerText = count - 1;
-                 tcIn.appendChild(opt);
-            }
-            
-            tcIn.value = count - 1;
-            this.renderTimeTable(series);
-        } else {
-            App.alert("Please remove dates from the start or end of the series.");
-        }
-    },
-
-    selectRag(val) {
-        const pills = document.querySelectorAll('.rag-pill');
-        pills.forEach(p => {
-            if(p.dataset.val === val) p.classList.add('active');
-            else p.classList.remove('active');
-        });
-        const rs = getEl('tkRagStatus');
-        if(rs) rs.value = val;
-    },
-
-    addDonutRow(label = '', value = '') {
-        const container = getEl('donutDataContainer');
-        if (!container) return;
-        if (container.children.length >= 10) return App.alert("Max 10 data points allowed.");
-
-        const div = document.createElement('div');
-        div.className = 'donut-row';
-        div.style.display = 'flex';
-        div.style.gap = '10px';
-        div.style.marginBottom = '5px';
-        div.innerHTML = `
-            <input type="text" class="dr-label" maxlength="15" placeholder="Label" value="${label}" style="flex: 2;">
-            <input type="number" class="dr-value" placeholder="Value" value="${value}" style="flex: 1;">
-            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeDonutRow(this)">&times;</button>
-        `;
-        container.appendChild(div);
-    },
-
-    removeDonutRow(btn) {
-        btn.parentElement.remove();
-    },
-
-    parseCSV(type) {
-        const ctx = this.getContext(); 
-        const txtArea = getEl('csvInput');
-        if (!txtArea) return;
-        
-        const text = txtArea.value.trim();
-        if (!text) return App.alert("Please paste CSV data.");
-        
-        // Check for existing data
-        const series = this.scrapeTimeSeries();
-        let hasData = false;
-        series.forEach(s => { if (s.values.some(v => v !== 0)) hasData = true; });
-
-        const processCSV = () => {
-            const lines = text.split('\n').map(l => l.trim()).filter(l => l);
-            if (lines.length < 2) return App.alert("Invalid CSV format.");
-            
-            const headers = lines[0].split(',').map(h => h.trim());
-            const seriesNames = headers.slice(1);
-            
-            const labels = [];
-            const seriesData = seriesNames.map(name => ({ name: name, values: [] }));
-            
-            for(let i=1; i<lines.length; i++) {
-                const cols = lines[i].split(',').map(c => c.trim());
-                labels.push(cols[0]); 
-                
-                for(let j=0; j<seriesNames.length; j++) {
-                    const val = parseFloat(cols[j+1]) || 0;
-                    seriesData[j].values.push(val);
-                }
-            }
-
-            // Infer Unit
-            let unit = 'day';
-            if (labels.length > 0) {
-                const sample = labels.slice(0, 5);
-                if (sample.every(d => /^\d{4}$/.test(d))) {
-                    unit = 'year';
-                } else if (sample.every(d => /^\d{4}-\d{2}$/.test(d))) {
-                    unit = 'month';
-                } else if (sample.every(d => /^\d{4}-\d{2}-\d{2}$/.test(d))) {
-                     if (labels.length > 1) {
-                         const d1 = new Date(labels[0]);
-                         const d2 = new Date(labels[1]);
-                         const diff = Math.abs((d2 - d1) / (1000 * 60 * 60 * 24));
-                         if (diff >= 28 && diff <= 32) unit = 'month';
-                     }
-                }
-            }
-
-            // Set Unit Radio
-            const rad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${unit}"]`);
-            if(rad) rad.checked = true;
-            
-            // Sync current unit dataset
-            const container = document.getElementById('tkTimeUnitContainer');
-            if(container) container.dataset.currentUnit = unit;
-
-            // Reset Options based on new unit
-            this.updateTimeOptions();
-
-            // Update Start Date (End Date in UI)
-            const sdIn = getEl(`${ctx.prefix}StartDate`);
-            if(sdIn && labels.length > 0) {
-                 const lastLbl = labels[labels.length-1];
-                 let dateStr = lastLbl;
-                 // Normalize to YYYY-MM-DD
-                 if (unit === 'year' && /^\d{4}$/.test(lastLbl)) dateStr = `${lastLbl}-01-01`;
-                 if (unit === 'month' && /^\d{4}-\d{2}$/.test(lastLbl)) dateStr = `${lastLbl}-01`;
-                 
-                 // Ensure valid date object
-                 const d = new Date(dateStr);
-                 if(!isNaN(d.getTime())) {
-                     sdIn.value = d.toISOString().split('T')[0];
-                     sdIn.dataset.prev = sdIn.value;
-                 }
-            }
-            
-            // Update Time Count
-            const tcIn = getEl(`${ctx.prefix}TimeCount`);
-            if(tcIn) {
-                const count = labels.length;
-                let exists = false;
-                for(let opt of tcIn.options) if(parseInt(opt.value) === count) exists = true;
-                if(!exists) {
-                    const opt = document.createElement('option');
-                    opt.value = count;
-                    opt.innerText = count;
-                    tcIn.appendChild(opt);
-                }
-                tcIn.value = count;
-            }
-            
-            const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
-            seriesData.forEach((s, i) => s.color = colors[i % colors.length]);
-            
-            this.renderTimeTable(seriesData, labels);
-            App.alert("CSV Parsed Successfully!");
-        };
-
-        if (hasData) {
-            App.confirm("Importing CSV will overwrite existing data. Proceed?", () => {
-                processCSV();
-            });
-        } else {
-            processCSV();
-        }
-    },
-
-    deleteTracker(index) {
-        if(index < 0 || index >= State.trackers.length) return;
-        App.confirm("Are you sure you want to delete this tracker?", () => {
-            State.trackers.splice(index, 1);
-            renderBoard();
-        });
-    },
-
-    submitTracker() {
-        const index = State.editingTrackerIndex;
-        const descIn = getEl('tkDesc');
-        const desc = descIn ? descIn.value : '';
-        const sizeRadio = document.querySelector('input[name="tkSize"]:checked');
-        const size = sizeRadio ? sizeRadio.value : 'M';
-        if (!desc) return App.alert("Title required");
-
-        const type = State.currentTrackerType;
-        let newTracker = { desc, type, size };
-
-        if (type === 'gauge') {
-            const mIn = getEl('tkMetric');
-            const cIn = getEl('tkComp');
-            const tIn = getEl('tkTotal');
-            const nIn = getEl('tkNotes'); // Capture Notes
-            const m = mIn ? mIn.value : '';
-            const c = cIn ? parseFloat(cIn.value) || 0 : 0;
-            const t = tIn ? parseFloat(tIn.value) || 0 : 0;
-            if(t<=0) return App.alert("Target must be a positive number.");
-            if(c>t) return App.alert("Progress cannot exceed the Target.");
-            newTracker.metric = m;
-            newTracker.completed = c;
-            newTracker.total = t;
-            newTracker.notes = nIn ? nIn.value : '';
-            newTracker.size = 'S'; // Force Small Size
-            const pcIn = getEl('tkPieColor');
-            newTracker.colorVal = pcIn ? pcIn.value : '#00e676'; 
-            const pc2In = getEl('tkPieColor2');
-            newTracker.color2 = pc2In ? pc2In.value : '#ff1744';
-        } else if (type === 'line' || type === 'bar') {
-            const ctx = this.getContext();
-            const yIn = getEl(`${ctx.prefix}YLabel`);
-            newTracker.yLabel = yIn ? yIn.value : '';
-            
-            const series = this.scrapeTimeSeries();
-            const container = getEl(ctx.tableId);
-            const labels = container ? JSON.parse(container.dataset.labels || '[]') : [];
-            
-            if (series.length === 0) return App.alert("Add at least one series");
-            
-            const urIn = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
-            newTracker.timeUnit = urIn ? urIn.value : 'day';
-            const sdIn = getEl(`${ctx.prefix}StartDate`);
-            newTracker.startDate = sdIn ? sdIn.value : '';
-            const tcIn = getEl(`${ctx.prefix}TimeCount`);
-            newTracker.timeCount = tcIn ? parseInt(tcIn.value) : 7;
-            
-            newTracker.labels = labels;
-            newTracker.series = series;
-            
-            const styleRad = document.querySelector('input[name="tkDisplayStyle"]:checked');
-            newTracker.displayStyle = styleRad ? styleRad.value : 'line';
-            
-            const lnIn = getEl('tkLineNotes');
-            newTracker.notes = lnIn ? lnIn.value : '';
-        } else if (type === 'counter') {
-            const cvIn = getEl('tkCounterVal');
-            const val = cvIn ? parseFloat(cvIn.value) || 0 : 0;
-            if (val < 0 || val > 9999999) return App.alert("Counter value must be between 0 and 9,999,999.");
-            newTracker.value = val;
-            const csIn = getEl('tkCounterSub');
-            newTracker.subtitle = csIn ? csIn.value : '';
-            const cnIn = getEl('tkCounterNotes');
-            newTracker.notes = cnIn ? cnIn.value : '';
-            newTracker.size = 'S'; // Force Small Size
-            const ccIn = getEl('tkCounterColor');
-            newTracker.color1 = ccIn ? ccIn.value : '#bb86fc';
-        } else if (type === 'rag') {
-            newTracker.type = 'rag'; 
-            const rsIn = getEl('tkRagStatus');
-            newTracker.status = rsIn ? rsIn.value : 'grey';
-            const rmIn = getEl('tkRagMsg');
-            newTracker.message = rmIn ? rmIn.value : '';
-            const rnIn = getEl('tkRagNotes');
-            newTracker.notes = rnIn ? rnIn.value : '';
-            newTracker.size = 'S'; // Force Small Size
-            newTracker.color1 = (newTracker.status === 'green' ? '#00e676' : (newTracker.status === 'amber' ? '#ffb300' : (newTracker.status === 'red' ? '#ff1744' : '#666666')));
-        } else if (type === 'note') {
-            const contentIn = getEl('tkNoteContent');
-            newTracker.content = contentIn ? contentIn.value : '';
-            const alignRad = document.querySelector('input[name="tkNoteAlign"]:checked');
-            newTracker.align = alignRad ? alignRad.value : 'left';
-            newTracker.notes = ''; // No notes for Note Tracker
-        } else if (type === 'waffle') {
-            const wmIn = getEl('tkWaffleMetric');
-            const wtIn = getEl('tkWaffleTotal');
-            const waIn = getEl('tkWaffleActive');
-            const wnIn = getEl('tkWaffleNotes');
-            
-            const total = wtIn ? (parseInt(wtIn.value) || 100) : 100;
-            const active = waIn ? (parseInt(waIn.value) || 0) : 0;
-            
-            if (total <= 0) return App.alert("Target must be a positive number.");
-            if (total > 450) return App.alert("Target cannot exceed 450.");
-            if (active > total) return App.alert("Progress cannot exceed the Target.");
-            
-            newTracker.metric = wmIn ? wmIn.value : '';
-            newTracker.total = total;
-            newTracker.active = active;
-            newTracker.notes = wnIn ? wnIn.value : '';
-            newTracker.size = total < 201 ? 'S' : 'M'; // Inferred size
-            
-            const wcIn = getEl('tkWaffleColorVal');
-            newTracker.colorVal = wcIn ? wcIn.value : '#228B22';
-            const wbIn = getEl('tkWaffleColorBg');
-            newTracker.colorBg = wbIn ? wbIn.value : '#696969';
-        } else if (type === 'donut') {
-            const rows = document.querySelectorAll('.donut-row');
-            const dataPoints = [];
-            rows.forEach(row => {
-                const label = row.querySelector('.dr-label').value.trim();
-                const value = parseFloat(row.querySelector('.dr-value').value) || 0;
-                if (label) dataPoints.push({ label, value });
-            });
-            if (dataPoints.length === 0) return App.alert("At least one data point with a label is required.");
-            newTracker.dataPoints = dataPoints;
-            const notesIn = getEl('tkDonutNotes');
-            newTracker.notes = notesIn ? notesIn.value : '';
-            newTracker.size = size; // Use selected size
-        }
-
-        if(index === -1) {
-            State.trackers.push(newTracker);
-        } else {
-            State.trackers[index] = newTracker;
-        }
-
-        ModalManager.closeModal('trackerModal');
-        renderBoard();
-        console.log("Tracker saved:", type);
     }
 };
 
