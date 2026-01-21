@@ -121,24 +121,11 @@ header {
 
 .tracker-card:hover { border-color: var(--accent); transform: translateY(-2px); }
 .tracker-desc { font-weight: bold; margin-bottom: 1rem; color: var(--text-main); height: 30px; display: flex; align-items: center; justify-content: center;}
-.tracker-viz-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 160px; overflow: hidden; padding: 0 5px; }
+.tracker-viz-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 160px; overflow: visible; padding: 0 5px; }
 .tracker-viz-container > div { width: 100% !important; }
 .tracker-card.dragging { opacity: 0.5; border: 2px dashed var(--accent); }
 .tracker-grid.drag-active .tracker-card { cursor: grabbing; }
-.pie-chart {
-    width: 100%; aspect-ratio: 1 / 1; max-height: 160px; max-width: 160px;
-    border-radius: 50%; margin: 0 auto;
-    background: conic-gradient(var(--g-green) 0% 0%, var(--g-red) 0% 100%);
-    position: relative; box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    flex-shrink: 0;
-}
-.donut-chart {
-    width: 100%; height: 100%;
-    margin: 0 auto;
-    position: relative;
-    flex-shrink: 0;
-    display: flex; align-items: center; justify-content: center;
-}
+
 .status-select-col { display: flex; flex-direction: column; gap: 5px; width: 30%; }
 .status-option {
     width: 100%; padding: 8px; border-radius: 4px; text-align: center; cursor: pointer;
@@ -152,13 +139,6 @@ header {
     position: absolute; top: 10px; right: 10px; padding: 4px 8px; border-radius: 12px;
     font-size: 0.7rem; font-weight: bold; color: #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
-
-.pie-overlay {
-    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    background: var(--card-bg); width: 96px; height: 96px; border-radius: 50%;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-}
-.pie-pct { font-size: 1.4rem; font-weight: bold; color: var(--text-main); }
 .tracker-stats { font-size: 0.8rem; color: var(--text-muted); margin-top: auto; padding-top:1rem; }
 .btn-del-tracker {
     position: absolute; top: 10px; right: 10px; color: #666; background: none; border: none; cursor: pointer; font-size: 1.2rem; z-index: 2;

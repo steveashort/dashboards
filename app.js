@@ -15,6 +15,9 @@ let State = {
     currentTrackerType: 'gauge'
 };
 
+let chartInstances = []; // Track dashboard chart instances
+let zoomedChartInstance = null; // Track zoomed chart instance
+
 // --- DOM HELPERS ---
 const getEl = (id) => document.getElementById(id);
 
@@ -44,6 +47,33 @@ const getRanges = () => {
         last: `${formatDate(lm)} - ${formatDate(lf)}`
     };
 };
+
+// --- APEXCHARTS HELPERS ---
+const cleanupCharts = () => {
+    chartInstances.forEach(chart => chart.destroy());
+    chartInstances = [];
+};
+
+const getCommonApexOptions = (isZoomed = false) => ({
+    chart: {
+        background: 'transparent',
+        toolbar: { show: isZoomed },
+        animations: { enabled: true }
+    },
+    theme: { mode: 'dark', palette: 'palette1' },
+    dataLabels: { enabled: false },
+    grid: { borderColor: '#333', strokeDashArray: 2 },
+    xaxis: {
+        labels: { style: { colors: '#a0a0a0', fontSize: '10px', fontFamily: 'Segoe UI' } },
+        axisBorder: { show: false },
+        axisTicks: { color: '#333' }
+    },
+    yaxis: {
+        labels: { style: { colors: '#a0a0a0', fontSize: '10px', fontFamily: 'Segoe UI' } }
+    },
+    legend: { labels: { colors: '#e0e0e0' }, position: 'bottom' },
+    tooltip: { theme: 'dark' }
+});
 
 // --- CORE FUNCTIONS ---
 export const initApp = () => {
@@ -254,11 +284,18 @@ export const ModalManager = {
     closeModal: (id) => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('active');
+        if (id === 'zoomModal') {
+            if (zoomedChartInstance) {
+                zoomedChartInstance.destroy();
+                zoomedChartInstance = null;
+            }
+        }
     }
 };
 
 export const renderBoard = () => {
     console.log("Rendering Board...");
+    cleanupCharts();
 
     const titleEl = getEl('appTitle');
     if (titleEl) titleEl.innerText = State.title || "Server Platforms";
@@ -317,8 +354,8 @@ export const renderBoard = () => {
             card.onclick = () => {
                  console.log("Card clicked. Type:", t.type, "Publishing:", document.body.classList.contains('publishing'));
                  if (document.body.classList.contains('publishing')) {
-                     // Zoom requested for: Time Series (line/bar), Note Tracker (note), Date Tracker (rag/ryg), Schedule Tracker (waffle)
-                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut'].includes(t.type);
+                     // Zoom requested
+                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'gauge'].includes(t.type);
                      if (canZoom) ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
@@ -326,7 +363,7 @@ export const renderBoard = () => {
             };
 
             // Zoom Icon
-            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut'].includes(t.type)) {
+            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'gauge'].includes(t.type)) {
                 card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
             }
 
@@ -334,7 +371,7 @@ export const renderBoard = () => {
             if (noteText && t.type !== 'note') {
                 card.onmousemove = (e) => {
                     if (!document.body.classList.contains('publishing')) return;
-                    // Prevent overwriting specific tooltips on chart points/bars/segments
+                    if (e.target.closest('.apexcharts-canvas')) return; // Avoid tooltip overlap on charts
                     if (e.target.closest('circle, rect, path')) return;
                     Visuals.showTooltip(e, noteText);
                 };
@@ -343,10 +380,11 @@ export const renderBoard = () => {
 
             let visualHTML = '';
             let statsHTML = '';
+            let chartConfig = null;
+            let chartId = `chart-tk-${i}`;
             
             let renderType = t.type;
             if (renderType === 'line' || renderType === 'bar' || renderType === 'line1' || renderType === 'line2') {
-                // Unified Chart Logic
                 let labels = t.labels || [];
                 let series = t.series || [];
                 
@@ -359,20 +397,46 @@ export const renderBoard = () => {
                 // Render based on displayStyle
                 const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
                 
-                if (style === 'bar') {
-                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createMultiBarChartSVG(labels, series, t.size)}</div>`;
-                } else {
-                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createLineChartSVG(labels, series, t.yLabel, t.size)}</div>`;
-                }
+                visualHTML = `<div id="${chartId}" style="width:100%; height:160px;"></div>`;
+
+                // Build Apex Options
+                const common = getCommonApexOptions();
+                chartConfig = {
+                    ...common,
+                    chart: { ...common.chart, type: style, height: 160 },
+                    series: series.map(s => ({ name: s.name, data: s.values, color: s.color })),
+                    xaxis: { ...common.xaxis, categories: labels },
+                    yaxis: { ...common.yaxis, title: { text: t.yLabel || '' } },
+                    stroke: { width: style === 'line' ? 2 : 0, curve: 'smooth' }
+                };
+
             } else if (renderType === 'gauge') {
                 const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
-                const c1 = t.colorVal || t.color1 || '#00e676'; 
-                const c2 = t.color2 || '#ff1744';
-                // c2 is Progress Colour, c1 is Target Colour
-                const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
-                
-                visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:160px; display:flex; justify-content:center;"></div>`;
                 statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
+
+                // Apex Radial Bar
+                const c1 = t.colorVal || t.color1 || '#00e676';
+                const common = getCommonApexOptions();
+                chartConfig = {
+                    ...common,
+                    chart: { ...common.chart, type: 'radialBar', height: 180 },
+                    series: [pct],
+                    plotOptions: {
+                        radialBar: {
+                            hollow: { size: '60%' },
+                            track: { background: '#333' },
+                            dataLabels: {
+                                show: true,
+                                name: { show: false },
+                                value: { color: '#fff', fontSize: '20px', show: true, offsetY: 8 }
+                            }
+                        }
+                    },
+                    fill: { colors: [c1] },
+                    stroke: { lineCap: 'round' }
+                };
+
             } else if (renderType === 'counter') {
                 visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
                 statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
@@ -391,9 +455,19 @@ export const renderBoard = () => {
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
                 const values = (t.dataPoints || []).map(dp => dp.value);
-                const html = Visuals.createDonutChartSVG(labels, values, displaySize);
-                visualHTML = `<div class="donut-chart">${html}</div>`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:160px;"></div>`;
                 statsHTML = '';
+
+                const common = getCommonApexOptions();
+                chartConfig = {
+                    ...common,
+                    chart: { ...common.chart, type: 'donut', height: 160 },
+                    series: values,
+                    labels: labels,
+                    plotOptions: { pie: { donut: { size: '60%' } } },
+                    dataLabels: { enabled: false },
+                    legend: { show: false }
+                };
             }
 
             card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
@@ -402,10 +476,18 @@ export const renderBoard = () => {
             card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
             
             tGrid.appendChild(card);
+
+            // Render ApexChart if config exists
+            if (chartConfig) {
+                const el = document.getElementById(chartId);
+                if (el) {
+                    const chart = new ApexCharts(el, chartConfig);
+                    chart.render();
+                    chartInstances.push(chart);
+                }
+            }
         });
     }
-
-
 
     const grid = getEl('teamGrid');
     if (grid) {
@@ -529,12 +611,25 @@ export const ZoomManager = {
         const t = State.trackers[index];
         if(!t) return;
 
+        // Cleanup existing zoomed chart
+        if (zoomedChartInstance) {
+            zoomedChartInstance.destroy();
+            zoomedChartInstance = null;
+        }
+
         const titleEl = getEl('zoomTitle');
         if (titleEl) titleEl.innerText = t.desc;
-        let content = '';
         
+        const bodyEl = getEl('zoomBody');
+        if (!bodyEl) return;
+        bodyEl.className = 'zoom-body-chart';
+
+        let chartConfig = null;
+        let htmlContent = '';
         let renderType = t.type;
-        if (renderType === 'line' || renderType === 'bar') {
+        const chartId = 'zoomedChartContainer';
+
+        if (renderType === 'line' || renderType === 'bar' || renderType === 'line1' || renderType === 'line2') {
             let labels = t.labels || [];
             let series = t.series || [];
             if ((!labels.length) && t.data) {
@@ -543,103 +638,116 @@ export const ZoomManager = {
             }
             
             const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
-            if (style === 'bar') content = Visuals.createMultiBarChartSVG(labels, series, 'XL');
-            else content = Visuals.createLineChartSVG(labels, series, t.yLabel, 'XL');
-        } else if (renderType === 'counter') {
-            content = `<div style="font-size: 6rem; font-weight:300; color:${t.color1}; text-shadow:0 0 20px ${t.color1}">${t.value}</div><div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${t.subtitle}</div>`;
-        } else if (renderType === 'rag' || renderType === 'ryg') {
-            const status = t.status || 'grey';
-            const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
-            content = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message || ''}</div>`;
-        } else if (renderType === 'waffle') {
-            content = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969');
-        } else if (renderType === 'note') {
-            content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
+            htmlContent = `<div id="${chartId}" style="width:100%; height:100%;"></div>`;
+
+            const common = getCommonApexOptions(true);
+            chartConfig = {
+                ...common,
+                chart: { ...common.chart, type: style, height: '100%' },
+                series: series.map(s => ({ name: s.name, data: s.values, color: s.color })),
+                xaxis: { ...common.xaxis, categories: labels },
+                yaxis: { ...common.yaxis, title: { text: t.yLabel || '' } },
+                stroke: { width: style === 'line' ? 3 : 0, curve: 'smooth' }
+            };
+
         } else if (renderType === 'gauge') {
-            const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
-            const c1 = t.colorVal || t.color1 || '#00e676'; 
-            const c2 = t.color2 || '#ff1744';
-            // c2 is Progress Colour, c1 is Target Colour
-            const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
-            content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
+             const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
+             const c1 = t.colorVal || t.color1 || '#00e676';
+
+             htmlContent = `<div id="${chartId}" style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;"></div>`;
+
+             const common = getCommonApexOptions(true);
+             chartConfig = {
+                 ...common,
+                 chart: { ...common.chart, type: 'radialBar', height: 500 },
+                 series: [pct],
+                 plotOptions: {
+                     radialBar: {
+                         hollow: { size: '70%' },
+                         track: { background: '#333' },
+                         dataLabels: {
+                             show: true,
+                             name: { show: false },
+                             value: { color: '#fff', fontSize: '40px', show: true, offsetY: 10 }
+                         }
+                     }
+                 },
+                 fill: { colors: [c1] },
+                 stroke: { lineCap: 'round' }
+             };
+
         } else if (renderType === 'donut') {
             const labels = (t.dataPoints || []).map(dp => dp.label);
             const values = (t.dataPoints || []).map(dp => dp.value);
-            content = Visuals.createDonutChartWithCalloutsSVG(labels, values);
+
+            htmlContent = `<div style="width:100%; height:100%; display:flex; flex-direction:row; gap:20px;">
+                            <div style="flex: 2; display:flex; align-items:center; justify-content:center; min-height: 400px;">
+                                <div id="${chartId}" style="width:100%; height:100%;"></div>
+                            </div>
+                            <div class="zoom-notes-section" style="flex: 1; padding:20px; border-left:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px; overflow-y:auto;">
+                                ${t.notes ? `<h4 style="color:var(--accent); margin-bottom:10px;">Notes</h4><div>${parseMarkdown(t.notes)}</div>` : ''}
+                            </div>
+                           </div>`;
+
+            const common = getCommonApexOptions(true);
+            chartConfig = {
+                ...common,
+                chart: { ...common.chart, type: 'donut', height: '100%' },
+                series: values,
+                labels: labels,
+                plotOptions: { pie: { donut: { size: '60%' } } },
+                dataLabels: { enabled: true },
+                legend: { position: 'right', fontSize: '14px', labels: { colors: '#fff' } }
+            };
+
+        } else if (renderType === 'counter') {
+             htmlContent = `<div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                                <div style="font-size: 8rem; font-weight:300; color:${t.color1}; text-shadow:0 0 20px ${t.color1}">${t.value}</div>
+                                <div style="font-size:2rem; color:#aaa; margin-top:1rem;">${t.subtitle}</div>
+                            </div>`;
+        } else if (renderType === 'rag' || renderType === 'ryg') {
+            const status = t.status || 'grey';
+            const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
+            htmlContent = `<div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                            <div class="ryg-indicator ryg-${status}" style="background:${t.color1}; width:300px; height:300px; font-size:3rem;">${icon}</div>
+                            <div style="margin-top:2rem; font-size:2rem;">${t.message || ''}</div>
+                           </div>`;
+        } else if (renderType === 'waffle') {
+             htmlContent = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">${createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969')}</div>`;
+        } else if (renderType === 'note') {
+             htmlContent = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}; font-size: 1.2rem; padding: 2rem;">${parseMarkdown(t.content || '')}</div>`;
         }
 
-        const bodyEl = getEl('zoomBody');
-        if (bodyEl) {
-            bodyEl.className = 'zoom-body-chart';
-            let html = '';
-            
-            if (renderType === 'donut') {
-                 html = `<div style="width:100%; height:100%; display:flex; flex-direction:row; gap:20px;">`;
-                 html += `<div style="flex: 2; display:flex; align-items:center; justify-content:center; min-height: 400px;">${content}</div>`;
-                 
-                 html += `<div class="zoom-notes-section" style="flex: 1; padding:20px; border-left:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px; overflow-y:auto; display:flex; flex-direction:column; gap:20px;">`;
-                 
-                 if (t.notes || t.content) {
-                     const notesHtml = parseMarkdown(t.notes || t.content || '');
-                     html += `<div>
-                                 <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
-                                 <div style="font-size:0.9rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
-                              </div>`;
-                 }
-
-                 // Data Table
-                 const labels = (t.dataPoints || []).map(dp => dp.label);
-                 const values = (t.dataPoints || []).map(dp => dp.value);
-                 const total = values.reduce((a, b) => a + b, 0);
-                 
-                 if (labels.length > 0) {
-                     let tableHtml = `<h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Data Details</h4>
-                                      <table style="width:100%; border-collapse: collapse; font-size:0.9rem; color:#ddd;">
-                                        <thead>
-                                            <tr style="border-bottom: 1px solid #444;">
-                                                <th style="text-align:left; padding:8px;">Label</th>
-                                                <th style="text-align:right; padding:8px;">Value</th>
-                                                <th style="text-align:right; padding:8px;">%</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>`;
-                     
-                     labels.forEach((l, i) => {
-                         const v = values[i];
-                         const pct = total > 0 ? Math.round((v / total) * 100) : 0;
-                         tableHtml += `<tr style="border-bottom: 1px solid #333;">
-                                         <td style="padding:8px;">${l}</td>
-                                         <td style="text-align:right; padding:8px;">${v}</td>
-                                         <td style="text-align:right; padding:8px;">${pct}%</td>
-                                       </tr>`;
-                     });
-                     
-                     tableHtml += `<tr style="font-weight:bold; background:rgba(255,255,255,0.05);">
-                                     <td style="padding:8px;">Total</td>
-                                     <td style="text-align:right; padding:8px;">${total}</td>
-                                     <td style="text-align:right; padding:8px;">100%</td>
-                                   </tr>`;
-                     
-                     tableHtml += `</tbody></table>`;
-                     html += `<div>${tableHtml}</div>`;
-                 }
-                 
-                 html += `</div></div>`;
-            } else {
-                html = `<div style="width:100%; height:100%; display:flex; flex-direction:column; padding:20px;">`;
-                html += `<div style="flex: 1; min-height: 300px; display:flex; align-items:center; justify-content:center;">${content}</div>`;
-                
-                if ((t.notes || t.content) && t.type !== 'note') {
-                    const notesHtml = parseMarkdown(t.notes || t.content || '');
-                    html += `<div class="zoom-notes-section" style="margin-top:20px; padding:20px; border-top:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px;">
-                                <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
-                                <div style="font-size:0.9rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
-                             </div>`;
-                }
-                html += `</div>`;
-            }
-            bodyEl.innerHTML = html;
+        // Add Notes Section for non-donut types if notes exist
+        if (renderType !== 'donut' && (t.notes || (t.content && renderType !== 'note'))) {
+            const notesHtml = parseMarkdown(t.notes || t.content || '');
+             if (!htmlContent.includes('zoom-notes-section')) {
+                 // Wrapper
+                 const content = htmlContent;
+                 htmlContent = `<div style="width:100%; height:100%; display:flex; flex-direction:column; padding:20px;">
+                                    <div style="flex: 1; min-height: 300px; display:flex; align-items:center; justify-content:center;">${content}</div>
+                                    <div class="zoom-notes-section" style="margin-top:20px; padding:20px; border-top:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px;">
+                                        <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
+                                        <div style="font-size:0.9rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
+                                    </div>
+                                </div>`;
+             }
         }
+
+        bodyEl.innerHTML = htmlContent;
+
+        // Render ApexChart if config exists
+        if (chartConfig) {
+             // Wait for DOM update
+             setTimeout(() => {
+                 const el = document.getElementById(chartId);
+                 if (el) {
+                     zoomedChartInstance = new ApexCharts(el, chartConfig);
+                     zoomedChartInstance.render();
+                 }
+             }, 50);
+        }
+
         ModalManager.openModal('zoomModal');
     }
 };
