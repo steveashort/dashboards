@@ -398,3 +398,18 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 .flash-icon {
     animation: flash 1s infinite;
 }
+.last-updated {
+    position: absolute;
+    top: 5px;
+    right: 25px; /* Moved slightly left to avoid delete button on trackers */
+    color: #888;
+    font-size: 0.7rem;
+    font-family: monospace;
+    z-index: 10;
+    pointer-events: none;
+}
+/* Adjust for member card */
+.member-card .last-updated {
+    right: 15px;
+    top: 10px;
+}

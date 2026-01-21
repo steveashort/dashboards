@@ -3,326 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Platforms Tracker v22</title>
-    <style>
-        :root {
-            --bg-color: #121212;
-            --card-bg: #1e1e1e;
-            --input-bg: #2d2d2d;
-            --modal-bg: #252525;
-            --text-main: #e0e0e0;
-            --text-muted: #a0a0a0;
-            --accent: #bb86fc;
-            --accent-hover: #9965f4;
-            --border: #333;
-            
-            /* Status Colors */
-            --g-green: #00e676; 
-            --g-yellow: #ffea00; 
-            --g-red: #ff1744;
-            --g-grey: #666666;
-            /* Chart Colors */
-            --chart-1: #03dac6; /* Cyan */
-            --chart-2: #ff4081; /* Pink */
-        }
-
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; }
-        
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-main);
-            padding: 2rem;
-            min-height: 100vh;
-            padding-bottom: 4rem;
-        }
-
-        /* --- HEADER --- */
-        header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem;
-            gap: 1.5rem; flex-wrap: wrap;
-        }
-        
-        .header-left { display: flex; align-items: center; gap: 15px; }
-        .header-logo-img { width: 48px; height: 48px; object-fit: contain; }
-        
-        #appTitle { 
-            font-weight: 300; letter-spacing: 1px; color: var(--accent); margin: 0; 
-            border-bottom: 1px dashed transparent; cursor: text; transition: border 0.2s;
-        }
-        #appTitle:hover { border-bottom-color: var(--accent); }
-        #appTitle:focus { outline: none; border-bottom: 1px solid var(--accent); }
-
-        .date-display { color: var(--text-muted); font-size: 0.9rem; font-family: monospace; margin-top: 5px; }
-        .header-actions { display: flex; gap: 0.8rem; align-items: center; }
-
-        .btn {
-            background: var(--input-bg); border: 1px solid var(--accent); color: var(--accent);
-            padding: 0.6rem 1.2rem; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
-            transition: all 0.2s; font-weight: 600;
-        }
-        .btn:hover { background: var(--accent); color: #000; }
-        .btn-primary { background: var(--accent); color: #000; }
-        .btn-primary:hover { background: var(--accent-hover); }
-
-        .btn-reset {
-            background: transparent; border: 1px solid #444; color: var(--text-muted);
-            padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 0.7rem;
-            margin-top: 0.8rem; width: auto; display: inline-block; transition: all 0.2s;
-        }
-        .btn-reset:hover { border-color: var(--g-red); color: var(--g-red); }
-
-        /* --- OVERVIEW --- */
-        .team-overview-panel {
-            background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
-            padding: 1.5rem; margin-bottom: 2rem; display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 2rem;
-        }
-        .overview-col h4 {
-            color: var(--accent); font-size: 0.85rem; text-transform: uppercase;
-            border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; margin-bottom: 0.5rem;
-        }
-        .date-suffix { color: var(--text-muted); font-weight: normal; font-size: 0.8em; margin-left: 8px; text-transform: none; }
-        .edit-hint { font-size: 0.7rem; color: #666; font-style: italic; margin-bottom: 1rem; display: block; }
-
-        .overview-list { list-style: none; font-size: 0.9rem; line-height: 1.4; color: var(--text-main); }
-        .overview-list li { margin-bottom: 0.5rem; position: relative; padding-left: 1rem; }
-        .overview-list li::before { content: "•"; position: absolute; left: 0; color: #fff; }
-        .auto-item { color: var(--text-main); }
-        .auto-item b { color: var(--text-muted); margin-right: 5px; }
-
-        .overview-col.interactive {
-            cursor: pointer; position: relative; transition: background 0.2s; border-radius: 4px; padding: 0.5rem; margin: -0.5rem;
-        }
-        .overview-col.interactive:hover { background: rgba(255,255,255,0.05); }
-        .overview-col.interactive::after {
-            content: "✎"; position: absolute; top: 0.5rem; right: 0.5rem; color: var(--text-muted); opacity: 0; transition: opacity 0.2s;
-        }
-        .overview-col.interactive:hover::after { opacity: 1; }
-
-        #additionalInfoPreview { font-size: 0.9rem; line-height: 1.5; color: var(--text-main); pointer-events: none; }
-        #additionalInfoPreview ul { padding-left: 1.2rem; margin-bottom: 0.5rem; }
-        #additionalInfoPreview li { margin-bottom: 0.2rem; }
-        #additionalInfoPreview b { color: #fff; }
-        #additionalInfoPreview a { color: var(--chart-1); text-decoration: none; border-bottom: 1px dashed var(--chart-1); cursor: pointer; pointer-events: auto; }
-        #additionalInfoPreview a:hover { border-bottom-style: solid; }
-
-        /* --- TRACKERS --- */
-        .section-header { 
-            display: flex; justify-content: space-between; align-items: center; 
-            margin-bottom: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;
-        }
-        .section-header.first { border-top: none; padding-top: 0; }
-        .tracker-grid {
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;
-        }
-        .tracker-card {
-            background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
-            padding: 1.5rem; text-align: center; position: relative; cursor: pointer; transition: transform 0.2s;
-            min-height: 280px; display: flex; flex-direction: column; justify-content: space-between;
-        }
-        .tracker-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-        .tracker-desc { font-weight: bold; margin-bottom: 1rem; color: var(--text-main); height: 30px; display: flex; align-items: center; justify-content: center;}
-        .tracker-viz-container { flex-grow: 1; display: flex; align-items: center; justify-content: center; width: 100%; height: 160px; overflow: hidden; }
-
-        .pie-chart {
-            width: 120px; height: 120px; border-radius: 50%; margin: 0 auto;
-            background: conic-gradient(var(--g-green) 0% 0%, var(--g-red) 0% 100%);
-            position: relative; box-shadow: 0 0 10px rgba(0,0,0,0.5);
-        }
-        .pie-overlay {
-            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: var(--card-bg); width: 96px; height: 96px; border-radius: 50%;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-        }
-        .pie-pct { font-size: 1.4rem; font-weight: bold; color: var(--text-main); }
-        .tracker-stats { font-size: 0.8rem; color: var(--text-muted); margin-top: auto; padding-top:1rem; }
-        
-        .btn-del-tracker {
-            position: absolute; top: 10px; right: 10px; color: #666; background: none; border: none; cursor: pointer; font-size: 1.2rem; z-index: 2;
-        }
-        .btn-del-tracker:hover { color: var(--g-red); }
-
-        /* --- USERS --- */
-        .team-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1.5rem; }
-        .member-card {
-            background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
-            transition: transform 0.2s; position: relative; cursor: pointer; overflow: hidden;
-            display: flex; flex-direction: column;
-        }
-        .member-card:hover { border-color: var(--accent); transform: translateY(-2px); }
-        .card-half { padding: 1.2rem; display: flex; flex-direction: column; gap: 1rem; }
-        .card-top { background: rgba(255,255,255,0.03); border-bottom: 1px solid var(--border); }
-        .card-bottom { background: transparent; }
-        .half-header { display: flex; justify-content: space-between; align-items: center; }
-        .half-label { font-size: 0.7rem; text-transform: uppercase; color: var(--text-muted); font-weight: bold; letter-spacing: 1px; }
-        .member-name-row { padding: 1rem 1.2rem 0; font-size: 1.4rem; font-weight: bold; color: var(--text-main); }
-        .card-task-list { list-style: none; font-size: 0.9rem; color: #ddd; }
-        .card-task-li { margin-bottom: 0.4rem; display: flex; gap: 8px; align-items: flex-start; }
-        .card-task-li input[type="checkbox"] { margin-top: 4px; accent-color: var(--accent); cursor: pointer; }
-        
-        .gauge-container { width: 60px; height: 35px; position: relative; text-align: center; }
-        .gauge-val { position: absolute; bottom: -5px; width: 100%; text-align: center; font-size: 0.75rem; font-weight: bold; }
-        
-        .daily-mini-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; margin-top: auto; }
-        .dm-box { text-align: center; background: var(--input-bg); padding: 4px 2px; border-radius: 2px; }
-        .dm-day { font-size: 0.55rem; color: var(--text-muted); display: block; }
-        .dm-val { font-size: 0.75rem; font-weight: bold; }
-        .val-H { color: var(--g-red); } .val-M { color: var(--g-yellow); } 
-        .val-L { color: var(--g-green); } .val-X { color: var(--g-grey); opacity: 0.7; font-weight: normal; }
-
-        /* --- GLOBAL TOOLTIP --- */
-        #globalTooltip {
-            position: fixed; background: #222; color: #fff; padding: 10px; border: 1px solid #555;
-            border-radius: 4px; font-size: 0.8rem; white-space: pre-wrap; width: 220px;
-            z-index: 99999; box-shadow: 0 4px 15px rgba(0,0,0,0.8); pointer-events: none; display: none; line-height: 1.4;
-        }
-        .help-icon {
-            display: inline-block; width: 16px; height: 16px; background: #444; color: #aaa;
-            border-radius: 50%; text-align: center; line-height: 16px; font-size: 11px; font-weight: bold;
-            cursor: help; margin-left: 6px; vertical-align: middle;
-        }
-        .help-icon:hover { background: var(--accent); color: #000; }
-        
-        /* --- MODALS --- */
-        .modal-overlay {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center;
-        }
-        .modal-overlay.active { display: flex; }
-        .modal-content {
-            background: var(--modal-bg); width: 95%; max-width: 700px; max-height: 90vh;
-            border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.8);
-        }
-        .modal-mini { max-width: 400px; text-align: center; }
-        .modal-large { width: 90%; height: 85%; max-width: 1200px; }
-        
-        .modal-header { padding: 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-        /* Default modal body */
-        .modal-body { padding: 2rem; overflow-y: auto; flex-grow: 1; }
-        .modal-footer { padding: 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 1rem; }
-
-        /* Zoom Modal Specifics */
-        .zoom-body-text {
-            padding: 3rem; 
-            display: block; 
-            width: 100%; 
-            height: 100%; 
-            text-align: left; /* LEFT JUSTIFIED */
-            overflow-y: auto;
-        }
-        .zoom-body-chart {
-            padding: 3rem;
-            display: flex;
-            justify-content: center; /* CENTERED */
-            align-items: center;
-            width: 100%;
-            height: 100%;
-        }
-
-        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-bottom: 2rem; }
-        .form-section-title { color: var(--accent); font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1rem; border-bottom: 1px solid #444; padding-bottom: 0.5rem; }
-        .input-group { margin-bottom: 1rem; }
-        .input-group label { display: block; font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.4rem; }
-        input[type="text"], input[type="number"], textarea {
-            width: 100%; padding: 0.6rem; background: var(--input-bg); border: 1px solid var(--border);
-            color: #fff; border-radius: 4px; font-size: 0.9rem;
-        }
-        input:focus, textarea:focus { border-color: var(--accent); outline: none; }
-        .load-select-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
-        .ls-box { text-align: center; } .ls-box label { font-size: 0.7rem; margin-bottom: 2px; }
-        select { width: 100%; padding: 4px; background: var(--input-bg); color: #fff; border: 1px solid var(--border); text-align: center; border-radius: 4px; cursor: pointer; }
-        option { background: var(--input-bg); color: #fff; }
-
-        .type-selector { display: flex; gap: 10px; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem; }
-        .type-option { 
-            padding: 0.5rem 1rem; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; color: var(--text-muted); 
-            background: transparent; font-weight: bold; font-size: 0.9rem; flex:1;
-        }
-        .type-option.active { background: var(--accent); color: #000; border-color: var(--accent); }
-        .graph-input-grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 5px; }
-        .graph-input-grid { display: grid; grid-template-columns: 1fr 80px; gap: 10px; margin-bottom: 5px; }
-        .graph-header-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 5px; font-size: 0.7rem; color: var(--text-muted); }
-
-        /* --- PUBLISH MODE STYLES --- */
-        body.publishing .header-actions, 
-        body.publishing .btn-del-tracker, 
-        body.publishing .section-header button,
-        body.publishing .overview-col.interactive::after,
-        body.publishing .edit-hint,
-        body.publishing .help-icon,
-        body.publishing .btn-reset { display: none !important; }
-        
-        body.publishing .overview-col.interactive { pointer-events: auto; }
-        body.publishing .overview-col { cursor: zoom-in; } 
-        body.publishing .overview-col:hover { background: rgba(255,255,255,0.05); }
-
-        body.publishing #appTitle { pointer-events: none; border-bottom: none; }
-        body.publishing #publishToggleBtn { display: block !important; position: fixed; top: 20px; right: 20px; z-index: 9999; }
-        
-        body.publishing .auto-item b { display: none; }
-        body.publishing .tracker-card { cursor: zoom-in; }
-        body.publishing .member-card { cursor: default; }
-        
-        /* Enable Links in Publish Mode */
-        body.publishing #additionalInfoPreview { pointer-events: auto; }
-
-        #publishToggleBtn { display: none; }
-
-        /* Zoomed Content Styles */
-        .zoomed-content ul { font-size: 1.5rem; line-height: 2; padding-left: 2rem; }
-        .zoomed-content li { margin-bottom: 1rem; }
-        .zoomed-content p { font-size: 1.2rem; line-height: 1.6; }
-        .zoomed-content b { color: #fff; }
-        .zoomed-content a { color: var(--chart-1); text-decoration: none; border-bottom: 1px dashed var(--chart-1); }
-
-        @media print {
-            body { background: #121212 !important; color: #e0e0e0 !important; -webkit-print-color-adjust: exact; }
-            .header-actions, .modal-overlay, .btn, .btn-del-tracker, #publishToggleBtn, .btn-reset { display: none !important; }
-            .member-card, .team-overview-panel, .tracker-card { break-inside: avoid; border: 1px solid #444 !important; }
-            .card-top { background: #1a1a1a !important; }
-            .section-header button { display: none; }
-            body.publishing .auto-item b { display: none; }
-        }
-    </style>
+    <title>Server Platforms Tracker v30 (Fixed)</title>
+    <!-- Load Styles -->
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-    <button id="publishToggleBtn" class="btn btn-primary" onclick="togglePublishMode()">Edit View</button>
+    <!-- NEW: LOADING OVERLAY -->
+    <div id="loadingOverlay" style="position:fixed; top:0; left:0; width:100%; height:100%; background:var(--bg-color); z-index:99999; display:flex; justify-content:center; align-items:center;">
+        <h1 style="color:var(--accent);">Loading Application...</h1>
+        <p style="color:var(--text-muted);">Please wait.</p>
+    </div>
+
+    <button id="expandTeamBtn" class="btn" onclick="App.toggleTeamData()" style="display:none;">Expand Team Data</button>
+    <button id="publishToggleBtn" class="btn btn-primary" onclick="App.togglePublishMode()" style="display:none;">Edit View</button>
 
     <header>
         <div class="header-left">
-            <img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYmI4NmZjIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjIwIiBoZWlnaHQ9IjgiIHJ4PSIyIiByeT0iMiI+PC9yZWN0PjxyZWN0IHg9IjIiIHk9IjE0IiB3aWR0aD0iMjAiIGhlaWdodD0iOCIgcng9IjIiIHJ5PSIyIj48L3JlY3Q+PGxpbmUgeDE9IjYiIHkxPSI2IiB4Mj0iNi4wMSIgeTI9IjYiPjwvbGluZT48bGluZSB4MT0iNiIgeTE9IjE4IiB4Mj0iNi4wMSIgeTI9IjE4Ij48L2xpbmU+PC9zdmc+" alt="Logo" class="header-logo-img">
+            <img src="logo.svg" alt="Logo" class="header-logo-img">
             <div>
-                <h1 id="appTitle" contenteditable="true" spellcheck="false" onblur="saveTitle()">Server Platforms</h1>
+                <h1 id="appTitle" contenteditable="true" spellcheck="false" onblur="App.saveTitle()">Server Platforms</h1>
                 <div class="date-display" id="dateRangeDisplay">...</div>
             </div>
         </div>
         <div class="header-actions">
-            <input type="file" id="fileInput" style="display: none;" accept=".json" onchange="loadFromFile(this)">
+            <input type="file" id="fileInput" style="display: none;" accept=".json,.csv" onchange="DataLoader.loadFromFile(this)">
             <button class="btn" onclick="document.getElementById('fileInput').click()">Load Data</button>
-            <button class="btn" onclick="saveData()">Save Data</button>
-            <button class="btn" onclick="togglePublishMode()">Publish View</button>
-            <button class="btn btn-primary" onclick="openUserModal()">+ Add User</button>
+            <button class="btn" onclick="DataSaver.saveData()">Save JSON</button>
+            <button class="btn" onclick="App.togglePublishMode()">Publish View</button>
         </div>
     </header>
 
     <div class="container">
-        
         <div class="team-overview-panel">
-            <div class="overview-col" onclick="handleOverviewClick('success')">
+            <div class="overview-col" onclick="OverviewManager.handleOverviewClick('success')">
                 <h4 id="overviewTitleCurrent">Top 5 Team Achievements</h4>
                 <div class="edit-hint">(Check max 5 boxes in Last Week)</div>
                 <ul class="overview-list" id="teamSuccessList"><li>No items selected.</li></ul>
-                <button class="btn-reset" onclick="event.stopPropagation(); resetSelections('success')">Reset Selection</button>
+                <button class="btn-reset" onclick="event.stopPropagation(); UserManager.resetSelections('success')">Reset Selection</button>
             </div>
-            <div class="overview-col" onclick="handleOverviewClick('activity')">
+            <div class="overview-col" onclick="OverviewManager.handleOverviewClick('activity')">
                 <h4 id="overviewTitleNext">Top 5 Activities Next Week</h4>
                 <div class="edit-hint">(Check max 5 boxes in Next Week)</div>
                 <ul class="overview-list" id="teamActivityList"><li>No items selected.</li></ul>
-                <button class="btn-reset" onclick="event.stopPropagation(); resetSelections('activity')">Reset Selection</button>
+                <button class="btn-reset" onclick="event.stopPropagation(); UserManager.resetSelections('activity')">Reset Selection</button>
             </div>
-            <div class="overview-col interactive" onclick="handleInfoClick()">
+            <div class="overview-col interactive" onclick="OverviewManager.handleInfoClick()">
                 <h4>Additional Info</h4>
                 <div class="edit-hint">(Click anywhere to edit)</div>
                 <div id="additionalInfoPreview"></div>
@@ -331,16 +57,25 @@
 
         <div class="section-header first">
             <h3 style="color:var(--accent); font-weight:300;">Progress Trackers</h3>
-            <button class="btn" onclick="openTrackerModal()">+ Add Tracker</button>
+            <button class="btn" onclick="TrackerManager.openModal(-1)">+ Add Tracker</button>
         </div>
         <div class="tracker-grid" id="trackerGrid"></div>
 
-        <div class="section-header">
+        <div id="ganttSection" style="margin-bottom: 3rem; display: none;">
+            <div class="section-header">
+                <h3 style="color:var(--accent); font-weight:300;">Resource Planner</h3>
+            </div>
+            <div id="ganttContainer" style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem; overflow-x:auto;"></div>
+        </div>
+
+        <div class="section-header" id="teamSectionHeader">
             <h3 style="color:var(--accent); font-weight:300;">Team Members</h3>
+            <button class="btn btn-primary" onclick="UserManager.openUserModal()">+ Add User</button>
         </div>
         <div class="team-grid" id="teamGrid"></div>
     </div>
 
+    <!-- TOOLTIP & MODALS -->
     <div id="globalTooltip"></div>
 
     <div class="modal-overlay" id="alertModal">
@@ -350,10 +85,11 @@
                 <p id="alertMessage" style="font-size:1rem; color:#fff;"></p>
             </div>
             <div class="modal-footer" style="justify-content:center; border-top:none;">
-                <button class="btn btn-primary" onclick="closeModal('alertModal')">OK</button>
+                <button class="btn btn-primary" onclick="ModalManager.closeModal('alertModal')">OK</button>
             </div>
         </div>
     </div>
+
     <div class="modal-overlay" id="confirmModal">
         <div class="modal-content modal-mini">
             <div class="modal-body" style="padding-bottom:1rem;">
@@ -361,7 +97,7 @@
                 <p id="confirmMessage" style="font-size:1rem; color:#fff;"></p>
             </div>
             <div class="modal-footer" style="justify-content:center; border-top:none; gap:1rem;">
-                <button class="btn" onclick="closeModal('confirmModal')">Cancel</button>
+                <button class="btn" onclick="ModalManager.closeModal('confirmModal')">Cancel</button>
                 <button id="confirmYesBtn" class="btn btn-primary">Yes, Proceed</button>
             </div>
         </div>
@@ -371,10 +107,9 @@
         <div class="modal-content modal-large">
             <div class="modal-header">
                 <h3 id="zoomTitle" style="font-size:1.5rem;">View</h3>
-                <button class="btn" onclick="closeModal('zoomModal')">&times;</button>
+                <button class="btn" onclick="ModalManager.closeModal('zoomModal')">&times;</button>
             </div>
-            <div class="modal-body" id="zoomBody">
-                </div>
+            <div class="modal-body" id="zoomBody"></div>
         </div>
     </div>
 
@@ -382,400 +117,501 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h3 id="modalTitle">Add User</h3>
-                <button class="btn" onclick="closeModal('userModal')" style="padding: 0.2rem 0.6rem;">&times;</button>
+                <button class="btn" onclick="ModalManager.closeModal('userModal')" style="padding: 0.2rem 0.6rem;">&times;</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editIndex" value="-1">
                 <div class="input-group">
-                    <label>Team Member Name <span class="help-icon" data-text="Enter the full name of the team member.">?</span></label>
-                    <input type="text" id="mName" placeholder="e.g. Alex Chen">
+                    <label>Team Member Name <span class="help-icon" data-text="Enter full name of team member.">?</span></label>
+                    <input type="text" maxlength="250" id="mName" placeholder="e.g. Alex Chen">
                 </div>
-                <div class="form-row">
-                    <div class="half-form">
-                        <div class="form-section-title">Last Week (Mon - Fri)</div>
+                <div class="form-row tri-form" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
+                    <div class="col-form">
+                        <div class="form-section-title" id="lastWeekTitle">Last Week</div>
                         <div class="input-group">
-                            <label>Top 3 Successes <span class="help-icon" data-text="Key achievements from the previous week. Check the box on the dashboard to add these to the 'Top 5 Team Achievements'.">?</span></label>
-                            <input type="text" class="mb-2" id="lwTask1" placeholder="1. Project A...">
-                            <input type="text" class="mb-2" id="lwTask2" style="margin-top:5px" placeholder="2. Client Call...">
-                            <input type="text" class="mb-2" id="lwTask3" style="margin-top:5px" placeholder="3. Bug fix...">
+                            <label>Top 3 Successes</label>
+                            <input type="text" maxlength="250" class="mb-2" id="lwTask1" placeholder="1. Project A...">
+                            <input type="text" maxlength="250" class="mb-2" id="lwTask2" style="margin-top:5px" placeholder="2. Client Call...">
+                            <input type="text" maxlength="250" class="mb-2" id="lwTask3" style="margin-top:5px" placeholder="3. Bug fix...">
+                        </div>
+                    </div>
+                    <div class="col-form">
+                        <div class="form-section-title" id="thisWeekTitle">Current Week</div>
+                        <div class="input-group">
+                            <label>Top 3 Priorities</label>
+                            <input type="text" maxlength="250" class="mb-2" id="nwTask1" placeholder="1. Start Phase 2...">
+                            <input type="text" maxlength="250" class="mb-2" id="nwTask2" style="margin-top:5px" placeholder="2. Planning...">
+                            <input type="text" maxlength="250" class="mb-2" id="nwTask3" style="margin-top:5px" placeholder="3. Code Review...">
                         </div>
                         <div class="input-group">
-                            <label>Workload <span class="help-icon" data-text="Daily workload intensity.&#10;L = Low&#10;M = Medium&#10;H = High&#10;X = Absence (Excluded from utilization score)">?</span></label>
+                            <label>Availability <span style="font-size:0.7rem; font-weight:normal; color:#888;">(Checkbox = On-Call)</span></label>
                             <div class="load-select-row">
-                                <div class="ls-box"><label>M</label><select id="lw0"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                                <div class="ls-box"><label>T</label><select id="lw1"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                                <div class="ls-box"><label>W</label><select id="lw2"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                                <div class="ls-box"><label>T</label><select id="lw3"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                                <div class="ls-box"><label>F</label><select id="lw4"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
+                                <div class="ls-box"><label>M</label><input type="hidden" id="nw0" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(0,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(0,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(0,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(0,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc0" title="On Call"></div></div>
+                                <div class="ls-box"><label>T</label><input type="hidden" id="nw1" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(1,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(1,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(1,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(1,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc1" title="On Call"></div></div>
+                                <div class="ls-box"><label>W</label><input type="hidden" id="nw2" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(2,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(2,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(2,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(2,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc2" title="On Call"></div></div>
+                                <div class="ls-box"><label>T</label><input type="hidden" id="nw3" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(3,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(3,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(3,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(3,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc3" title="On Call"></div></div>
+                                <div class="ls-box"><label>F</label><input type="hidden" id="nw4" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(4,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(4,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(4,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(4,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc4" title="On Call"></div></div>
+                                <div class="ls-box"><label>S</label><input type="hidden" id="nw5" value="X"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(5,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(5,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(5,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(5,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc5" title="On Call"></div></div>
+                                <div class="ls-box"><label>S</label><input type="hidden" id="nw6" value="X"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(6,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(6,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(6,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(6,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc6" title="On Call"></div></div>
                             </div>
                         </div>
                     </div>
-                    <div class="half-form">
-                        <div class="form-section-title">Next Week (Mon - Fri)</div>
+                    <div class="col-form">
+                        <div class="form-section-title" id="nextWeekTitle">Next Week</div>
                         <div class="input-group">
-                            <label>Top 3 Priorities <span class="help-icon" data-text="Key planned activities. Check the box on the dashboard to add these to the 'Top 5 Activities'.">?</span></label>
-                            <input type="text" class="mb-2" id="nwTask1" placeholder="1. Start Phase 2...">
-                            <input type="text" class="mb-2" id="nwTask2" style="margin-top:5px" placeholder="2. Planning...">
-                            <input type="text" class="mb-2" id="nwTask3" style="margin-top:5px" placeholder="3. Code Review...">
+                            <label>Planned Work</label>
+                            <input type="text" maxlength="250" class="mb-2" id="fwTask1" placeholder="1. Future Task...">
+                            <input type="text" maxlength="250" class="mb-2" id="fwTask2" style="margin-top:5px" placeholder="2. Future Task...">
+                            <input type="text" maxlength="250" class="mb-2" id="fwTask3" style="margin-top:5px" placeholder="3. Future Task...">
                         </div>
                         <div class="input-group">
-                            <label>Workload <span class="help-icon" data-text="Daily workload intensity.&#10;L = Low&#10;M = Medium&#10;H = High&#10;X = Absence (Excluded from utilization score)">?</span></label>
+                            <label>Availability <span style="font-size:0.7rem; font-weight:normal; color:#888;">(Checkbox = On-Call)</span></label>
                             <div class="load-select-row">
-                                <div class="ls-box"><label>M</label><select id="nw0"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                                <div class="ls-box"><label>T</label><select id="nw1"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                                <div class="ls-box"><label>W</label><select id="nw2"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                                <div class="ls-box"><label>T</label><select id="nw3"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
-                                <div class="ls-box"><label>F</label><select id="nw4"><option title="Low">L</option><option title="Medium">M</option><option title="High">H</option><option title="Absence">X</option></select></div>
+                                <div class="ls-box"><label>M</label><input type="hidden" id="fw0" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(0,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(0,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(0,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(0,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc0" title="On Call"></div></div>
+                                <div class="ls-box"><label>T</label><input type="hidden" id="fw1" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(1,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(1,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(1,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(1,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc1" title="On Call"></div></div>
+                                <div class="ls-box"><label>W</label><input type="hidden" id="fw2" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(2,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(2,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(2,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(2,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc2" title="On Call"></div></div>
+                                <div class="ls-box"><label>T</label><input type="hidden" id="fw3" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(3,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(3,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(3,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(3,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc3" title="On Call"></div></div>
+                                <div class="ls-box"><label>F</label><input type="hidden" id="fw4" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(4,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(4,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(4,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(4,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc4" title="On Call"></div></div>
+                                <div class="ls-box"><label>S</label><input type="hidden" id="fw5" value="X"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(5,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(5,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(5,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(5,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc5" title="On Call"></div></div>
+                                <div class="ls-box"><label>S</label><input type="hidden" id="fw6" value="X"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(6,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(6,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(6,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(6,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc6" title="On Call"></div></div>
                             </div>
                         </div>
                     </div>
                 </div>
+                <div class="input-group" style="margin-top: 1rem;">
+                    <label>Notes (Max 200 chars)</label>
+                    <textarea maxlength="250" id="mNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="General notes, key updates..."></textarea>
+                </div>
+                </div>
             </div>
             <div class="modal-footer">
-                <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="deleteUser()" id="deleteBtn">Delete</button>
-                <button class="btn btn-primary" onclick="submitUser()">Save User</button>
-            </div>
-        </div>
-    </div>
-
-    <div class="modal-overlay" id="infoModal">
-        <div class="modal-content" style="max-width:500px;">
-            <div class="modal-header">
-                <h3>Additional Information</h3>
-                <button class="btn" onclick="closeModal('infoModal')">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p style="font-size:0.8rem; color:#888; margin-bottom:1rem;">Supports: **bold**, *italic*, - list item, [link](url)</p>
-                <textarea id="additionalInfoInput" style="height:200px; resize:none;" placeholder="Enter risks, blockers, or general notes..."></textarea>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" onclick="saveAdditionalInfo()">Update Info</button>
+                <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="UserManager.deleteUser()" id="deleteBtn">Delete</button>
+                <button class="btn btn-primary" onclick="UserManager.submitUser()">Save User</button>
             </div>
         </div>
     </div>
 
     <div class="modal-overlay" id="trackerModal">
-        <div class="modal-content" style="max-width:500px;">
+        <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
                 <h3 id="trackerModalTitle">Add Progress Tracker</h3>
-                <button class="btn" onclick="closeModal('trackerModal')">&times;</button>
+                <button class="btn" onclick="ModalManager.closeModal('trackerModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editTrackerIndex" value="-1">
-                <div class="type-selector">
-                    <button class="type-option active" id="typeGaugeBtn" onclick="setTrackerType('gauge')">Gauge (Pie)</button>
-                    <button class="type-option" id="typeBarBtn" onclick="setTrackerType('bar')">Bar Graph (1 Y-Axis)</button>
-                    <button class="type-option" id="typeLine1Btn" onclick="setTrackerType('line1')">Line Graph (1 Y-Axis)</button>
-                    <button class="type-option" id="typeLine2Btn" onclick="setTrackerType('line2')">Line Graph (2 Y-Axis)</button>
+                <div class="type-selector" id="trackerTypeSelector">
+                    <button id="typeGaugeBtn" class="type-option active" onclick="TrackerManager.setType('gauge')">Gauge (Pie)</button>
+                    <button id="typeLineBtn" class="type-option" onclick="TrackerManager.setType('line')">Time Series</button>
+                    <button id="typeCounterBtn" class="type-option" onclick="TrackerManager.setType('counter')">Counter</button>
+                    <button id="typeRagBtn" class="type-option" onclick="TrackerManager.setType('rag')">RAG Status</button>
+                    <button id="typeWaffleBtn" class="type-option" onclick="TrackerManager.setType('waffle')">Waffle Chart</button>
+                    <button id="typeNoteBtn" class="type-option" onclick="TrackerManager.setType('note')">Note</button>
+                    <button id="typeDonutBtn" class="type-option" onclick="TrackerManager.setType('donut')">Donut Chart</button>
                 </div>
-                <div class="input-group">
-                    <label>Tracker Title</label>
-                    <input type="text" id="tkDesc">
+                <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
+                    <div class="input-group" style="flex: 2;">
+                        <label>Chart Title</label>
+                        <input type="text" maxlength="250" id="tkDesc">
+                    </div>
+                    <div class="input-group" style="flex: 0 0 180px;" id="sizeContainer">
+                        <label>Size</label>
+                        <div id="tkSize" style="display:flex; gap:15px; margin-top:5px;">
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="S"> S</label>
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="M" checked> M</label>
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="L"> L</label>
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="XL"> XL</label>
+                        </div>
+                    </div>
                 </div>
 
-                <div id="gaugeInputs">
-                    <div class="input-group"><label>Metric Name</label><input type="text" id="tkMetric"></div>
+                                <div id="gaugeInputs">
+
+                                    <div class="input-group"><label>Metric Unit</label><input type="text" maxlength="250" id="tkMetric"></div>
+
+                                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
+
+                                        <div class="input-group"><label>Target</label><input type="number" min="0" max="2000" id="tkTotal"></div>
+
+                                        <div class="input-group"><label>Progress</label><input type="number" min="0" max="2000" id="tkComp"></div>
+
+                                    </div>
+
+                                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
+
+                                        <div class="input-group">
+
+                                            <label>Target Colour</label>
+
+                                            <input type="color" id="tkPieColor" value="#696969">
+
+                                        </div>
+
+                                        <div class="input-group">
+
+                                            <label>Progress Colour</label>
+
+                                            <input type="color" id="tkPieColor2" value="#228B22">
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="input-group" style="margin-top: 1rem;">
+
+                                        <label>Notes for Published View (Max 200 chars)</label>
+
+                                        <textarea maxlength="250" id="tkNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+
+                                    </div>
+
+                                </div>
+
+                                <div id="lineInputs" style="display:none;">
+
+                                    <div class="form-row" style="margin-bottom: 1rem; gap: 2rem;">
+
+                                        <div class="input-group">
+
+                                            <label>Metric Unit</label>
+
+                                            <input type="text" maxlength="250" id="tkYLabel">
+
+                                        </div>
+
+                                        <div class="input-group">
+
+                                            <label>Chart Style</label>
+
+                                            <div style="display:flex; gap:15px; margin-top:5px;">
+
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="line" checked> Line Chart</label>
+
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="bar"> Bar Chart</label>
+
+                                            </div>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end; display: flex; gap: 2rem;">
+
+                                        <div class="input-group">
+
+                                            <label>End Date</label>
+
+                                            <input type="date" id="tkStartDate" onchange="TrackerManager.handleEndDateChange(this)" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+
+                                        </div>
+
+                                        <div class="input-group">
+
+                                            <label>Time Unit</label>
+
+                                            <div style="display: flex; gap: 15px; margin-top: 5px;" id="tkTimeUnitContainer">
+
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="day" checked onchange="TrackerManager.handleTimeUnitChange(this)"> Days</label>
+
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="month" onchange="TrackerManager.handleTimeUnitChange(this)"> Months</label>
+
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="year" onchange="TrackerManager.handleTimeUnitChange(this)"> Years</label>
+
+                                            </div>
+
+                                        </div>
+
+                                        <div class="input-group">
+
+                                            <label id="tkHistoricLabel">Historic Days</label>
+
+                                            <select id="tkTimeCount" onchange="TrackerManager.handleCountChange(this)" style="width: 80px; min-width: 60px;"></select>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="input-group">
+
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+
+                                            <label>Manual Data Entry</label>
+
+                                        </div>
+
+                                        <div id="lineTableContainer" style="max-height: 450px; overflow: auto; border: 1px solid #333; border-radius: 4px;"></div>
+
+                                        <div style="margin-top: 10px; display:flex; justify-content:flex-end;">
+
+                                            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); display: none;" onclick="TrackerManager.deleteSelectedSeries()">Delete Series</button>
+
+                                        </div>
+
+                                    </div>
+
+                                    <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-top: 1rem;">
+
+                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+
+                                            <label style="margin:0;">Import / Export Data</label>
+
+                                            <button class="btn btn-sm" onclick="TrackerManager.exportTimeSeriesCSV()">Export Table to CSV</button>
+
+                                        </div>
+
+                                        <textarea maxlength="250" id="csvInput" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
+
+                                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
+
+                                    </div>
+
+                                    <div class="input-group" style="margin-top: 1rem;">
+                                        <label>Notes for Published View (Max 200 chars)</label>
+                                        <textarea maxlength="250" id="tkLineNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                                    </div>
+
+                                </div>
+
+                                                <div id="waffleInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Metric Unit</label>
+                        <input type="text" maxlength="250" id="tkWaffleMetric">
+                    </div>
                     <div class="form-row" style="margin-bottom:0; gap:1rem;">
-                        <div class="input-group"><label>Completed</label><input type="number" id="tkComp"></div>
-                        <div class="input-group"><label>Total</label><input type="number" id="tkTotal"></div>
+                        <div class="input-group">
+                            <label>Target (Max 450)</label>
+                            <input type="number" min="0" max="450" id="tkWaffleTotal">
+                        </div>
+                        <div class="input-group">
+                            <label>Progress</label>
+                            <input type="number" min="0" max="450" id="tkWaffleActive">
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Target Colour</label>
+                            <input type="color" id="tkWaffleColorBg" value="#696969">
+                        </div>
+                        <div class="input-group">
+                            <label>Progress Colour</label>
+                            <input type="color" id="tkWaffleColorVal" value="#228B22">
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea maxlength="250" id="tkWaffleNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
                     </div>
                 </div>
 
-                <div id="barInputs" style="display:none;">
-                    <div class="input-group"><label>Y-Axis Label</label><input type="text" id="tkBarYLabel"></div>
-                    <label style="font-size:0.8rem; color:var(--text-muted); margin-bottom:5px; display:block;">Data Points (Label vs Value) - Up to 10</label>
-                    <div id="barPointsContainer" style="max-height: 250px; overflow-y:auto; padding-right:5px;"></div>
-                </div>
+                <div id="counterInputs" style="display:none;">
 
-                 <div id="line1Inputs" style="display:none;">
-                    <div class="input-group"><label style="color:var(--chart-1);">Y-Axis Legend</label><input type="text" id="tkLine1YLegend" placeholder="e.g. Values"></div>
-                    <div class="graph-header-grid" style="grid-template-columns: 2fr 2fr;"><span>X Label</span><span>Y Val</span></div>
-                    <div id="line1PointsContainer" style="max-height: 200px; overflow-y:auto; padding-right:5px;"></div>
-                </div>
+                                                    <div class="form-row" style="margin-bottom: 0; gap: 1rem;">
 
-                 <div id="line2Inputs" style="display:none;">
-                    <div class="form-row" style="margin-bottom:1rem; gap:1rem;">
-                        <div class="input-group"><label style="color:var(--chart-1);">Y1 Legend</label><input type="text" id="tkLine2Y1Legend" placeholder="e.g. Planned"></div>
-                        <div class="input-group"><label style="color:var(--chart-2);">Y2 Legend</label><input type="text" id="tkLine2Y2Legend" placeholder="e.g. Actual"></div>
-                    </div>
-                    <div class="graph-header-grid"><span>X Label</span><span>Y1 Val</span><span>Y2 Val</span></div>
-                    <div id="line2PointsContainer" style="max-height: 200px; overflow-y:auto; padding-right:5px;"></div>
-                </div>
+                                                                                <div class="input-group" style="flex: 1;">
 
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary" onclick="submitTracker()">Save Tracker</button>
-            </div>
-        </div>
-    </div>
+                                                                                    <label>Counter Value</label>
 
-    <script>
-        // --- STATE ---
-        let teamData = { title: "Server Platforms", additionalInfo: "", trackers: [], members: [] };
-        let currentTrackerType = 'gauge';
-        let confirmCallback = null;
+                                                                                    <input type="number" min="0" max="9999999" id="tkCounterVal">
 
-        // --- DATES ---
-        const formatDate = (date) => date.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
-        const getRanges = () => {
-            const today = new Date(); const d = today.getDay(); const diff = d === 0 ? -6 : 1 - d; 
-            const cm = new Date(today); cm.setDate(today.getDate() + diff); const cf = new Date(cm); cf.setDate(cm.getDate() + 4);
-            const nm = new Date(cm); nm.setDate(cm.getDate() + 7); const nf = new Date(nm); nf.setDate(nm.getDate() + 4);
-            return { current: `${formatDate(cm)} - ${formatDate(cf)}`, next: `${formatDate(nm)} - ${formatDate(nf)}` };
-        };
-        const initDates = () => {
-            const r = getRanges();
-            document.getElementById('dateRangeDisplay').innerText = `Current: ${r.current} | Next: ${r.next}`;
-            document.getElementById('overviewTitleCurrent').innerHTML = `Top 5 Team Achievements <span class="date-suffix">${r.current}</span>`;
-            document.getElementById('overviewTitleNext').innerHTML = `Top 5 Activities Next Week <span class="date-suffix">${r.next}</span>`;
-        };
-        initDates();
+                                                                                </div>
 
-        // --- CUSTOM ALERTS ---
-        const openAlert = (msg) => { document.getElementById('alertMessage').innerText = msg; document.getElementById('alertModal').classList.add('active'); };
-        const openConfirm = (msg, callback) => { document.getElementById('confirmMessage').innerText = msg; confirmCallback = callback; document.getElementById('confirmModal').classList.add('active'); };
-        document.getElementById('confirmYesBtn').addEventListener('click', () => { if (confirmCallback) confirmCallback(); closeModal('confirmModal'); });
+                                                        <div class="input-group" style="flex: 0 0 100px;">
 
-        // --- TITLE & PUBLISH ---
-        const saveTitle = () => { teamData.title = document.getElementById('appTitle').innerText; };
-        function togglePublishMode() { document.body.classList.toggle('publishing'); }
+                                                            <label>Font Color</label>
 
-        // --- TOOLTIP ---
-        const tooltip = document.getElementById('globalTooltip');
-        const showTooltip = (e, text) => { if(!text)return; tooltip.innerText=text; tooltip.style.display='block'; positionTooltip(e); };
-        const hideTooltip = () => { tooltip.style.display='none'; };
-        const positionTooltip = (e) => {
-            const m = 15; let l = e.pageX + m; let t = e.pageY + m; const r = tooltip.getBoundingClientRect();
-            if(l+r.width > window.innerWidth) l=e.pageX-r.width-m; if(t+r.height > window.innerHeight) t=e.pageY-r.height-m;
-            tooltip.style.left=l+'px'; tooltip.style.top=t+'px';
-        };
-        document.body.addEventListener('mousemove', (e) => { if(e.target.classList.contains('help-icon')) showTooltip(e, e.target.getAttribute('data-text')); else hideTooltip(); });
+                                                            <input type="color" id="tkCounterColor" value="#bb86fc">
 
-        // --- VISUALIZATIONS ---
-        const getColor = (s) => s >= 90 ? '#ff1744' : s >= 51 ? '#ffea00' : '#00e676';
-        const createGauge = (loadArr) => {
-            let t=0; let c=0; loadArr.forEach(v => { if(v==='H'){t+=100;c++}else if(v==='M'){t+=70;c++}else if(v==='L'){t+=30;c++} });
-            const s = c===0?0:Math.round(t/c); const r=15, cx=30, cy=30; const rad=(Math.min(s,100)/100)*180*Math.PI/180;
-            const bg=`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`;
-            const val=s>0?`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r*Math.cos(rad-Math.PI)} ${cy+r*Math.sin(rad-Math.PI)}`:'';
-            return `<svg width="60" height="35" viewBox="0 0 60 35"><path d="${bg}" fill="none" stroke="#333" stroke-width="4" stroke-linecap="round"/><path d="${val}" fill="none" stroke="${getColor(s)}" stroke-width="4" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="2" fill="#fff"/></svg><div class="gauge-val" style="color:${getColor(s)}">${s}%</div>`;
-        };
+                                                        </div>
 
-        const createBarChartSVG = (data, yLabel) => {
-            let max = 0; data.forEach(d => { if(d.val > max) max = d.val; }); if(max === 0) max = 10;
-            // INCREASED HEIGHT AND PADDING
-            const w=300, h=180, pTop=20, pBot=50, pSide=25; 
-            const bw=(w-(pSide*2))/data.length, uh=h-pTop-pBot; 
-            let bars='';
-            data.forEach((d, i) => {
-                const bh=(d.val/max)*uh; const x=pSide+(i*bw)+5; const y=h-pBot-bh;
-                bars+=`<rect x="${x}" y="${y}" width="${bw-10}" height="${bh}" fill="var(--chart-1)" rx="2"/><text x="${x+(bw-10)/2}" y="${y-5}" text-anchor="middle" fill="#fff" font-size="10">${d.val}</text><text x="${x+(bw-10)/2}" y="${h-15}" text-anchor="middle" fill="#aaa" font-size="10">${d.label.substring(0,6)}</text>`;
-            });
-            // Native scaling via viewBox
-            return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/><text transform="rotate(-90 ${pSide/2},${h/2})" x="${pSide/2}" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>${bars}</svg>`;
-        };
+                                                    </div>
 
-        const createLineChartSVG = (data, y1Leg, y2Leg) => {
-            const isSingle = !y2Leg;
-            let max = 0; data.forEach(d => { max = Math.max(max, d.y1 || 0, d.y2 || 0); }); if(max===0) max=10;
-            // INCREASED HEIGHT, PADDING FOR LEGEND
-            const w=300, h=180, pTop=30, pBot=50, pSide=30; 
-            const gw=(w-(pSide*2))/(data.length-1||1), uh=h-pTop-pBot;
-            let p1='', p2='', lbls='', pts1='', pts2='';
-            data.forEach((d, i) => {
-                const x = pSide + (i*gw); const y1 = h-pBot - ((d.y1||0)/max)*uh; 
-                p1+=(i===0?'M':'L')+`${x},${y1} `; pts1+=`<circle cx="${x}" cy="${y1}" r="3" fill="var(--chart-1)"/>`;
-                if(!isSingle) {
-                    const y2 = h-pBot - ((d.y2||0)/max)*uh; p2+=(i===0?'M':'L')+`${x},${y2} `; pts2+=`<circle cx="${x}" cy="${y2}" r="3" fill="var(--chart-2)"/>`;
-                }
-                lbls+=`<text x="${x}" y="${h-35}" text-anchor="middle" fill="#aaa" font-size="10">${d.label.substring(0,5)}</text>`;
-            });
-            const legY = h - 10;
-            let legendHTML = '';
-            if(isSingle) {
-                legendHTML = `<circle cx="${w/2 - 10}" cy="${legY}" r="3" fill="var(--chart-1)"/><text x="${w/2}" y="${legY+3}" fill="#aaa" font-size="9" text-anchor="start">${y1Leg}</text>`;
-            } else {
-                legendHTML = `<circle cx="${w/2 - 60}" cy="${legY}" r="3" fill="var(--chart-1)"/><text x="${w/2 - 50}" y="${legY+3}" fill="#aaa" font-size="9" text-anchor="start">${y1Leg}</text><circle cx="${w/2 + 40}" cy="${legY}" r="3" fill="var(--chart-2)"/><text x="${w/2 + 50}" y="${legY+3}" fill="#aaa" font-size="9" text-anchor="start">${y2Leg}</text>`;
+                                                    <div class="input-group" style="margin-top: 1rem;">
+
+                                                        <label>Status Message</label>
+
+                                                        <input type="text" maxlength="250" id="tkCounterSub" placeholder="e.g. Active Incidents">
+
+                                                    </div>
+
+                                                    <div class="input-group" style="margin-top: 1rem;">
+
+                                                        <label>Notes for Published View (Max 200 chars)</label>
+
+                                                        <textarea maxlength="250" id="tkCounterNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+
+                                                    </div>
+
+                                                </div>
+
+                                <div id="ragInputs" style="display:none;">
+
+                                    <div class="input-group">
+
+                                        <label>Status</label>
+
+                                                                <div class="rag-selector">
+
+                                                                    <div class="rag-pill" data-val="green" onclick="TrackerManager.selectRag('green')">
+
+                                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+                                                                          <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                          <path d="M22 4L12 14.01L9 11.01" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                        </svg>
+
+                                                                    </div>
+
+                                                                    <div class="rag-pill" data-val="amber" onclick="TrackerManager.selectRag('amber')">
+
+                                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+                                                                          <path d="M10.29 3.86L1.82 18C1.64556 18.3024 1.55293 18.6453 1.55196 18.9945C1.55098 19.3437 1.64171 19.6871 1.81506 19.991C1.98841 20.2949 2.23846 20.5487 2.54076 20.7275C2.84306 20.9063 3.18721 21.0041 3.54 21H20.46C20.8128 21.0041 21.1569 20.9063 21.4592 20.7275C21.7615 20.5487 22.0116 20.2949 22.1849 19.991C22.3583 19.6871 22.449 19.3437 22.448 18.9945C22.4471 18.6453 22.3544 18.3024 22.18 18L13.71 3.86C13.5317 3.56613 13.2807 3.32314 12.9812 3.15449C12.6817 2.98585 12.3437 2.89722 12 2.89722C11.6563 2.89722 11.3183 2.98585 11.0188 3.15449C10.7193 3.32314 10.4683 3.56613 10.29 3.86V3.86Z" fill="#D97706" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                          <path d="M12 9V13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                          <path d="M12 17H12.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                        </svg>
+
+                                                                    </div>
+
+                                                                    <div class="rag-pill" data-val="red" onclick="TrackerManager.selectRag('red')">
+
+                                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+                                                                          <path d="M7.86 2H16.14L22 7.86V16.14L16.14 22H7.86L2 16.14V7.86L7.86 2Z" fill="#DC2626" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                          <path d="M15 9L9 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                          <path d="M9 9L15 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                        </svg>
+
+                                                                    </div>
+
+                                                                    <div class="rag-pill" data-val="grey" onclick="TrackerManager.selectRag('grey')">
+
+                                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+                                                                          <circle cx="12" cy="12" r="10" fill="#9CA3AF" />
+
+                                                                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                        </svg>
+
+                                                                    </div>
+
+                                                                </div>
+
+                                        <input type="hidden" id="tkRagStatus">
+
+                                    </div>
+
+                                                        <div class="input-group">
+
+                                                            <label>Status Message</label>
+
+                                                            <input type="text" maxlength="250" id="tkRagMsg" placeholder="e.g. All Systems Operational">
+
+                                                        </div>
+
+                                                        <div class="input-group" style="margin-top: 1rem;">
+
+                                                            <label>Notes for Published View (Max 200 chars)</label>
+
+                                                            <textarea maxlength="250" id="tkRagNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                                                                <div id="noteInputs" style="display:none;">
+
+                                                                                                    <div class="input-group">
+
+                                                                                                        <label>Content (Markdown supported)</label>
+
+                                                                                                        <textarea maxlength="250" id="tkNoteContent" style="height: 200px; font-family: monospace;" placeholder="# Heading&#10;- Bullet&#10;**Bold**&#10;[Link](google.com)"></textarea>
+
+                                                                                                    </div>
+
+                                                                                                    <div class="input-group">
+                                                                                                        <label>Text Alignment</label>
+                                                                                                        <div style="display:flex; gap:15px; margin-top:5px;">
+                                                                                                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="left" checked> Left</label>
+                                                                                                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="center"> Center</label>
+                                                                                                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="right"> Right</label>
+                                                                                                        </div>
+                                                                                                    </div>
+
+                                                                                                </div>
+
+
+
+                                                                                                <div id="donutInputs" style="display:none;">
+
+                                                                                                    <div class="input-group">
+
+                                                                                                        <label>Segments (Max 10)</label>
+
+                                                                                                        <div id="donutDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+
+                                                                                                            <!-- Rows will be added here -->
+
+                                                                                                        </div>
+
+                                                                                                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addDonutRow()">+ Add Segment</button>
+
+                                                                                                    </div>
+
+                                                                                                    <div class="input-group" style="margin-top: 1rem;">
+
+                                                                                                        <label>Notes for Published View (Max 200 chars)</label>
+
+                                                                                                        <textarea maxlength="250" id="tkDonutNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+
+                                                                                                    </div>
+
+                                                                                                </div>
+
+                                                                            </div>
+
+                                                                            <div class="modal-footer">
+
+                                                                                <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Tracker</button>
+
+                                                                            </div>
+
+                                                                        </div>
+
+                                                                    </div>
+
+    <!-- LOAD SCRIPT LAST to ensure it's available -->
+    <!-- Changed to type="module" and added an export to window -->
+    <script type="module">
+        import * as AppModule from './app.js';
+
+        // When module loads, expose it to window so HTML onclick works
+        window.App = AppModule.App;
+        window.UserManager = AppModule.UserManager;
+        window.TrackerManager = AppModule.TrackerManager;
+        window.OverviewManager = AppModule.OverviewManager;
+        window.ModalManager = AppModule.ModalManager;
+        window.DataSaver = AppModule.DataSaver;
+        window.DataLoader = AppModule.DataLoader;
+        window.DataExporter = AppModule.DataExporter;
+        window.Visuals = AppModule.Visuals;
+
+        // When ready, remove loading overlay
+        window.addEventListener('DOMContentLoaded', () => {
+            window.App.init();
+            const overlay = document.getElementById('loadingOverlay');
+            if (overlay) {
+                overlay.style.opacity = '0';
+                setTimeout(() => overlay.style.display = 'none', 100);
             }
-
-            return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/><path d="${p1}" fill="none" stroke="var(--chart-1)" stroke-width="2"/>${!isSingle ? `<path d="${p2}" fill="none" stroke="var(--chart-2)" stroke-width="2"/>` : ''}${pts1}${pts2}${lbls}${legendHTML}<text x="${pSide-5}" y="${pTop+10}" text-anchor="end" fill="#aaa" font-size="10">${max}</text><text x="${pSide-5}" y="${h-pBot}" text-anchor="end" fill="#aaa" font-size="10">0</text></svg>`;
-        };
-
-        // --- RENDER ---
-        const parseMd = (t) => { if(!t)return''; 
-            let h = t.replace(/&/g,"&amp;").replace(/</g,"&lt;")
-                     .replace(/\*\*(.*?)\*\*/g,'<b>$1</b>')
-                     .replace(/\*(.*?)\*/g,'<i>$1</i>')
-                     // Fix: Ensure link has https if missing
-                     .replace(/\[(.*?)\]\((.*?)\)/g, (match, text, url) => {
-                         let finalUrl = url;
-                         if(!/^https?:\/\//i.test(url)) finalUrl = 'https://' + url;
-                         return `<a href="${finalUrl}" target="_blank">${text}</a>`;
-                     });
-            return h.split('\n').map(l=>l.trim().startsWith('- ')?`<li>${l.substring(2)}</li>`:l+'<br>').join('').replace(/<\/li><br><li>/g,'</li><li>').replace(/<br><li>/g,'<ul><li>').replace(/<\/li><br>/g,'</li></ul>'); 
-        };
-
-        const renderBoard = () => {
-            document.getElementById('appTitle').innerText = teamData.title || "Server Platforms";
-            const sL = document.getElementById('teamSuccessList'); const aL = document.getElementById('teamActivityList');
-            sL.innerHTML=''; aL.innerHTML=''; let sc=0, ac=0;
-            teamData.members.forEach(m => {
-                m.lastWeek.tasks.forEach(t=>{if(t.isTeamSuccess&&t.text.trim()){sc++;sL.innerHTML+=`<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`}});
-                m.nextWeek.tasks.forEach(t=>{if(t.isTeamActivity&&t.text.trim()){ac++;aL.innerHTML+=`<li class="auto-item"><b>${m.name}:</b> ${t.text}</li>`}});
-            });
-            if(sc===0) sL.innerHTML='<li>No items selected.</li>'; if(ac===0) aL.innerHTML='<li>No items selected.</li>';
-            document.getElementById('additionalInfoPreview').innerHTML = parseMd(teamData.additionalInfo) || "No additional info.";
-
-            const tGrid = document.getElementById('trackerGrid'); tGrid.innerHTML='';
-            (teamData.trackers || []).forEach((t, i) => {
-                const card = document.createElement('div'); card.className='tracker-card'; 
-                card.onclick = () => handleTrackerClick(i); 
-                
-                let visualHTML = '', statsHTML = '';
-                if(t.type === 'line1') visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createLineChartSVG(t.data, t.y1Leg, null)}</div>`;
-                else if(t.type === 'line2') visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createLineChartSVG(t.data, t.y1Leg, t.y2Leg)}</div>`;
-                else if(t.type === 'bar') visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${createBarChartSVG(t.data, t.yLabel)}</div>`;
-                else {
-                    const pct=t.total>0?Math.round((t.completed/t.total)*100):0;
-                    const grad = `conic-gradient(var(--g-green) 0% ${pct}%, var(--g-red) ${pct}% 100%)`;
-                    visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
-                    statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
-                }
-                card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); deleteTracker(${i})">&times;</button><div class="tracker-desc">${t.desc}</div><div class="tracker-viz-container">${visualHTML}</div>${statsHTML}`;
-                tGrid.appendChild(card);
-            });
-
-            const grid = document.getElementById('teamGrid'); grid.innerHTML='';
-            teamData.members.forEach((m, i) => {
-                let lw=''; m.lastWeek.tasks.forEach((t,x)=>{if(t.text.trim())lw+=`<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="toggleSuccess(${i},${x})"><span>${t.text}</span></li>`});
-                let nw=''; m.nextWeek.tasks.forEach((t,x)=>{if(t.text.trim())nw+=`<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="toggleActivity(${i},${x})"><span>${t.text}</span></li>`});
-                const mg=(a)=>a.map((v,k)=>`<div class="dm-box"><span class="dm-day">${['M','T','W','T','F'][k]}</span><span class="dm-val val-${v}">${v}</span></div>`).join('');
-                const c = document.createElement('div'); c.className='member-card'; c.onclick=()=>openUserModal(i);
-                c.innerHTML=`<div class="member-name-row">${m.name}</div><div class="card-half card-top"><div class="half-header"><span class="half-label">Last Week (Successes)</span><div class="gauge-container">${createGauge(m.lastWeek.load)}</div></div><ul class="card-task-list">${lw||'<li>No tasks</li>'}</ul><div class="daily-mini-grid">${mg(m.lastWeek.load)}</div></div><div class="card-half card-bottom"><div class="half-header"><span class="half-label">Next Week (Priorities)</span><div class="gauge-container">${createGauge(m.nextWeek.load)}</div></div><ul class="card-task-list">${nw||'<li>No tasks</li>'}</ul><div class="daily-mini-grid">${mg(m.nextWeek.load)}</div></div>`;
-                grid.appendChild(c);
-            });
-        };
-
-        // --- ACTIONS ---
-        function countSelected(type) { let c=0; teamData.members.forEach(m=>{ (type==='success'?m.lastWeek.tasks:m.nextWeek.tasks).forEach(t=>{if(type==='success'?t.isTeamSuccess:t.isTeamActivity)c++}) }); return c; }
-        function toggleSuccess(i,x) { const t=teamData.members[i].lastWeek.tasks[x]; if(!t.isTeamSuccess&&countSelected('success')>=5){openAlert('Max 5 items.');renderBoard();return;} t.isTeamSuccess=!t.isTeamSuccess; renderBoard(); }
-        function toggleActivity(i,x) { const t=teamData.members[i].nextWeek.tasks[x]; if(!t.isTeamActivity&&countSelected('activity')>=5){openAlert('Max 5 items.');renderBoard();return;} t.isTeamActivity=!t.isTeamActivity; renderBoard(); }
-        function resetSelections(type) { openConfirm(`Reset all ${type==='success'?'Achievement':'Activity'} selections?`, () => { teamData.members.forEach(m => { (type==='success'?m.lastWeek.tasks:m.nextWeek.tasks).forEach(t => t[type==='success'?'isTeamSuccess':'isTeamActivity'] = false); }); renderBoard(); }); }
-
-        function handleTrackerClick(i) {
-            if(document.body.classList.contains('publishing')) openChartViewModal(i);
-            else openTrackerModal(i);
-        }
-
-        function handleOverviewClick(type) {
-            if(!document.body.classList.contains('publishing')) return;
-            let title = '', content = '';
-            if(type === 'success') { title = "Top 5 Achievements"; content = document.getElementById('teamSuccessList').innerHTML; }
-            if(type === 'activity') { title = "Top 5 Activities"; content = document.getElementById('teamActivityList').innerHTML; }
-            document.getElementById('zoomTitle').innerText = title;
-            document.getElementById('zoomBody').className = 'zoom-body-text';
-            document.getElementById('zoomBody').innerHTML = `<div class="zoomed-content"><ul>${content}</ul></div>`;
-            document.getElementById('zoomModal').classList.add('active');
-        }
-
-        function handleInfoClick() {
-            if(document.body.classList.contains('publishing')) {
-                document.getElementById('zoomTitle').innerText = "Additional Info";
-                document.getElementById('zoomBody').className = 'zoom-body-text';
-                document.getElementById('zoomBody').innerHTML = `<div class="zoomed-content">${document.getElementById('additionalInfoPreview').innerHTML}</div>`;
-                document.getElementById('zoomModal').classList.add('active');
-            } else {
-                openInfoModal();
-            }
-        }
-
-        // --- MODALS ---
-        function closeModal(id){document.getElementById(id).classList.remove('active');}
-        
-        function openChartViewModal(i) {
-            const t = teamData.trackers[i];
-            document.getElementById('zoomTitle').innerText = t.desc;
-            let content = '';
-            // NATIVE SCALING IN MODAL
-            if(t.type === 'line1') content = createLineChartSVG(t.data, t.y1Leg, null);
-            else if(t.type === 'line2') content = createLineChartSVG(t.data, t.y1Leg, t.y2Leg);
-            else if(t.type === 'bar') content = createBarChartSVG(t.data, t.yLabel);
-            else {
-                const pct=t.total>0?Math.round((t.completed/t.total)*100):0;
-                const grad = `conic-gradient(var(--g-green) 0% ${pct}%, var(--g-red) ${pct}% 100%)`;
-                content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
-            }
-            document.getElementById('zoomBody').className = 'zoom-body-chart';
-            document.getElementById('zoomBody').innerHTML = `<div style="width:100%; height:100%;">${content}</div>`;
-            document.getElementById('zoomModal').classList.add('active');
-        }
-
-        function openUserModal(i=-1){
-            if(document.body.classList.contains('publishing')) return; 
-            document.getElementById('editIndex').value=i; document.getElementById('deleteBtn').style.display=i===-1?'none':'block'; document.getElementById('modalTitle').innerText=i===-1?'Add New User':'Edit User';
-            const m=i>-1?teamData.members[i]:null;
-            document.getElementById('mName').value=m?m.name:'';
-            ['lwTask1','lwTask2','lwTask3','nwTask1','nwTask2','nwTask3'].forEach((id,k)=>document.getElementById(id).value=m?(k<3?m.lastWeek.tasks[k]?.text||'':m.nextWeek.tasks[k-3]?.text||''):'');
-            for(let j=0;j<5;j++){document.getElementById(`lw${j}`).value=m?m.lastWeek.load[j]:'L';document.getElementById(`nw${j}`).value=m?m.nextWeek.load[j]:'L';}
-            document.getElementById('userModal').classList.add('active');
-        }
-        function submitUser(){
-            const i=parseInt(document.getElementById('editIndex').value); const n=document.getElementById('mName').value; if(!n)return openAlert('Name required');
-            const gl=(p)=>[0,1,2,3,4].map(x=>document.getElementById(`${p}${x}`).value);
-            const bt=(p,t,old)=>{const txts=[1,2,3].map(x=>document.getElementById(`${p}Task${x}`).value); return txts.map((txt,k)=>{const k2=t==='lw'?'isTeamSuccess':'isTeamActivity';return{text:txt,[k2]:old&&old[k]?old[k][k2]:false}})};
-            const old=i>-1?teamData.members[i]:null;
-            const u={id:old?old.id:Date.now(),name:n,lastWeek:{tasks:bt('lw','lw',old?old.lastWeek.tasks:null),load:gl('lw')},nextWeek:{tasks:bt('nw','nw',old?old.nextWeek.tasks:null),load:gl('nw')}};
-            if(i>-1)teamData.members[i]=u; else teamData.members.push(u); closeModal('userModal'); renderBoard();
-        }
-        function deleteUser(){openConfirm('Delete user?', () => {teamData.members.splice(document.getElementById('editIndex').value,1);closeModal('userModal');renderBoard();});}
-        function openInfoModal(){document.getElementById('additionalInfoInput').value=teamData.additionalInfo||'';document.getElementById('infoModal').classList.add('active');}
-        function saveAdditionalInfo(){teamData.additionalInfo=document.getElementById('additionalInfoInput').value;closeModal('infoModal');renderBoard();}
-
-        // --- TRACKER MODAL ---
-        function setTrackerType(t) {
-            currentTrackerType = t;
-            ['Gauge','Bar','Line1','Line2'].forEach(x => { document.getElementById(`type${x}Btn`).className = t === x.toLowerCase() ? 'type-option active' : 'type-option'; document.getElementById(`${x.toLowerCase()}Inputs`).style.display = t === x.toLowerCase() ? 'block' : 'none'; });
-        }
-        function openTrackerModal(i=-1){
-            document.getElementById('editTrackerIndex').value=i; document.getElementById('trackerModalTitle').innerText=i===-1?'Add Progress Tracker':'Edit Tracker';
-            const bc=document.getElementById('barPointsContainer'); bc.innerHTML=''; for(let k=0;k<10;k++)bc.innerHTML+=`<div class="graph-input-grid"><input type="text" id="bLbl${k}"><input type="number" id="bVal${k}"></div>`;
-            const lc1=document.getElementById('line1PointsContainer'); lc1.innerHTML=''; for(let k=0;k<10;k++)lc1.innerHTML+=`<div class="graph-input-grid"><input type="text" id="l1Lbl${k}"><input type="number" id="l1Val1${k}"></div>`;
-            const lc2=document.getElementById('line2PointsContainer'); lc2.innerHTML=''; for(let k=0;k<10;k++)lc2.innerHTML+=`<div class="graph-input-grid-3"><input type="text" id="l2Lbl${k}"><input type="number" id="l2Val1${k}"><input type="number" id="l2Val2${k}"></div>`;
-            const t=i>-1?teamData.trackers[i]:null; setTrackerType(t?(t.type||'gauge'):'gauge');
-            document.getElementById('tkDesc').value=t?t.desc:'';
-            if(t&&t.type==='line1'){ document.getElementById('tkLine1YLegend').value=t.y1Leg||''; (t.data||[]).forEach((d,k)=>{if(k<10){document.getElementById(`l1Lbl${k}`).value=d.label;document.getElementById(`l1Val1${k}`).value=d.y1;}});}
-            else if(t&&t.type==='line2'){ document.getElementById('tkLine2Y1Legend').value=t.y1Leg||''; document.getElementById('tkLine2Y2Legend').value=t.y2Leg||''; (t.data||[]).forEach((d,k)=>{if(k<10){document.getElementById(`l2Lbl${k}`).value=d.label;document.getElementById(`l2Val1${k}`).value=d.y1;document.getElementById(`l2Val2${k}`).value=d.y2;}});}
-            else if(t&&t.type==='bar'){ document.getElementById('tkBarYLabel').value=t.yLabel||''; (t.data||[]).forEach((d,k)=>{if(k<10){document.getElementById(`bLbl${k}`).value=d.label;document.getElementById(`bVal${k}`).value=d.val;}});}
-            else { document.getElementById('tkMetric').value=t?t.metric:''; document.getElementById('tkComp').value=t?t.completed:''; document.getElementById('tkTotal').value=t?t.total:''; }
-            document.getElementById('trackerModal').classList.add('active');
-        }
-        function submitTracker(){
-            const i=parseInt(document.getElementById('editTrackerIndex').value); const desc=document.getElementById('tkDesc').value; if(!desc)return openAlert("Title required");
-            let nt={desc,type:currentTrackerType};
-            if(currentTrackerType==='gauge'){
-                const m=document.getElementById('tkMetric').value, c=parseFloat(document.getElementById('tkComp').value)||0, t=parseFloat(document.getElementById('tkTotal').value)||0;
-                if(t<=0)return openAlert("Total > 0 required"); if(c>t)return openAlert("Completed value cannot exceed Total value."); 
-                nt.metric=m;nt.completed=c;nt.total=t;
-            } else if(currentTrackerType==='bar'){
-                const y=document.getElementById('tkBarYLabel').value, d=[]; for(let k=0;k<10;k++){const l=document.getElementById(`bLbl${k}`).value, v=document.getElementById(`bVal${k}`).value;if(l&&v)d.push({label:l,val:parseFloat(v)})}
-                if(d.length===0)return openAlert("Add data"); nt.yLabel=y;nt.data=d;
-            } else if(currentTrackerType==='line1') {
-                const y1=document.getElementById('tkLine1YLegend').value, d=[]; for(let k=0;k<10;k++){const l=document.getElementById(`l1Lbl${k}`).value, v1=document.getElementById(`l1Val1${k}`).value;if(l&&v1)d.push({label:l,y1:parseFloat(v1)||0})}
-                if(d.length<2)return openAlert("Add 2+ points"); nt.y1Leg=y1;nt.data=d;
-            } else {
-                const y1=document.getElementById('tkLine2Y1Legend').value, y2=document.getElementById('tkLine2Y2Legend').value, d=[]; for(let k=0;k<10;k++){const l=document.getElementById(`l2Lbl${k}`).value, v1=document.getElementById(`l2Val1${k}`).value, v2=document.getElementById(`l2Val2${k}`).value;if(l&&(v1||v2))d.push({label:l,y1:parseFloat(v1)||0,y2:parseFloat(v2)||0})}
-                if(d.length<2)return openAlert("Add 2+ points"); nt.y1Leg=y1;nt.y2Leg=y2;nt.data=d;
-            }
-            if(!teamData.trackers)teamData.trackers=[]; if(i>-1)teamData.trackers[i]=nt;else teamData.trackers.push(nt); closeModal('trackerModal'); renderBoard();
-        }
-        function deleteTracker(i){openConfirm("Delete tracker?",()=>{teamData.trackers.splice(i,1);renderBoard();});}
-
-        function saveData(){const d="data:text/json;charset=utf-8,"+encodeURIComponent(JSON.stringify(teamData));const a=document.createElement('a');a.href=d;a.download="team_tracker.json";document.body.appendChild(a);a.click();a.remove();}
-        function loadFromFile(inp){const f=inp.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{
-            const l=JSON.parse(e.target.result); if(l.members){l.members.forEach(m=>{if(typeof m.nextWeek.tasks[0]==='string')m.nextWeek.tasks=m.nextWeek.tasks.map(t=>({text:t,isTeamActivity:false}))})}
-            teamData=l;renderBoard();openAlert('Data loaded!');}catch(x){openAlert('Error reading file');}};r.readAsText(f);inp.value='';}
-
-        renderBoard();
+        });
     </script>
 </body>
 </html>

@@ -18,7 +18,7 @@ export const createGaugeSVG = (loadArr) => {
     const bg=`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`;
     const val=s>0?`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r*Math.cos(rad-Math.PI)} ${cy+r*Math.sin(rad-Math.PI)}`:'';
     const color = getColor(s);
-    return `<svg width="60" height="35" viewBox="0 0 60 35"><path d="${bg}" fill="none" stroke="#333" stroke-width="4" stroke-linecap="round"/><path d="${val}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="2" fill="#fff"/></svg><div class="gauge-val" style="color:${color}">${s}%</div>`;
+    return `<svg width="60" height="35" viewBox="0 0 60 35"><path d="${bg}" fill="none" stroke="var(--border)" stroke-width="4" stroke-linecap="round"/><path d="${val}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="2" fill="#fff"/></svg><div class="gauge-val" style="color:${color}">${s}%</div>`;
 };
 
 export const createWaffleHTML = (total, active, colorVal, colorBg) => {
@@ -66,7 +66,7 @@ export const Visuals = {
         [0, 0.25, 0.5, 0.75, 1].forEach(p => {
             const y = h - pBot - (p * uh);
             const val = Math.round(max * p);
-            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="#333" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="9">${val}</text>`;
+            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="var(--border)" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="9">${val}</text>`;
         });
 
         let paths = '';
@@ -105,7 +105,7 @@ export const Visuals = {
             if (i % skip !== 0) return;
             const x = pSide + (i*gw);
             const txt = fmt(l);
-            lbls += `<text transform="translate(${x}, ${h-35}) rotate(45)" text-anchor="start" fill="#aaa" font-size="9">${txt}</text>`;
+            lbls += `<text transform="translate(${x}, ${h-35}) rotate(45)" text-anchor="start" fill="var(--text-muted)" font-size="9">${txt}</text>`;
         });
 
         let legHTML = '';
@@ -116,12 +116,12 @@ export const Visuals = {
 
         series.forEach((s, i) => {
             const lx = startX + (i * legItemW);
-            legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
+            legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="var(--text-muted)" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
         });
         
-        const yAxisLabel = yLabel ? `<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>` : '';
+        const yAxisLabel = yLabel ? `<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="var(--text-muted)" font-size="10">${yLabel}</text>` : '';
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yGrid}${yAxisLabel}${paths}${points}${lbls}${legHTML}</svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" ><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="var(--border)"/>${yGrid}${yAxisLabel}${paths}${points}${lbls}${legHTML}</svg>`;
     },
 
     createMultiBarChartSVG: (labels, series, yLabel, size = 'M') => {
@@ -138,7 +138,7 @@ export const Visuals = {
         [0, 0.25, 0.5, 0.75, 1].forEach(p => {
             const y = h - pBot - (p * uh);
             const val = Math.round(max * p);
-            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="#333" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="9">${val}</text>`;
+            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="var(--border)" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="9">${val}</text>`;
         });
 
         let rects = '';
@@ -157,9 +157,9 @@ export const Visuals = {
         labels.forEach((l, i) => {
             const x = pSide + (i * groupWidth) + (groupWidth/2);
             if (rotate) {
-                lbls += `<text transform="translate(${x}, ${h-35}) rotate(45)" text-anchor="start" fill="#aaa" font-size="9">${l.substring(0,8)}</text>`;
+                lbls += `<text transform="translate(${x}, ${h-35}) rotate(45)" text-anchor="start" fill="var(--text-muted)" font-size="9">${l.substring(0,8)}</text>`;
             } else {
-                lbls += `<text x="${x}" y="${h-25}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
+                lbls += `<text x="${x}" y="${h-25}" text-anchor="middle" fill="var(--text-muted)" font-size="9">${l.substring(0,5)}</text>`;
             }
         });
 
@@ -171,12 +171,12 @@ export const Visuals = {
 
         series.forEach((s, i) => {
             const lx = startX + (i * legItemW);
-            legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
+            legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="var(--text-muted)" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
         });
 
-        const yAxisLabel = yLabel ? `<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>` : '';
+        const yAxisLabel = yLabel ? `<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="var(--text-muted)" font-size="10">${yLabel}</text>` : '';
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yGrid}${yAxisLabel}${rects}${lbls}${legHTML}</svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" ><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="var(--border)"/>${yGrid}${yAxisLabel}${rects}${lbls}${legHTML}</svg>`;
     },
 
     createBarChartSVG: (data, yLabel, color, size = 'M') => {
@@ -190,7 +190,7 @@ export const Visuals = {
         [0, 0.25, 0.5, 0.75, 1].forEach(p => {
             const y = h - pBot - (p * uh);
             const val = Math.round(max * p);
-            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="#333" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="9">${val}</text>`;
+            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="var(--border)" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="9">${val}</text>`;
         });
 
         let bars='';
@@ -204,12 +204,12 @@ export const Visuals = {
             
             const rotate = d.label.length > 4;
             if (rotate) {
-                bars+=`<text transform="translate(${x+(bw-10)/2}, ${h-35}) rotate(45)" text-anchor="start" fill="#aaa" font-size="10">${d.label.substring(0,8)}</text>`;
+                bars+=`<text transform="translate(${x+(bw-10)/2}, ${h-35}) rotate(45)" text-anchor="start" fill="var(--text-muted)" font-size="10">${d.label.substring(0,8)}</text>`;
             } else {
-                bars+=`<text x="${x+(bw-10)/2}" y="${h-15}" text-anchor="middle" fill="#aaa" font-size="10">${d.label.substring(0,5)}</text>`;
+                bars+=`<text x="${x+(bw-10)/2}" y="${h-15}" text-anchor="middle" fill="var(--text-muted)" font-size="10">${d.label.substring(0,5)}</text>`;
             }
         });
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yGrid}<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>${bars}</svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" ><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="var(--border)"/>${yGrid}<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="var(--text-muted)" font-size="10">${yLabel}</text>${bars}</svg>`;
     },
 
     createRAGIconHTML: (status) => {
@@ -252,7 +252,7 @@ export const Visuals = {
         const rEnd = radius + 15;
 
         const total = values.reduce((a, b) => a + b, 0);
-        if (total === 0) return `<svg width="${w}" height="${h}"><circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="none" stroke="#333" stroke-width="${thickness}"/><text x="${centerX}" y="${centerY}" text-anchor="middle" dominant-baseline="middle" fill="#666" font-size="12">No Data</text></svg>`;
+        if (total === 0) return `<svg width="${w}" height="${h}"><circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="none" stroke="var(--border)" stroke-width="${thickness}"/><text x="${centerX}" y="${centerY}" text-anchor="middle" dominant-baseline="middle" fill="#666" font-size="12">No Data</text></svg>`;
 
         let startAngle = 0;
         let paths = '';
@@ -327,7 +327,7 @@ export const Visuals = {
         const rEnd = r + 60;
 
         const total = values.reduce((a, b) => a + b, 0);
-        if (total === 0) return `<svg width="${w}" height="${h}"><text x="${cx}" y="${cy}" text-anchor="middle" fill="#aaa">No Data</text></svg>`;
+        if (total === 0) return `<svg width="${w}" height="${h}"><text x="${cx}" y="${cy}" text-anchor="middle" fill="var(--text-muted)">No Data</text></svg>`;
 
         let startAngle = 0;
         let paths = '';
@@ -378,7 +378,7 @@ export const Visuals = {
                 const anchor = isLeft ? 'end' : 'start';
 
                 annotations += `<text x="${tx}" y="${ly2}" dy="4" text-anchor="${anchor}" fill="#eee" font-size="14" font-weight="bold">${labels[i]}</text>`;
-                annotations += `<text x="${tx}" y="${ly2 + 18}" dy="4" text-anchor="${anchor}" fill="#aaa" font-size="12">${val} (${Math.round(pct * 100)}%)</text>`;
+                annotations += `<text x="${tx}" y="${ly2 + 18}" dy="4" text-anchor="${anchor}" fill="var(--text-muted)" font-size="12">${val} (${Math.round(pct * 100)}%)</text>`;
             }
 
             startAngle = endAngle;
@@ -411,7 +411,7 @@ export const Visuals = {
         
         // Week headers
         svg += `<text x="${nameColWidth + (colWidth * 3.5)}" y="18" fill="#bb86fc" font-size="14" text-anchor="middle" font-weight="bold">CURRENT WEEK (${currentRange})</text>`;
-        svg += `<line x1="${nameColWidth + (colWidth * 7)}" y1="5" x2="${nameColWidth + (colWidth * 7)}" y2="${height}" stroke="#444" stroke-dasharray="4"/>`;
+        svg += `<line x1="${nameColWidth + (colWidth * 7)}" y1="5" x2="${nameColWidth + (colWidth * 7)}" y2="${height}" stroke="var(--border)" stroke-dasharray="4"/>`;
         svg += `<text x="${nameColWidth + (colWidth * 10.5)}" y="18" fill="#bb86fc" font-size="14" text-anchor="middle" font-weight="bold">NEXT WEEK (${nextRange})</text>`;
 
         // Day Headers
@@ -419,10 +419,10 @@ export const Visuals = {
         const allDays = [...days, ...days];
         allDays.forEach((d, i) => {
             const x = nameColWidth + (i * colWidth);
-            svg += `<text x="${x + colWidth/2}" y="${headerHeight - 8}" fill="#aaa" font-size="11" text-anchor="middle">${d}</text>`;
-            svg += `<line x1="${x}" y1="${headerHeight}" x2="${x}" y2="${height}" stroke="#333" stroke-width="1"/>`;
+            svg += `<text x="${x + colWidth/2}" y="${headerHeight - 8}" fill="var(--text-muted)" font-size="11" text-anchor="middle">${d}</text>`;
+            svg += `<line x1="${x}" y1="${headerHeight}" x2="${x}" y2="${height}" stroke="var(--border)" stroke-width="1"/>`;
         });
-        svg += `<line x1="0" y1="${headerHeight}" x2="${width}" y2="${headerHeight}" stroke="#444" stroke-width="1"/>`;
+        svg += `<line x1="0" y1="${headerHeight}" x2="${width}" y2="${headerHeight}" stroke="var(--border)" stroke-width="1"/>`;
 
         // Rows
         members.forEach((m, i) => {
@@ -466,7 +466,7 @@ export const Visuals = {
                 }
             });
             
-            svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="#333" stroke-width="0.5"/>`;
+            svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="var(--border)" stroke-width="0.5"/>`;
         });
         
         svg += `</svg>`;

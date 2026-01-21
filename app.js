@@ -71,6 +71,7 @@ export const initApp = () => {
 
     updateDateUI();
     renderBoard();
+    App.setupInputValidation();
     console.log("App Initialized");
 };
 
@@ -111,6 +112,19 @@ export const App = {
     init: () => {
         initApp();
         App.initDragAndDrop();
+    },
+    setupInputValidation: () => {
+        document.body.addEventListener('input', (e) => {
+            if (e.target.type === 'number') {
+                const max = parseFloat(e.target.max);
+                if (!isNaN(max)) {
+                    const maxDigits = Math.floor(max).toString().length;
+                    if (e.target.value.length > maxDigits) {
+                        e.target.value = e.target.value.slice(0, maxDigits);
+                    }
+                }
+            }
+        });
     },
     initDragAndDrop: () => {
         const grid = getEl('trackerGrid');
@@ -399,7 +413,7 @@ export const renderBoard = () => {
             card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
             card.innerHTML += `<div class="tracker-desc">${t.desc}</div>`;
             card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
-            card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
+            card.innerHTML += `<div class="tracker-stats">${statsHTML}</div><div class="last-updated">${t.lastUpdated || ''}</div>`;
             
             tGrid.appendChild(card);
         });
@@ -476,7 +490,7 @@ export const renderBoard = () => {
                 return `<div class="dm-box" style="position:relative;"><span class="dm-day">${['M','T','W','T','F','S','S'][k]}</span><span class="dm-val val-${v}">${mapDisplay(v)}</span>${isOc}</div>`;
             }).join('');
 
-            c.innerHTML = `<div class="member-header">${m.name}</div>`;
+            c.innerHTML = `<div class="member-header">${m.name}</div><div class="last-updated">${m.lastUpdated || ''}</div>`;
             
             let content = `<div class="member-card-content">`;
             content += `<div class="card-col"><div class="col-header">Last Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().last.split(' - ')[0]})</span></div>`;
@@ -1083,14 +1097,14 @@ export const TrackerManager = {
                     <div style="display:flex; align-items:center; gap:5px;">
                         <input type="checkbox" class="ts-select" data-idx="${si}" style="accent-color:var(--accent);" onchange="TrackerManager.updateDeleteSeriesButtonVisibility()">
                         <input type="color" class="ts-color" value="${s.color}" style="width:20px; height:20px; border:none; padding:0; cursor:pointer;" data-idx="${si}">
-                        <input type="text" class="ts-name" value="${s.name}" style="width:100px; font-size:0.8rem; background:#222; border:1px solid #444; color:#fff; padding:2px;" data-idx="${si}">
+                        <input type="text" class="ts-name" value="${s.name}" maxlength="250" style="width:100px; font-size:0.8rem; background:#222; border:1px solid #444; color:#fff; padding:2px;" data-idx="${si}">
                     </div>
                 </td>`;
             
             labels.forEach((l, li) => {
                 const val = (s.values && s.values[li] !== undefined) ? s.values[li] : 0;
                 html += `<td style="padding:2px; border-bottom:1px solid #333;">
-                    <input type="number" class="ts-val" data-s="${si}" data-r="${li}" value="${val}" style="width:100%; background:transparent; border:none; color:#fff; text-align:center;">
+                    <input type="number" class="ts-val" data-s="${si}" data-r="${li}" value="${val}" min="0" max="2000" style="width:100%; background:transparent; border:none; color:#fff; text-align:center;">
                 </td>`;
             });
             html += `<td style="border-bottom:1px solid #333;"></td>`;
@@ -1356,8 +1370,8 @@ export const TrackerManager = {
         div.style.gap = '10px';
         div.style.marginBottom = '5px';
         div.innerHTML = `
-            <input type="text" class="dr-label" maxlength="15" placeholder="Label" value="${label}" style="flex: 2;">
-            <input type="number" class="dr-value" placeholder="Value" value="${value}" style="flex: 1;">
+            <input type="text" class="dr-label" maxlength="250" placeholder="Label" value="${label}" style="flex: 2;">
+            <input type="number" class="dr-value" placeholder="Value" value="${value}" min="0" max="2000" style="flex: 1;">
             <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeDonutRow(this)">&times;</button>
         `;
         container.appendChild(div);
@@ -1494,7 +1508,7 @@ export const TrackerManager = {
         if (!desc) return App.alert("Title required");
 
         const type = State.currentTrackerType;
-        let newTracker = { desc, type, size };
+        let newTracker = { desc, type, size }; newTracker.lastUpdated = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 
         if (type === 'gauge') {
             const mIn = getEl('tkMetric');
@@ -1702,7 +1716,7 @@ export const UserManager = {
         const name = getEl('mName').value.trim();
         if(!name) return App.alert("Name is required");
 
-        const member = {
+        const member = { lastUpdated: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
             name,
             notes: getEl('mNotes').value.trim(),
             lastWeek: {
@@ -1760,15 +1774,15 @@ export const UserManager = {
         });
     },
     toggleSuccess: (mIdx, tIdx) => {
-        State.members[mIdx].lastWeek.tasks[tIdx].isTeamSuccess = !State.members[mIdx].lastWeek.tasks[tIdx].isTeamSuccess;
+        State.members[mIdx].lastWeek.tasks[tIdx].isTeamSuccess = !State.members[mIdx].lastWeek.tasks[tIdx].isTeamSuccess; State.members[mIdx].lastUpdated = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         renderBoard();
     },
     toggleActivity: (mIdx, tIdx) => {
-        State.members[mIdx].thisWeek.tasks[tIdx].isTeamSuccess = !State.members[mIdx].thisWeek.tasks[tIdx].isTeamSuccess;
+        State.members[mIdx].thisWeek.tasks[tIdx].isTeamSuccess = !State.members[mIdx].thisWeek.tasks[tIdx].isTeamSuccess; State.members[mIdx].lastUpdated = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         renderBoard();
     },
     toggleFuture: (mIdx, tIdx) => {
-        State.members[mIdx].nextWeek.tasks[tIdx].isTeamActivity = !State.members[mIdx].nextWeek.tasks[tIdx].isTeamActivity;
+        State.members[mIdx].nextWeek.tasks[tIdx].isTeamActivity = !State.members[mIdx].nextWeek.tasks[tIdx].isTeamActivity; State.members[mIdx].lastUpdated = new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
         renderBoard();
     },
     resetSelections: (type) => {
