@@ -207,6 +207,7 @@
                     <button id="typeWaffleBtn" class="type-option" onclick="TrackerManager.setType('waffle')">Waffle Chart</button>
                     <button id="typeNoteBtn" class="type-option" onclick="TrackerManager.setType('note')">Note</button>
                     <button id="typeDonutBtn" class="type-option" onclick="TrackerManager.setType('donut')">Donut Chart</button>
+                    <button id="typeCountdownBtn" class="type-option" onclick="TrackerManager.setType('countdown')">Countdown</button>
                 </div>
                 <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
                     <div class="input-group" style="flex: 2;">
@@ -573,6 +574,18 @@
 
                                                                                                     </div>
 
+                                                                                                </div>
+
+                                                                                                <div id="countdownInputs" style="display:none;">
+                                                                                                    <div class="input-group">
+                                                                                                        <label>Events (Max 10)</label>
+                                                                                                        <div id="countdownDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);"></div>
+                                                                                                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addCountdownRow()">+ Add Event</button>
+                                                                                                    </div>
+                                                                                                    <div class="input-group" style="margin-top: 1rem;">
+                                                                                                        <label>Notes for Published View (Max 200 chars)</label>
+                                                                                                        <textarea id="tkCountdownNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                                                                                                    </div>
                                                                                                 </div>
 
                                                                             </div>

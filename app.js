@@ -654,7 +654,7 @@ export const TrackerManager = {
         const titleEl = getEl('trackerModalTitle');
         if (titleEl) titleEl.innerText = isEdit ? 'Edit Progress Tracker' : 'Add Progress Tracker';
         
-        ['gauge','bar','line','counter','rag','waffle'].forEach(type => {
+        ['gauge','bar','line','counter','rag','waffle','countdown'].forEach(type => {
             const div = getEl(`${type}Inputs`);
             if (div) div.style.display = 'none';
         });
@@ -678,6 +678,8 @@ export const TrackerManager = {
                 }
             };
         }
+        const countdownContainer = getEl('countdownDataContainer');
+        if (countdownContainer) countdownContainer.innerHTML = '';
 
         const tracker = isEdit ? State.trackers[index] : null;
         let type = tracker ? tracker.type : 'gauge';
@@ -848,6 +850,12 @@ export const TrackerManager = {
                 // Default Size S
                 const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
                 if(sizeRad) sizeRad.checked = true;
+            } else if (!isEdit && type === 'countdown') {
+                const notesIn = getEl('tkCountdownNotes');
+                if(notesIn) notesIn.value = '';
+                // Default Size M
+                const sizeRad = document.querySelector('input[name="tkSize"][value="M"]');
+                if(sizeRad) sizeRad.checked = true;
             }
 
             if (type === 'gauge') {
@@ -912,6 +920,14 @@ export const TrackerManager = {
                 }
                 const notesIn = getEl('tkDonutNotes');
                 if (tracker && notesIn) notesIn.value = tracker.notes || '';
+            } else if (type === 'countdown') {
+                const container = getEl('countdownDataContainer');
+                if (container) container.innerHTML = '';
+                if (tracker && tracker.items) {
+                    tracker.items.forEach(item => this.addCountdownRow(item.label, item.date));
+                }
+                const notesIn = getEl('tkCountdownNotes');
+                if (tracker && notesIn) notesIn.value = tracker.notes || '';
             }
         }
 
@@ -922,7 +938,7 @@ export const TrackerManager = {
         State.currentTrackerType = type;
         // Map 'bar' to 'line' for input visibility
         const inputType = (type === 'bar') ? 'line' : type;
-        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut'].forEach(x => {
+        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown'].forEach(x => {
             const btn = getEl(`type${x}Btn`);
             if (btn) btn.className = (type === x.toLowerCase()) ? 'type-option active' : 'type-option';
             const div = getEl(`${x.toLowerCase()}Inputs`);
@@ -1364,6 +1380,28 @@ export const TrackerManager = {
     },
 
     removeDonutRow(btn) {
+        btn.parentElement.remove();
+    },
+
+    addCountdownRow(label = '', date = '') {
+        const container = getEl('countdownDataContainer');
+        if (!container) return;
+        if (container.children.length >= 10) return App.alert("Max 10 events allowed.");
+
+        const div = document.createElement('div');
+        div.className = 'countdown-row';
+        div.style.display = 'flex';
+        div.style.gap = '10px';
+        div.style.marginBottom = '5px';
+        div.innerHTML = `
+            <input type="text" class="cd-label" maxlength="15" placeholder="Event Label" value="${label}" style="flex: 2;">
+            <input type="date" class="cd-date" value="${date}" style="flex: 1; background:var(--input-bg); color:#fff; color-scheme:dark;">
+            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeCountdownRow(this)">&times;</button>
+        `;
+        container.appendChild(div);
+    },
+
+    removeCountdownRow(btn) {
         btn.parentElement.remove();
     },
 
