@@ -1383,7 +1383,7 @@ export const OverviewManager = {
 };
 
 export const DataSaver = {
-    saveData: () => {
+    saveData: async () => {
         const today = new Date();
         const d = today.getDay();
         const diff = d === 0 ? -6 : 1 - d;
@@ -1392,13 +1392,37 @@ export const DataSaver = {
         const savedDate = cm.toISOString().split('T')[0];
 
         const data = JSON.stringify({ ...State, savedDate }, null, 2);
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `team_tracker_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const filename = `team_tracker_${new Date().toISOString().split('T')[0]}.json`;
+
+        if ('showSaveFilePicker' in window) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [{
+                        description: 'JSON File',
+                        accept: { 'application/json': ['.json'] }
+                    }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(data);
+                await writable.close();
+                App.alert("File saved successfully.");
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('File save failed:', err);
+                    App.alert("Failed to save file.");
+                }
+            }
+        } else {
+            // Fallback for browsers not supporting File System Access API
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
     }
 };
 
