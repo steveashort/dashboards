@@ -1,5 +1,5 @@
 /**
- * SERVER PLATFORMS TRACKER v33
+ * SERVER PLATFORMS TRACKER v36
  * ES6 MODULE STRUCTURE
  */
 export { createGaugeSVG, createWaffleHTML, Visuals } from './charts.js';
@@ -12,7 +12,18 @@ let State = {
     trackers: [],
     members: [],
     editingTrackerIndex: -1,
-    currentTrackerType: 'gauge'
+    currentTrackerType: 'gauge',
+    config: {
+        showTopSection: true,
+        maxSeries: 6,
+        maxEvents: 20,
+        maxDonut: 10,
+        maxWaffle: 450,
+        githubRepo: "",
+        colors: [
+            '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', '#ffffff', '#000000'
+        ]
+    }
 };
 
 let chartInstances = []; // Track dashboard chart instances
@@ -63,6 +74,15 @@ const getTwoWeeksDates = () => {
         dates.push(date);
     }
     return dates;
+};
+
+const createColorPickerHTML = (inputId, initialColor) => {
+    let html = '';
+    State.config.colors.forEach(c => {
+        const selected = (c.toLowerCase() === (initialColor || '').toLowerCase()) ? 'selected' : '';
+        html += `<div class="color-swatch ${selected}" style="background:${c}" onclick="SettingsManager.selectColor('${inputId}', '${c}', this)"></div>`;
+    });
+    return html;
 };
 
 // --- APEXCHARTS HELPERS ---
@@ -119,6 +139,13 @@ export const initApp = () => {
 
     updateDateUI();
     renderBoard();
+
+    const btn = document.getElementById('expandTeamBtn');
+    if(btn) {
+        btn.style.display = 'inline-block';
+        btn.innerText = "Show Resource Planner";
+    }
+
     console.log("App Initialized");
 };
 
@@ -247,18 +274,34 @@ export const App = {
         const isPub = document.body.classList.contains('publishing');
         const btn = getEl('expandTeamBtn');
         if(btn) {
-            btn.style.display = isPub ? 'inline-block' : 'none';
-            btn.innerText = "Expand Team Data";
+            btn.style.display = 'inline-block';
+            btn.innerText = isPub ? "Expand Team Data" : "Show Resource Planner";
         }
         
+        const editBtn = getEl('publishToggleBtn');
+        if (editBtn) editBtn.style.display = isPub ? 'block' : 'none';
+
         const ganttSec = getEl('ganttSection');
         const teamHead = getEl('teamSectionHeader');
         const teamGrid = getEl('teamGrid');
+        const overviewPanel = getEl('teamOverviewPanel');
         
         if (ganttSec) ganttSec.style.display = 'none';
         if (teamHead) teamHead.style.display = isPub ? 'none' : 'flex';
         if (teamGrid) teamGrid.style.display = isPub ? 'none' : 'grid';
         
+        // Handle Top Section Config
+        if (overviewPanel) {
+            if (isPub) {
+                // If publishing, respect the config setting
+                const showTop = (State.config && State.config.showTopSection !== undefined) ? State.config.showTopSection : true;
+                overviewPanel.style.display = showTop ? 'grid' : 'none';
+            } else {
+                // Always show in edit mode
+                overviewPanel.style.display = 'grid';
+            }
+        }
+
         renderBoard();
     },
     toggleTeamData: () => {
@@ -266,22 +309,32 @@ export const App = {
         const teamHead = getEl('teamSectionHeader');
         const teamGrid = getEl('teamGrid');
         const btn = getEl('expandTeamBtn');
+        const ghBtn = getEl('githubSyncBtn');
         
         const isHidden = ganttSec.style.display === 'none';
+        const isPub = document.body.classList.contains('publishing');
         
         if (isHidden) {
             ganttSec.style.display = 'block';
             if (teamHead) teamHead.style.display = 'flex';
             if (teamGrid) teamGrid.style.display = 'grid';
-            if (btn) btn.innerText = "Collapse Team Data";
+
+            if (btn) btn.innerText = isPub ? "Collapse Team Data" : "Hide Resource Planner";
+
+            if (ghBtn && State.config.githubRepo) ghBtn.style.display = 'inline-block';
             
             // Render Gantt
             Visuals.renderResourcePlanner(State.members);
         } else {
             ganttSec.style.display = 'none';
-            if (teamHead) teamHead.style.display = 'none';
-            if (teamGrid) teamGrid.style.display = 'none';
-            if (btn) btn.innerText = "Expand Team Data";
+
+            if (isPub) {
+                if (teamHead) teamHead.style.display = 'none';
+                if (teamGrid) teamGrid.style.display = 'none';
+            }
+
+            if (btn) btn.innerText = isPub ? "Expand Team Data" : "Show Resource Planner";
+            if (ghBtn) ghBtn.style.display = 'none';
         }
     },
     saveTitle: () => {
@@ -441,6 +494,16 @@ export const ModalManager = {
         console.log("Opening modal:", id);
         const el = document.getElementById(id);
         if (el) el.classList.add('active');
+
+        if (id === 'settingsModal') {
+            const cfg = State.config || {};
+            const stsIn = getEl('cfgShowTopSection'); if(stsIn) stsIn.checked = (cfg.showTopSection !== undefined) ? cfg.showTopSection : true;
+            const msIn = getEl('cfgMaxSeries'); if(msIn) msIn.value = cfg.maxSeries || 6;
+            const meIn = getEl('cfgMaxEvents'); if(meIn) meIn.value = cfg.maxEvents || 20;
+            const mdIn = getEl('cfgMaxDonut'); if(mdIn) mdIn.value = cfg.maxDonut || 10;
+            const mwIn = getEl('cfgMaxWaffle'); if(mwIn) mwIn.value = cfg.maxWaffle || 450;
+            const grIn = getEl('cfgGithubRepo'); if(grIn) grIn.value = cfg.githubRepo || "";
+        }
     },
     closeModal: (id) => {
         const el = document.getElementById(id);
@@ -450,6 +513,50 @@ export const ModalManager = {
                 zoomedChartInstance.destroy();
                 zoomedChartInstance = null;
             }
+        }
+    }
+};
+
+export const SettingsManager = {
+    saveSettings: () => {
+        const sts = getEl('cfgShowTopSection').checked;
+        const ms = parseInt(getEl('cfgMaxSeries').value) || 6;
+        const me = parseInt(getEl('cfgMaxEvents').value) || 20;
+        const md = parseInt(getEl('cfgMaxDonut').value) || 10;
+        const mw = parseInt(getEl('cfgMaxWaffle').value) || 450;
+        const gr = getEl('cfgGithubRepo').value.trim();
+
+        State.config = {
+            ...State.config,
+            showTopSection: sts,
+            maxSeries: ms,
+            maxEvents: me,
+            maxDonut: md,
+            maxWaffle: mw,
+            githubRepo: gr
+        };
+
+        ModalManager.closeModal('settingsModal');
+        // If currently published, toggle logic will pick up new setting
+        if (document.body.classList.contains('publishing')) {
+            const overviewPanel = getEl('teamOverviewPanel');
+            if (overviewPanel) overviewPanel.style.display = sts ? 'grid' : 'none';
+        }
+
+        // Show/Hide Sync Button if opened
+        const ghBtn = getEl('githubSyncBtn');
+        if (ghBtn) ghBtn.style.display = (State.config.githubRepo && getEl('ganttSection').style.display !== 'none') ? 'inline-block' : 'none';
+
+        App.alert("Settings saved.");
+    },
+    selectColor: (inputId, color, element) => {
+        const input = getEl(inputId);
+        if(input) input.value = color;
+
+        // Update visual selection
+        if(element && element.parentNode) {
+            Array.from(element.parentNode.children).forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
         }
     }
 };
@@ -505,7 +612,9 @@ export const renderBoard = () => {
             const card = document.createElement('div');
             // Force Donut to always be Small
             const displaySize = t.type === 'donut' ? 'S' : (t.size || 'M');
-            card.className = `tracker-card size-${displaySize} type-${t.type}`;
+            const heightClass = (t.height === 'tall' && (t.size === 'L' || t.size === 'XL')) ? 'height-2x' : '';
+
+            card.className = `tracker-card size-${displaySize} type-${t.type} ${heightClass}`;
             card.dataset.index = i;
             
             if (!document.body.classList.contains('publishing')) {
@@ -516,7 +625,7 @@ export const renderBoard = () => {
                  console.log("Card clicked. Type:", t.type, "Publishing:", document.body.classList.contains('publishing'));
                  if (document.body.classList.contains('publishing')) {
                      // Zoom requested
-                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'gauge', 'event'].includes(t.type);
+                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'gauge', 'event', 'gantt'].includes(t.type);
                      if (canZoom) ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
@@ -524,8 +633,14 @@ export const renderBoard = () => {
             };
 
             // Zoom Icon
-            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'gauge', 'event'].includes(t.type)) {
+            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'gauge', 'event', 'gantt'].includes(t.type)) {
                 card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
+            }
+
+            // Last Updated
+            if (document.body.classList.contains('publishing') && t.lastUpdated) {
+                const dateStr = new Date(t.lastUpdated).toLocaleDateString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+                card.innerHTML += `<div class="last-updated">Updated - ${dateStr}</div>`;
             }
 
             const noteText = (t.notes || t.content || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
@@ -543,6 +658,7 @@ export const renderBoard = () => {
             let statsHTML = '';
             let chartConfig = null;
             let chartId = `chart-tk-${i}`;
+            const chartHeight = heightClass ? 440 : 160;
             
             let renderType = t.type;
             if (renderType === 'line' || renderType === 'bar' || renderType === 'line1' || renderType === 'line2') {
@@ -558,13 +674,13 @@ export const renderBoard = () => {
                 // Render based on displayStyle
                 const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
                 
-                visualHTML = `<div id="${chartId}" style="width:100%; height:160px;"></div>`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:${chartHeight}px;"></div>`;
 
                 // Build Apex Options
                 const common = getCommonApexOptions();
                 chartConfig = {
                     ...common,
-                    chart: { ...common.chart, type: style, height: 160 },
+                    chart: { ...common.chart, type: style, height: chartHeight },
                     series: series.map(s => ({ name: s.name, data: s.values, color: s.color })),
                     xaxis: { ...common.xaxis, categories: labels },
                     yaxis: { ...common.yaxis, title: { text: t.yLabel || '' } },
@@ -573,7 +689,7 @@ export const renderBoard = () => {
 
             } else if (renderType === 'gauge') {
                 const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
-                visualHTML = `<div id="${chartId}" style="width:100%; height:160px; display:flex; justify-content:center;"></div>`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:${chartHeight}px; display:flex; justify-content:center;"></div>`;
                 statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
 
                 // Apex Radial Bar
@@ -581,7 +697,7 @@ export const renderBoard = () => {
                 const common = getCommonApexOptions();
                 chartConfig = {
                     ...common,
-                    chart: { ...common.chart, type: 'radialBar', height: 180 },
+                    chart: { ...common.chart, type: 'radialBar', height: chartHeight + 20 },
                     series: [pct],
                     plotOptions: {
                         radialBar: {
@@ -599,8 +715,21 @@ export const renderBoard = () => {
                 };
 
             } else if (renderType === 'counter') {
-                visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
-                statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
+                // Support Multiple Counters
+                const counters = t.counters || [{ label: t.subtitle, value: t.value, color: t.color1 }];
+
+                visualHTML = `<div style="display:flex; flex-wrap:wrap; justify-content:space-around; align-items:center; width:100%; height:100%; gap:10px;">`;
+
+                counters.forEach(c => {
+                    visualHTML += `<div style="text-align:center;">
+                                    <div class="counter-display" style="color:${c.color}">${c.value}</div>
+                                    <div class="counter-sub">${c.label || ''}</div>
+                                   </div>`;
+                });
+
+                visualHTML += `</div>`;
+                statsHTML = ''; // Stats moved inside visual for multi-counter
+
             } else if (renderType === 'rag' || renderType === 'ryg') {
                 const status = t.status || 'grey';
                 const iconHTML = Visuals.createRAGIconHTML(status);
@@ -616,13 +745,13 @@ export const renderBoard = () => {
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
                 const values = (t.dataPoints || []).map(dp => dp.value);
-                visualHTML = `<div id="${chartId}" style="width:100%; height:160px;"></div>`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:${chartHeight}px;"></div>`;
                 statsHTML = '';
 
                 const common = getCommonApexOptions();
                 chartConfig = {
                     ...common,
-                    chart: { ...common.chart, type: 'donut', height: 160 },
+                    chart: { ...common.chart, type: 'donut', height: chartHeight },
                     series: values,
                     labels: labels,
                     plotOptions: { pie: { donut: { size: '60%' } } },
@@ -630,23 +759,26 @@ export const renderBoard = () => {
                     legend: { show: false }
                 };
             } else if (renderType === 'event') {
-                const events = t.events || [];
-                // Sort by Date
-                events.sort((a, b) => new Date(a.date) - new Date(b.date));
+                const events = (t.events || []).map(ev => {
+                    const evDate = new Date(ev.date);
+                    const utcDate = new Date(evDate.valueOf() + evDate.getTimezoneOffset() * 60000);
+                    return { name: ev.name, date: utcDate.getTime() };
+                });
 
-                // Prepare Series: x = Date, y = Alternating 1, -1
+                events.sort((a, b) => a.date - b.date);
+
                 const data = events.map((e, i) => ({
                     x: e.date,
                     y: i % 2 === 0 ? 1 : -1,
                     meta: e.name
                 }));
 
-                visualHTML = `<div id="${chartId}" style="width:100%; height:160px;"></div>`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:${chartHeight}px;"></div>`;
 
                 const common = getCommonApexOptions();
                 chartConfig = {
                     ...common,
-                    chart: { ...common.chart, type: 'bar', height: 160, toolbar: { show: false } },
+                    chart: { ...common.chart, type: 'bar', height: chartHeight, toolbar: { show: false } },
                     series: [{ name: 'Timeline', data: data }],
                     xaxis: {
                         ...common.xaxis,
@@ -668,13 +800,13 @@ export const renderBoard = () => {
                     },
                     plotOptions: {
                         bar: {
-                            columnWidth: '2%', // Very thin lines
+                            columnWidth: '2%',
                             borderRadius: 0,
                             colors: {
                                 ranges: [{ from: -10, to: 10, color: '#03dac6' }]
                             },
                             dataLabels: {
-                                position: 'top' // Ends of bars
+                                position: 'top'
                             }
                         }
                     },
@@ -719,6 +851,29 @@ export const renderBoard = () => {
                             </div>`;
                         }
                     }
+                };
+            } else if (renderType === 'gantt') {
+                const tasks = t.tasks || [];
+                // Sort by Start Date
+                tasks.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+                const data = tasks.map(tk => ({
+                    x: tk.name,
+                    y: [new Date(tk.start).getTime(), new Date(tk.end).getTime()],
+                    fillColor: tk.status === 'done' ? '#00e676' : (tk.status === 'wip' ? '#ffb300' : '#666')
+                }));
+
+                visualHTML = `<div id="${chartId}" style="width:100%; height:${chartHeight}px;"></div>`;
+
+                const common = getCommonApexOptions();
+                chartConfig = {
+                    ...common,
+                    chart: { ...common.chart, type: 'rangeBar', height: chartHeight },
+                    series: [{ data: data }],
+                    plotOptions: {
+                        bar: { horizontal: true, barHeight: '50%', borderRadius: 4 }
+                    },
+                    xaxis: { type: 'datetime' }
                 };
             }
 
@@ -953,10 +1108,17 @@ export const ZoomManager = {
             };
 
         } else if (renderType === 'counter') {
-             htmlContent = `<div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-                                <div style="font-size: 8rem; font-weight:300; color:${t.color1}; text-shadow:0 0 20px ${t.color1}">${t.value}</div>
-                                <div style="font-size:2rem; color:#aaa; margin-top:1rem;">${t.subtitle}</div>
-                            </div>`;
+             // Multi-Counter Zoom
+             const counters = t.counters || [{ label: t.subtitle, value: t.value, color: t.color1 }];
+             htmlContent = `<div style="width:100%; height:100%; display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center; gap:20px;">`;
+             counters.forEach(c => {
+                 htmlContent += `<div style="display:flex; flex-direction:column; align-items:center;">
+                                    <div style="font-size: 6rem; font-weight:300; color:${c.color}; text-shadow:0 0 20px ${c.color}">${c.value}</div>
+                                    <div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${c.label || ''}</div>
+                                </div>`;
+             });
+             htmlContent += `</div>`;
+
         } else if (renderType === 'rag' || renderType === 'ryg') {
             const status = t.status || 'grey';
             const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
@@ -1055,6 +1217,27 @@ export const ZoomManager = {
                     }
                 }
             };
+        } else if (renderType === 'gantt') {
+            const tasks = t.tasks || [];
+            tasks.sort((a, b) => new Date(a.start) - new Date(b.start));
+            const data = tasks.map(tk => ({
+                x: tk.name,
+                y: [new Date(tk.start).getTime(), new Date(tk.end).getTime()],
+                fillColor: tk.status === 'done' ? '#00e676' : (tk.status === 'wip' ? '#ffb300' : '#666')
+            }));
+
+            htmlContent = `<div id="${chartId}" style="width:100%; height:100%;"></div>`;
+            const common = getCommonApexOptions(true);
+            chartConfig = {
+                ...common,
+                chart: { ...common.chart, type: 'rangeBar', height: '100%' },
+                series: [{ data: data }],
+                plotOptions: {
+                    bar: { horizontal: true, barHeight: '50%', borderRadius: 4 }
+                },
+                xaxis: { type: 'datetime', labels: { style: { colors: '#aaa', fontSize:'14px' } } },
+                tooltip: { theme: 'dark' }
+            };
         }
 
         // Add Notes Section for non-donut types if notes exist
@@ -1091,6 +1274,260 @@ export const ZoomManager = {
     }
 };
 
+export const OverviewManager = {
+    handleOverviewClick: (type) => {},
+    handleInfoClick: () => {
+        const current = State.additionalInfo || "";
+        const newVal = prompt("Edit Additional Info (Markdown supported):", current);
+        if (newVal !== null) {
+            State.additionalInfo = newVal;
+            renderBoard();
+        }
+    }
+};
+
+export const UserManager = {
+    openUserModal: (index = -1) => {
+        const modal = document.getElementById('userModal');
+        const title = document.getElementById('modalTitle');
+        const nameIn = document.getElementById('mName');
+        const notesIn = document.getElementById('mNotes');
+        const editIdx = document.getElementById('editIndex');
+        const delBtn = document.getElementById('deleteBtn');
+
+        if(title) title.innerText = index === -1 ? "Add User" : "Edit User";
+        if(editIdx) editIdx.value = index;
+        if(delBtn) delBtn.style.display = index === -1 ? 'none' : 'inline-block';
+
+        if(nameIn) nameIn.value = '';
+        if(notesIn) notesIn.value = '';
+
+        ['lw','nw','fw'].forEach(p => {
+            for(let i=1; i<=3; i++) {
+                const el = document.getElementById(`${p}Task${i}`);
+                if(el) el.value = '';
+            }
+        });
+
+        const defLoad = ['N','N','N','N','N','X','X'];
+        for(let i=0; i<7; i++) {
+            UserManager.setLoad(i, defLoad[i]);
+            UserManager.setFutureLoad(i, defLoad[i]);
+            const oc1 = document.getElementById(`nwOc${i}`); if(oc1) oc1.checked = false;
+            const oc2 = document.getElementById(`fwOc${i}`); if(oc2) oc2.checked = false;
+        }
+
+        if (index > -1) {
+            const m = State.members[index];
+            if(nameIn) nameIn.value = m.name;
+            if(notesIn) notesIn.value = m.notes || '';
+
+            if(m.lastWeek && m.lastWeek.tasks) {
+                m.lastWeek.tasks.forEach((t, i) => { const el = document.getElementById(`lwTask${i+1}`); if(el) el.value = t.text; });
+            }
+            if(m.thisWeek && m.thisWeek.tasks) {
+                m.thisWeek.tasks.forEach((t, i) => { const el = document.getElementById(`nwTask${i+1}`); if(el) el.value = t.text; });
+            }
+            if(m.nextWeek && m.nextWeek.tasks) {
+                m.nextWeek.tasks.forEach((t, i) => { const el = document.getElementById(`fwTask${i+1}`); if(el) el.value = t.text; });
+            }
+
+            const tLoad = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : defLoad;
+            tLoad.forEach((v, i) => UserManager.setLoad(i, v));
+            const tOc = (m.thisWeek && m.thisWeek.onCall) ? m.thisWeek.onCall : [];
+            tOc.forEach((v, i) => { const el = document.getElementById(`nwOc${i}`); if(el) el.checked = v; });
+
+            const nLoad = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : defLoad;
+            nLoad.forEach((v, i) => UserManager.setFutureLoad(i, v));
+            const nOc = (m.nextWeek && m.nextWeek.onCall) ? m.nextWeek.onCall : [];
+            nOc.forEach((v, i) => { const el = document.getElementById(`fwOc${i}`); if(el) el.checked = v; });
+        }
+
+        ModalManager.openModal('userModal');
+    },
+
+    setLoad: (dayIdx, val) => {
+        const inp = document.getElementById(`nw${dayIdx}`);
+        if(inp) inp.value = val;
+        const container = inp ? inp.parentNode : null;
+        if(container) {
+            const pills = container.querySelectorAll('.w-pill');
+            pills.forEach(p => p.classList.remove('active'));
+            const map = {'L':'.wp-l', 'N':'.wp-n', 'R':'.wp-r', 'X':'.wp-x'};
+            const activePill = container.querySelector(map[val]);
+            if(activePill) activePill.classList.add('active');
+        }
+    },
+
+    setFutureLoad: (dayIdx, val) => {
+        const inp = document.getElementById(`fw${dayIdx}`);
+        if(inp) inp.value = val;
+        const container = inp ? inp.parentNode : null;
+        if(container) {
+            const pills = container.querySelectorAll('.w-pill');
+            pills.forEach(p => p.classList.remove('active'));
+            const map = {'L':'.wp-l', 'N':'.wp-n', 'R':'.wp-r', 'X':'.wp-x'};
+            const activePill = container.querySelector(map[val]);
+            if(activePill) activePill.classList.add('active');
+        }
+    },
+
+    submitUser: () => {
+        const name = document.getElementById('mName').value.trim();
+        if(!name) return App.alert("Name required");
+
+        const idx = parseInt(document.getElementById('editIndex').value);
+        const notes = document.getElementById('mNotes').value;
+
+        const getTasks = (prefix) => {
+            const tasks = [];
+            for(let i=1; i<=3; i++) {
+                const val = document.getElementById(`${prefix}Task${i}`).value.trim();
+                let isChecked = false;
+                if(idx > -1) {
+                    const m = State.members[idx];
+                    let oldTasks = [];
+                    if(prefix==='lw') oldTasks = m.lastWeek.tasks;
+                    if(prefix==='nw') oldTasks = m.thisWeek.tasks;
+                    if(prefix==='fw') oldTasks = m.nextWeek.tasks;
+
+                    if(oldTasks && oldTasks[i-1] && oldTasks[i-1].text === val) {
+                         isChecked = (prefix==='lw') ? oldTasks[i-1].isTeamSuccess : ((prefix==='nw') ? oldTasks[i-1].isTeamSuccess : oldTasks[i-1].isTeamActivity);
+                    }
+                }
+
+                const taskObj = { text: val };
+                if (prefix === 'lw') taskObj.isTeamSuccess = isChecked;
+                else if (prefix === 'nw') taskObj.isTeamSuccess = isChecked;
+                else taskObj.isTeamActivity = isChecked;
+                tasks.push(taskObj);
+            }
+            return tasks;
+        };
+
+        const getLoad = (prefix) => {
+            const load = [];
+            const oc = [];
+            for(let i=0; i<7; i++) {
+                load.push(document.getElementById(`${prefix}${i}`).value);
+                const cb = document.getElementById(`${prefix}Oc${i}`);
+                oc.push(cb ? cb.checked : false);
+            }
+            return { load, oc };
+        };
+
+        const lwTasks = getTasks('lw');
+        const nwTasks = getTasks('nw');
+        const fwTasks = getTasks('fw');
+
+        const thisLoad = getLoad('nw');
+        const nextLoad = getLoad('fw');
+
+        const user = {
+            name,
+            notes,
+            lastWeek: { tasks: lwTasks, status: 'busy', onCall: [] },
+            thisWeek: { tasks: nwTasks, load: thisLoad.load, onCall: thisLoad.oc },
+            nextWeek: { tasks: fwTasks, load: nextLoad.load, onCall: nextLoad.oc }
+        };
+
+        if(idx === -1) {
+            State.members.push(user);
+        } else {
+            State.members[idx] = user;
+        }
+
+        ModalManager.closeModal('userModal');
+        renderBoard();
+        const gs = document.getElementById('ganttSection');
+        if(gs && gs.style.display !== 'none') {
+             Visuals.renderResourcePlanner(State.members);
+        }
+    },
+
+    deleteUser: () => {
+        const idx = parseInt(document.getElementById('editIndex').value);
+        if(idx === -1) return;
+        App.confirm("Delete this user?", () => {
+            State.members.splice(idx, 1);
+            ModalManager.closeModal('userModal');
+            renderBoard();
+            const gs = document.getElementById('ganttSection');
+            if(gs && gs.style.display !== 'none') {
+                 Visuals.renderResourcePlanner(State.members);
+            }
+        });
+    },
+
+    resetSelections: (type) => {
+        State.members.forEach(m => {
+            if (type === 'success') {
+                if(m.lastWeek) m.lastWeek.tasks.forEach(t => t.isTeamSuccess = false);
+                if(m.thisWeek) m.thisWeek.tasks.forEach(t => t.isTeamSuccess = false);
+            } else {
+                if(m.nextWeek) m.nextWeek.tasks.forEach(t => t.isTeamActivity = false);
+            }
+        });
+        renderBoard();
+    },
+
+    toggleSuccess: (mIdx, tIdx) => {
+        const t = State.members[mIdx].lastWeek.tasks[tIdx];
+        if(!t.isTeamSuccess) {
+            let count = 0;
+            State.members.forEach(m => {
+                if(m.lastWeek) m.lastWeek.tasks.forEach(x => { if(x.isTeamSuccess) count++; });
+                if(m.thisWeek) m.thisWeek.tasks.forEach(x => { if(x.isTeamSuccess) count++; });
+            });
+            if(count >= 5) {
+                renderBoard(); // Revert UI
+                return App.alert("Max 5 Team Achievements allowed.");
+            }
+            t.isTeamSuccess = true;
+        } else {
+            t.isTeamSuccess = false;
+        }
+        renderBoard();
+    },
+
+    toggleActivity: (mIdx, tIdx) => {
+        const t = State.members[mIdx].thisWeek.tasks[tIdx];
+        if(!t.isTeamSuccess) {
+             let count = 0;
+             State.members.forEach(m => {
+                if(m.lastWeek) m.lastWeek.tasks.forEach(x => { if(x.isTeamSuccess) count++; });
+                if(m.thisWeek) m.thisWeek.tasks.forEach(x => { if(x.isTeamSuccess) count++; });
+            });
+            if(count >= 5) {
+                renderBoard();
+                return App.alert("Max 5 Team Achievements allowed.");
+            }
+            t.isTeamSuccess = true;
+        } else {
+            t.isTeamSuccess = false;
+        }
+        renderBoard();
+    },
+
+    toggleFuture: (mIdx, tIdx) => {
+        const t = State.members[mIdx].nextWeek.tasks[tIdx];
+        if(!t.isTeamActivity) {
+            let count = 0;
+            State.members.forEach(m => {
+                if(m.nextWeek) m.nextWeek.tasks.forEach(x => { if(x.isTeamActivity) count++; });
+            });
+            if(count >= 5) {
+                renderBoard();
+                return App.alert("Max 5 Future Activities allowed.");
+            }
+            t.isTeamActivity = true;
+        } else {
+            t.isTeamActivity = false;
+        }
+        renderBoard();
+    }
+};
+
 export const TrackerManager = {
     openModal(index) {
         console.log("Opening Tracker Modal for index:", index);
@@ -1101,7 +1538,7 @@ export const TrackerManager = {
         const titleEl = getEl('trackerModalTitle');
         if (titleEl) titleEl.innerText = isEdit ? 'Edit Progress Tracker' : 'Add Progress Tracker';
         
-        ['gauge','bar','line','counter','rag','waffle','note','donut','event'].forEach(type => {
+        ['gauge','bar','line','counter','rag','waffle','note','donut','event','gantt'].forEach(type => {
             const div = getEl(`${type}Inputs`);
             if (div) div.style.display = 'none';
         });
@@ -1146,6 +1583,11 @@ export const TrackerManager = {
         const sizeVal = tracker ? (tracker.size || 'M') : 'M';
         const sizeRadio = document.querySelector(`input[name="tkSize"][value="${sizeVal}"]`);
         if (sizeRadio) sizeRadio.checked = true;
+
+        // Height
+        const heightVal = tracker ? (tracker.height || 'standard') : 'standard';
+        const heightRadio = document.querySelector(`input[name="tkHeight"][value="${heightVal}"]`);
+        if (heightRadio) heightRadio.checked = true;
 
         if (type === 'line') {
              // Init Style Radio
@@ -1272,9 +1714,10 @@ export const TrackerManager = {
                 if(sizeRad) sizeRad.checked = true;
             } else if (!isEdit && type === 'counter') {
                 // Reset Counter defaults for new trackers
-                const tcsIn = getEl('tkCounterSub'); if(tcsIn) tcsIn.value = '';
+                const container = getEl('counterDataContainer');
+                if(container) container.innerHTML = '';
+
                 const tcnIn = getEl('tkCounterNotes'); if(tcnIn) tcnIn.value = '';
-                const tcvIn = getEl('tkCounterVal'); if(tcvIn) tcvIn.value = 0;
                 
                 // Set Size to S
                 const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
@@ -1302,8 +1745,19 @@ export const TrackerManager = {
                 if(notesIn) notesIn.value = '';
                 const sizeRad = document.querySelector('input[name="tkSize"][value="L"]');
                 if(sizeRad) sizeRad.checked = true;
+            } else if (!isEdit && type === 'gantt') {
+                const container = getEl('ganttDataContainer');
+                if(container) container.innerHTML = '';
+                const notesIn = getEl('tkGanttNotes');
+                if(notesIn) notesIn.value = '';
+                // Default Size XL
+                const sizeRad = document.querySelector('input[name="tkSize"][value="XL"]');
+                if(sizeRad) sizeRad.checked = true;
+                const hRad = document.querySelector('input[name="tkHeight"][value="standard"]');
+                if(hRad) hRad.checked = true;
             }
 
+            // Populate Color Pickers dynamically
             if (type === 'gauge') {
                 const tmIn = getEl('tkMetric');
                 // Only populate if tracker exists, otherwise keep blank (from reset above)
@@ -1318,19 +1772,31 @@ export const TrackerManager = {
                 const nIn = getEl('tkNotes');
                 if (tracker && nIn) nIn.value = tracker.notes || '';
                 
-                const pcIn = getEl('tkPieColor');
-                if (pcIn) pcIn.value = tracker ? (tracker.colorVal || tracker.color1 || '#696969') : '#696969';
-                const pc2In = getEl('tkPieColor2');
-                if (pc2In) pc2In.value = tracker ? (tracker.color2 || '#228B22') : '#228B22';
+                const c1 = tracker ? (tracker.colorVal || tracker.color1 || '#696969') : '#696969';
+                getEl('tkPieColor').value = c1;
+                getEl('tkPieColorPicker').innerHTML = createColorPickerHTML('tkPieColor', c1);
+
+                const c2 = tracker ? (tracker.color2 || '#228B22') : '#228B22';
+                getEl('tkPieColor2').value = c2;
+                getEl('tkPieColor2Picker').innerHTML = createColorPickerHTML('tkPieColor2', c2);
+
             } else if (type === 'counter') {
-                const cvIn = getEl('tkCounterVal');
-                if (tracker && cvIn) cvIn.value = tracker.value || 0;
-                const csIn = getEl('tkCounterSub');
-                if (tracker && csIn) csIn.value = tracker.subtitle || '';
+                const container = getEl('counterDataContainer');
+                if (container) container.innerHTML = '';
+
+                if (tracker && tracker.counters) {
+                    tracker.counters.forEach(c => this.addCounterRow(c.label, c.value, c.color));
+                } else if (tracker && tracker.value !== undefined) {
+                    // Backwards compatibility for single counter
+                    this.addCounterRow(tracker.subtitle, tracker.value, tracker.color1);
+                } else {
+                    // Default row for new counter
+                    this.addCounterRow();
+                }
+
                 const cnIn = getEl('tkCounterNotes');
                 if (tracker && cnIn) cnIn.value = tracker.notes || '';
-                const ccIn = getEl('tkCounterColor');
-                if (ccIn) ccIn.value = tracker ? (tracker.color1 || '#bb86fc') : '#bb86fc';
+
             } else if (type === 'rag') {
                 this.selectRag(tracker ? (tracker.status || 'grey') : 'grey');
                 const rmIn = getEl('tkRagMsg');
@@ -1347,43 +1813,885 @@ export const TrackerManager = {
                 const twnIn = getEl('tkWaffleNotes');
                 if (tracker && twnIn) twnIn.value = tracker.notes || '';
                 
-                const wcIn = getEl('tkWaffleColorVal');
-                if (wcIn) wcIn.value = tracker ? (tracker.colorVal || '#228B22') : '#228B22';
-                const wbIn = getEl('tkWaffleColorBg');
-                if (wbIn) wbIn.value = tracker ? (tracker.colorBg || '#696969') : '#696969';
+                // Set MAX limit on input based on config
+                if (twtIn) twtIn.max = (State.config && State.config.maxWaffle) ? State.config.maxWaffle : 450;
+
+                const cVal = tracker ? (tracker.colorVal || '#228B22') : '#228B22';
+                getEl('tkWaffleColorVal').value = cVal;
+                getEl('tkWaffleColorValPicker').innerHTML = createColorPickerHTML('tkWaffleColorVal', cVal);
+
+                const cBg = tracker ? (tracker.colorBg || '#696969') : '#696969';
+                getEl('tkWaffleColorBg').value = cBg;
+                getEl('tkWaffleColorBgPicker').innerHTML = createColorPickerHTML('tkWaffleColorBg', cBg);
+
             } else if (type === 'note') {
-                const contentIn = getEl('tkNoteContent');
-                newTracker.content = contentIn ? contentIn.value : '';
-                const alignRad = document.querySelector('input[name="tkNoteAlign"]:checked');
-                newTracker.align = alignRad ? alignRad.value : 'left';
-                newTracker.notes = ''; // No notes for Note Tracker
+                const tcnIn = getEl('tkNoteContent');
+                if (tracker && tcnIn) tcnIn.value = tracker.content || '';
+
+                const align = tracker ? (tracker.align || 'left') : 'left';
+                const alignRad = document.querySelector(`input[name="tkNoteAlign"][value="${align}"]`);
+                if(alignRad) alignRad.checked = true;
             } else if (type === 'donut') {
-                const rows = document.querySelectorAll('.donut-row');
-                const dataPoints = [];
-                rows.forEach(row => {
-                    const label = row.querySelector('.dr-label').value.trim();
-                    const value = parseFloat(row.querySelector('.dr-value').value) || 0;
-                    if (label) dataPoints.push({ label, value });
-                });
-                if (dataPoints.length === 0) return App.alert("At least one data point with a label is required.");
-                newTracker.dataPoints = dataPoints;
+                const container = getEl('donutDataContainer');
+                if (container) container.innerHTML = '';
+                if (tracker && tracker.dataPoints) {
+                    tracker.dataPoints.forEach(dp => this.addDonutRow(dp.label, dp.value));
+                }
                 const notesIn = getEl('tkDonutNotes');
-                newTracker.notes = notesIn ? notesIn.value : '';
-                newTracker.size = size; // Use selected size
+                if (tracker && notesIn) notesIn.value = tracker.notes || '';
             } else if (type === 'event') {
-                const rows = document.querySelectorAll('.event-row');
-                const events = [];
-                rows.forEach(row => {
-                    const name = row.querySelector('.er-name').value.trim();
-                    const date = row.querySelector('.er-date').value;
-                    if (name && date) events.push({ name, date });
-                });
-                if (events.length === 0) return App.alert("At least one event with a name and date is required.");
-                newTracker.events = events;
+                const container = getEl('eventDataContainer');
+                if (container) container.innerHTML = '';
+                if (tracker && tracker.events) {
+                    tracker.events.forEach(ev => this.addEventRow(ev.name, ev.date));
+                }
                 const notesIn = getEl('tkEventNotes');
-                newTracker.notes = notesIn ? notesIn.value : '';
-                newTracker.size = size;
+                if (tracker && notesIn) notesIn.value = tracker.notes || '';
+            } else if (type === 'gantt') {
+                const container = getEl('ganttDataContainer');
+                if (container) container.innerHTML = '';
+                if (tracker && tracker.tasks) {
+                    tracker.tasks.forEach(t => this.addGanttRow(t.name, t.start, t.end, t.status));
+                }
+                const notesIn = getEl('tkGanttNotes');
+                if (tracker && notesIn) notesIn.value = tracker.notes || '';
             }
+        }
+
+        ModalManager.openModal('trackerModal');
+    },
+
+    setType(type) {
+        State.currentTrackerType = type;
+        // Map 'bar' to 'line' for input visibility
+        const inputType = (type === 'bar') ? 'line' : type;
+        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Event','Gantt'].forEach(x => {
+            const btn = getEl(`type${x}Btn`);
+            if (btn) btn.className = (type === x.toLowerCase()) ? 'type-option active' : 'type-option';
+            const div = getEl(`${x.toLowerCase()}Inputs`);
+            if (div) div.style.display = (inputType === x.toLowerCase()) ? 'block' : 'none';
+        });
+
+        const sizeCont = getEl('sizeContainer');
+        if(sizeCont) sizeCont.style.display = (type === 'gauge' || type === 'waffle' || type === 'rag' || type === 'counter' || type === 'donut' || type === 'event' || type === 'gantt') ? 'none' : 'block';
+
+        if (inputType === 'line') {
+             this.renderTimeTable();
+        }
+
+        // Initialize default row for list types if empty and creating new
+        if (State.editingTrackerIndex === -1) {
+            if (type === 'counter') {
+                const c = getEl('counterDataContainer');
+                if(c && c.children.length === 0) this.addCounterRow();
+            } else if (type === 'donut') {
+                const c = getEl('donutDataContainer');
+                if(c && c.children.length === 0) this.addDonutRow();
+            } else if (type === 'event') {
+                const c = getEl('eventDataContainer');
+                if(c && c.children.length === 0) this.addEventRow();
+            } else if (type === 'gantt') {
+                const c = getEl('ganttDataContainer');
+                if(c && c.children.length === 0) this.addGanttRow();
+            }
+        }
+    },
+
+    getContext(typeOverride) {
+        const type = typeOverride || State.currentTrackerType;
+        // Always use 'tk' (Line) inputs now, as Bar inputs are removed
+        return {
+            prefix: 'tk',
+            tableId: 'lineTableContainer',
+            btnAddId: 'btnAddSeries'
+        };
+    },
+
+    handleTimeUnitChange(input) {
+        const ctx = this.getContext();
+        const container = document.getElementById('tkTimeUnitContainer');
+        const prevUnit = container ? container.dataset.currentUnit : 'day';
+        const newUnit = input.value;
+
+        if (prevUnit === newUnit) return;
+
+        const series = this.scrapeTimeSeries();
+        let hasData = false;
+        series.forEach(s => { if (s.values.some(v => v !== 0)) hasData = true; });
+
+        if (hasData) {
+            App.confirm("Changing the Time Unit will clear existing data. Proceed?", () => {
+                if(container) container.dataset.currentUnit = newUnit;
+                this.updateTimeOptions(true);
+            });
+            // Revert immediately, will be re-checked if confirmed
+            const prevRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${prevUnit}"]`);
+            if (prevRad) prevRad.checked = true;
+        } else {
+            if(container) container.dataset.currentUnit = newUnit;
+            this.updateTimeOptions();
+        }
+    },
+
+    updateTimeOptions(clearData = false) {
+        const ctx = this.getContext();
+        const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
+        const unit = unitRad ? unitRad.value : 'day';
+
+        // Ensure dataset is synced if updateTimeOptions called directly (e.g. from openModal)
+        const container = document.getElementById('tkTimeUnitContainer');
+        if(container) container.dataset.currentUnit = unit;
+
+        const histLabel = getEl(`${ctx.prefix}HistoricLabel`);
+        if (histLabel) histLabel.innerText = `Historic ${unit.charAt(0).toUpperCase() + unit.slice(1)}s`;
+
+        const countSel = getEl(`${ctx.prefix}TimeCount`);
+        if (!countSel) return;
+        const currentVal = countSel.value;
+        countSel.innerHTML = '';
+        let opts = [];
+        if (unit === 'year') opts = [3, 5, 10];
+        else if (unit === 'month') opts = [3, 6, 12, 24];
+        else opts = [5, 7, 14, 30, 60, 90];
+        
+        opts.forEach(o => {
+            const opt = document.createElement('option');
+            opt.value = o;
+            opt.innerText = o;
+            countSel.appendChild(opt);
+        });
+        if (currentVal && opts.includes(parseInt(currentVal))) {
+            countSel.value = currentVal;
+        } else if (unit === 'day') {
+            countSel.value = 30;
+        }
+
+        // When changing unit, we must reset the table to match the new unit's dates
+        if (clearData) {
+             const currentSeries = this.scrapeTimeSeries();
+             const clearedSeries = currentSeries.map(s => ({ ...s, values: [] }));
+             this.renderTimeTable(clearedSeries);
+        } else {
+             this.renderTimeTable();
+        }
+    },
+
+    renderTimeTable(seriesOverride = null, labelsOverride = null) {
+        const ctx = this.getContext();
+        const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
+        const unit = unitRad ? unitRad.value : 'day';
+        const tcIn = getEl(`${ctx.prefix}TimeCount`);
+        const count = tcIn ? (parseInt(tcIn.value) || 5) : 5;
+        const sdIn = getEl(`${ctx.prefix}StartDate`);
+        let startDateVal = sdIn ? sdIn.value : '';
+        if(!startDateVal) {
+             const d = new Date();
+             const day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1);
+             const monday = new Date(d.setDate(diff));
+             startDateVal = monday.toISOString().split('T')[0];
+             if(sdIn) sdIn.value = startDateVal;
+        }
+
+        let series = seriesOverride;
+        if (!series) series = this.scrapeTimeSeries();
+        
+        let labels = [];
+        if (labelsOverride) {
+            labels = labelsOverride;
+        } else {
+            const start = new Date(startDateVal);
+            for(let i=0; i<count; i++) {
+                let label = '';
+                const offset = (count - 1) - i;
+                if (unit === 'year') {
+                    label = (start.getFullYear() - offset).toString();
+                } else if (unit === 'month') {
+                    let d = new Date(start.getFullYear(), start.getMonth() - offset, 1);
+                    let m = d.getMonth() + 1;
+                    label = `${d.getFullYear()}-${m.toString().padStart(2, '0')}`;
+                } else {
+                    let d = new Date(start);
+                    d.setDate(d.getDate() - offset);
+                    label = d.toISOString().split('T')[0];
+                }
+                labels.push(label);
+            }
+        }
+
+        const container = getEl(ctx.tableId);
+        if (!container) return;
+
+        let html = '<table style="width:100%; border-collapse: separate; border-spacing: 0;">';
+
+        html += '<thead><tr><th style="padding:8px; text-align:left; border-bottom:1px solid #444; position:sticky; left:0; top:0; background:var(--modal-bg); z-index:20; min-width:160px;">Series Name</th>';
+
+        labels.forEach((l, li) => {
+            html += `<th style="padding:8px; border-bottom:1px solid #444; position:sticky; top:0; background:var(--modal-bg); z-index:10; min-width:80px; text-align:center; font-size:0.7rem; white-space:nowrap;">
+                ${l} <span onclick="TrackerManager.removeDateColumn(${li})" style="color:var(--g-red); cursor:pointer; margin-left:2px; font-weight:bold;">&times;</span>
+            </th>`;
+        });
+
+        html += `<th style="padding:8px; text-align:center; min-width:40px; cursor:pointer; background:var(--modal-bg); border-bottom:1px solid #444; position:sticky; top:0; z-index:10;" onclick="TrackerManager.addDateColumn()" title="Add Historic Date">+</th>`;
+        html += '</tr></thead><tbody>';
+
+        series.forEach((s, si) => {
+            html += `<tr>
+                <td style="padding:8px; border-bottom:1px solid #333; position:sticky; left:0; background:var(--modal-bg); z-index:10;">
+                    <div style="display:flex; align-items:center; gap:5px;">
+                        <input type="checkbox" class="ts-select" data-idx="${si}" style="accent-color:var(--accent);" onchange="TrackerManager.updateDeleteSeriesButtonVisibility()">
+                        <div class="ts-color-swatch" style="width:20px; height:20px; background:${s.color}; border:1px solid #fff; cursor:pointer;" onclick="this.nextElementSibling.click()"></div>
+                        <input type="color" class="ts-color" value="${s.color}" style="width:0; height:0; visibility:hidden; padding:0; border:0;" data-idx="${si}" onchange="this.previousElementSibling.style.background=this.value">
+                        <input type="text" class="ts-name" value="${s.name}" style="width:100px; font-size:0.8rem; background:#222; border:1px solid #444; color:#fff; padding:2px;" data-idx="${si}">
+                    </div>
+                </td>`;
+
+            labels.forEach((l, li) => {
+                const val = (s.values && s.values[li] !== undefined) ? s.values[li] : 0;
+                html += `<td style="padding:2px; border-bottom:1px solid #333;">
+                    <input type="number" class="ts-val" data-s="${si}" data-r="${li}" value="${val}" style="width:100%; background:transparent; border:none; color:#fff; text-align:center;">
+                </td>`;
+            });
+            html += `<td style="border-bottom:1px solid #333;"></td>`;
+            html += '</tr>';
+        });
+
+        // Use Config for limits
+        const maxSeries = (State.config && State.config.maxSeries) ? State.config.maxSeries : 6;
+
+        if (series.length < maxSeries) {
+            html += `<tr class="add-series-row">
+                <td colspan="${labels.length + 2}" style="padding: 10px; border-top: 1px dashed #444; text-align: left;">
+                    <div onclick="TrackerManager.addTimeSeriesColumn()" style="width: 30px; height: 30px; background: #444; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; cursor: pointer; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">+</div>
+                </td>
+            </tr>`;
+        }
+
+        html += '</tbody></table>';
+
+        container.innerHTML = html;
+        container.dataset.labels = JSON.stringify(labels);
+        this.updateDeleteSeriesButtonVisibility();
+    },
+
+    updateDeleteSeriesButtonVisibility() {
+        const btnDelete = document.querySelector('button[onclick="TrackerManager.deleteSelectedSeries()"]');
+        if (!btnDelete) return;
+        const checks = document.querySelectorAll('.ts-select:checked');
+        btnDelete.style.display = checks.length > 0 ? 'inline-block' : 'none';
+    },
+
+    scrapeTimeSeries() {
+        const ctx = this.getContext();
+        const container = getEl(ctx.tableId);
+        if (!container) return [];
+        const rows = container.querySelectorAll('tbody tr');
+        if (rows.length === 0) return [];
+
+        const series = [];
+        rows.forEach((row, si) => {
+            if (row.classList.contains('add-series-row')) return;
+            const nameIn = row.querySelector('.ts-name');
+            const colorIn = row.querySelector('.ts-color');
+            const name = nameIn ? nameIn.value : `Series ${si+1}`;
+            const color = colorIn ? colorIn.value : '#03dac6';
+
+            const values = [];
+            const valInputs = row.querySelectorAll('.ts-val');
+            valInputs.forEach(inp => values.push(parseFloat(inp.value) || 0));
+
+            series.push({ name, color, values });
+        });
+
+        return series;
+    },
+
+    addTimeSeriesColumn() {
+        const series = this.scrapeTimeSeries();
+        const maxSeries = (State.config && State.config.maxSeries) ? State.config.maxSeries : 6;
+        if (series.length >= maxSeries) return App.alert(`Max ${maxSeries} series allowed.`);
+        const colors = State.config.colors || ['#03dac6'];
+        const color = colors[series.length % colors.length];
+        series.push({ name: `Series ${series.length+1}`, color: color, values: [] });
+        this.renderTimeTable(series);
+    },
+
+    handleCountChange(selectEl) {
+        const newCount = parseInt(selectEl.value);
+        const series = this.scrapeTimeSeries();
+        if (series.length === 0) {
+             this.renderTimeTable();
+             return;
+        }
+
+        const oldCount = series[0].values.length;
+        const delta = newCount - oldCount;
+
+        if (delta === 0) return;
+
+        series.forEach(s => {
+            if (delta > 0) {
+                for(let i=0; i<delta; i++) s.values.unshift(0);
+            } else {
+                for(let i=0; i<Math.abs(delta); i++) s.values.shift();
+            }
+        });
+
+        this.renderTimeTable(series);
+    },
+
+    handleEndDateChange(input) {
+        const series = this.scrapeTimeSeries();
+        let hasData = false;
+        series.forEach(s => {
+            if (s.values.some(v => v !== 0)) hasData = true;
+        });
+
+        const newVal = input.value;
+        const prevVal = input.dataset.prev;
+
+        if (!hasData) {
+            input.dataset.prev = newVal;
+            this.renderTimeTable();
+            return;
+        }
+
+        input.value = prevVal;
+
+        App.confirm("Changing the End Date will clear existing manual data. Proceed?", () => {
+            input.value = newVal;
+            input.dataset.prev = newVal;
+            const clearedSeries = series.map(s => ({ name: s.name, color: s.color, values: [] }));
+            this.renderTimeTable(clearedSeries);
+        });
+    },
+
+    exportTimeSeriesCSV() {
+        const series = this.scrapeTimeSeries();
+        if (series.length === 0) return App.alert("No data to export.");
+
+        const ctx = this.getContext();
+        const container = getEl(ctx.tableId);
+        const labels = JSON.parse(container.dataset.labels || '[]');
+
+        let csv = "Date";
+        series.forEach(s => csv += `,${s.name}`);
+        csv += "\n";
+
+        labels.forEach((date, dateIdx) => {
+            csv += `${date}`;
+            series.forEach(s => {
+                const val = (s.values && s.values[dateIdx] !== undefined) ? s.values[dateIdx] : 0;
+                csv += `,${val}`;
+            });
+            csv += "\n";
+        });
+
+        const title = getEl('tkDesc').value || "chart_data";
+        const filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".csv";
+
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement("a");
+        if (link.download !== undefined) {
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", filename);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    },
+
+    deleteSelectedSeries() {
+        const ctx = this.getContext();
+        const container = getEl(ctx.tableId);
+        if (!container) return;
+        const checks = container.querySelectorAll('.ts-select:checked');
+        if (checks.length === 0) return App.alert("No series selected.");
+
+        const indicesToDelete = new Set();
+        checks.forEach(c => indicesToDelete.add(parseInt(c.dataset.idx)));
+
+        const currentSeries = this.scrapeTimeSeries();
+        const newSeries = currentSeries.filter((_, i) => !indicesToDelete.has(i));
+
+        this.renderTimeTable(newSeries);
+    },
+
+    addDateColumn() {
+        const ctx = this.getContext();
+        const tcIn = getEl(`${ctx.prefix}TimeCount`);
+        const sdIn = getEl(`${ctx.prefix}StartDate`);
+        if (tcIn && sdIn) {
+             const series = this.scrapeTimeSeries();
+
+             const d = new Date(sdIn.value);
+             const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
+             const unit = unitRad ? unitRad.value : 'day';
+
+             if (unit === 'year') d.setFullYear(d.getFullYear() + 1);
+             else if (unit === 'month') d.setMonth(d.getMonth() + 1);
+             else d.setDate(d.getDate() + 1);
+
+             sdIn.value = d.toISOString().split('T')[0];
+             sdIn.dataset.prev = sdIn.value;
+
+             series.forEach(s => {
+                 s.values.shift();
+                 s.values.push(0);
+             });
+
+             this.renderTimeTable(series);
+        }
+    },
+
+    removeDateColumn(index) {
+        const ctx = this.getContext();
+        const tcIn = getEl(`${ctx.prefix}TimeCount`);
+        const count = parseInt(tcIn.value);
+        if (count <= 1) return App.alert("Cannot remove the last date.");
+
+        const series = this.scrapeTimeSeries();
+
+        if (index === 0) {
+            series.forEach(s => s.values.shift());
+
+            let exists = false;
+            for(let opt of tcIn.options) { if(parseInt(opt.value) === count - 1) exists = true; }
+            if (!exists) {
+                 const opt = document.createElement('option');
+                 opt.value = count - 1;
+                 opt.innerText = count - 1;
+                 tcIn.appendChild(opt);
+            }
+
+            tcIn.value = count - 1;
+            this.renderTimeTable(series);
+        } else if (index === count - 1) {
+            series.forEach(s => s.values.pop());
+            const sdIn = getEl(`${ctx.prefix}StartDate`);
+            if (sdIn) {
+                 const d = new Date(sdIn.value);
+                 const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
+                 const unit = unitRad ? unitRad.value : 'day';
+                 if (unit === 'year') d.setFullYear(d.getFullYear() - 1);
+                 else if (unit === 'month') d.setMonth(d.getMonth() - 1);
+                 else d.setDate(d.getDate() - 1);
+                 sdIn.value = d.toISOString().split('T')[0];
+                 sdIn.dataset.prev = sdIn.value;
+            }
+
+            let exists = false;
+            for(let opt of tcIn.options) { if(parseInt(opt.value) === count - 1) exists = true; }
+            if (!exists) {
+                 const opt = document.createElement('option');
+                 opt.value = count - 1;
+                 opt.innerText = count - 1;
+                 tcIn.appendChild(opt);
+            }
+
+            tcIn.value = count - 1;
+            this.renderTimeTable(series);
+        } else {
+            App.alert("Please remove dates from the start or end of the series.");
+        }
+    },
+
+    selectRag(val) {
+        const pills = document.querySelectorAll('.rag-pill');
+        pills.forEach(p => {
+            if(p.dataset.val === val) p.classList.add('active');
+            else p.classList.remove('active');
+        });
+        const rs = getEl('tkRagStatus');
+        if(rs) rs.value = val;
+    },
+
+    addDonutRow(label = '', value = '') {
+        const container = getEl('donutDataContainer');
+        if (!container) return;
+        const max = State.config.maxDonut || 10;
+        if (container.children.length >= max) return App.alert(`Max ${max} data points allowed.`);
+
+        const div = document.createElement('div');
+        div.className = 'donut-row';
+        div.innerHTML = `
+            <input type="text" class="dr-label" maxlength="15" placeholder="Label" value="${label}" style="flex: 2;">
+            <input type="number" class="dr-value" placeholder="Value" value="${value}" style="flex: 1;">
+            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeDonutRow(this)">&times;</button>
+        `;
+        container.appendChild(div);
+    },
+
+    removeDonutRow(btn) {
+        btn.parentElement.remove();
+    },
+
+    addEventRow(name = '', date = '') {
+        const container = getEl('eventDataContainer');
+        if (!container) return;
+        const max = State.config.maxEvents || 20;
+        if (container.children.length >= max) return App.alert(`Max ${max} events allowed.`);
+
+        const div = document.createElement('div');
+        div.className = 'event-row';
+        div.innerHTML = `
+            <input type="text" class="er-name" maxlength="30" placeholder="Event Name" value="${name}" style="flex: 2;">
+            <input type="date" class="er-date" value="${date}" style="flex: 1; background:var(--input-bg); color:#fff; color-scheme:dark;">
+            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeEventRow(this)">&times;</button>
+        `;
+        container.appendChild(div);
+    },
+
+    removeEventRow(btn) {
+        btn.parentElement.remove();
+    },
+
+    addGanttRow(name = '', start = '', end = '', status = 'wip') {
+        const container = getEl('ganttDataContainer');
+        if (!container) return;
+        // Limit Gantt tasks? Reuse max events or define new? Let's use maxEvents for now
+        const max = State.config.maxEvents || 20;
+        if (container.children.length >= max) return App.alert(`Max ${max} tasks allowed.`);
+
+        const div = document.createElement('div');
+        div.className = 'gantt-row';
+        div.innerHTML = `
+            <div style="display:flex; gap:5px; margin-bottom:5px;">
+                <input type="text" class="gr-name" maxlength="30" placeholder="Task Name" value="${name}" style="flex: 2;">
+                <select class="gr-status" style="flex:1;">
+                    <option value="wip" ${status==='wip'?'selected':''}>WIP</option>
+                    <option value="done" ${status==='done'?'selected':''}>Done</option>
+                    <option value="blocked" ${status==='blocked'?'selected':''}>Blocked</option>
+                </select>
+                <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeGanttRow(this)">&times;</button>
+            </div>
+            <div style="display:flex; gap:5px;">
+                <input type="date" class="gr-start" value="${start}" style="flex:1; background:var(--input-bg); color:#fff; color-scheme:dark;">
+                <input type="date" class="gr-end" value="${end}" style="flex:1; background:var(--input-bg); color:#fff; color-scheme:dark;">
+            </div>
+        `;
+        container.appendChild(div);
+    },
+
+    removeGanttRow(btn) {
+        btn.parentElement.parentElement.remove();
+    },
+
+    addCounterRow(label = '', value = '', color = '#bb86fc') {
+        const container = getEl('counterDataContainer');
+        if (!container) return;
+        const max = State.config.maxDonut || 10;
+        if (container.children.length >= max) return App.alert(`Max ${max} counters allowed.`);
+
+        const div = document.createElement('div');
+        div.className = 'counter-row';
+        div.style.display = 'flex';
+        div.style.gap = '10px';
+        div.style.marginBottom = '5px';
+        div.style.alignItems = 'center';
+
+        const uniqueId = 'cp_' + Math.random().toString(36).substr(2, 9);
+
+        div.innerHTML = `
+            <input type="text" class="cr-label" maxlength="15" placeholder="Label" value="${label}" style="flex: 2;">
+            <input type="number" class="cr-value" placeholder="Value" value="${value}" style="flex: 1;">
+            <input type="color" class="cr-color" value="${color}" style="width:30px; height:30px; padding:0; border:none;" id="${uniqueId}">
+            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeCounterRow(this)">&times;</button>
+        `;
+        container.appendChild(div);
+    },
+
+    removeCounterRow(btn) {
+        btn.parentElement.remove();
+    },
+
+    parseCSV(type) {
+        const ctx = this.getContext();
+        const txtArea = getEl('csvInput');
+        if (!txtArea) return;
+
+        const text = txtArea.value.trim();
+        if (!text) return App.alert("Please paste CSV data.");
+
+        // Check for existing data
+        const series = this.scrapeTimeSeries();
+        let hasData = false;
+        series.forEach(s => { if (s.values.some(v => v !== 0)) hasData = true; });
+
+        const processCSV = () => {
+            const lines = text.split('\n').map(l => l.trim()).filter(l => l);
+            if (lines.length < 2) return App.alert("Invalid CSV format.");
+
+            const headers = lines[0].split(',').map(h => h.trim());
+            const seriesNames = headers.slice(1);
+
+            const labels = [];
+            const seriesData = seriesNames.map(name => ({ name: name, values: [] }));
+
+            for(let i=1; i<lines.length; i++) {
+                const cols = lines[i].split(',').map(c => c.trim());
+                labels.push(cols[0]);
+
+                for(let j=0; j<seriesNames.length; j++) {
+                    const val = parseFloat(cols[j+1]) || 0;
+                    seriesData[j].values.push(val);
+                }
+            }
+
+            // Infer Unit
+            let unit = 'day';
+            if (labels.length > 0) {
+                const sample = labels.slice(0, 5);
+                if (sample.every(d => /^\d{4}$/.test(d))) {
+                    unit = 'year';
+                } else if (sample.every(d => /^\d{4}-\d{2}$/.test(d))) {
+                    unit = 'month';
+                } else if (sample.every(d => /^\d{4}-\d{2}-\d{2}$/.test(d))) {
+                     if (labels.length > 1) {
+                         const d1 = new Date(labels[0]);
+                         const d2 = new Date(labels[1]);
+                         const diff = Math.abs((d2 - d1) / (1000 * 60 * 60 * 24));
+                         if (diff >= 28 && diff <= 32) unit = 'month';
+                     }
+                }
+            }
+
+            // Set Unit Radio
+            const rad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${unit}"]`);
+            if(rad) rad.checked = true;
+
+            // Sync current unit dataset
+            const container = document.getElementById('tkTimeUnitContainer');
+            if(container) container.dataset.currentUnit = unit;
+
+            // Reset Options based on new unit
+            this.updateTimeOptions();
+
+            // Update Start Date (End Date in UI)
+            const sdIn = getEl(`${ctx.prefix}StartDate`);
+            if(sdIn && labels.length > 0) {
+                 const lastLbl = labels[labels.length-1];
+                 let dateStr = lastLbl;
+                 // Normalize to YYYY-MM-DD
+                 if (unit === 'year' && /^\d{4}$/.test(lastLbl)) dateStr = `${lastLbl}-01-01`;
+                 if (unit === 'month' && /^\d{4}-\d{2}$/.test(lastLbl)) dateStr = `${lastLbl}-01`;
+
+                 // Ensure valid date object
+                 const d = new Date(dateStr);
+                 if(!isNaN(d.getTime())) {
+                     sdIn.value = d.toISOString().split('T')[0];
+                     sdIn.dataset.prev = sdIn.value;
+                 }
+            }
+
+            // Update Time Count
+            const tcIn = getEl(`${ctx.prefix}TimeCount`);
+            if(tcIn) {
+                const count = labels.length;
+                let exists = false;
+                for(let opt of tcIn.options) if(parseInt(opt.value) === count) exists = true;
+                if(!exists) {
+                    const opt = document.createElement('option');
+                    opt.value = count;
+                    opt.innerText = count;
+                    tcIn.appendChild(opt);
+                }
+                tcIn.value = count;
+            }
+
+            const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
+            seriesData.forEach((s, i) => s.color = colors[i % colors.length]);
+
+            this.renderTimeTable(seriesData, labels);
+            App.alert("CSV Parsed Successfully!");
+        };
+
+        if (hasData) {
+            App.confirm("Importing CSV will overwrite existing data. Proceed?", () => {
+                processCSV();
+            });
+        } else {
+            processCSV();
+        }
+    },
+
+    deleteTracker(index) {
+        if(index < 0 || index >= State.trackers.length) return;
+        App.confirm("Are you sure you want to delete this tracker?", () => {
+            State.trackers.splice(index, 1);
+            renderBoard();
+        });
+    },
+
+    submitTracker() {
+        const index = State.editingTrackerIndex;
+        const descIn = getEl('tkDesc');
+        const desc = descIn ? descIn.value : '';
+        const sizeRadio = document.querySelector('input[name="tkSize"]:checked');
+        const size = sizeRadio ? sizeRadio.value : 'M';
+        const heightRadio = document.querySelector('input[name="tkHeight"]:checked');
+        const height = heightRadio ? heightRadio.value : 'standard';
+
+        if (!desc) return App.alert("Title required");
+
+        const type = State.currentTrackerType;
+        let newTracker = { desc, type, size, height };
+
+        // Capture Timestamp
+        newTracker.lastUpdated = new Date().toISOString();
+
+        if (type === 'gauge') {
+            const mIn = getEl('tkMetric');
+            const cIn = getEl('tkComp');
+            const tIn = getEl('tkTotal');
+            const nIn = getEl('tkNotes'); // Capture Notes
+            const m = mIn ? mIn.value : '';
+            const c = cIn ? parseFloat(cIn.value) || 0 : 0;
+            const t = tIn ? parseFloat(tIn.value) || 0 : 0;
+            if(t<=0) return App.alert("Target must be a positive number.");
+            if(c>t) return App.alert("Progress cannot exceed the Target.");
+            newTracker.metric = m;
+            newTracker.completed = c;
+            newTracker.total = t;
+            newTracker.notes = nIn ? nIn.value : '';
+            newTracker.size = 'S'; // Force Small Size
+            const pcIn = getEl('tkPieColor');
+            newTracker.colorVal = pcIn ? pcIn.value : '#00e676';
+            const pc2In = getEl('tkPieColor2');
+            newTracker.color2 = pc2In ? pc2In.value : '#ff1744';
+        } else if (type === 'line' || type === 'bar') {
+            const ctx = this.getContext();
+            const yIn = getEl(`${ctx.prefix}YLabel`);
+            newTracker.yLabel = yIn ? yIn.value : '';
+
+            const series = this.scrapeTimeSeries();
+            const container = getEl(ctx.tableId);
+            const labels = container ? JSON.parse(container.dataset.labels || '[]') : [];
+
+            if (series.length === 0) return App.alert("Add at least one series");
+
+            const urIn = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
+            newTracker.timeUnit = urIn ? urIn.value : 'day';
+            const sdIn = getEl(`${ctx.prefix}StartDate`);
+            newTracker.startDate = sdIn ? sdIn.value : '';
+            const tcIn = getEl(`${ctx.prefix}TimeCount`);
+            newTracker.timeCount = tcIn ? parseInt(tcIn.value) : 7;
+
+            newTracker.labels = labels;
+            newTracker.series = series;
+
+            const styleRad = document.querySelector('input[name="tkDisplayStyle"]:checked');
+            newTracker.displayStyle = styleRad ? styleRad.value : 'line';
+
+            const lnIn = getEl('tkLineNotes');
+            newTracker.notes = lnIn ? lnIn.value : '';
+        } else if (type === 'counter') {
+            // New logic: scrape multiple counters
+            const rows = document.querySelectorAll('.counter-row');
+            const counters = [];
+            rows.forEach(row => {
+                const label = row.querySelector('.cr-label').value.trim();
+                const value = parseFloat(row.querySelector('.cr-value').value) || 0;
+                const color = row.querySelector('.cr-color').value;
+                counters.push({ label, value, color });
+            });
+
+            if (counters.length === 0) {
+                // Fallback or alert? Let's just create one default if empty
+                counters.push({ label: '', value: 0, color: '#bb86fc' });
+            }
+
+            newTracker.counters = counters;
+            newTracker.value = counters[0].value;
+            newTracker.subtitle = counters[0].label;
+            newTracker.color1 = counters[0].color;
+
+            const cnIn = getEl('tkCounterNotes');
+            newTracker.notes = cnIn ? cnIn.value : '';
+            newTracker.size = 'S'; // Force Small Size
+
+        } else if (type === 'rag') {
+            newTracker.type = 'rag';
+            const rsIn = getEl('tkRagStatus');
+            newTracker.status = rsIn ? rsIn.value : 'grey';
+            const rmIn = getEl('tkRagMsg');
+            newTracker.message = rmIn ? rmIn.value : '';
+            const rnIn = getEl('tkRagNotes');
+            newTracker.notes = rnIn ? rnIn.value : '';
+            newTracker.size = 'S'; // Force Small Size
+            newTracker.color1 = (newTracker.status === 'green' ? '#00e676' : (newTracker.status === 'amber' ? '#ffb300' : (newTracker.status === 'red' ? '#ff1744' : '#666666')));
+        } else if (type === 'note') {
+            const contentIn = getEl('tkNoteContent');
+            newTracker.content = contentIn ? contentIn.value : '';
+            const alignRad = document.querySelector('input[name="tkNoteAlign"]:checked');
+            newTracker.align = alignRad ? alignRad.value : 'left';
+            newTracker.notes = ''; // No notes for Note Tracker
+        } else if (type === 'waffle') {
+            const wmIn = getEl('tkWaffleMetric');
+            const wtIn = getEl('tkWaffleTotal');
+            const waIn = getEl('tkWaffleActive');
+            const wnIn = getEl('tkWaffleNotes');
+
+            const total = wtIn ? (parseInt(wtIn.value) || 100) : 100;
+            const active = waIn ? (parseInt(waIn.value) || 0) : 0;
+            const maxWaffle = (State.config && State.config.maxWaffle) ? State.config.maxWaffle : 450;
+
+            if (total <= 0) return App.alert("Target must be a positive number.");
+            if (total > maxWaffle) return App.alert(`Target cannot exceed ${maxWaffle}.`);
+            if (active > total) return App.alert("Progress cannot exceed the Target.");
+
+            newTracker.metric = wmIn ? wmIn.value : '';
+            newTracker.total = total;
+            newTracker.active = active;
+            newTracker.notes = wnIn ? wnIn.value : '';
+            newTracker.size = total < 201 ? 'S' : 'M'; // Inferred size
+
+            const wcIn = getEl('tkWaffleColorVal');
+            newTracker.colorVal = wcIn ? wcIn.value : '#228B22';
+            const wbIn = getEl('tkWaffleColorBg');
+            newTracker.colorBg = wbIn ? wbIn.value : '#696969';
+        } else if (type === 'donut') {
+            const rows = document.querySelectorAll('.donut-row');
+            const dataPoints = [];
+            rows.forEach(row => {
+                const label = row.querySelector('.dr-label').value.trim();
+                const value = parseFloat(row.querySelector('.dr-value').value) || 0;
+                if (label) dataPoints.push({ label, value });
+            });
+            if (dataPoints.length === 0) return App.alert("At least one data point with a label is required.");
+            newTracker.dataPoints = dataPoints;
+            const notesIn = getEl('tkDonutNotes');
+            newTracker.notes = notesIn ? notesIn.value : '';
+            newTracker.size = size; // Use selected size
+        } else if (type === 'event') {
+            const rows = document.querySelectorAll('.event-row');
+            const events = [];
+            rows.forEach(row => {
+                const name = row.querySelector('.er-name').value.trim();
+                const date = row.querySelector('.er-date').value;
+                if (name && date) events.push({ name, date });
+            });
+            if (events.length === 0) return App.alert("At least one event with a name and date is required.");
+            newTracker.events = events;
+            const notesIn = getEl('tkEventNotes');
+            newTracker.notes = notesIn ? notesIn.value : '';
+            newTracker.size = size; // Explicitly set size
+        } else if (type === 'gantt') {
+            const rows = document.querySelectorAll('.gantt-row');
+            const tasks = [];
+            rows.forEach(row => {
+                const name = row.querySelector('.gr-name').value.trim();
+                const start = row.querySelector('.gr-start').value;
+                const end = row.querySelector('.gr-end').value;
+                const status = row.querySelector('.gr-status').value;
+                if (name && start && end) tasks.push({ name, start, end, status });
+            });
+            if (tasks.length === 0) return App.alert("At least one task with name and dates is required.");
+            newTracker.tasks = tasks;
+            const notesIn = getEl('tkGanttNotes');
+            newTracker.notes = notesIn ? notesIn.value : '';
+            newTracker.size = size;
         }
 
         if(index === -1) {
@@ -1395,197 +2703,6 @@ export const TrackerManager = {
         ModalManager.closeModal('trackerModal');
         renderBoard();
         console.log("Tracker saved:", type);
-    }
-};
-
-export const UserManager = {
-    openUserModal: (index = -1) => {
-        const isEdit = index > -1;
-        getEl('modalTitle').innerText = isEdit ? 'Edit User' : 'Add User';
-        getEl('editIndex').value = index;
-        
-        const m = isEdit ? State.members[index] : {
-            name: '',
-            lastWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}] },
-            thisWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], load: ['N','N','N','N','N','X','X'] },
-            nextWeek: { tasks: [{text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}], load: ['N','N','N','N','N','X','X'] }
-        };
-
-        getEl('mName').value = m.name || '';
-        
-        // Populate tasks
-        for(let i=1; i<=3; i++) {
-            getEl('lwTask'+i).value = m.lastWeek.tasks[i-1]?.text || '';
-            getEl('nwTask'+i).value = m.thisWeek.tasks[i-1]?.text || '';
-            getEl('fwTask'+i).value = m.nextWeek.tasks[i-1]?.text || '';
-        }
-
-        // Loads
-        const defaultLoad = ['N','N','N','N','N','X','X'];
-        const thisLoad = (m.thisWeek && m.thisWeek.load) ? [...m.thisWeek.load, ...defaultLoad.slice(m.thisWeek.load.length)] : defaultLoad;
-        const nextLoad = (m.nextWeek && m.nextWeek.load) ? [...m.nextWeek.load, ...defaultLoad.slice(m.nextWeek.load.length)] : defaultLoad;
-        
-        thisLoad.forEach((v, i) => UserManager.setLoad(i, v));
-        nextLoad.forEach((v, i) => UserManager.setFutureLoad(i, v));
-
-        // On Call
-        const defaultOnCall = [false, false, false, false, false, false, false];
-        const thisOnCall = (m.thisWeek && m.thisWeek.onCall) ? [...m.thisWeek.onCall, ...defaultOnCall.slice(m.thisWeek.onCall.length)] : defaultOnCall;
-        const nextOnCall = (m.nextWeek && m.nextWeek.onCall) ? [...m.nextWeek.onCall, ...defaultOnCall.slice(m.nextWeek.onCall.length)] : defaultOnCall;
-
-        thisOnCall.forEach((v, i) => { const el = getEl('nwOc'+i); if(el) el.checked = v; });
-        nextOnCall.forEach((v, i) => { const el = getEl('fwOc'+i); if(el) el.checked = v; });
-
-        getEl('mNotes').value = m.notes || '';
-
-        getEl('deleteBtn').style.display = isEdit ? 'block' : 'none';
-        ModalManager.openModal('userModal');
-    },
-    setStatus: (status) => {
-        getEl('lwStatus').value = status;
-        document.querySelectorAll('.status-option').forEach(el => {
-            el.classList.toggle('selected', el.classList.contains('so-' + status));
-        });
-    },
-    setLoad: (day, val) => {
-        getEl('nw' + day).value = val;
-        // Search globally for all load select rows
-        const rows = document.querySelectorAll('.load-select-row');
-        if (rows.length > 0) {
-            const boxes = rows[0].querySelectorAll('.ls-box');
-            if (boxes[day]) {
-                boxes[day].querySelectorAll('.w-pill').forEach(p => {
-                    const text = p.innerText;
-                    const expected = (val === 'N' ? 'M' : (val === 'L' ? 'L' : (val === 'R' ? 'H' : 'A')));
-                    p.classList.toggle('selected', text === expected);
-                });
-            }
-        }
-    },
-    setFutureLoad: (day, val) => {
-        getEl('fw' + day).value = val;
-        const rows = document.querySelectorAll('.load-select-row');
-        if (rows.length > 1) {
-            const boxes = rows[1].querySelectorAll('.ls-box');
-            if (boxes[day]) {
-                boxes[day].querySelectorAll('.w-pill').forEach(p => {
-                    const text = p.innerText;
-                    const expected = (val === 'N' ? 'M' : (val === 'L' ? 'L' : (val === 'R' ? 'H' : 'A')));
-                    p.classList.toggle('selected', text === expected);
-                });
-            }
-        }
-    },
-    submitUser: () => {
-        const idx = parseInt(getEl('editIndex').value);
-        const name = getEl('mName').value.trim();
-        if(!name) return App.alert("Name is required");
-
-        const member = {
-            name,
-            notes: getEl('mNotes').value.trim(),
-            lastWeek: {
-                onCall: (idx > -1 && State.members[idx].lastWeek?.onCall) ? State.members[idx].lastWeek.onCall : [],
-                tasks: [
-                    { text: getEl('lwTask1').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[0]?.isTeamSuccess || false) : false },
-                    { text: getEl('lwTask2').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[1]?.isTeamSuccess || false) : false },
-                    { text: getEl('lwTask3').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[2]?.isTeamSuccess || false) : false }
-                ]
-            },
-            thisWeek: {
-                load: [
-                    getEl('nw0').value, getEl('nw1').value, getEl('nw2').value, getEl('nw3').value, getEl('nw4').value,
-                    getEl('nw5').value, getEl('nw6').value
-                ],
-                onCall: [
-                    getEl('nwOc0').checked, getEl('nwOc1').checked, getEl('nwOc2').checked, getEl('nwOc3').checked, getEl('nwOc4').checked,
-                    getEl('nwOc5').checked, getEl('nwOc6').checked
-                ],
-                tasks: [
-                    { text: getEl('nwTask1').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[0]?.isTeamSuccess || false) : false },
-                    { text: getEl('nwTask2').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[1]?.isTeamSuccess || false) : false },
-                    { text: getEl('nwTask3').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[2]?.isTeamSuccess || false) : false }
-                ]
-            },
-            nextWeek: {
-                load: [
-                    getEl('fw0').value, getEl('fw1').value, getEl('fw2').value, getEl('fw3').value, getEl('fw4').value,
-                    getEl('fw5').value, getEl('fw6').value
-                ],
-                onCall: [
-                    getEl('fwOc0').checked, getEl('fwOc1').checked, getEl('fwOc2').checked, getEl('fwOc3').checked, getEl('fwOc4').checked,
-                    getEl('fwOc5').checked, getEl('fwOc6').checked
-                ],
-                tasks: [
-                    { text: getEl('fwTask1').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[0]?.isTeamActivity || false) : false },
-                    { text: getEl('fwTask2').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[1]?.isTeamActivity || false) : false },
-                    { text: getEl('fwTask3').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[2]?.isTeamActivity || false) : false }
-                ]
-            }
-        };
-
-        if(idx === -1) State.members.push(member);
-        else State.members[idx] = member;
-
-        ModalManager.closeModal('userModal');
-        renderBoard();
-    },
-    deleteUser: () => {
-        const idx = parseInt(getEl('editIndex').value);
-        App.confirm("Delete this user?", () => {
-            State.members.splice(idx, 1);
-            ModalManager.closeModal('userModal');
-            renderBoard();
-        });
-    },
-    toggleSuccess: (mIdx, tIdx) => {
-        State.members[mIdx].lastWeek.tasks[tIdx].isTeamSuccess = !State.members[mIdx].lastWeek.tasks[tIdx].isTeamSuccess;
-        renderBoard();
-    },
-    toggleActivity: (mIdx, tIdx) => {
-        State.members[mIdx].thisWeek.tasks[tIdx].isTeamSuccess = !State.members[mIdx].thisWeek.tasks[tIdx].isTeamSuccess;
-        renderBoard();
-    },
-    toggleFuture: (mIdx, tIdx) => {
-        State.members[mIdx].nextWeek.tasks[tIdx].isTeamActivity = !State.members[mIdx].nextWeek.tasks[tIdx].isTeamActivity;
-        renderBoard();
-    },
-    resetSelections: (type) => {
-        State.members.forEach(m => {
-            if(type === 'success') {
-                m.lastWeek.tasks.forEach(t => t.isTeamSuccess = false);
-                m.thisWeek.tasks.forEach(t => t.isTeamSuccess = false);
-            } else {
-                m.nextWeek.tasks.forEach(t => t.isTeamActivity = false);
-            }
-        });
-        renderBoard();
-    }
-};
-
-export const OverviewManager = {
-    handleOverviewClick: (type) => {
-        if(document.body.classList.contains('publishing')) {
-            const list = type === 'success' ? getEl('teamSuccessList') : getEl('teamActivityList');
-            const title = type === 'success' ? 'Team Achievements' : 'Activities Next Week';
-            const body = `<div class="zoomed-content"><ul>${list.innerHTML}</ul></div>`;
-            getEl('zoomTitle').innerText = title;
-            getEl('zoomBody').innerHTML = body;
-            ModalManager.openModal('zoomModal');
-        }
-    },
-    handleInfoClick: () => {
-        if(!document.body.classList.contains('publishing')) {
-            const val = prompt("Enter Additional Info (Markdown supported):", State.additionalInfo);
-            if(val !== null) {
-                State.additionalInfo = val;
-                renderBoard();
-            }
-        } else {
-            getEl('zoomTitle').innerText = "Additional Info";
-            getEl('zoomBody').innerHTML = `<div class="zoomed-content">${parseMarkdown(State.additionalInfo)}</div>`;
-            ModalManager.openModal('zoomModal');
-        }
     }
 };
 
@@ -1734,6 +2851,39 @@ export const DataLoader = {
         };
         reader.readAsText(file);
         input.value = '';
+    },
+    syncFromGitHub: async () => {
+        const repo = State.config.githubRepo;
+        if (!repo) return App.alert("Please configure a GitHub Repo in Settings.");
+
+        App.alert("Syncing data from GitHub...");
+        let updatedCount = 0;
+
+        // Iterate through existing members and try to fetch their data
+        for (let i = 0; i < State.members.length; i++) {
+            const member = State.members[i];
+            // Assume filename is Name.json (spaces replaced? let's try direct first)
+            // Or "Steve-short.json" per prompt example.
+            // Simple strategy: Try "Name.json"
+            const filename = member.name.replace(/\s+/g, '-') + ".json";
+            const url = `https://raw.githubusercontent.com/${repo}/main/user/${filename}`;
+
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const userData = await response.json();
+                    // Merge logic: Update tasks/availability if present in JSON
+                    // Expecting JSON structure similar to member object
+                    State.members[i] = { ...member, ...userData };
+                    updatedCount++;
+                }
+            } catch (e) {
+                console.warn(`Failed to fetch for ${member.name}:`, e);
+            }
+        }
+
+        renderBoard();
+        App.alert(`Sync complete. Updated ${updatedCount} users.`);
     }
 };
 

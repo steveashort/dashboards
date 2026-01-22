@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Platforms Tracker v30 (Fixed)</title>
+    <title>Server Platforms Tracker v35</title>
     <!-- Load Styles -->
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -31,11 +31,12 @@
             <button class="btn" onclick="document.getElementById('fileInput').click()">Load Data</button>
             <button class="btn" onclick="DataSaver.saveData()">Save JSON</button>
             <button class="btn" onclick="App.togglePublishMode()">Publish View</button>
+            <button class="btn" onclick="ModalManager.openModal('settingsModal')" title="Settings">&#9881;</button>
         </div>
     </header>
 
     <div class="container">
-        <div class="team-overview-panel">
+        <div class="team-overview-panel" id="teamOverviewPanel">
             <div class="overview-col" onclick="OverviewManager.handleOverviewClick('success')">
                 <h4 id="overviewTitleCurrent">Top 5 Team Achievements</h4>
                 <div class="edit-hint">(Check max 5 boxes in Last Week)</div>
@@ -64,6 +65,7 @@
         <div id="ganttSection" style="margin-bottom: 3rem; display: none;">
             <div class="section-header">
                 <h3 style="color:var(--accent); font-weight:300;">Resource Planner</h3>
+                <button class="btn btn-sm" onclick="DataLoader.syncFromGitHub()" title="Sync user data from GitHub" style="margin-left:auto; display:none;" id="githubSyncBtn">Sync GitHub</button>
             </div>
             <div id="resourceAggregateChart" style="margin-bottom: 1.5rem; height: 200px;"></div>
             <div id="ganttContainer" style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem; overflow-x:auto;"></div>
@@ -111,6 +113,51 @@
                 <button class="btn" onclick="ModalManager.closeModal('zoomModal')">&times;</button>
             </div>
             <div class="modal-body" id="zoomBody"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 style="color:var(--accent);">Settings</h3>
+                <button class="btn" onclick="ModalManager.closeModal('settingsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row" style="display:flex; flex-direction:column; gap:1rem;">
+                    <div class="input-group">
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                            <input type="checkbox" id="cfgShowTopSection" checked style="width:auto; margin:0;">
+                            Show Team Achievements in Publish Mode
+                        </label>
+                    </div>
+                    <div class="input-group">
+                        <label>Max Series (Time Series)</label>
+                        <input type="number" id="cfgMaxSeries" min="1" max="20" placeholder="Default: 6">
+                    </div>
+                    <div class="input-group">
+                        <label>Max Events (Timeline)</label>
+                        <input type="number" id="cfgMaxEvents" min="1" max="50" placeholder="Default: 20">
+                    </div>
+                    <div class="input-group">
+                        <label>Max Donut Segments</label>
+                        <input type="number" id="cfgMaxDonut" min="1" max="20" placeholder="Default: 10">
+                    </div>
+                    <div class="input-group">
+                        <label>Max Waffle Size (Cells)</label>
+                        <input type="number" id="cfgMaxWaffle" min="100" max="1000" placeholder="Default: 450">
+                    </div>
+                    <div class="input-group" style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
+                        <label>GitHub Repo (User Data)</label>
+                        <input type="text" id="cfgGithubRepo" placeholder="username/repo-name">
+                        <div style="font-size:0.7rem; color:#888; margin-top:2px;">
+                            Reads from: <code>https://raw.githubusercontent.com/[repo]/main/user/[Name].json</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="SettingsManager.saveSettings()">Save Changes</button>
+            </div>
         </div>
     </div>
 
@@ -209,179 +256,118 @@
                     <button id="typeNoteBtn" class="type-option" onclick="TrackerManager.setType('note')">Note</button>
                     <button id="typeDonutBtn" class="type-option" onclick="TrackerManager.setType('donut')">Donut Chart</button>
                     <button id="typeEventBtn" class="type-option" onclick="TrackerManager.setType('event')">Timeline</button>
+                    <button id="typeGanttBtn" class="type-option" onclick="TrackerManager.setType('gantt')">Project Gantt</button>
                 </div>
                 <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
                     <div class="input-group" style="flex: 2;">
                         <label>Chart Title</label>
                         <input type="text" id="tkDesc">
                     </div>
-                    <div class="input-group" style="flex: 0 0 180px;" id="sizeContainer">
-                        <label>Size</label>
-                        <div id="tkSize" style="display:flex; gap:15px; margin-top:5px;">
-                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="S"> S</label>
-                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="M" checked> M</label>
-                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="L"> L</label>
-                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="XL"> XL</label>
+                    <div class="input-group" style="flex: 0 0 250px;" id="sizeContainer">
+                        <label>Size & Height</label>
+                        <div style="display:flex; flex-direction: column; gap: 5px;">
+                            <div id="tkSize" style="display:flex; gap:15px; margin-top:5px;">
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="S"> S</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="M" checked> M</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="L"> L</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="XL"> XL</label>
+                            </div>
+                            <div id="tkHeight" style="display:flex; gap:15px; font-size:0.8rem;">
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkHeight" value="standard" checked> Standard</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkHeight" value="tall"> Tall</label>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                                <div id="gaugeInputs">
-
-                                    <div class="input-group"><label>Metric Unit</label><input type="text" id="tkMetric" maxlength="15"></div>
-
-                                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
-
-                                        <div class="input-group"><label>Target</label><input type="number" id="tkTotal"></div>
-
-                                        <div class="input-group"><label>Progress</label><input type="number" id="tkComp"></div>
-
-                                    </div>
-
-                                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
-
-                                        <div class="input-group">
-
-                                            <label>Target Colour</label>
-
-                                            <input type="color" id="tkPieColor" value="#696969">
-
-                                        </div>
-
-                                        <div class="input-group">
-
-                                            <label>Progress Colour</label>
-
-                                            <input type="color" id="tkPieColor2" value="#228B22">
-
-                                        </div>
-
-                                    </div>
-
-                                    <div class="input-group" style="margin-top: 1rem;">
-
-                                        <label>Notes for Published View (Max 200 chars)</label>
-
-                                        <textarea id="tkNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
-
-                                    </div>
-
-                                </div>
-
-                                <div id="lineInputs" style="display:none;">
-
-                                    <div class="form-row" style="margin-bottom: 1rem; gap: 2rem;">
-
-                                        <div class="input-group">
-
-                                            <label>Metric Unit</label>
-
-                                            <input type="text" id="tkYLabel" maxlength="15">
-
-                                        </div>
-
-                                        <div class="input-group">
-
-                                            <label>Chart Style</label>
-
-                                            <div style="display:flex; gap:15px; margin-top:5px;">
-
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="line" checked> Line Chart</label>
-
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="bar"> Bar Chart</label>
-
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
-                                    <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end; display: flex; gap: 2rem;">
-
-                                        <div class="input-group">
-
-                                            <label>End Date</label>
-
-                                            <input type="date" id="tkStartDate" onchange="TrackerManager.handleEndDateChange(this)" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
-
-                                        </div>
-
-                                        <div class="input-group">
-
-                                            <label>Time Unit</label>
-
-                                            <div style="display: flex; gap: 15px; margin-top: 5px;" id="tkTimeUnitContainer">
-
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="day" checked onchange="TrackerManager.handleTimeUnitChange(this)"> Days</label>
-
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="month" onchange="TrackerManager.handleTimeUnitChange(this)"> Months</label>
-
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="year" onchange="TrackerManager.handleTimeUnitChange(this)"> Years</label>
-
-                                            </div>
-
-                                        </div>
-
-                                        <div class="input-group">
-
-                                            <label id="tkHistoricLabel">Historic Days</label>
-
-                                            <select id="tkTimeCount" onchange="TrackerManager.handleCountChange(this)" style="width: 80px; min-width: 60px;"></select>
-
-                                        </div>
-
-                                    </div>
-
-                                    <div class="input-group">
-
-                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-
-                                            <label>Manual Data Entry</label>
-
-                                        </div>
-
-                                        <div id="lineTableContainer" style="max-height: 450px; overflow: auto; border: 1px solid #333; border-radius: 4px;"></div>
-
-                                        <div style="margin-top: 10px; display:flex; justify-content:flex-end;">
-
-                                            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); display: none;" onclick="TrackerManager.deleteSelectedSeries()">Delete Series</button>
-
-                                        </div>
-
-                                    </div>
-
-                                    <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-top: 1rem;">
-
-                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-
-                                            <label style="margin:0;">Import / Export Data</label>
-
-                                            <button class="btn btn-sm" onclick="TrackerManager.exportTimeSeriesCSV()">Export Table to CSV</button>
-
-                                        </div>
-
-                                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
-
-                                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
-
-                                    </div>
-
-                                    <div class="input-group" style="margin-top: 1rem;">
-                                        <label>Notes for Published View (Max 200 chars)</label>
-                                        <textarea id="tkLineNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
-                                    </div>
-
-                                </div>
-
-                                                <div id="waffleInputs" style="display:none;">
+                <div id="gaugeInputs">
+                    <div class="input-group"><label>Metric Unit</label><input type="text" id="tkMetric" maxlength="15"></div>
+                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
+                        <div class="input-group"><label>Target</label><input type="number" id="tkTotal"></div>
+                        <div class="input-group"><label>Progress</label><input type="number" id="tkComp"></div>
+                    </div>
+                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Target Colour</label>
+                            <div class="color-picker-container" id="tkPieColorPicker" data-input-id="tkPieColor"></div>
+                            <input type="hidden" id="tkPieColor" value="#696969">
+                        </div>
+                        <div class="input-group">
+                            <label>Progress Colour</label>
+                            <div class="color-picker-container" id="tkPieColor2Picker" data-input-id="tkPieColor2"></div>
+                            <input type="hidden" id="tkPieColor2" value="#228B22">
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
+
+                <div id="lineInputs" style="display:none;">
+                    <div class="form-row" style="margin-bottom: 1rem; gap: 2rem;">
+                        <div class="input-group">
+                            <label>Metric Unit</label>
+                            <input type="text" id="tkYLabel" maxlength="15">
+                        </div>
+                        <div class="input-group">
+                            <label>Chart Style</label>
+                            <div style="display:flex; gap:15px; margin-top:5px;">
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="line" checked> Line Chart</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="bar"> Bar Chart</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end; display: flex; gap: 2rem;">
+                        <div class="input-group">
+                            <label>End Date</label>
+                            <input type="date" id="tkStartDate" onchange="TrackerManager.handleEndDateChange(this)" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                        </div>
+                        <div class="input-group">
+                            <label>Time Unit</label>
+                            <div style="display: flex; gap: 15px; margin-top: 5px;" id="tkTimeUnitContainer">
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="day" checked onchange="TrackerManager.handleTimeUnitChange(this)"> Days</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="month" onchange="TrackerManager.handleTimeUnitChange(this)"> Months</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="year" onchange="TrackerManager.handleTimeUnitChange(this)"> Years</label>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label id="tkHistoricLabel">Historic Days</label>
+                            <select id="tkTimeCount" onchange="TrackerManager.handleCountChange(this)" style="width: 80px; min-width: 60px;"></select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <label>Manual Data Entry</label>
+                        </div>
+                        <div id="lineTableContainer" style="max-height: 450px; overflow: auto; border: 1px solid #333; border-radius: 4px;"></div>
+                        <div style="margin-top: 10px; display:flex; justify-content:flex-end;">
+                            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); display: none;" onclick="TrackerManager.deleteSelectedSeries()">Delete Series</button>
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-top: 1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <label style="margin:0;">Import / Export Data</label>
+                            <button class="btn btn-sm" onclick="TrackerManager.exportTimeSeriesCSV()">Export Table to CSV</button>
+                        </div>
+                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
+                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkLineNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
+
+                <div id="waffleInputs" style="display:none;">
                     <div class="input-group">
                         <label>Metric Unit</label>
                         <input type="text" id="tkWaffleMetric" maxlength="15">
                     </div>
                     <div class="form-row" style="margin-bottom:0; gap:1rem;">
                         <div class="input-group">
-                            <label>Target (Max 450)</label>
-                            <input type="number" id="tkWaffleTotal" max="450">
+                            <label>Target</label>
+                            <input type="number" id="tkWaffleTotal">
                         </div>
                         <div class="input-group">
                             <label>Progress</label>
@@ -391,11 +377,13 @@
                     <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
                         <div class="input-group">
                             <label>Target Colour</label>
-                            <input type="color" id="tkWaffleColorBg" value="#696969">
+                            <div class="color-picker-container" id="tkWaffleColorBgPicker" data-input-id="tkWaffleColorBg"></div>
+                            <input type="hidden" id="tkWaffleColorBg" value="#696969">
                         </div>
                         <div class="input-group">
                             <label>Progress Colour</label>
-                            <input type="color" id="tkWaffleColorVal" value="#228B22">
+                            <div class="color-picker-container" id="tkWaffleColorValPicker" data-input-id="tkWaffleColorVal"></div>
+                            <input type="hidden" id="tkWaffleColorVal" value="#228B22">
                         </div>
                     </div>
                     <div class="input-group" style="margin-top: 1rem;">
@@ -405,203 +393,124 @@
                 </div>
 
                 <div id="counterInputs" style="display:none;">
-
-                                                    <div class="form-row" style="margin-bottom: 0; gap: 1rem;">
-
-                                                                                <div class="input-group" style="flex: 1;">
-
-                                                                                    <label>Counter Value</label>
-
-                                                                                    <input type="number" id="tkCounterVal" min="0" max="9999999">
-
-                                                                                </div>
-
-                                                        <div class="input-group" style="flex: 0 0 100px;">
-
-                                                            <label>Font Color</label>
-
-                                                            <input type="color" id="tkCounterColor" value="#bb86fc">
-
-                                                        </div>
-
-                                                    </div>
-
-                                                    <div class="input-group">
-
-                                                        <label>Status Message</label>
-
-                                                        <input type="text" id="tkCounterSub" maxlength="15" placeholder="e.g. Active Incidents">
-
-                                                    </div>
-
-                                                    <div class="input-group" style="margin-top: 1rem;">
-
-                                                        <label>Notes for Published View (Max 200 chars)</label>
-
-                                                        <textarea id="tkCounterNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
-
-                                                    </div>
-
-                                                </div>
-
-                                <div id="ragInputs" style="display:none;">
-
-                                    <div class="input-group">
-
-                                        <label>Status</label>
-
-                                                                <div class="rag-selector">
-
-                                                                    <div class="rag-pill" data-val="green" onclick="TrackerManager.selectRag('green')">
-
-                                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-
-                                                                          <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-                                                                          <path d="M22 4L12 14.01L9 11.01" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-                                                                        </svg>
-
-                                                                    </div>
-
-                                                                    <div class="rag-pill" data-val="amber" onclick="TrackerManager.selectRag('amber')">
-
-                                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-
-                                                                          <path d="M10.29 3.86L1.82 18C1.64556 18.3024 1.55293 18.6453 1.55196 18.9945C1.55098 19.3437 1.64171 19.6871 1.81506 19.991C1.98841 20.2949 2.23846 20.5487 2.54076 20.7275C2.84306 20.9063 3.18721 21.0041 3.54 21H20.46C20.8128 21.0041 21.1569 20.9063 21.4592 20.7275C21.7615 20.5487 22.0116 20.2949 22.1849 19.991C22.3583 19.6871 22.449 19.3437 22.448 18.9945C22.4471 18.6453 22.3544 18.3024 22.18 18L13.71 3.86C13.5317 3.56613 13.2807 3.32314 12.9812 3.15449C12.6817 2.98585 12.3437 2.89722 12 2.89722C11.6563 2.89722 11.3183 2.98585 11.0188 3.15449C10.7193 3.32314 10.4683 3.56613 10.29 3.86V3.86Z" fill="#D97706" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-                                                                          <path d="M12 9V13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-                                                                          <path d="M12 17H12.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-                                                                        </svg>
-
-                                                                    </div>
-
-                                                                    <div class="rag-pill" data-val="red" onclick="TrackerManager.selectRag('red')">
-
-                                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-
-                                                                          <path d="M7.86 2H16.14L22 7.86V16.14L16.14 22H7.86L2 16.14V7.86L7.86 2Z" fill="#DC2626" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-                                                                          <path d="M15 9L9 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-                                                                          <path d="M9 9L15 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-                                                                        </svg>
-
-                                                                    </div>
-
-                                                                    <div class="rag-pill" data-val="grey" onclick="TrackerManager.selectRag('grey')">
-
-                                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-
-                                                                          <circle cx="12" cy="12" r="10" fill="#9CA3AF" />
-
-                                                                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-
-                                                                        </svg>
-
-                                                                    </div>
-
-                                                                </div>
-
-                                        <input type="hidden" id="tkRagStatus">
-
-                                    </div>
-
-                                                        <div class="input-group">
-
-                                                            <label>Status Message</label>
-
-                                                            <input type="text" id="tkRagMsg" maxlength="15" placeholder="e.g. All Systems Operational">
-
-                                                        </div>
-
-                                                        <div class="input-group" style="margin-top: 1rem;">
-
-                                                            <label>Notes for Published View (Max 200 chars)</label>
-
-                                                            <textarea id="tkRagNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
-
-                                                        </div>
-
-                                                    </div>
-
-                                                                                                <div id="noteInputs" style="display:none;">
-
-                                                                                                    <div class="input-group">
-
-                                                                                                        <label>Content (Markdown supported)</label>
-
-                                                                                                        <textarea id="tkNoteContent" style="height: 200px; font-family: monospace;" placeholder="# Heading&#10;- Bullet&#10;**Bold**&#10;[Link](google.com)"></textarea>
-
-                                                                                                    </div>
-
-                                                                                                    <div class="input-group">
-                                                                                                        <label>Text Alignment</label>
-                                                                                                        <div style="display:flex; gap:15px; margin-top:5px;">
-                                                                                                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="left" checked> Left</label>
-                                                                                                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="center"> Center</label>
-                                                                                                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="right"> Right</label>
-                                                                                                        </div>
-                                                                                                    </div>
-
-                                                                                                </div>
-
-                                                                                                <div id="eventInputs" style="display:none;">
-                                                                                                    <div class="input-group">
-                                                                                                        <label>Events (Max 20)</label>
-                                                                                                        <div id="eventDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
-                                                                                                            <!-- Rows will be added here -->
-                                                                                                        </div>
-                                                                                                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addEventRow()">+ Add Event</button>
-                                                                                                    </div>
-                                                                                                    <div class="input-group" style="margin-top: 1rem;">
-                                                                                                        <label>Notes for Published View (Max 200 chars)</label>
-                                                                                                        <textarea id="tkEventNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
-                                                                                                    </div>
-                                                                                                </div>
-
-                                                                
-
-                                                                                                <div id="donutInputs" style="display:none;">
-
-                                                                                                    <div class="input-group">
-
-                                                                                                        <label>Segments (Max 10)</label>
-
-                                                                                                        <div id="donutDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
-
-                                                                                                            <!-- Rows will be added here -->
-
-                                                                                                        </div>
-
-                                                                                                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addDonutRow()">+ Add Segment</button>
-
-                                                                                                    </div>
-
-                                                                                                    <div class="input-group" style="margin-top: 1rem;">
-
-                                                                                                        <label>Notes for Published View (Max 200 chars)</label>
-
-                                                                                                        <textarea id="tkDonutNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
-
-                                                                                                    </div>
-
-                                                                                                </div>
-
-                                                                            </div>
-
-                                                                            <div class="modal-footer">
-
-                                                                                <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Tracker</button>
-
-                                                                            </div>
-
-                                                                        </div>
-
-                                                                    </div>
+                    <div class="input-group">
+                        <label>Counters (Max 10)</label>
+                        <div id="counterDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+                            <!-- Rows will be added here -->
+                        </div>
+                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addCounterRow()">+ Add Counter</button>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkCounterNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
+
+                <div id="ragInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Status</label>
+                        <div class="rag-selector">
+                            <div class="rag-pill" data-val="green" onclick="TrackerManager.selectRag('green')">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M22 4L12 14.01L9 11.01" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="rag-pill" data-val="amber" onclick="TrackerManager.selectRag('amber')">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M10.29 3.86L1.82 18C1.64556 18.3024 1.55293 18.6453 1.55196 18.9945C1.55098 19.3437 1.64171 19.6871 1.81506 19.991C1.98841 20.2949 2.23846 20.5487 2.54076 20.7275C2.84306 20.9063 3.18721 21.0041 3.54 21H20.46C20.8128 21.0041 21.1569 20.9063 21.4592 20.7275C21.7615 20.5487 22.0116 20.2949 22.1849 19.991C22.3583 19.6871 22.449 19.3437 22.448 18.9945C22.4471 18.6453 22.3544 18.3024 22.18 18L13.71 3.86C13.5317 3.56613 13.2807 3.32314 12.9812 3.15449C12.6817 2.98585 12.3437 2.89722 12 2.89722C11.6563 2.89722 11.3183 2.98585 11.0188 3.15449C10.7193 3.32314 10.4683 3.56613 10.29 3.86V3.86Z" fill="#D97706" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 9V13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M12 17H12.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="rag-pill" data-val="red" onclick="TrackerManager.selectRag('red')">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M7.86 2H16.14L22 7.86V16.14L16.14 22H7.86L2 16.14V7.86L7.86 2Z" fill="#DC2626" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M15 9L9 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path d="M9 9L15 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                            <div class="rag-pill" data-val="grey" onclick="TrackerManager.selectRag('grey')">
+                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="12" r="10" fill="#9CA3AF" />
+                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                                </svg>
+                            </div>
+                        </div>
+                        <input type="hidden" id="tkRagStatus">
+                    </div>
+                    <div class="input-group">
+                        <label>Status Message</label>
+                        <input type="text" id="tkRagMsg" maxlength="15" placeholder="e.g. All Systems Operational">
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkRagNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
+
+                <div id="noteInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Content (Markdown supported)</label>
+                        <textarea id="tkNoteContent" style="height: 200px; font-family: monospace;" placeholder="# Heading&#10;- Bullet&#10;**Bold**&#10;[Link](google.com)"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Text Alignment</label>
+                        <div style="display:flex; gap:15px; margin-top:5px;">
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="left" checked> Left</label>
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="center"> Center</label>
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="right"> Right</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="eventInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Events</label>
+                        <div id="eventDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+                            <!-- Rows will be added here -->
+                        </div>
+                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addEventRow()">+ Add Event</button>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkEventNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
+
+                <div id="donutInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Segments</label>
+                        <div id="donutDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+                            <!-- Rows will be added here -->
+                        </div>
+                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addDonutRow()">+ Add Segment</button>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkDonutNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
+
+                <div id="ganttInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Project Tasks</label>
+                        <div id="ganttDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+                            <!-- Rows -->
+                        </div>
+                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addGanttRow()">+ Add Task</button>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkGanttNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Tracker</button>
+            </div>
+        </div>
+    </div>
 
     <!-- LOAD SCRIPT LAST to ensure it's available -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
@@ -616,6 +525,7 @@
         window.TrackerManager = AppModule.TrackerManager;
         window.OverviewManager = AppModule.OverviewManager;
         window.ModalManager = AppModule.ModalManager;
+        window.SettingsManager = AppModule.SettingsManager;
         window.DataSaver = AppModule.DataSaver;
         window.DataLoader = AppModule.DataLoader;
         window.DataExporter = AppModule.DataExporter;

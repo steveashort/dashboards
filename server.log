@@ -1,6 +1,66 @@
-127.0.0.1 - - [21/Jan/2026 21:31:50] "GET /index.html HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jan/2026 21:31:50] "GET /styles.css HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jan/2026 21:31:50] code 404, message File not found
-127.0.0.1 - - [21/Jan/2026 21:31:50] "GET /logo.svg HTTP/1.1" 404 -
-127.0.0.1 - - [21/Jan/2026 21:31:50] "GET /app.js HTTP/1.1" 200 -
-127.0.0.1 - - [21/Jan/2026 21:31:50] "GET /charts.js HTTP/1.1" 200 -
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/http/server.py", line 1314, in <module>
+    test(
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/http/server.py", line 1261, in test
+    with ServerClass(addr, HandlerClass) as httpd:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/socketserver.py", line 457, in __init__
+    self.server_bind()
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/http/server.py", line 1308, in server_bind
+    return super().server_bind()
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/http/server.py", line 136, in server_bind
+    socketserver.TCPServer.server_bind(self)
+  File "/home/jules/.pyenv/versions/3.12.12/lib/python3.12/socketserver.py", line 478, in server_bind
+    self.socket.bind(self.server_address)
+OSError: [Errno 98] Address already in use
+127.0.0.1 - - [22/Jan/2026 01:45:11] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:45:11] "GET /styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:45:11] code 404, message File not found
+127.0.0.1 - - [22/Jan/2026 01:45:11] "GET /logo.svg HTTP/1.1" 404 -
+127.0.0.1 - - [22/Jan/2026 01:45:11] "GET /app.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:45:11] "GET /charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:47:09] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:47:09] "GET /styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:47:09] code 404, message File not found
+127.0.0.1 - - [22/Jan/2026 01:47:09] "GET /logo.svg HTTP/1.1" 404 -
+127.0.0.1 - - [22/Jan/2026 01:47:09] "GET /app.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:47:09] "GET /charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:47:39] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:47:39] "GET /styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:47:39] code 404, message File not found
+127.0.0.1 - - [22/Jan/2026 01:47:39] "GET /logo.svg HTTP/1.1" 404 -
+127.0.0.1 - - [22/Jan/2026 01:47:40] "GET /app.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:47:40] "GET /charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:48:49] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:48:49] code 404, message File not found
+127.0.0.1 - - [22/Jan/2026 01:48:49] "GET /logo.svg HTTP/1.1" 404 -
+127.0.0.1 - - [22/Jan/2026 01:48:49] "GET /styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:48:49] "GET /app.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:48:49] "GET /charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:49:47] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:49:47] "GET /styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:49:47] code 404, message File not found
+127.0.0.1 - - [22/Jan/2026 01:49:47] "GET /logo.svg HTTP/1.1" 404 -
+127.0.0.1 - - [22/Jan/2026 01:49:47] "GET /app.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:49:47] "GET /charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:50:57] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:50:57] "GET /styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:50:57] code 404, message File not found
+127.0.0.1 - - [22/Jan/2026 01:50:57] "GET /logo.svg HTTP/1.1" 404 -
+127.0.0.1 - - [22/Jan/2026 01:50:57] "GET /app.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:50:57] "GET /charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:52:58] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:52:58] "GET /styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:52:58] code 404, message File not found
+127.0.0.1 - - [22/Jan/2026 01:52:58] "GET /logo.svg HTTP/1.1" 404 -
+127.0.0.1 - - [22/Jan/2026 01:52:58] "GET /app.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:52:58] "GET /charts.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:53:41] "GET /index.html HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:53:41] "GET /styles.css HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:53:41] code 404, message File not found
+127.0.0.1 - - [22/Jan/2026 01:53:41] "GET /logo.svg HTTP/1.1" 404 -
+127.0.0.1 - - [22/Jan/2026 01:53:41] "GET /app.js HTTP/1.1" 200 -
+127.0.0.1 - - [22/Jan/2026 01:53:41] "GET /charts.js HTTP/1.1" 200 -
