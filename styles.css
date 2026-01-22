@@ -263,7 +263,9 @@ body.publishing .tracker-card.type-bar,
 body.publishing .tracker-card.type-note, 
 body.publishing .tracker-card.type-rag, 
 body.publishing .tracker-card.type-ryg, 
-body.publishing .tracker-card.type-waffle { 
+body.publishing .tracker-card.type-waffle,
+body.publishing .tracker-card.type-donut,
+body.publishing .tracker-card.type-event {
     cursor: zoom-in; 
 }
 body.publishing .member-card { cursor: default; }
@@ -383,4 +385,8 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 }
 .flash-icon {
     animation: flash 1s infinite;
+}
+
+.donut-row, .event-row {
+    display: flex; gap: 10px; margin-bottom: 5px;
 }

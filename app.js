@@ -1,5 +1,5 @@
 /**
- * SERVER PLATFORMS TRACKER v32
+ * SERVER PLATFORMS TRACKER v33
  * ES6 MODULE STRUCTURE
  */
 export { createGaugeSVG, createWaffleHTML, Visuals } from './charts.js';
@@ -292,9 +292,6 @@ export const App = {
 };
 
 // Override Visuals.renderResourcePlanner to use ApexCharts
-// Extending the imported Visuals object directly is tricky with ES modules if it's not mutable or if we want to replace it.
-// Instead, we'll attach a new method to the Visuals object if it's exported as an object, or just define a local function.
-// Since Visuals is imported, we can add properties to it if it's an object.
 Visuals.renderResourcePlanner = (members) => {
     // 1. Aggregate Data
     const dates = getTwoWeeksDates();
@@ -519,7 +516,7 @@ export const renderBoard = () => {
                  console.log("Card clicked. Type:", t.type, "Publishing:", document.body.classList.contains('publishing'));
                  if (document.body.classList.contains('publishing')) {
                      // Zoom requested
-                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'gauge'].includes(t.type);
+                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'gauge', 'event'].includes(t.type);
                      if (canZoom) ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
@@ -527,7 +524,7 @@ export const renderBoard = () => {
             };
 
             // Zoom Icon
-            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'gauge'].includes(t.type)) {
+            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'gauge', 'event'].includes(t.type)) {
                 card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
             }
 
@@ -631,6 +628,97 @@ export const renderBoard = () => {
                     plotOptions: { pie: { donut: { size: '60%' } } },
                     dataLabels: { enabled: false },
                     legend: { show: false }
+                };
+            } else if (renderType === 'event') {
+                const events = t.events || [];
+                // Sort by Date
+                events.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                // Prepare Series: x = Date, y = Alternating 1, -1
+                const data = events.map((e, i) => ({
+                    x: e.date,
+                    y: i % 2 === 0 ? 1 : -1,
+                    meta: e.name
+                }));
+
+                visualHTML = `<div id="${chartId}" style="width:100%; height:160px;"></div>`;
+
+                const common = getCommonApexOptions();
+                chartConfig = {
+                    ...common,
+                    chart: { ...common.chart, type: 'bar', height: 160, toolbar: { show: false } },
+                    series: [{ name: 'Timeline', data: data }],
+                    xaxis: {
+                        ...common.xaxis,
+                        type: 'datetime',
+                        labels: { show: true, format: 'dd MMM', style: { colors: '#aaa', fontSize: '10px' } },
+                        axisBorder: { show: false },
+                        axisTicks: { show: false },
+                        tooltip: { enabled: false }
+                    },
+                    yaxis: {
+                        min: -2, max: 2,
+                        show: false,
+                    },
+                    grid: {
+                        show: true,
+                        yaxis: { lines: { show: false } },
+                        xaxis: { lines: { show: false } },
+                        padding: { top: 0, bottom: 0 }
+                    },
+                    plotOptions: {
+                        bar: {
+                            columnWidth: '2%', // Very thin lines
+                            borderRadius: 0,
+                            colors: {
+                                ranges: [{ from: -10, to: 10, color: '#03dac6' }]
+                            },
+                            dataLabels: {
+                                position: 'top' // Ends of bars
+                            }
+                        }
+                    },
+                    annotations: {
+                        yaxis: [{
+                            y: 0,
+                            strokeDashArray: 0,
+                            borderColor: '#666',
+                            borderWidth: 1,
+                            width: '100%',
+                            opacity: 0.5
+                        }]
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function(val, opts) {
+                            try {
+                                return opts.w.config.series[0].data[opts.dataPointIndex].meta;
+                            } catch(e) { return ''; }
+                        },
+                        style: {
+                            fontSize: '9px',
+                            colors: ['#e0e0e0']
+                        },
+                        background: {
+                            enabled: true,
+                            foreColor: '#000',
+                            padding: 2,
+                            borderRadius: 2,
+                            opacity: 0.7,
+                            borderColor: '#333'
+                        }
+                    },
+                    tooltip: {
+                        custom: function({series, seriesIndex, dataPointIndex, w}) {
+                            const d = w.config.series[seriesIndex].data[dataPointIndex];
+                            if (!d) return '';
+                            const date = new Date(d.x).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                            return `<div style="padding:8px; background:#222; border:1px solid #444; font-size:12px;">
+                                <div style="font-weight:bold; color:#fff; margin-bottom:4px;">${d.meta}</div>
+                                <div style="color:#aaa;">${date}</div>
+                            </div>`;
+                        }
+                    }
                 };
             }
 
@@ -880,6 +968,93 @@ export const ZoomManager = {
              htmlContent = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">${createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969')}</div>`;
         } else if (renderType === 'note') {
              htmlContent = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}; font-size: 1.2rem; padding: 2rem;">${parseMarkdown(t.content || '')}</div>`;
+        } else if (renderType === 'event') {
+            const events = t.events || [];
+            events.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const data = events.map((e, i) => ({
+                x: e.date,
+                y: i % 2 === 0 ? 1 : -1,
+                meta: e.name
+            }));
+
+            htmlContent = `<div id="${chartId}" style="width:100%; height:100%;"></div>`;
+
+            const common = getCommonApexOptions(true);
+            chartConfig = {
+                ...common,
+                chart: { ...common.chart, type: 'bar', height: '100%' },
+                series: [{ name: 'Timeline', data: data }],
+                xaxis: {
+                    ...common.xaxis,
+                    type: 'datetime',
+                    labels: { show: true, format: 'dd MMM yyyy', style: { colors: '#aaa', fontSize: '14px' } },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false }
+                },
+                yaxis: {
+                    min: -2, max: 2,
+                    show: false,
+                },
+                grid: {
+                    show: true,
+                    yaxis: { lines: { show: false } },
+                    xaxis: { lines: { show: false } },
+                    padding: { top: 0, bottom: 0 }
+                },
+                plotOptions: {
+                    bar: {
+                        columnWidth: '1%', // Very thin lines for zoomed view
+                        borderRadius: 0,
+                        colors: {
+                            ranges: [{ from: -10, to: 10, color: '#03dac6' }]
+                        },
+                        dataLabels: {
+                            position: 'top'
+                        }
+                    }
+                },
+                annotations: {
+                    yaxis: [{
+                        y: 0,
+                        strokeDashArray: 0,
+                        borderColor: '#666',
+                        borderWidth: 2,
+                        width: '100%',
+                        opacity: 0.5
+                    }]
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val, opts) {
+                        try {
+                            return opts.w.config.series[0].data[opts.dataPointIndex].meta;
+                        } catch(e) { return ''; }
+                    },
+                    style: {
+                        fontSize: '14px',
+                        colors: ['#e0e0e0']
+                    },
+                    background: {
+                        enabled: true,
+                        foreColor: '#000',
+                        padding: 6,
+                        borderRadius: 4,
+                        opacity: 0.8,
+                        borderColor: '#333'
+                    }
+                },
+                tooltip: {
+                    custom: function({series, seriesIndex, dataPointIndex, w}) {
+                        const d = w.config.series[seriesIndex].data[dataPointIndex];
+                        if (!d) return '';
+                        const date = new Date(d.x).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                        return `<div style="padding:15px; background:#222; border:1px solid #444; font-size:16px;">
+                            <div style="font-weight:bold; color:#fff; margin-bottom:8px;">${d.meta}</div>
+                            <div style="color:#aaa;">${date}</div>
+                        </div>`;
+                    }
+                }
+            };
         }
 
         // Add Notes Section for non-donut types if notes exist
@@ -926,7 +1101,7 @@ export const TrackerManager = {
         const titleEl = getEl('trackerModalTitle');
         if (titleEl) titleEl.innerText = isEdit ? 'Edit Progress Tracker' : 'Add Progress Tracker';
         
-        ['gauge','bar','line','counter','rag','waffle'].forEach(type => {
+        ['gauge','bar','line','counter','rag','waffle','note','donut','event'].forEach(type => {
             const div = getEl(`${type}Inputs`);
             if (div) div.style.display = 'none';
         });
@@ -1120,6 +1295,13 @@ export const TrackerManager = {
                 // Default Size S
                 const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
                 if(sizeRad) sizeRad.checked = true;
+            } else if (!isEdit && type === 'event') {
+                const container = getEl('eventDataContainer');
+                if(container) container.innerHTML = '';
+                const notesIn = getEl('tkEventNotes');
+                if(notesIn) notesIn.value = '';
+                const sizeRad = document.querySelector('input[name="tkSize"][value="L"]');
+                if(sizeRad) sizeRad.checked = true;
             }
 
             if (type === 'gauge') {
@@ -1170,24 +1352,49 @@ export const TrackerManager = {
                 const wbIn = getEl('tkWaffleColorBg');
                 if (wbIn) wbIn.value = tracker ? (tracker.colorBg || '#696969') : '#696969';
             } else if (type === 'note') {
-                const tcnIn = getEl('tkNoteContent');
-                if (tracker && tcnIn) tcnIn.value = tracker.content || '';
-                
-                const align = tracker ? (tracker.align || 'left') : 'left';
-                const alignRad = document.querySelector(`input[name="tkNoteAlign"][value="${align}"]`);
-                if(alignRad) alignRad.checked = true;
+                const contentIn = getEl('tkNoteContent');
+                newTracker.content = contentIn ? contentIn.value : '';
+                const alignRad = document.querySelector('input[name="tkNoteAlign"]:checked');
+                newTracker.align = alignRad ? alignRad.value : 'left';
+                newTracker.notes = ''; // No notes for Note Tracker
             } else if (type === 'donut') {
-                const container = getEl('donutDataContainer');
-                if (container) container.innerHTML = '';
-                if (tracker && tracker.dataPoints) {
-                    tracker.dataPoints.forEach(dp => this.addDonutRow(dp.label, dp.value));
-                }
+                const rows = document.querySelectorAll('.donut-row');
+                const dataPoints = [];
+                rows.forEach(row => {
+                    const label = row.querySelector('.dr-label').value.trim();
+                    const value = parseFloat(row.querySelector('.dr-value').value) || 0;
+                    if (label) dataPoints.push({ label, value });
+                });
+                if (dataPoints.length === 0) return App.alert("At least one data point with a label is required.");
+                newTracker.dataPoints = dataPoints;
                 const notesIn = getEl('tkDonutNotes');
-                if (tracker && notesIn) notesIn.value = tracker.notes || '';
+                newTracker.notes = notesIn ? notesIn.value : '';
+                newTracker.size = size; // Use selected size
+            } else if (type === 'event') {
+                const rows = document.querySelectorAll('.event-row');
+                const events = [];
+                rows.forEach(row => {
+                    const name = row.querySelector('.er-name').value.trim();
+                    const date = row.querySelector('.er-date').value;
+                    if (name && date) events.push({ name, date });
+                });
+                if (events.length === 0) return App.alert("At least one event with a name and date is required.");
+                newTracker.events = events;
+                const notesIn = getEl('tkEventNotes');
+                newTracker.notes = notesIn ? notesIn.value : '';
+                newTracker.size = size;
             }
         }
 
-        ModalManager.openModal('trackerModal');
+        if(index === -1) {
+            State.trackers.push(newTracker);
+        } else {
+            State.trackers[index] = newTracker;
+        }
+
+        ModalManager.closeModal('trackerModal');
+        renderBoard();
+        console.log("Tracker saved:", type);
     }
 };
 
