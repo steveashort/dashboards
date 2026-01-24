@@ -5,12 +5,12 @@
 - [x] Task: Analyze and reproduce rendering bugs in `charts.js`. [35735ec]
     - [x] Create a reproduction test case (manual or simple script) to observe failures in Gauge and Waffle charts.
     - [x] Document findings in this task.
-- [~] Task: Fix Gauge SVG Pathing.
-    - [ ] Refactor createGaugeSVG math to ensure arcs render correctly for all values (0-100).
-    - [ ] Verify fix with edge cases (0, 50, 100).
-- [ ] Task: Fix Waffle Chart Generation.
-    - [ ] Refactor createWaffleHTML to ensure grid items are generated correctly matching input arrays.
-    - [ ] Ensure correct CSS class application for colors.
+- [x] Task: Fix Gauge SVG Pathing. [b5d6688]
+    - [x] Refactor createGaugeSVG math to ensure arcs render correctly for all values (0-100).
+    - [x] Verify fix with edge cases (0, 50, 100).
+- [x] Task: Fix Waffle Chart Generation. [b5d6688]
+    - [x] Refactor createWaffleHTML to ensure grid items are generated correctly matching input arrays.
+    - [x] Ensure correct CSS class application for colors.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Stabilization' (Protocol in workflow.md)
 
 ## Phase 2: Integration of ApexCharts
