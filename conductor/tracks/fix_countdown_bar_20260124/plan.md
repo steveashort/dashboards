@@ -5,8 +5,8 @@
     - [x] Inspect `app.js` `renderBoard` and `ZoomManager` `openChartModal` `countdown` bar style blocks.
     - [x] Inspect `charts.js` `getCountdownGanttData` function.
     - [x] Identify discrepancies or errors in data passed to `renderChart` or ApexCharts configuration.
-- [ ] Task: Implement fix for rendering issue.
-    - [ ] Correct any identified data structure or configuration errors.
-    - [ ] Consider adding a default \yaxis.min\ and \yaxis.max\ or \xaxis.min\/\max\ if the problem is axis scaling.
-    - [ ] Ensure \labels\ are correct.
+- [x] Task: Implement fix for rendering issue. [d1e104f]
+    - [x] Correct any identified data structure or configuration errors.
+    - [x] Consider adding a default `yaxis.min` and `yaxis.max` or `xaxis.min`/`max` if the problem is axis scaling.
+    - [x] Ensure `labels` are correct.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Fix' (Protocol in workflow.md)
