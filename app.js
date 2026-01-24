@@ -418,18 +418,19 @@ export const renderBoard = () => {
                             const barData = getCountdownBarData(items);
                             // Only render if there's actual data after filtering past events
                             if (barData.series[0].data.length > 0) {
-                                renderChart(el, 'bar', barData, {
+                                renderChart(el, 'rangeBar', barData, {
                                     plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
                                     dataLabels: {
                                         enabled: true,
-                                        formatter: function(val) {
-                                            return `${val} days`;
+                                        formatter: function(val, opts) {
+                                            // val will be [start, end], we want the end value (diffDays)
+                                            return `${val[1]} days`;
                                         },
                                         style: { colors: ['#f3f4f5', '#fff'] }
                                     },
                                     chart: {
                                         toolbar: { show: false },
-                                        height: barData.labels.length * 40 + 50 // Dynamic height based on number of items
+                                        height: barData.series[0].data.length * 40 + 50 // Dynamic height based on number of items
                                     },
                                     xaxis: {
                                         type: 'numeric',
@@ -438,7 +439,7 @@ export const renderBoard = () => {
                                         labels: {
                                             formatter: function(val) {
                                                 if (val === 0) return 'Today';
-                                                return val + 'd';
+                                                return `${val}d`;
                                             },
                                             style: { colors: '#aaa' }
                                         }
@@ -451,14 +452,15 @@ export const renderBoard = () => {
                                     },
                                     grid: { show: false, padding: { left: 0, right: 0 } },
                                     legend: { show: false },
-                                    colors: barData.colors, // Apply colors per bar
+                                    colors: barData.series[0].data.map(d => d.fillColor), // Apply colors per bar from data
                                     tooltip: {
                                         enabled: true,
                                         custom: function({series, seriesIndex, dataPointIndex, w}) {
-                                            const eventLabel = w.globals.labels[dataPointIndex];
-                                            const days = series[seriesIndex][dataPointIndex];
-                                            const originalItem = items.find(item => item.label === eventLabel); // Find original item for date
-                                            const eventDate = originalItem ? new Date(originalItem.date).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
+                                            const item = w.config.series[seriesIndex].data[dataPointIndex];
+                                            const eventLabel = item.x;
+                                            const days = item.y[1]; // The end of the range is diffDays
+                                            const originalDate = item.meta.originalDate;
+                                            const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
                                             return `<div class="apexcharts-tooltip-box">
                                                         <div class="tooltip-title">${eventLabel}</div>
                                                         <div class="tooltip-value">${eventDate}</div>
@@ -666,18 +668,19 @@ export const ZoomManager = {
                             
                             const barData = getCountdownBarData(items);
                             if (barData.series[0].data.length > 0) {
-                                renderChart(el, 'bar', barData, {
+                                renderChart(el, 'rangeBar', barData, {
                                     plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
                                     dataLabels: {
                                         enabled: true,
-                                        formatter: function(val) {
-                                            return `${val} days`;
+                                        formatter: function(val, opts) {
+                                            // val will be [start, end], we want the end value (diffDays)
+                                            return `${val[1]} days`;
                                         },
                                         style: { colors: ['#f3f4f5', '#fff'] }
                                     },
                                     chart: {
                                         toolbar: { show: true },
-                                        height: barData.labels.length * 40 + 50 // Dynamic height based on number of items
+                                        height: barData.series[0].data.length * 40 + 50 // Dynamic height based on number of items
                                     },
                                     xaxis: {
                                         type: 'numeric',
@@ -686,17 +689,39 @@ export const ZoomManager = {
                                         labels: {
                                             formatter: function(val) {
                                                 if (val === 0) return 'Today';
-                                                return val + 'd';
+                                                return `${val}d`;
                                             },
                                             style: { colors: '#aaa' }
                                         }
                                     },
                                     yaxis: {
-                                        show: false, // Hide Y-axis entirely
-                                        labels: { show: false },
-                                        axisBorder: { show: false },
-                                        axisTicks: { show: false }
+                                        show: true,
+                                        labels: {
+                                            style: { colors: '#aaa' }
+                                        }
                                     },
+                                    grid: { show: false, padding: { left: 0, right: 0 } },
+                                    legend: { show: false },
+                                    colors: barData.series[0].data.map(d => d.fillColor), // Apply colors per bar from data
+                                    tooltip: {
+                                        enabled: true,
+                                        custom: function({series, seriesIndex, dataPointIndex, w}) {
+                                            const item = w.config.series[seriesIndex].data[dataPointIndex];
+                                            const eventLabel = item.x;
+                                            const days = item.y[1]; // The end of the range is diffDays
+                                            const originalDate = item.meta.originalDate;
+                                            const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
+                                            return `<div class="apexcharts-tooltip-box">
+                                                        <div class="tooltip-title">${eventLabel}</div>
+                                                        <div class="tooltip-value">${eventDate}</div>
+                                                        <div class="tooltip-value">${days} days from today</div>
+                                                    </div>`;
+                                        }
+                                    }
+                                });
+                            } else {
+                                el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
+                            }
                                     grid: { show: false, padding: { left: 0, right: 0 } },
                                     legend: { show: false },
                                     colors: barData.colors, // Apply colors per bar

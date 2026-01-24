@@ -38,14 +38,14 @@ export const getApexConfig = (type, data, options = {}) => {
         labels: { style: { colors: '#aaa' } }
     };
 
-    // Special handling for rangeBar and horizontal bar (Countdown)
-    if (type === 'rangeBar' || (type === 'bar' && options.plotOptions && options.plotOptions.bar && options.plotOptions.bar.horizontal)) {
+    // Special handling for rangeBar
+    if (type === 'rangeBar') {
         xaxisConfig = {
             type: 'numeric',
             labels: { style: { colors: '#aaa' } }
         };
         yaxisConfig = {
-            categories: data.labels || (data.series && data.series[0] && data.series[0].data ? data.series[0].data.map(d => d.x) : []),
+            categories: data.series && data.series[0] && data.series[0].data ? data.series[0].data.map(d => d.x) : [],
             labels: { style: { colors: '#aaa' } }
         };
     }
