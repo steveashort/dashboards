@@ -2,8 +2,8 @@
  * SERVER PLATFORMS TRACKER v31
  * ES6 MODULE STRUCTURE
  */
-export { createGaugeSVG, createWaffleHTML, Visuals, renderChart, getTop5FromTrackers } from './charts.js';
-import { createGaugeSVG, createWaffleHTML, Visuals, renderChart, getTop5FromTrackers } from './charts.js';
+export { createGaugeSVG, createWaffleHTML, Visuals, renderChart } from './charts.js';
+import { createGaugeSVG, createWaffleHTML, Visuals, renderChart } from './charts.js';
 
 // --- GLOBAL STATE ---
 let State = {
