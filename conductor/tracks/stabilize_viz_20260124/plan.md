@@ -42,5 +42,11 @@
 - [x] Task: Verify Responsiveness. [17248bb]
     - [x] Test dashboard resizing to ensure both SVG and ApexCharts resize correctly.
     - [x] Adjust media queries if necessary for 1440x900 optimization.
-- [ ] Task: Conductor - User Manual Verification 'Phase 3: Data Wiring' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 3: Data Wiring' (Protocol in workflow.md) [checkpoint: 2e2348d]
+
+## Phase 4: Refinement
+- [ ] Task: Remove Top 5 Metrics Card.
+    - [ ] Remove HTML container from `index.html`.
+    - [ ] Remove `App.renderTop5` and its call in `app.js`.
+    - [ ] Remove `getTop5FromTrackers` from `charts.js`.
 
