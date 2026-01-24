@@ -481,10 +481,6 @@ export const renderBoard = () => {
                                 // If no future events, display a message
                                 el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
                             }
-                            } else {
-                                // If no future events, display a message
-                                el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
-                            }
                         }
                     }, 0);
                     statsHTML = '';
