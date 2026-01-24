@@ -24,15 +24,29 @@ export const createGaugeSVG = (loadArr) => {
 };
 
 export const createWaffleHTML = (total, active, colorVal, colorBg) => {
-    const maxCells = Math.min(total, 450);
+    const maxCells = Math.min(total, 5000);
     
-    // Dynamic columns: If total is small, adjust cols to fit exactly to avoid empty space.
+    // Dynamic columns and sizing for large datasets
     let cols = 15;
-    if (total <= 15) cols = total;
-    else if (total > 200) cols = 25;
+    let cellSize = 7;
+    let gap = 2;
 
-    const cellSize = total > 200 ? 5 : 7;
-    const gap = 2;
+    if (total <= 15) {
+        cols = total;
+    } else if (total <= 200) {
+        cols = 15;
+        cellSize = 7;
+    } else if (total <= 1000) {
+        cols = 25;
+        cellSize = 5;
+    } else {
+        // > 1000 items (up to 5000)
+        // Try to keep aspect ratio reasonable
+        cols = 50;
+        cellSize = 3; 
+        gap = 1;
+    }
+
     // Calculate exact width to force wrap at 'cols'
     const gridWidth = (cols * (cellSize + gap)) - gap;
     

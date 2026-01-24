@@ -1656,14 +1656,17 @@ export const TrackerManager = {
             const active = waIn ? (parseInt(waIn.value) || 0) : 0;
             
             if (total <= 0) return App.alert("Target must be a positive number.");
-            if (total > 450) return App.alert("Target cannot exceed 450.");
+            if (total > 5000) return App.alert("Target cannot exceed 5000.");
             if (active > total) return App.alert("Progress cannot exceed the Target.");
             
             newTracker.metric = wmIn ? wmIn.value : '';
             newTracker.total = total;
             newTracker.active = active;
             newTracker.notes = wnIn ? wnIn.value : '';
-            newTracker.size = total < 201 ? 'S' : 'M'; // Inferred size
+            // Size will be dynamically calculated in render if not set here, or we can pre-calc.
+            // Requirement says "make the card automatically adjust".
+            // We'll address dynamic sizing in Phase 2.
+            newTracker.size = 'M'; // Default placeholder, will be overridden by dynamic logic later.
             
             const wcIn = getEl('tkWaffleColorVal');
             newTracker.colorVal = wcIn ? wcIn.value : '#228B22';
