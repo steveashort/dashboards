@@ -2,8 +2,8 @@
  * SERVER PLATFORMS TRACKER v31
  * ES6 MODULE STRUCTURE
  */
-export { createGaugeSVG, createWaffleHTML, Visuals } from './charts.js';
-import { createGaugeSVG, createWaffleHTML, Visuals } from './charts.js';
+export { createGaugeSVG, createWaffleHTML, Visuals, renderChart } from './charts.js';
+import { createGaugeSVG, createWaffleHTML, Visuals, renderChart } from './charts.js';
 
 // --- GLOBAL STATE ---
 let State = {
@@ -346,24 +346,28 @@ export const renderBoard = () => {
             
             let renderType = t.type;
             if (renderType === 'line' || renderType === 'bar' || renderType === 'line1' || renderType === 'line2') {
-                // Unified Chart Logic
                 let labels = t.labels || [];
                 let series = t.series || [];
                 
-                // Legacy Data Migration (Bar or Line)
                 if ((!t.labels || t.labels.length === 0) && t.data) {
                     labels = t.data.map(d => d.label);
                     series = [{ name: 'Series 1', color: t.color1 || '#03dac6', values: t.data.map(d => d.val) }];
                 }
 
-                // Render based on displayStyle
                 const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
                 
-                if (style === 'bar') {
-                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createMultiBarChartSVG(labels, series, t.size)}</div>`;
-                } else {
-                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createLineChartSVG(labels, series, t.yLabel, t.size)}</div>`;
-                }
+                const chartId = `chart-viz-${i}`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:150px; margin-bottom:10px;"></div>`;
+                
+                setTimeout(() => {
+                    const el = document.getElementById(chartId);
+                    if(el) {
+                        // ApexCharts Series format: [{name, data}]
+                        const apexSeries = series.map(s => ({ name: s.name, data: s.values }));
+                        const colors = series.map(s => s.color);
+                        renderChart(el, style, { labels, series: apexSeries }, { colors });
+                    }
+                }, 0);
             } else if (renderType === 'gauge') {
                 const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
                 const c1 = t.colorVal || t.color1 || '#00e676'; 
@@ -524,125 +528,133 @@ export const ZoomManager = {
         ModalManager.openModal('zoomModal');
     },
 
-    openChartModal: (index) => {
-        console.log("ZoomManager.openChartModal called for index:", index);
-        const t = State.trackers[index];
-        if(!t) return;
-
-        const titleEl = getEl('zoomTitle');
-        if (titleEl) titleEl.innerText = t.desc;
-        let content = '';
-        
-        let renderType = t.type;
-        if (renderType === 'line' || renderType === 'bar') {
-            let labels = t.labels || [];
-            let series = t.series || [];
-            if ((!labels.length) && t.data) {
-                labels = t.data.map(d => d.label);
-                series = [{ name: 'Series 1', color: t.color1 || '#03dac6', values: t.data.map(d => d.val) }];
-            }
+        openChartModal: (index) => {
+            console.log("ZoomManager.openChartModal called for index:", index);
+            const t = State.trackers[index];
+            if(!t) return;
+    
+            const titleEl = getEl('zoomTitle');
+            if (titleEl) titleEl.innerText = t.desc;
+            let content = '';
+            let renderAction = null;
             
-            const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
-            if (style === 'bar') content = Visuals.createMultiBarChartSVG(labels, series, 'XL');
-            else content = Visuals.createLineChartSVG(labels, series, t.yLabel, 'XL');
-        } else if (renderType === 'counter') {
-            content = `<div style="font-size: 6rem; font-weight:300; color:${t.color1}; text-shadow:0 0 20px ${t.color1}">${t.value}</div><div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${t.subtitle}</div>`;
-        } else if (renderType === 'rag' || renderType === 'ryg') {
-            const status = t.status || 'grey';
-            const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
-            content = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message || ''}</div>`;
-        } else if (renderType === 'waffle') {
-            content = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969');
-        } else if (renderType === 'note') {
-            content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
-        } else if (renderType === 'gauge') {
-            const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
-            const c1 = t.colorVal || t.color1 || '#00e676'; 
-            const c2 = t.color2 || '#ff1744';
-            // c2 is Progress Colour, c1 is Target Colour
-            const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
-            content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
-        } else if (renderType === 'donut') {
-            const labels = (t.dataPoints || []).map(dp => dp.label);
-            const values = (t.dataPoints || []).map(dp => dp.value);
-            content = Visuals.createDonutChartWithCalloutsSVG(labels, values);
-        }
-
-        const bodyEl = getEl('zoomBody');
-        if (bodyEl) {
-            bodyEl.className = 'zoom-body-chart';
-            let html = '';
-            
-            if (renderType === 'donut') {
-                 html = `<div style="width:100%; height:100%; display:flex; flex-direction:row; gap:20px;">`;
-                 html += `<div style="flex: 2; display:flex; align-items:center; justify-content:center; min-height: 400px;">${content}</div>`;
-                 
-                 html += `<div class="zoom-notes-section" style="flex: 1; padding:20px; border-left:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px; overflow-y:auto; display:flex; flex-direction:column; gap:20px;">`;
-                 
-                 if (t.notes || t.content) {
-                     const notesHtml = parseMarkdown(t.notes || t.content || '');
-                     html += `<div>
-                                 <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
-                                 <div style="font-size:0.9rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
-                              </div>`;
-                 }
-
-                 // Data Table
-                 const labels = (t.dataPoints || []).map(dp => dp.label);
-                 const values = (t.dataPoints || []).map(dp => dp.value);
-                 const total = values.reduce((a, b) => a + b, 0);
-                 
-                 if (labels.length > 0) {
-                     let tableHtml = `<h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Data Details</h4>
-                                      <table style="width:100%; border-collapse: collapse; font-size:0.9rem; color:#ddd;">
-                                        <thead>
-                                            <tr style="border-bottom: 1px solid #444;">
-                                                <th style="text-align:left; padding:8px;">Label</th>
-                                                <th style="text-align:right; padding:8px;">Value</th>
-                                                <th style="text-align:right; padding:8px;">%</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>`;
-                     
-                     labels.forEach((l, i) => {
-                         const v = values[i];
-                         const pct = total > 0 ? Math.round((v / total) * 100) : 0;
-                         tableHtml += `<tr style="border-bottom: 1px solid #333;">
-                                         <td style="padding:8px;">${l}</td>
-                                         <td style="text-align:right; padding:8px;">${v}</td>
-                                         <td style="text-align:right; padding:8px;">${pct}%</td>
-                                       </tr>`;
-                     });
-                     
-                     tableHtml += `<tr style="font-weight:bold; background:rgba(255,255,255,0.05);">
-                                     <td style="padding:8px;">Total</td>
-                                     <td style="text-align:right; padding:8px;">${total}</td>
-                                     <td style="text-align:right; padding:8px;">100%</td>
-                                   </tr>`;
-                     
-                     tableHtml += `</tbody></table>`;
-                     html += `<div>${tableHtml}</div>`;
-                 }
-                 
-                 html += `</div></div>`;
-            } else {
-                html = `<div style="width:100%; height:100%; display:flex; flex-direction:column; padding:20px;">`;
-                html += `<div style="flex: 1; min-height: 300px; display:flex; align-items:center; justify-content:center;">${content}</div>`;
-                
-                if ((t.notes || t.content) && t.type !== 'note') {
-                    const notesHtml = parseMarkdown(t.notes || t.content || '');
-                    html += `<div class="zoom-notes-section" style="margin-top:20px; padding:20px; border-top:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px;">
-                                <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
-                                <div style="font-size:0.9rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
-                             </div>`;
+            let renderType = t.type;
+            if (renderType === 'line' || renderType === 'bar' || renderType === 'line1' || renderType === 'line2') {
+                let labels = t.labels || [];
+                let series = t.series || [];
+                if ((!labels.length) && t.data) {
+                    labels = t.data.map(d => d.label);
+                    series = [{ name: 'Series 1', color: t.color1 || '#03dac6', values: t.data.map(d => d.val) }];
                 }
-                html += `</div>`;
+                
+                const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
+                content = '<div id="zoomChartContainer" style="width:100%; height:100%;"></div>';
+                renderAction = () => {
+                    const el = document.getElementById('zoomChartContainer');
+                    if(el) {
+                        const apexSeries = series.map(s => ({ name: s.name, data: s.values }));
+                        const colors = series.map(s => s.color);
+                        renderChart(el, style, { labels, series: apexSeries }, { colors, chart: { toolbar: { show: true }, zoom: { enabled: true } } });
+                    }
+                };
+            } else if (renderType === 'counter') {
+                content = `<div style="font-size: 6rem; font-weight:300; color:${t.color1}; text-shadow:0 0 20px ${t.color1}">${t.value}</div><div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${t.subtitle}</div>`;
+            } else if (renderType === 'rag' || renderType === 'ryg') {
+                const status = t.status || 'grey';
+                const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
+                content = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message || ''}</div>`;
+            } else if (renderType === 'waffle') {
+                content = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969');
+            } else if (renderType === 'note') {
+                content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
+            } else if (renderType === 'gauge') {
+                const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
+                const c1 = t.colorVal || t.color1 || '#00e676'; 
+                const c2 = t.color2 || '#ff1744';
+                // c2 is Progress Colour, c1 is Target Colour
+                const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
+                content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
+            } else if (renderType === 'donut') {
+                const labels = (t.dataPoints || []).map(dp => dp.label);
+                const values = (t.dataPoints || []).map(dp => dp.value);
+                content = Visuals.createDonutChartWithCalloutsSVG(labels, values);
             }
-            bodyEl.innerHTML = html;
-        }
-        ModalManager.openModal('zoomModal');
-    }
-};
+    
+            const bodyEl = getEl('zoomBody');
+            if (bodyEl) {
+                bodyEl.className = 'zoom-body-chart';
+                let html = '';
+                
+                if (renderType === 'donut') {
+                     html = `<div style="width:100%; height:100%; display:flex; flex-direction:row; gap:20px;">`;
+                     html += `<div style="flex: 2; display:flex; align-items:center; justify-content:center; min-height: 400px;">${content}</div>`;
+                     
+                     html += `<div class="zoom-notes-section" style="flex: 1; padding:20px; border-left:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px; overflow-y:auto; display:flex; flex-direction:column; gap:20px;">`;
+                     
+                     if (t.notes || t.content) {
+                         const notesHtml = parseMarkdown(t.notes || t.content || '');
+                         html += `<div>
+                                     <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
+                                     <div style="font-size:0.9rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
+                                  </div>`;
+                     }
+    
+                     // Data Table
+                     const labels = (t.dataPoints || []).map(dp => dp.label);
+                     const values = (t.dataPoints || []).map(dp => dp.value);
+                     const total = values.reduce((a, b) => a + b, 0);
+                     
+                     if (labels.length > 0) {
+                         let tableHtml = `<h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Data Details</h4>
+                                          <table style="width:100%; border-collapse: collapse; font-size:0.9rem; color:#ddd;">
+                                            <thead>
+                                                <tr style="border-bottom: 1px solid #444;">
+                                                    <th style="text-align:left; padding:8px;">Label</th>      
+                                                    <th style="text-align:right; padding:8px;">Value</th>     
+                                                    <th style="text-align:right; padding:8px;">%</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>`;
+                         
+                         labels.forEach((l, i) => {
+                             const v = values[i];
+                             const pct = total > 0 ? Math.round((v / total) * 100) : 0;
+                             tableHtml += `<tr style="border-bottom: 1px solid #333;">
+                                             <td style="padding:8px;">${l}</td>
+                                             <td style="text-align:right; padding:8px;">${v}</td>
+                                             <td style="text-align:right; padding:8px;">${pct}%</td>
+                                           </tr>`;
+                         });
+                         
+                         tableHtml += `<tr style="font-weight:bold; background:rgba(255,255,255,0.05);">      
+                                         <td style="padding:8px;">Total</td>
+                                         <td style="text-align:right; padding:8px;">${total}</td>
+                                         <td style="text-align:right; padding:8px;">100%</td>
+                                       </tr>`;
+                         
+                         tableHtml += `</tbody></table>`;
+                         html += `<div>${tableHtml}</div>`;
+                     }
+                     
+                     html += `</div></div>`;
+                } else {
+                    html = `<div style="width:100%; height:100%; display:flex; flex-direction:column; padding:20px;">`;
+                    html += `<div style="flex: 1; min-height: 300px; display:flex; align-items:center; justify-content:center;">${content}</div>`;
+                    
+                    if ((t.notes || t.content) && t.type !== 'note') {
+                        const notesHtml = parseMarkdown(t.notes || t.content || '');
+                        html += `<div class="zoom-notes-section" style="margin-top:20px; padding:20px; border-top:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px;">
+                                    <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
+                                    <div style="font-size:0.9rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
+                                 </div>`;
+                    }
+                    html += `</div>`;
+                }
+                bodyEl.innerHTML = html;
+            }
+            ModalManager.openModal('zoomModal');
+            if(renderAction) setTimeout(renderAction, 100);
+        }};
 
 export const TrackerManager = {
     openModal(index) {
