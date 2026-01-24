@@ -2,8 +2,8 @@
  * SERVER PLATFORMS TRACKER v31
  * ES6 MODULE STRUCTURE
  */
-export { createGaugeSVG, createWaffleHTML, Visuals, renderChart } from './charts.js';
-import { createGaugeSVG, createWaffleHTML, Visuals, renderChart } from './charts.js';
+export { createGaugeSVG, createWaffleHTML, Visuals, renderChart, calculateTrackerSize } from './charts.js';
+import { createGaugeSVG, createWaffleHTML, Visuals, renderChart, calculateTrackerSize } from './charts.js';
 
 // --- GLOBAL STATE ---
 let State = {
@@ -332,8 +332,8 @@ export const renderBoard = () => {
         
         State.trackers.forEach((t, i) => {
             const card = document.createElement('div');
-            // Force Donut to always be Small
-            const displaySize = t.type === 'donut' ? 'S' : (t.size || 'M');
+            // Auto-calculate size
+            const displaySize = calculateTrackerSize(t);
             card.className = `tracker-card size-${displaySize} type-${t.type}`;
             card.dataset.index = i;
             
@@ -985,7 +985,7 @@ export const TrackerManager = {
         });
 
         const sizeCont = getEl('sizeContainer');
-        if(sizeCont) sizeCont.style.display = (type === 'gauge' || type === 'waffle' || type === 'rag' || type === 'counter' || type === 'donut') ? 'none' : 'block';
+        if(sizeCont) sizeCont.style.display = 'none';
 
         if (inputType === 'line') {
              this.renderTimeTable();
