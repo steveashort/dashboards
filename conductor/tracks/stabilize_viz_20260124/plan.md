@@ -2,10 +2,10 @@
 # Implementation Plan - Stabilize and Modernize Visualization
 
 ## Phase 1: Stabilization of Legacy Charts
-- [ ] Task: Analyze and reproduce rendering bugs in charts.js.
-    - [ ] Create a reproduction test case (manual or simple script) to observe failures in Gauge and Waffle charts.
-    - [ ] Document findings in this task.
-- [ ] Task: Fix Gauge SVG Pathing.
+- [x] Task: Analyze and reproduce rendering bugs in `charts.js`. [35735ec]
+    - [x] Create a reproduction test case (manual or simple script) to observe failures in Gauge and Waffle charts.
+    - [x] Document findings in this task.
+- [~] Task: Fix Gauge SVG Pathing.
     - [ ] Refactor createGaugeSVG math to ensure arcs render correctly for all values (0-100).
     - [ ] Verify fix with edge cases (0, 50, 100).
 - [ ] Task: Fix Waffle Chart Generation.
