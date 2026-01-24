@@ -378,7 +378,7 @@ export const renderBoard = () => {
                 const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
                 
                 const chartId = `chart-viz-${i}`;
-                visualHTML = `<div id="${chartId}" style="width:100%; height:150px; margin-bottom:10px;"></div>`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:150px; margin-bottom:10px;"></div>`;
                 
                 setTimeout(() => {
                     const el = document.getElementById(chartId);

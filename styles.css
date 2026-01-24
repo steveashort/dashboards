@@ -98,25 +98,37 @@ header {
 }
 .section-header.first { border-top: none; padding-top: 0; }
 .tracker-grid {
-    display: flex; flex-wrap: wrap; gap: 1.5rem; margin-bottom: 3rem;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    grid-auto-rows: minmax(280px, auto);
+    gap: 1.5rem;
+    margin-bottom: 3rem;
 }
 .tracker-card {
     background-color: var(--card-bg); border: 1px solid var(--border); border-radius: 8px;
     padding: 1rem; text-align: center; position: relative; cursor: pointer; transition: transform 0.2s;
-    min-height: 280px; display: flex; flex-direction: column; justify-content: space-between;
-    flex-grow: 1;
+    display: flex; flex-direction: column; justify-content: space-between;
+    overflow: hidden;
 }
-.tracker-card.size-S { flex-basis: calc(20% - 1.5rem); max-width: calc(20% - 1.5rem); }
-.tracker-card.size-M { flex-basis: calc(33.333% - 1.5rem); max-width: calc(33.333% - 1.5rem); }
-.tracker-card.size-L { flex-basis: calc(50% - 1.5rem); max-width: calc(50% - 1.5rem); }
-.tracker-card.size-XL { flex-basis: 100%; max-width: 100%; }
+.tracker-card.size-S { grid-column: span 1; grid-row: span 1; }
+.tracker-card.size-M { grid-column: span 2; grid-row: span 1; }
+.tracker-card.size-L { grid-column: span 3; grid-row: span 1; }
+.tracker-card.size-XL { grid-column: span 3; grid-row: span 2; }
 
 /* Fallback for smaller screens */
 @media (max-width: 1200px) {
-    .tracker-card.size-S { flex-basis: calc(33.333% - 1.5rem); max-width: calc(33.333% - 1.5rem); }
+    .tracker-grid { grid-template-columns: repeat(3, 1fr); }
+    .tracker-card.size-S { grid-column: span 1; }
+    .tracker-card.size-M { grid-column: span 2; }
+    .tracker-card.size-L { grid-column: span 3; }
+    .tracker-card.size-XL { grid-column: span 3; grid-row: span 2; }
 }
 @media (max-width: 768px) {
-    .tracker-card.size-S, .tracker-card.size-M, .tracker-card.size-L { flex-basis: 100%; max-width: 100%; }
+    .tracker-grid { grid-template-columns: 1fr; }
+    .tracker-card.size-S, .tracker-card.size-M, .tracker-card.size-L, .tracker-card.size-XL {
+        grid-column: span 1;
+        grid-row: auto;
+    }
 }
 
 .tracker-card:hover { border-color: var(--accent); transform: translateY(-2px); }
