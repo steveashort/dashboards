@@ -15,16 +15,16 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Waffle Removal' (Protocol in workflow.md) [checkpoint: 66b0e42]
 
 ## Phase 2: Stacked Bar Chart Implementation
-- [ ] Task: Add new \completionBar\ tracker type.
-    - [ ] Add \	ypeCompletionBarBtn\ to \	rackerModal\ HTML.
-    - [ ] Update \TrackerManager.setType\.
-    - [ ] Add input fields for \completed\, \	otal\, \metric\ to \completionBarInputs\.
-- [ ] Task: Implement \completionBar\ logic.
-    - [ ] Add \completionBar\ block to \submitTracker\.
-    - [ ] Implement \completionBar\ block in \enderBoard\ using ApexCharts.
-        - \	ype: 'bar'\, \stacked: true\, \horizontal: true\.
-        - Data: \completed\, \emaining\.
+- [x] Task: Add new `completionBar` tracker type. [eef78a8]
+    - [x] Add `typeCompletionBarBtn` to `trackerModal` HTML.
+    - [x] Update `TrackerManager.setType`.
+    - [x] Add input fields for `completed`, `total`, `metric` to `completionBarInputs`.
+- [x] Task: Implement `completionBar` logic. [eef78a8]
+    - [x] Add `completionBar` block to `submitTracker`.
+    - [x] Implement `completionBar` block in `renderBoard` using ApexCharts.
+        - `type: 'bar'`, `stacked: true`, `horizontal: true`.
+        - Data: `completed`, `remaining`.
         - Colors.
-    - [ ] Implement \completionBar\ block in \ZoomManager.openChartModal\.
-    - [ ] Force "Small" card size.
+    - [x] Implement `completionBar` block in `ZoomManager.openChartModal`.
+    - [x] Force "Small" card size.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Stacked Bar' (Protocol in workflow.md)
