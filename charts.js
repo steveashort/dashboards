@@ -14,7 +14,9 @@ export const createGaugeSVG = (loadArr) => {
     });
     const s = c===0?0:Math.round(t/c); 
     const r=15, cx=30, cy=30; 
-    const rad=(Math.min(s,100)/100)*180*Math.PI/180;
+    // Ensure s is clamped 0-100 for path calculation
+    const clampedS = Math.min(Math.max(s, 0), 100);
+    const rad=(clampedS/100)*180*Math.PI/180;
     const bg=`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r} ${cy}`;
     const val=s>0?`M ${cx-r} ${cy} A ${r} ${r} 0 0 1 ${cx+r*Math.cos(rad-Math.PI)} ${cy+r*Math.sin(rad-Math.PI)}`:'';
     const color = getColor(s);
@@ -23,7 +25,12 @@ export const createGaugeSVG = (loadArr) => {
 
 export const createWaffleHTML = (total, active, colorVal, colorBg) => {
     const maxCells = Math.min(total, 450);
-    const cols = total > 200 ? 25 : 15;
+    
+    // Dynamic columns: If total is small, adjust cols to fit exactly to avoid empty space.
+    let cols = 15;
+    if (total <= 15) cols = total;
+    else if (total > 200) cols = 25;
+
     const cellSize = total > 200 ? 5 : 7;
     const gap = 2;
     // Calculate exact width to force wrap at 'cols'
