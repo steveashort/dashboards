@@ -660,12 +660,6 @@ export const ZoomManager = {
                     renderAction = () => {
                         const el = document.getElementById('zoomChartContainer');
                         if(el) {
-                            const items = t.items || [];
-                            items.sort((a,b) => new Date(a.date) - new Date(b.date));
-                            const labels = items.map(x => x.label);
-                            const data = items.map(x => formatCountdown(x.date).diff);
-                            const colors = data.map(d => (d < 0 ? '#ff1744' : (d < 7 ? '#ffb300' : '#00e676')));
-                            
                             const barData = getCountdownBarData(items);
                             if (barData.series[0].data.length > 0) {
                                 renderChart(el, 'rangeBar', barData, {
@@ -711,21 +705,6 @@ export const ZoomManager = {
                                             const days = item.y[1]; // The end of the range is diffDays
                                             const originalDate = item.meta.originalDate;
                                             const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
-                                            return `<div class="apexcharts-tooltip-box">
-                                                        <div class="tooltip-title">${eventLabel}</div>
-                                                        <div class="tooltip-value">${eventDate}</div>
-                                                        <div class="tooltip-value">${days} days from today</div>
-                                                    </div>`;
-                                        }
-                                    }
-                                });
-                            } else {
-                                el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
-                            }
-                                            const eventLabel = w.globals.labels[dataPointIndex];
-                                            const days = series[seriesIndex][dataPointIndex];
-                                            const originalItem = items.find(item => item.label === eventLabel); // Find original item for date
-                                            const eventDate = originalItem ? new Date(originalItem.date).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
                                             return `<div class="apexcharts-tooltip-box">
                                                         <div class="tooltip-title">${eventLabel}</div>
                                                         <div class="tooltip-value">${eventDate}</div>
