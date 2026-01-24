@@ -1538,7 +1538,7 @@ export const TrackerManager = {
         const titleEl = getEl('trackerModalTitle');
         if (titleEl) titleEl.innerText = isEdit ? 'Edit Progress Tracker' : 'Add Progress Tracker';
         
-        ['gauge','bar','line','counter','rag','waffle','note','donut','event','gantt'].forEach(type => {
+        ['gauge','bar','line','counter','rag','waffle','countdown'].forEach(type => {
             const div = getEl(`${type}Inputs`);
             if (div) div.style.display = 'none';
         });
@@ -1562,6 +1562,8 @@ export const TrackerManager = {
                 }
             };
         }
+        const countdownContainer = getEl('countdownDataContainer');
+        if (countdownContainer) countdownContainer.innerHTML = '';
 
         const tracker = isEdit ? State.trackers[index] : null;
         let type = tracker ? tracker.type : 'gauge';
@@ -1738,23 +1740,12 @@ export const TrackerManager = {
                 // Default Size S
                 const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
                 if(sizeRad) sizeRad.checked = true;
-            } else if (!isEdit && type === 'event') {
-                const container = getEl('eventDataContainer');
-                if(container) container.innerHTML = '';
-                const notesIn = getEl('tkEventNotes');
+            } else if (!isEdit && type === 'countdown') {
+                const notesIn = getEl('tkCountdownNotes');
                 if(notesIn) notesIn.value = '';
-                const sizeRad = document.querySelector('input[name="tkSize"][value="L"]');
+                // Default Size M
+                const sizeRad = document.querySelector('input[name="tkSize"][value="M"]');
                 if(sizeRad) sizeRad.checked = true;
-            } else if (!isEdit && type === 'gantt') {
-                const container = getEl('ganttDataContainer');
-                if(container) container.innerHTML = '';
-                const notesIn = getEl('tkGanttNotes');
-                if(notesIn) notesIn.value = '';
-                // Default Size XL
-                const sizeRad = document.querySelector('input[name="tkSize"][value="XL"]');
-                if(sizeRad) sizeRad.checked = true;
-                const hRad = document.querySelector('input[name="tkHeight"][value="standard"]');
-                if(hRad) hRad.checked = true;
             }
 
             // Populate Color Pickers dynamically
@@ -1839,21 +1830,13 @@ export const TrackerManager = {
                 }
                 const notesIn = getEl('tkDonutNotes');
                 if (tracker && notesIn) notesIn.value = tracker.notes || '';
-            } else if (type === 'event') {
-                const container = getEl('eventDataContainer');
+            } else if (type === 'countdown') {
+                const container = getEl('countdownDataContainer');
                 if (container) container.innerHTML = '';
-                if (tracker && tracker.events) {
-                    tracker.events.forEach(ev => this.addEventRow(ev.name, ev.date));
+                if (tracker && tracker.items) {
+                    tracker.items.forEach(item => this.addCountdownRow(item.label, item.date));
                 }
-                const notesIn = getEl('tkEventNotes');
-                if (tracker && notesIn) notesIn.value = tracker.notes || '';
-            } else if (type === 'gantt') {
-                const container = getEl('ganttDataContainer');
-                if (container) container.innerHTML = '';
-                if (tracker && tracker.tasks) {
-                    tracker.tasks.forEach(t => this.addGanttRow(t.name, t.start, t.end, t.status));
-                }
-                const notesIn = getEl('tkGanttNotes');
+                const notesIn = getEl('tkCountdownNotes');
                 if (tracker && notesIn) notesIn.value = tracker.notes || '';
             }
         }
@@ -1865,7 +1848,7 @@ export const TrackerManager = {
         State.currentTrackerType = type;
         // Map 'bar' to 'line' for input visibility
         const inputType = (type === 'bar') ? 'line' : type;
-        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Event','Gantt'].forEach(x => {
+        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown'].forEach(x => {
             const btn = getEl(`type${x}Btn`);
             if (btn) btn.className = (type === x.toLowerCase()) ? 'type-option active' : 'type-option';
             const div = getEl(`${x.toLowerCase()}Inputs`);
@@ -2327,82 +2310,25 @@ export const TrackerManager = {
         btn.parentElement.remove();
     },
 
-    addEventRow(name = '', date = '') {
-        const container = getEl('eventDataContainer');
+    addCountdownRow(label = '', date = '') {
+        const container = getEl('countdownDataContainer');
         if (!container) return;
-        const max = State.config.maxEvents || 20;
-        if (container.children.length >= max) return App.alert(`Max ${max} events allowed.`);
+        if (container.children.length >= 10) return App.alert("Max 10 events allowed.");
 
         const div = document.createElement('div');
-        div.className = 'event-row';
-        div.innerHTML = `
-            <input type="text" class="er-name" maxlength="30" placeholder="Event Name" value="${name}" style="flex: 2;">
-            <input type="date" class="er-date" value="${date}" style="flex: 1; background:var(--input-bg); color:#fff; color-scheme:dark;">
-            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeEventRow(this)">&times;</button>
-        `;
-        container.appendChild(div);
-    },
-
-    removeEventRow(btn) {
-        btn.parentElement.remove();
-    },
-
-    addGanttRow(name = '', start = '', end = '', status = 'wip') {
-        const container = getEl('ganttDataContainer');
-        if (!container) return;
-        // Limit Gantt tasks? Reuse max events or define new? Let's use maxEvents for now
-        const max = State.config.maxEvents || 20;
-        if (container.children.length >= max) return App.alert(`Max ${max} tasks allowed.`);
-
-        const div = document.createElement('div');
-        div.className = 'gantt-row';
-        div.innerHTML = `
-            <div style="display:flex; gap:5px; margin-bottom:5px;">
-                <input type="text" class="gr-name" maxlength="30" placeholder="Task Name" value="${name}" style="flex: 2;">
-                <select class="gr-status" style="flex:1;">
-                    <option value="wip" ${status==='wip'?'selected':''}>WIP</option>
-                    <option value="done" ${status==='done'?'selected':''}>Done</option>
-                    <option value="blocked" ${status==='blocked'?'selected':''}>Blocked</option>
-                </select>
-                <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeGanttRow(this)">&times;</button>
-            </div>
-            <div style="display:flex; gap:5px;">
-                <input type="date" class="gr-start" value="${start}" style="flex:1; background:var(--input-bg); color:#fff; color-scheme:dark;">
-                <input type="date" class="gr-end" value="${end}" style="flex:1; background:var(--input-bg); color:#fff; color-scheme:dark;">
-            </div>
-        `;
-        container.appendChild(div);
-    },
-
-    removeGanttRow(btn) {
-        btn.parentElement.parentElement.remove();
-    },
-
-    addCounterRow(label = '', value = '', color = '#bb86fc') {
-        const container = getEl('counterDataContainer');
-        if (!container) return;
-        const max = State.config.maxDonut || 10;
-        if (container.children.length >= max) return App.alert(`Max ${max} counters allowed.`);
-
-        const div = document.createElement('div');
-        div.className = 'counter-row';
+        div.className = 'countdown-row';
         div.style.display = 'flex';
         div.style.gap = '10px';
         div.style.marginBottom = '5px';
-        div.style.alignItems = 'center';
-
-        const uniqueId = 'cp_' + Math.random().toString(36).substr(2, 9);
-
         div.innerHTML = `
-            <input type="text" class="cr-label" maxlength="15" placeholder="Label" value="${label}" style="flex: 2;">
-            <input type="number" class="cr-value" placeholder="Value" value="${value}" style="flex: 1;">
-            <input type="color" class="cr-color" value="${color}" style="width:30px; height:30px; padding:0; border:none;" id="${uniqueId}">
-            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeCounterRow(this)">&times;</button>
+            <input type="text" class="cd-label" maxlength="15" placeholder="Event Label" value="${label}" style="flex: 2;">
+            <input type="date" class="cd-date" value="${date}" style="flex: 1; background:var(--input-bg); color:#fff; color-scheme:dark;">
+            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeCountdownRow(this)">&times;</button>
         `;
         container.appendChild(div);
     },
 
-    removeCounterRow(btn) {
+    removeCountdownRow(btn) {
         btn.parentElement.remove();
     },
 

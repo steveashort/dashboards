@@ -255,8 +255,7 @@
                     <button id="typeWaffleBtn" class="type-option" onclick="TrackerManager.setType('waffle')">Waffle Chart</button>
                     <button id="typeNoteBtn" class="type-option" onclick="TrackerManager.setType('note')">Note</button>
                     <button id="typeDonutBtn" class="type-option" onclick="TrackerManager.setType('donut')">Donut Chart</button>
-                    <button id="typeEventBtn" class="type-option" onclick="TrackerManager.setType('event')">Timeline</button>
-                    <button id="typeGanttBtn" class="type-option" onclick="TrackerManager.setType('gantt')">Project Gantt</button>
+                    <button id="typeCountdownBtn" class="type-option" onclick="TrackerManager.setType('countdown')">Countdown</button>
                 </div>
                 <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
                     <div class="input-group" style="flex: 2;">
@@ -406,48 +405,192 @@
                     </div>
                 </div>
 
-                <div id="ragInputs" style="display:none;">
-                    <div class="input-group">
-                        <label>Status</label>
-                        <div class="rag-selector">
-                            <div class="rag-pill" data-val="green" onclick="TrackerManager.selectRag('green')">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M22 4L12 14.01L9 11.01" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div class="rag-pill" data-val="amber" onclick="TrackerManager.selectRag('amber')">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M10.29 3.86L1.82 18C1.64556 18.3024 1.55293 18.6453 1.55196 18.9945C1.55098 19.3437 1.64171 19.6871 1.81506 19.991C1.98841 20.2949 2.23846 20.5487 2.54076 20.7275C2.84306 20.9063 3.18721 21.0041 3.54 21H20.46C20.8128 21.0041 21.1569 20.9063 21.4592 20.7275C21.7615 20.5487 22.0116 20.2949 22.1849 19.991C22.3583 19.6871 22.449 19.3437 22.448 18.9945C22.4471 18.6453 22.3544 18.3024 22.18 18L13.71 3.86C13.5317 3.56613 13.2807 3.32314 12.9812 3.15449C12.6817 2.98585 12.3437 2.89722 12 2.89722C11.6563 2.89722 11.3183 2.98585 11.0188 3.15449C10.7193 3.32314 10.4683 3.56613 10.29 3.86V3.86Z" fill="#D97706" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M12 9V13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M12 17H12.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div class="rag-pill" data-val="red" onclick="TrackerManager.selectRag('red')">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M7.86 2H16.14L22 7.86V16.14L16.14 22H7.86L2 16.14V7.86L7.86 2Z" fill="#DC2626" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M15 9L9 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <path d="M9 9L15 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                            <div class="rag-pill" data-val="grey" onclick="TrackerManager.selectRag('grey')">
-                                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <circle cx="12" cy="12" r="10" fill="#9CA3AF" />
-                                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-                                </svg>
-                            </div>
-                        </div>
-                        <input type="hidden" id="tkRagStatus">
-                    </div>
-                    <div class="input-group">
-                        <label>Status Message</label>
-                        <input type="text" id="tkRagMsg" maxlength="15" placeholder="e.g. All Systems Operational">
-                    </div>
-                    <div class="input-group" style="margin-top: 1rem;">
-                        <label>Notes for Published View (Max 200 chars)</label>
-                        <textarea id="tkRagNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
-                    </div>
-                </div>
+                                                    <div class="form-row" style="margin-bottom: 0; gap: 1rem;">
+
+                                                                                <div class="input-group" style="flex: 1;">
+
+                                                                                    <label>Counter Value</label>
+
+                                                                                    <input type="number" id="tkCounterVal" min="0" max="9999999">
+
+                                                                                </div>
+
+                                                        <div class="input-group" style="flex: 0 0 100px;">
+
+                                                            <label>Font Color</label>
+
+                                                            <input type="color" id="tkCounterColor" value="#bb86fc">
+
+                                                        </div>
+
+                                                    </div>
+
+                                                    <div class="input-group">
+
+                                                        <label>Status Message</label>
+
+                                                        <input type="text" id="tkCounterSub" maxlength="15" placeholder="e.g. Active Incidents">
+
+                                                    </div>
+
+                                                    <div class="input-group" style="margin-top: 1rem;">
+
+                                                        <label>Notes for Published View (Max 200 chars)</label>
+
+                                                        <textarea id="tkCounterNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+
+                                                    </div>
+
+                                                </div>
+
+                                <div id="ragInputs" style="display:none;">
+
+                                    <div class="input-group">
+
+                                        <label>Status</label>
+
+                                                                <div class="rag-selector">
+
+                                                                    <div class="rag-pill" data-val="green" onclick="TrackerManager.selectRag('green')">
+
+                                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+                                                                          <path d="M22 11.08V12C21.9988 14.1564 21.3005 16.2547 20.0093 17.9818C18.7182 19.709 16.9033 20.9725 14.8354 21.5839C12.7674 22.1953 10.5573 22.1219 8.53447 21.3746C6.51168 20.6273 4.78465 19.2461 3.61096 17.4371C2.43727 15.628 1.87979 13.4881 2.02168 11.3363C2.16356 9.18455 2.99721 7.13631 4.39828 5.49706C5.79935 3.85781 7.69279 2.71537 9.79619 2.24013C11.8996 1.7649 14.1003 1.98232 16.07 2.85999" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                          <path d="M22 4L12 14.01L9 11.01" stroke="#16A34A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                        </svg>
+
+                                                                    </div>
+
+                                                                    <div class="rag-pill" data-val="amber" onclick="TrackerManager.selectRag('amber')">
+
+                                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+                                                                          <path d="M10.29 3.86L1.82 18C1.64556 18.3024 1.55293 18.6453 1.55196 18.9945C1.55098 19.3437 1.64171 19.6871 1.81506 19.991C1.98841 20.2949 2.23846 20.5487 2.54076 20.7275C2.84306 20.9063 3.18721 21.0041 3.54 21H20.46C20.8128 21.0041 21.1569 20.9063 21.4592 20.7275C21.7615 20.5487 22.0116 20.2949 22.1849 19.991C22.3583 19.6871 22.449 19.3437 22.448 18.9945C22.4471 18.6453 22.3544 18.3024 22.18 18L13.71 3.86C13.5317 3.56613 13.2807 3.32314 12.9812 3.15449C12.6817 2.98585 12.3437 2.89722 12 2.89722C11.6563 2.89722 11.3183 2.98585 11.0188 3.15449C10.7193 3.32314 10.4683 3.56613 10.29 3.86V3.86Z" fill="#D97706" stroke="#D97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                          <path d="M12 9V13" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                          <path d="M12 17H12.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                        </svg>
+
+                                                                    </div>
+
+                                                                    <div class="rag-pill" data-val="red" onclick="TrackerManager.selectRag('red')">
+
+                                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+                                                                          <path d="M7.86 2H16.14L22 7.86V16.14L16.14 22H7.86L2 16.14V7.86L7.86 2Z" fill="#DC2626" stroke="#DC2626" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                          <path d="M15 9L9 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                          <path d="M9 9L15 15" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                        </svg>
+
+                                                                    </div>
+
+                                                                    <div class="rag-pill" data-val="grey" onclick="TrackerManager.selectRag('grey')">
+
+                                                                        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+                                                                          <circle cx="12" cy="12" r="10" fill="#9CA3AF" />
+
+                                                                          <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3M12 17h.01" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+
+                                                                        </svg>
+
+                                                                    </div>
+
+                                                                </div>
+
+                                        <input type="hidden" id="tkRagStatus">
+
+                                    </div>
+
+                                                        <div class="input-group">
+
+                                                            <label>Status Message</label>
+
+                                                            <input type="text" id="tkRagMsg" maxlength="15" placeholder="e.g. All Systems Operational">
+
+                                                        </div>
+
+                                                        <div class="input-group" style="margin-top: 1rem;">
+
+                                                            <label>Notes for Published View (Max 200 chars)</label>
+
+                                                            <textarea id="tkRagNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+
+                                                        </div>
+
+                                                    </div>
+
+                                                                                                <div id="noteInputs" style="display:none;">
+
+                                                                                                    <div class="input-group">
+
+                                                                                                        <label>Content (Markdown supported)</label>
+
+                                                                                                        <textarea id="tkNoteContent" style="height: 200px; font-family: monospace;" placeholder="# Heading&#10;- Bullet&#10;**Bold**&#10;[Link](google.com)"></textarea>
+
+                                                                                                    </div>
+
+                                                                                                    <div class="input-group">
+                                                                                                        <label>Text Alignment</label>
+                                                                                                        <div style="display:flex; gap:15px; margin-top:5px;">
+                                                                                                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="left" checked> Left</label>
+                                                                                                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="center"> Center</label>
+                                                                                                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="right"> Right</label>
+                                                                                                        </div>
+                                                                                                    </div>
+
+                                                                                                </div>
+
+                                                                
+
+                                                                                                <div id="donutInputs" style="display:none;">
+
+                                                                                                    <div class="input-group">
+
+                                                                                                        <label>Segments (Max 10)</label>
+
+                                                                                                        <div id="donutDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+
+                                                                                                            <!-- Rows will be added here -->
+
+                                                                                                        </div>
+
+                                                                                                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addDonutRow()">+ Add Segment</button>
+
+                                                                                                    </div>
+
+                                                                                                    <div class="input-group" style="margin-top: 1rem;">
+
+                                                                                                        <label>Notes for Published View (Max 200 chars)</label>
+
+                                                                                                        <textarea id="tkDonutNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+
+                                                                                                    </div>
+
+                                                                                                </div>
+
+                                                                                                <div id="countdownInputs" style="display:none;">
+                                                                                                    <div class="input-group">
+                                                                                                        <label>Events (Max 10)</label>
+                                                                                                        <div id="countdownDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);"></div>
+                                                                                                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addCountdownRow()">+ Add Event</button>
+                                                                                                    </div>
+                                                                                                    <div class="input-group" style="margin-top: 1rem;">
+                                                                                                        <label>Notes for Published View (Max 200 chars)</label>
+                                                                                                        <textarea id="tkCountdownNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                                                                                                    </div>
+                                                                                                </div>
+
+                                                                            </div>
+
+                                                                            <div class="modal-footer">
 
                 <div id="noteInputs" style="display:none;">
                     <div class="input-group">
