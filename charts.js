@@ -116,6 +116,40 @@ export const calculateTrackerSize = (tracker) => {
     return 'M';
 };
 
+export const createWaffleData = (total, active) => {
+    let cols = 10;
+    if (total <= 10) cols = total;
+    else if (total <= 100) cols = 10;
+    else if (total <= 500) cols = 20;
+    else cols = 50; 
+    
+    const series = [];
+    let current = 0;
+    
+    // Fill row by row
+    // We want row 0 at the top.
+    // Heatmap renders Series[0] at the top usually.
+    
+    while(current < total) {
+        const rowData = [];
+        for(let c=0; c<cols; c++) {
+            if (current >= total) {
+                // Pad with "empty" logic or just break?
+                // Heatmap works best with rectangular data.
+                // We'll add "empty" cells (-1) if needed to complete the row visually?
+                // Or just break.
+                break; 
+            }
+            const isActive = current < active;
+            rowData.push({ x: `${c}`, y: isActive ? 1 : 0 });
+            current++;
+        }
+        series.push({ name: `Row`, data: rowData });
+    }
+    
+    return { series };
+};
+
 export const Visuals = {
     showTooltip: (evt, text) => {
         const tt = document.getElementById('globalTooltip');

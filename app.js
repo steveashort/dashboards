@@ -2,8 +2,8 @@
  * SERVER PLATFORMS TRACKER v31
  * ES6 MODULE STRUCTURE
  */
-export { createGaugeSVG, createWaffleHTML, Visuals, renderChart, calculateTrackerSize } from './charts.js';
-import { createGaugeSVG, createWaffleHTML, Visuals, renderChart, calculateTrackerSize } from './charts.js';
+export { createGaugeSVG, createWaffleHTML, Visuals, renderChart, calculateTrackerSize, createWaffleData } from './charts.js';
+import { createGaugeSVG, createWaffleHTML, Visuals, renderChart, calculateTrackerSize, createWaffleData } from './charts.js';
 
 // --- GLOBAL STATE ---
 let State = {
@@ -413,8 +413,40 @@ export const renderBoard = () => {
                 visualHTML = `<div class="ryg-icon-wrapper">${iconHTML}</div>`;
                 statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
             } else if (renderType === 'waffle') {
-                const html = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969');
-                visualHTML = `<div style="width:100%;">${html}</div>`;
+                const chartId = `waffle-viz-${i}`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:150px;"></div>`;
+                
+                setTimeout(() => {
+                    const el = document.getElementById(chartId);
+                    if(el) {
+                        const wData = createWaffleData(t.total, t.active);
+                        const cVal = t.colorVal || '#228B22';
+                        const cBg = t.colorBg || '#696969';
+                        
+                        renderChart(el, 'heatmap', { series: wData.series }, {
+                            chart: { toolbar: { show: false }, sparkline: { enabled: true } },
+                            dataLabels: { enabled: false },
+                            stroke: { width: 1, colors: ['#1e1e1e'] }, 
+                            plotOptions: {
+                                heatmap: {
+                                    radius: 0,
+                                    enableShades: false,
+                                    colorScale: {
+                                        ranges: [
+                                            { from: 0, to: 0, color: cBg },
+                                            { from: 1, to: 1, color: cVal }
+                                        ]
+                                    }
+                                }
+                            },
+                            grid: { padding: { top: 0, bottom: 0, left: 0, right: 0 } },
+                            tooltip: { enabled: false },
+                            xaxis: { labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
+                            yaxis: { show: false }
+                        });
+                    }
+                }, 0);
+                
                 statsHTML = `<div class="tracker-stats">${t.active} / ${t.total} ${t.metric || ''}</div>`;
             } else if (renderType === 'note') {
                 visualHTML = `<div class="note-render-container" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
@@ -612,7 +644,33 @@ export const ZoomManager = {
                 const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
                 content = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message || ''}</div>`;
             } else if (renderType === 'waffle') {
-                content = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969');
+                content = '<div id="zoomChartContainer" style="width:100%; height:100%;"></div>';
+                renderAction = () => {
+                    const el = document.getElementById('zoomChartContainer');
+                    if(el) {
+                        const wData = createWaffleData(t.total, t.active);
+                        const cVal = t.colorVal || '#228B22';
+                        const cBg = t.colorBg || '#696969';
+                        renderChart(el, 'heatmap', { series: wData.series }, {
+                            chart: { toolbar: { show: false } },
+                            dataLabels: { enabled: false },
+                            stroke: { width: 1, colors: ['#1e1e1e'] },
+                            plotOptions: {
+                                heatmap: {
+                                    radius: 0,
+                                    enableShades: false,
+                                    colorScale: {
+                                        ranges: [
+                                            { from: 0, to: 0, color: cBg },
+                                            { from: 1, to: 1, color: cVal }
+                                        ]
+                                    }
+                                }
+                            },
+                            tooltip: { enabled: false }
+                        });
+                    }
+                };
             } else if (renderType === 'note') {
                 content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
             } else if (renderType === 'countdown') {
