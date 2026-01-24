@@ -5,6 +5,3 @@ This file tracks all major tracks for the project. Each track has its own detail
 
 ---
 
-- [x] **Track: Stabilize and Modernize Visualization**
-  *Link: [./tracks/stabilize_viz_20260124/](./tracks/stabilize_viz_20260124/)*
-
