@@ -141,9 +141,7 @@ export const formatCountdown = (dateStr) => {
 };
 
 export const getCountdownBarData = (items) => {
-    const labels = [];
-    const data = [];
-    const colors = [];
+    const seriesData = [];
     const today = new Date();
     today.setHours(0,0,0,0);
 
@@ -157,26 +155,31 @@ export const getCountdownBarData = (items) => {
             return; // Skip this item
         }
 
-        labels.push(item.label);
-        data.push(diffDays);
+        let color = '#00e676'; // Green (far future)
+        if (diffDays === 1) { color = '#ff1744'; } // Red (Tomorrow)
+        else if (diffDays <= 7) { color = '#ff1744'; } // Red (very urgent)
+        else if (diffDays <= 14) { color = '#ff1744'; } // Red (urgent)
+        else if (diffDays <= 30) { color = '#ffb300'; } // Amber (flashing yellow)
+        else if (diffDays <= 60) { color = '#ffb300'; } // Amber (yellow)
+        // else color remains green
 
-        // Aligning color logic with formatCountdown
-        if (diffDays === 1) { colors.push('#ff1744'); } // Red (Tomorrow)
-        else if (diffDays <= 7) { colors.push('#ff1744'); } // Red (very urgent)
-        else if (diffDays <= 14) { colors.push('#ff1744'); } // Red (urgent)
-        else if (diffDays <= 30) { colors.push('#ffb300'); } // Amber (flashing yellow)
-        else if (diffDays <= 60) { colors.push('#ffb300'); } // Amber (yellow)
-        else { colors.push('#00e676'); } // Green (far future)
+        seriesData.push({
+            x: item.label,
+            y: [0, diffDays], // Range starts at 0, ends at diffDays
+            fillColor: color,
+            meta: {
+                originalDate: item.date // Store original date for tooltip
+            }
+        });
     });
 
-    // Sort based on diffDays
-    const sorted = labels.map((label, index) => ({ label, data: data[index], color: colors[index] }))
-                         .sort((a,b) => a.data - b.data);
+    // Sort by diffDays, smallest at the top
+    seriesData.sort((a,b) => a.y[1] - b.y[1]);
 
     return {
-        labels: sorted.map(s => s.label),
-        series: [{ name: 'Days', data: sorted.map(s => s.data) }],
-        colors: sorted.map(s => s.color)
+        series: [{
+            data: seriesData
+        }]
     };
 };
 
