@@ -103,6 +103,19 @@ export const renderChart = (el, type, data, options) => {
     return chart;
 };
 
+export const calculateTrackerSize = (tracker) => {
+    if (tracker.type === 'waffle') {
+        const t = tracker.total || 100;
+        if (t <= 100) return 'S';
+        if (t <= 400) return 'M';
+        if (t <= 1000) return 'L';
+        return 'XL';
+    }
+    if (['gauge', 'rag', 'counter', 'ryg', 'donut'].includes(tracker.type)) return 'S';
+    if (['line', 'bar', 'note', 'countdown'].includes(tracker.type)) return 'M'; 
+    return 'M';
+};
+
 export const Visuals = {
     showTooltip: (evt, text) => {
         const tt = document.getElementById('globalTooltip');
