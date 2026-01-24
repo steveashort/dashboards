@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Server Platforms Tracker v30 (Fixed)</title>
+    <title>Server Platforms Tracker v35</title>
     <!-- Load Styles -->
     <link rel="stylesheet" href="styles.css">
 </head>
@@ -31,11 +31,12 @@
             <button class="btn" onclick="document.getElementById('fileInput').click()">Load Data</button>
             <button class="btn" onclick="DataSaver.saveData()">Save JSON</button>
             <button class="btn" onclick="App.togglePublishMode()">Publish View</button>
+            <button class="btn" onclick="ModalManager.openModal('settingsModal')" title="Settings">&#9881;</button>
         </div>
     </header>
 
     <div class="container">
-        <div class="team-overview-panel">
+        <div class="team-overview-panel" id="teamOverviewPanel">
             <div class="overview-col" onclick="OverviewManager.handleOverviewClick('success')">
                 <h4 id="overviewTitleCurrent">Top 5 Team Achievements</h4>
                 <div class="edit-hint">(Check max 5 boxes in Last Week)</div>
@@ -64,7 +65,9 @@
         <div id="ganttSection" style="margin-bottom: 3rem; display: none;">
             <div class="section-header">
                 <h3 style="color:var(--accent); font-weight:300;">Resource Planner</h3>
+                <button class="btn btn-sm" onclick="DataLoader.syncFromGitHub()" title="Sync user data from GitHub" style="margin-left:auto; display:none;" id="githubSyncBtn">Sync GitHub</button>
             </div>
+            <div id="resourceAggregateChart" style="margin-bottom: 1.5rem; height: 200px;"></div>
             <div id="ganttContainer" style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem; overflow-x:auto;"></div>
         </div>
 
@@ -110,6 +113,51 @@
                 <button class="btn" onclick="ModalManager.closeModal('zoomModal')">&times;</button>
             </div>
             <div class="modal-body" id="zoomBody"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h3 style="color:var(--accent);">Settings</h3>
+                <button class="btn" onclick="ModalManager.closeModal('settingsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="form-row" style="display:flex; flex-direction:column; gap:1rem;">
+                    <div class="input-group">
+                        <label style="display:flex; align-items:center; gap:10px; cursor:pointer;">
+                            <input type="checkbox" id="cfgShowTopSection" checked style="width:auto; margin:0;">
+                            Show Team Achievements in Publish Mode
+                        </label>
+                    </div>
+                    <div class="input-group">
+                        <label>Max Series (Time Series)</label>
+                        <input type="number" id="cfgMaxSeries" min="1" max="20" placeholder="Default: 6">
+                    </div>
+                    <div class="input-group">
+                        <label>Max Events (Timeline)</label>
+                        <input type="number" id="cfgMaxEvents" min="1" max="50" placeholder="Default: 20">
+                    </div>
+                    <div class="input-group">
+                        <label>Max Donut Segments</label>
+                        <input type="number" id="cfgMaxDonut" min="1" max="20" placeholder="Default: 10">
+                    </div>
+                    <div class="input-group">
+                        <label>Max Waffle Size (Cells)</label>
+                        <input type="number" id="cfgMaxWaffle" min="100" max="1000" placeholder="Default: 450">
+                    </div>
+                    <div class="input-group" style="margin-top:10px; border-top:1px solid #333; padding-top:10px;">
+                        <label>GitHub Repo (User Data)</label>
+                        <input type="text" id="cfgGithubRepo" placeholder="username/repo-name">
+                        <div style="font-size:0.7rem; color:#888; margin-top:2px;">
+                            Reads from: <code>https://raw.githubusercontent.com/[repo]/main/user/[Name].json</code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="SettingsManager.saveSettings()">Save Changes</button>
+            </div>
         </div>
     </div>
 
@@ -214,173 +262,111 @@
                         <label>Chart Title</label>
                         <input type="text" id="tkDesc">
                     </div>
-                    <div class="input-group" style="flex: 0 0 180px;" id="sizeContainer">
-                        <label>Size</label>
-                        <div id="tkSize" style="display:flex; gap:15px; margin-top:5px;">
-                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="S"> S</label>
-                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="M" checked> M</label>
-                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="L"> L</label>
-                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="XL"> XL</label>
+                    <div class="input-group" style="flex: 0 0 250px;" id="sizeContainer">
+                        <label>Size & Height</label>
+                        <div style="display:flex; flex-direction: column; gap: 5px;">
+                            <div id="tkSize" style="display:flex; gap:15px; margin-top:5px;">
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="S"> S</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="M" checked> M</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="L"> L</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkSize" value="XL"> XL</label>
+                            </div>
+                            <div id="tkHeight" style="display:flex; gap:15px; font-size:0.8rem;">
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkHeight" value="standard" checked> Standard</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkHeight" value="tall"> Tall</label>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                                <div id="gaugeInputs">
-
-                                    <div class="input-group"><label>Metric Unit</label><input type="text" id="tkMetric" maxlength="15"></div>
-
-                                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
-
-                                        <div class="input-group"><label>Target</label><input type="number" id="tkTotal"></div>
-
-                                        <div class="input-group"><label>Progress</label><input type="number" id="tkComp"></div>
-
-                                    </div>
-
-                                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
-
-                                        <div class="input-group">
-
-                                            <label>Target Colour</label>
-
-                                            <input type="color" id="tkPieColor" value="#696969">
-
-                                        </div>
-
-                                        <div class="input-group">
-
-                                            <label>Progress Colour</label>
-
-                                            <input type="color" id="tkPieColor2" value="#228B22">
-
-                                        </div>
-
-                                    </div>
-
-                                    <div class="input-group" style="margin-top: 1rem;">
-
-                                        <label>Notes for Published View (Max 200 chars)</label>
-
-                                        <textarea id="tkNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
-
-                                    </div>
-
-                                </div>
-
-                                <div id="lineInputs" style="display:none;">
-
-                                    <div class="form-row" style="margin-bottom: 1rem; gap: 2rem;">
-
-                                        <div class="input-group">
-
-                                            <label>Metric Unit</label>
-
-                                            <input type="text" id="tkYLabel" maxlength="15">
-
-                                        </div>
-
-                                        <div class="input-group">
-
-                                            <label>Chart Style</label>
-
-                                            <div style="display:flex; gap:15px; margin-top:5px;">
-
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="line" checked> Line Chart</label>
-
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="bar"> Bar Chart</label>
-
-                                            </div>
-
-                                        </div>
-
-                                    </div>
-
-                                    <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end; display: flex; gap: 2rem;">
-
-                                        <div class="input-group">
-
-                                            <label>End Date</label>
-
-                                            <input type="date" id="tkStartDate" onchange="TrackerManager.handleEndDateChange(this)" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
-
-                                        </div>
-
-                                        <div class="input-group">
-
-                                            <label>Time Unit</label>
-
-                                            <div style="display: flex; gap: 15px; margin-top: 5px;" id="tkTimeUnitContainer">
-
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="day" checked onchange="TrackerManager.handleTimeUnitChange(this)"> Days</label>
-
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="month" onchange="TrackerManager.handleTimeUnitChange(this)"> Months</label>
-
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="year" onchange="TrackerManager.handleTimeUnitChange(this)"> Years</label>
-
-                                            </div>
-
-                                        </div>
-
-                                        <div class="input-group">
-
-                                            <label id="tkHistoricLabel">Historic Days</label>
-
-                                            <select id="tkTimeCount" onchange="TrackerManager.handleCountChange(this)" style="width: 80px; min-width: 60px;"></select>
-
-                                        </div>
-
-                                    </div>
-
-                                    <div class="input-group">
-
-                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-
-                                            <label>Manual Data Entry</label>
-
-                                        </div>
-
-                                        <div id="lineTableContainer" style="max-height: 450px; overflow: auto; border: 1px solid #333; border-radius: 4px;"></div>
-
-                                        <div style="margin-top: 10px; display:flex; justify-content:flex-end;">
-
-                                            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); display: none;" onclick="TrackerManager.deleteSelectedSeries()">Delete Series</button>
-
-                                        </div>
-
-                                    </div>
-
-                                    <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-top: 1rem;">
-
-                                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
-
-                                            <label style="margin:0;">Import / Export Data</label>
-
-                                            <button class="btn btn-sm" onclick="TrackerManager.exportTimeSeriesCSV()">Export Table to CSV</button>
-
-                                        </div>
-
-                                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
-
-                                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
-
-                                    </div>
-
-                                    <div class="input-group" style="margin-top: 1rem;">
-                                        <label>Notes for Published View (Max 200 chars)</label>
-                                        <textarea id="tkLineNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
-                                    </div>
-
-                                </div>
-
-                                                <div id="waffleInputs" style="display:none;">
+                <div id="gaugeInputs">
+                    <div class="input-group"><label>Metric Unit</label><input type="text" id="tkMetric" maxlength="15"></div>
+                    <div class="form-row" style="margin-bottom:0; gap:1rem;">
+                        <div class="input-group"><label>Target</label><input type="number" id="tkTotal"></div>
+                        <div class="input-group"><label>Progress</label><input type="number" id="tkComp"></div>
+                    </div>
+                    <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
+                        <div class="input-group">
+                            <label>Target Colour</label>
+                            <div class="color-picker-container" id="tkPieColorPicker" data-input-id="tkPieColor"></div>
+                            <input type="hidden" id="tkPieColor" value="#696969">
+                        </div>
+                        <div class="input-group">
+                            <label>Progress Colour</label>
+                            <div class="color-picker-container" id="tkPieColor2Picker" data-input-id="tkPieColor2"></div>
+                            <input type="hidden" id="tkPieColor2" value="#228B22">
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
+
+                <div id="lineInputs" style="display:none;">
+                    <div class="form-row" style="margin-bottom: 1rem; gap: 2rem;">
+                        <div class="input-group">
+                            <label>Metric Unit</label>
+                            <input type="text" id="tkYLabel" maxlength="15">
+                        </div>
+                        <div class="input-group">
+                            <label>Chart Style</label>
+                            <div style="display:flex; gap:15px; margin-top:5px;">
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="line" checked> Line Chart</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkDisplayStyle" value="bar"> Bar Chart</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row" style="margin-bottom: 1rem; align-items: flex-end; display: flex; gap: 2rem;">
+                        <div class="input-group">
+                            <label>End Date</label>
+                            <input type="date" id="tkStartDate" onchange="TrackerManager.handleEndDateChange(this)" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                        </div>
+                        <div class="input-group">
+                            <label>Time Unit</label>
+                            <div style="display: flex; gap: 15px; margin-top: 5px;" id="tkTimeUnitContainer">
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="day" checked onchange="TrackerManager.handleTimeUnitChange(this)"> Days</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="month" onchange="TrackerManager.handleTimeUnitChange(this)"> Months</label>
+                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkTimeUnit" value="year" onchange="TrackerManager.handleTimeUnitChange(this)"> Years</label>
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label id="tkHistoricLabel">Historic Days</label>
+                            <select id="tkTimeCount" onchange="TrackerManager.handleCountChange(this)" style="width: 80px; min-width: 60px;"></select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <label>Manual Data Entry</label>
+                        </div>
+                        <div id="lineTableContainer" style="max-height: 450px; overflow: auto; border: 1px solid #333; border-radius: 4px;"></div>
+                        <div style="margin-top: 10px; display:flex; justify-content:flex-end;">
+                            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); display: none;" onclick="TrackerManager.deleteSelectedSeries()">Delete Series</button>
+                        </div>
+                    </div>
+                    <div class="input-group" style="margin-bottom: 1rem; background: rgba(255,255,255,0.05); padding: 10px; border-radius: 4px; margin-top: 1rem;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                            <label style="margin:0;">Import / Export Data</label>
+                            <button class="btn btn-sm" onclick="TrackerManager.exportTimeSeriesCSV()">Export Table to CSV</button>
+                        </div>
+                        <textarea id="csvInput" placeholder="Paste CSV data here...&#10;Date, Series1, Series2...&#10;2023-01-01, 10, 20" style="height: 60px; font-family: monospace; font-size: 0.8rem;"></textarea>
+                        <button class="btn btn-sm" style="margin-top: 5px;" onclick="TrackerManager.parseCSV('line')">Parse CSV & Auto-fill</button>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkLineNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
+
+                <div id="waffleInputs" style="display:none;">
                     <div class="input-group">
                         <label>Metric Unit</label>
                         <input type="text" id="tkWaffleMetric" maxlength="15">
                     </div>
                     <div class="form-row" style="margin-bottom:0; gap:1rem;">
                         <div class="input-group">
-                            <label>Target (Max 450)</label>
-                            <input type="number" id="tkWaffleTotal" max="450">
+                            <label>Target</label>
+                            <input type="number" id="tkWaffleTotal">
                         </div>
                         <div class="input-group">
                             <label>Progress</label>
@@ -390,11 +376,13 @@
                     <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
                         <div class="input-group">
                             <label>Target Colour</label>
-                            <input type="color" id="tkWaffleColorBg" value="#696969">
+                            <div class="color-picker-container" id="tkWaffleColorBgPicker" data-input-id="tkWaffleColorBg"></div>
+                            <input type="hidden" id="tkWaffleColorBg" value="#696969">
                         </div>
                         <div class="input-group">
                             <label>Progress Colour</label>
-                            <input type="color" id="tkWaffleColorVal" value="#228B22">
+                            <div class="color-picker-container" id="tkWaffleColorValPicker" data-input-id="tkWaffleColorVal"></div>
+                            <input type="hidden" id="tkWaffleColorVal" value="#228B22">
                         </div>
                     </div>
                     <div class="input-group" style="margin-top: 1rem;">
@@ -404,6 +392,18 @@
                 </div>
 
                 <div id="counterInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Counters (Max 10)</label>
+                        <div id="counterDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+                            <!-- Rows will be added here -->
+                        </div>
+                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addCounterRow()">+ Add Counter</button>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkCounterNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
 
                                                     <div class="form-row" style="margin-bottom: 0; gap: 1rem;">
 
@@ -592,15 +592,72 @@
 
                                                                             <div class="modal-footer">
 
-                                                                                <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Tracker</button>
+                <div id="noteInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Content (Markdown supported)</label>
+                        <textarea id="tkNoteContent" style="height: 200px; font-family: monospace;" placeholder="# Heading&#10;- Bullet&#10;**Bold**&#10;[Link](google.com)"></textarea>
+                    </div>
+                    <div class="input-group">
+                        <label>Text Alignment</label>
+                        <div style="display:flex; gap:15px; margin-top:5px;">
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="left" checked> Left</label>
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="center"> Center</label>
+                            <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkNoteAlign" value="right"> Right</label>
+                        </div>
+                    </div>
+                </div>
 
-                                                                            </div>
+                <div id="eventInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Events</label>
+                        <div id="eventDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+                            <!-- Rows will be added here -->
+                        </div>
+                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addEventRow()">+ Add Event</button>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkEventNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
 
-                                                                        </div>
+                <div id="donutInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Segments</label>
+                        <div id="donutDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+                            <!-- Rows will be added here -->
+                        </div>
+                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addDonutRow()">+ Add Segment</button>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkDonutNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
 
-                                                                    </div>
+                <div id="ganttInputs" style="display:none;">
+                    <div class="input-group">
+                        <label>Project Tasks</label>
+                        <div id="ganttDataContainer" style="max-height: 300px; overflow-y: auto; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+                            <!-- Rows -->
+                        </div>
+                        <button class="btn btn-sm" style="margin-top: 10px;" onclick="TrackerManager.addGanttRow()">+ Add Task</button>
+                    </div>
+                    <div class="input-group" style="margin-top: 1rem;">
+                        <label>Notes for Published View (Max 200 chars)</label>
+                        <textarea id="tkGanttNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Tracker</button>
+            </div>
+        </div>
+    </div>
 
     <!-- LOAD SCRIPT LAST to ensure it's available -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
     <!-- Changed to type="module" and added an export to window -->
     <script type="module">
         import * as AppModule from './app.js';
@@ -611,6 +668,7 @@
         window.TrackerManager = AppModule.TrackerManager;
         window.OverviewManager = AppModule.OverviewManager;
         window.ModalManager = AppModule.ModalManager;
+        window.SettingsManager = AppModule.SettingsManager;
         window.DataSaver = AppModule.DataSaver;
         window.DataLoader = AppModule.DataLoader;
         window.DataExporter = AppModule.DataExporter;

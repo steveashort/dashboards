@@ -1,5 +1,5 @@
 /**
- * SERVER PLATFORMS TRACKER v31
+ * SERVER PLATFORMS TRACKER v36
  * ES6 MODULE STRUCTURE
  */
 export { createGaugeSVG, createWaffleHTML, Visuals } from './charts.js';
@@ -12,8 +12,22 @@ let State = {
     trackers: [],
     members: [],
     editingTrackerIndex: -1,
-    currentTrackerType: 'gauge'
+    currentTrackerType: 'gauge',
+    config: {
+        showTopSection: true,
+        maxSeries: 6,
+        maxEvents: 20,
+        maxDonut: 10,
+        maxWaffle: 450,
+        githubRepo: "",
+        colors: [
+            '#e6194b', '#3cb44b', '#ffe119', '#4363d8', '#f58231', '#911eb4', '#46f0f0', '#f032e6', '#bcf60c', '#fabebe', '#008080', '#e6beff', '#9a6324', '#fffac8', '#800000', '#aaffc3', '#808000', '#ffd8b1', '#000075', '#808080', '#ffffff', '#000000'
+        ]
+    }
 };
+
+let chartInstances = []; // Track dashboard chart instances
+let zoomedChartInstance = null; // Track zoomed chart instance
 
 // --- DOM HELPERS ---
 const getEl = (id) => document.getElementById(id);
@@ -45,6 +59,60 @@ const getRanges = () => {
     };
 };
 
+const getTwoWeeksDates = () => {
+    const today = new Date();
+    const d = today.getDay();
+    const diff = d === 0 ? -6 : 1 - d;
+    // Current Monday
+    const cm = new Date(today);
+    cm.setDate(today.getDate() + diff);
+
+    const dates = [];
+    for(let i=0; i<14; i++) {
+        const date = new Date(cm);
+        date.setDate(cm.getDate() + i);
+        dates.push(date);
+    }
+    return dates;
+};
+
+const createColorPickerHTML = (inputId, initialColor) => {
+    let html = '';
+    State.config.colors.forEach(c => {
+        const selected = (c.toLowerCase() === (initialColor || '').toLowerCase()) ? 'selected' : '';
+        html += `<div class="color-swatch ${selected}" style="background:${c}" onclick="SettingsManager.selectColor('${inputId}', '${c}', this)"></div>`;
+    });
+    return html;
+};
+
+// --- APEXCHARTS HELPERS ---
+const cleanupCharts = () => {
+    chartInstances.forEach(chart => chart.destroy());
+    chartInstances = [];
+};
+
+const getCommonApexOptions = (isZoomed = false) => ({
+    chart: {
+        background: 'transparent',
+        toolbar: { show: isZoomed },
+        animations: { enabled: true },
+        fontFamily: 'Segoe UI, sans-serif'
+    },
+    theme: { mode: 'dark', palette: 'palette1' },
+    dataLabels: { enabled: false },
+    grid: { borderColor: '#333', strokeDashArray: 2 },
+    xaxis: {
+        labels: { style: { colors: '#a0a0a0', fontSize: '12px', fontFamily: 'Segoe UI' } },
+        axisBorder: { show: false },
+        axisTicks: { color: '#333' }
+    },
+    yaxis: {
+        labels: { style: { colors: '#a0a0a0', fontSize: '12px', fontFamily: 'Segoe UI' } }
+    },
+    legend: { labels: { colors: '#e0e0e0' }, position: 'bottom' },
+    tooltip: { theme: 'dark' }
+});
+
 // --- CORE FUNCTIONS ---
 export const initApp = () => {
     
@@ -71,6 +139,13 @@ export const initApp = () => {
 
     updateDateUI();
     renderBoard();
+
+    const btn = document.getElementById('expandTeamBtn');
+    if(btn) {
+        btn.style.display = 'inline-block';
+        btn.innerText = "Show Resource Planner";
+    }
+
     console.log("App Initialized");
 };
 
@@ -199,18 +274,34 @@ export const App = {
         const isPub = document.body.classList.contains('publishing');
         const btn = getEl('expandTeamBtn');
         if(btn) {
-            btn.style.display = isPub ? 'inline-block' : 'none';
-            btn.innerText = "Expand Team Data";
+            btn.style.display = 'inline-block';
+            btn.innerText = isPub ? "Expand Team Data" : "Show Resource Planner";
         }
         
+        const editBtn = getEl('publishToggleBtn');
+        if (editBtn) editBtn.style.display = isPub ? 'block' : 'none';
+
         const ganttSec = getEl('ganttSection');
         const teamHead = getEl('teamSectionHeader');
         const teamGrid = getEl('teamGrid');
+        const overviewPanel = getEl('teamOverviewPanel');
         
         if (ganttSec) ganttSec.style.display = 'none';
         if (teamHead) teamHead.style.display = isPub ? 'none' : 'flex';
         if (teamGrid) teamGrid.style.display = isPub ? 'none' : 'grid';
         
+        // Handle Top Section Config
+        if (overviewPanel) {
+            if (isPub) {
+                // If publishing, respect the config setting
+                const showTop = (State.config && State.config.showTopSection !== undefined) ? State.config.showTopSection : true;
+                overviewPanel.style.display = showTop ? 'grid' : 'none';
+            } else {
+                // Always show in edit mode
+                overviewPanel.style.display = 'grid';
+            }
+        }
+
         renderBoard();
     },
     toggleTeamData: () => {
@@ -218,24 +309,32 @@ export const App = {
         const teamHead = getEl('teamSectionHeader');
         const teamGrid = getEl('teamGrid');
         const btn = getEl('expandTeamBtn');
+        const ghBtn = getEl('githubSyncBtn');
         
         const isHidden = ganttSec.style.display === 'none';
+        const isPub = document.body.classList.contains('publishing');
         
         if (isHidden) {
             ganttSec.style.display = 'block';
             if (teamHead) teamHead.style.display = 'flex';
             if (teamGrid) teamGrid.style.display = 'grid';
-            if (btn) btn.innerText = "Collapse Team Data";
+
+            if (btn) btn.innerText = isPub ? "Collapse Team Data" : "Hide Resource Planner";
+
+            if (ghBtn && State.config.githubRepo) ghBtn.style.display = 'inline-block';
             
             // Render Gantt
-            const r = getRanges();
-            const svg = Visuals.createGanttChartSVG(State.members, r.current, r.next);
-            getEl('ganttContainer').innerHTML = svg;
+            Visuals.renderResourcePlanner(State.members);
         } else {
             ganttSec.style.display = 'none';
-            if (teamHead) teamHead.style.display = 'none';
-            if (teamGrid) teamGrid.style.display = 'none';
-            if (btn) btn.innerText = "Expand Team Data";
+
+            if (isPub) {
+                if (teamHead) teamHead.style.display = 'none';
+                if (teamGrid) teamGrid.style.display = 'none';
+            }
+
+            if (btn) btn.innerText = isPub ? "Expand Team Data" : "Show Resource Planner";
+            if (ghBtn) ghBtn.style.display = 'none';
         }
     },
     saveTitle: () => {
@@ -245,20 +344,226 @@ export const App = {
     }
 };
 
+// Override Visuals.renderResourcePlanner to use ApexCharts
+Visuals.renderResourcePlanner = (members) => {
+    // 1. Aggregate Data
+    const dates = getTwoWeeksDates();
+    const dateLabels = dates.map(d => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' }));
+
+    // Calculate Totals
+    const dailyTotals = new Array(14).fill(0);
+
+    // Prepare Heatmap Data
+    const heatmapSeries = [];
+
+    // Mapping: L=1, N=2, R=3, X=0. OnCall adds 10.
+    const valMap = { 'L': 1, 'N': 2, 'R': 3, 'X': 0 };
+
+    members.forEach(m => {
+        const thisLoad = (m.thisWeek && m.thisWeek.load) ? (m.thisWeek.load.length === 5 ? [...m.thisWeek.load, 'X', 'X'] : m.thisWeek.load) : ['N','N','N','N','N','X','X'];
+        const nextLoad = (m.nextWeek && m.nextWeek.load) ? (m.nextWeek.load.length === 5 ? [...m.nextWeek.load, 'X', 'X'] : m.nextWeek.load) : ['N','N','N','N','N','X','X'];
+        const thisOc = (m.thisWeek && m.thisWeek.onCall) ? (m.thisWeek.onCall.length === 5 ? [...m.thisWeek.onCall, false, false] : m.thisWeek.onCall) : [false,false,false,false,false,false,false];
+        const nextOc = (m.nextWeek && m.nextWeek.onCall) ? (m.nextWeek.onCall.length === 5 ? [...m.nextWeek.onCall, false, false] : m.nextWeek.onCall) : [false,false,false,false,false,false,false];
+
+        const combinedLoad = [...thisLoad, ...nextLoad];
+        const combinedOc = [...thisOc, ...nextOc];
+
+        const dataPoints = combinedLoad.map((val, i) => {
+            const score = valMap[val] || 0;
+            // Add to daily total (simple score sum)
+            dailyTotals[i] += score;
+
+            // Encode for heatmap
+            let encodedVal = score;
+            if (combinedOc[i]) encodedVal += 10;
+
+            return {
+                x: dateLabels[i],
+                y: encodedVal
+            };
+        });
+
+        heatmapSeries.push({
+            name: m.name,
+            data: dataPoints
+        });
+    });
+
+    // --- RENDER AGGREGATE CHART ---
+    const aggContainer = getEl('resourceAggregateChart');
+    if (aggContainer) {
+        aggContainer.innerHTML = '';
+        const aggOptions = {
+            ...getCommonApexOptions(),
+            chart: {
+                type: 'bar',
+                height: 200,
+                background: 'transparent',
+                toolbar: { show: false }
+            },
+            series: [{ name: 'Total Capacity', data: dailyTotals }],
+            xaxis: { categories: dateLabels },
+            yaxis: { title: { text: 'Capacity Score' } },
+            colors: ['#bb86fc'],
+            plotOptions: { bar: { borderRadius: 4, columnWidth: '50%' } },
+            title: { text: 'Team Availability Forecast', style: { color: '#bb86fc', fontSize: '14px', fontFamily: 'Segoe UI' } }
+        };
+        const aggChart = new ApexCharts(aggContainer, aggOptions);
+        aggChart.render();
+        chartInstances.push(aggChart);
+    }
+
+    // --- RENDER DETAILED HEATMAP ---
+    const ganttContainer = getEl('ganttContainer');
+    if (ganttContainer) {
+        ganttContainer.innerHTML = '';
+
+        // Define Color Ranges
+        // 0=Absent, 1=Low, 2=Med, 3=High
+        // +10 for OnCall
+        const ranges = [
+            { from: 0, to: 0, color: '#333333', name: 'Absent' }, // Grey
+            { from: 1, to: 1, color: '#ff1744', name: 'Low' },    // Red
+            { from: 2, to: 2, color: '#ffb300', name: 'Medium' }, // Amber
+            { from: 3, to: 3, color: '#00e676', name: 'High' },   // Green
+
+            // On Call Variants (Same colors, icon handled by formatter)
+            { from: 10, to: 10, color: '#333333', name: 'Absent (On Call)' },
+            { from: 11, to: 11, color: '#ff1744', name: 'Low (On Call)' },
+            { from: 12, to: 12, color: '#ffb300', name: 'Medium (On Call)' },
+            { from: 13, to: 13, color: '#00e676', name: 'High (On Call)' }
+        ];
+
+        // Shade Weekends
+        const annotations = {
+            xaxis: [
+                { x: dateLabels[5], x2: dateLabels[6], fillColor: '#ffffff', opacity: 0.1, label: { text: '' } }, // Current Sat-Sun
+                { x: dateLabels[12], x2: dateLabels[13], fillColor: '#ffffff', opacity: 0.1, label: { text: '' } } // Next Sat-Sun
+            ]
+        };
+
+        const detailOptions = {
+            ...getCommonApexOptions(),
+            chart: {
+                type: 'heatmap',
+                height: Math.max(250, members.length * 40 + 50),
+                background: 'transparent',
+                toolbar: { show: false },
+                fontFamily: 'Segoe UI, sans-serif'
+            },
+            series: heatmapSeries,
+            plotOptions: {
+                heatmap: {
+                    shadeIntensity: 0.5,
+                    radius: 2,
+                    useFillColorAsStroke: false,
+                    colorScale: {
+                        ranges: ranges
+                    }
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                formatter: function(val, opts) {
+                    if (val >= 10) return '☎';
+                    return '';
+                },
+                style: {
+                    colors: ['#fff'],
+                    fontSize: '16px'
+                }
+            },
+            annotations: annotations,
+            xaxis: {
+                categories: dateLabels,
+                labels: { style: { colors: '#a0a0a0', fontSize: '11px' } },
+                position: 'top'
+            },
+            stroke: { width: 1, colors: ['#1e1e1e'] },
+            title: { text: 'Individual Availability & On-Call', style: { color: '#bb86fc', fontSize: '14px', fontFamily: 'Segoe UI' } }
+        };
+
+        const detailChart = new ApexCharts(ganttContainer, detailOptions);
+        detailChart.render();
+        chartInstances.push(detailChart);
+    }
+};
+
 export const ModalManager = {
     openModal: (id) => {
         console.log("Opening modal:", id);
         const el = document.getElementById(id);
         if (el) el.classList.add('active');
+
+        if (id === 'settingsModal') {
+            const cfg = State.config || {};
+            const stsIn = getEl('cfgShowTopSection'); if(stsIn) stsIn.checked = (cfg.showTopSection !== undefined) ? cfg.showTopSection : true;
+            const msIn = getEl('cfgMaxSeries'); if(msIn) msIn.value = cfg.maxSeries || 6;
+            const meIn = getEl('cfgMaxEvents'); if(meIn) meIn.value = cfg.maxEvents || 20;
+            const mdIn = getEl('cfgMaxDonut'); if(mdIn) mdIn.value = cfg.maxDonut || 10;
+            const mwIn = getEl('cfgMaxWaffle'); if(mwIn) mwIn.value = cfg.maxWaffle || 450;
+            const grIn = getEl('cfgGithubRepo'); if(grIn) grIn.value = cfg.githubRepo || "";
+        }
     },
     closeModal: (id) => {
         const el = document.getElementById(id);
         if (el) el.classList.remove('active');
+        if (id === 'zoomModal') {
+            if (zoomedChartInstance) {
+                zoomedChartInstance.destroy();
+                zoomedChartInstance = null;
+            }
+        }
+    }
+};
+
+export const SettingsManager = {
+    saveSettings: () => {
+        const sts = getEl('cfgShowTopSection').checked;
+        const ms = parseInt(getEl('cfgMaxSeries').value) || 6;
+        const me = parseInt(getEl('cfgMaxEvents').value) || 20;
+        const md = parseInt(getEl('cfgMaxDonut').value) || 10;
+        const mw = parseInt(getEl('cfgMaxWaffle').value) || 450;
+        const gr = getEl('cfgGithubRepo').value.trim();
+
+        State.config = {
+            ...State.config,
+            showTopSection: sts,
+            maxSeries: ms,
+            maxEvents: me,
+            maxDonut: md,
+            maxWaffle: mw,
+            githubRepo: gr
+        };
+
+        ModalManager.closeModal('settingsModal');
+        // If currently published, toggle logic will pick up new setting
+        if (document.body.classList.contains('publishing')) {
+            const overviewPanel = getEl('teamOverviewPanel');
+            if (overviewPanel) overviewPanel.style.display = sts ? 'grid' : 'none';
+        }
+
+        // Show/Hide Sync Button if opened
+        const ghBtn = getEl('githubSyncBtn');
+        if (ghBtn) ghBtn.style.display = (State.config.githubRepo && getEl('ganttSection').style.display !== 'none') ? 'inline-block' : 'none';
+
+        App.alert("Settings saved.");
+    },
+    selectColor: (inputId, color, element) => {
+        const input = getEl(inputId);
+        if(input) input.value = color;
+
+        // Update visual selection
+        if(element && element.parentNode) {
+            Array.from(element.parentNode.children).forEach(c => c.classList.remove('selected'));
+            element.classList.add('selected');
+        }
     }
 };
 
 export const renderBoard = () => {
     console.log("Rendering Board...");
+    cleanupCharts();
 
     const titleEl = getEl('appTitle');
     if (titleEl) titleEl.innerText = State.title || "Server Platforms";
@@ -307,7 +612,9 @@ export const renderBoard = () => {
             const card = document.createElement('div');
             // Force Donut to always be Small
             const displaySize = t.type === 'donut' ? 'S' : (t.size || 'M');
-            card.className = `tracker-card size-${displaySize} type-${t.type}`;
+            const heightClass = (t.height === 'tall' && (t.size === 'L' || t.size === 'XL')) ? 'height-2x' : '';
+
+            card.className = `tracker-card size-${displaySize} type-${t.type} ${heightClass}`;
             card.dataset.index = i;
             
             if (!document.body.classList.contains('publishing')) {
@@ -317,8 +624,8 @@ export const renderBoard = () => {
             card.onclick = () => {
                  console.log("Card clicked. Type:", t.type, "Publishing:", document.body.classList.contains('publishing'));
                  if (document.body.classList.contains('publishing')) {
-                     // Zoom requested for: Time Series (line/bar), Note Tracker (note), Date Tracker (rag/ryg), Schedule Tracker (waffle)
-                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut'].includes(t.type);
+                     // Zoom requested
+                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'gauge', 'event', 'gantt'].includes(t.type);
                      if (canZoom) ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
@@ -326,15 +633,21 @@ export const renderBoard = () => {
             };
 
             // Zoom Icon
-            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut'].includes(t.type)) {
+            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'gauge', 'event', 'gantt'].includes(t.type)) {
                 card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
+            }
+
+            // Last Updated
+            if (document.body.classList.contains('publishing') && t.lastUpdated) {
+                const dateStr = new Date(t.lastUpdated).toLocaleDateString('en-GB', { day:'numeric', month:'short', hour:'2-digit', minute:'2-digit' });
+                card.innerHTML += `<div class="last-updated">Updated - ${dateStr}</div>`;
             }
 
             const noteText = (t.notes || t.content || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
             if (noteText && t.type !== 'note') {
                 card.onmousemove = (e) => {
                     if (!document.body.classList.contains('publishing')) return;
-                    // Prevent overwriting specific tooltips on chart points/bars/segments
+                    if (e.target.closest('.apexcharts-canvas')) return; // Avoid tooltip overlap on charts
                     if (e.target.closest('circle, rect, path')) return;
                     Visuals.showTooltip(e, noteText);
                 };
@@ -343,10 +656,12 @@ export const renderBoard = () => {
 
             let visualHTML = '';
             let statsHTML = '';
+            let chartConfig = null;
+            let chartId = `chart-tk-${i}`;
+            const chartHeight = heightClass ? 440 : 160;
             
             let renderType = t.type;
             if (renderType === 'line' || renderType === 'bar' || renderType === 'line1' || renderType === 'line2') {
-                // Unified Chart Logic
                 let labels = t.labels || [];
                 let series = t.series || [];
                 
@@ -359,23 +674,62 @@ export const renderBoard = () => {
                 // Render based on displayStyle
                 const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
                 
-                if (style === 'bar') {
-                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createMultiBarChartSVG(labels, series, t.size)}</div>`;
-                } else {
-                    visualHTML = `<div style="width:100%; height:120px; margin-bottom:10px;">${Visuals.createLineChartSVG(labels, series, t.yLabel, t.size)}</div>`;
-                }
+                visualHTML = `<div id="${chartId}" style="width:100%; height:${chartHeight}px;"></div>`;
+
+                // Build Apex Options
+                const common = getCommonApexOptions();
+                chartConfig = {
+                    ...common,
+                    chart: { ...common.chart, type: style, height: chartHeight },
+                    series: series.map(s => ({ name: s.name, data: s.values, color: s.color })),
+                    xaxis: { ...common.xaxis, categories: labels },
+                    yaxis: { ...common.yaxis, title: { text: t.yLabel || '' } },
+                    stroke: { width: style === 'line' ? 2 : 0, curve: 'smooth' }
+                };
+
             } else if (renderType === 'gauge') {
                 const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
-                const c1 = t.colorVal || t.color1 || '#00e676'; 
-                const c2 = t.color2 || '#ff1744';
-                // c2 is Progress Colour, c1 is Target Colour
-                const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
-                
-                visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:${chartHeight}px; display:flex; justify-content:center;"></div>`;
                 statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
+
+                // Apex Radial Bar
+                const c1 = t.colorVal || t.color1 || '#00e676';
+                const common = getCommonApexOptions();
+                chartConfig = {
+                    ...common,
+                    chart: { ...common.chart, type: 'radialBar', height: chartHeight + 20 },
+                    series: [pct],
+                    plotOptions: {
+                        radialBar: {
+                            hollow: { size: '60%' },
+                            track: { background: '#333' },
+                            dataLabels: {
+                                show: true,
+                                name: { show: false },
+                                value: { color: '#fff', fontSize: '20px', show: true, offsetY: 8 }
+                            }
+                        }
+                    },
+                    fill: { colors: [c1] },
+                    stroke: { lineCap: 'round' }
+                };
+
             } else if (renderType === 'counter') {
-                visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
-                statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
+                // Support Multiple Counters
+                const counters = t.counters || [{ label: t.subtitle, value: t.value, color: t.color1 }];
+
+                visualHTML = `<div style="display:flex; flex-wrap:wrap; justify-content:space-around; align-items:center; width:100%; height:100%; gap:10px;">`;
+
+                counters.forEach(c => {
+                    visualHTML += `<div style="text-align:center;">
+                                    <div class="counter-display" style="color:${c.color}">${c.value}</div>
+                                    <div class="counter-sub">${c.label || ''}</div>
+                                   </div>`;
+                });
+
+                visualHTML += `</div>`;
+                statsHTML = ''; // Stats moved inside visual for multi-counter
+
             } else if (renderType === 'rag' || renderType === 'ryg') {
                 const status = t.status || 'grey';
                 const iconHTML = Visuals.createRAGIconHTML(status);
@@ -391,9 +745,136 @@ export const renderBoard = () => {
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
                 const values = (t.dataPoints || []).map(dp => dp.value);
-                const html = Visuals.createDonutChartSVG(labels, values, displaySize);
-                visualHTML = `<div class="donut-chart">${html}</div>`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:${chartHeight}px;"></div>`;
                 statsHTML = '';
+
+                const common = getCommonApexOptions();
+                chartConfig = {
+                    ...common,
+                    chart: { ...common.chart, type: 'donut', height: chartHeight },
+                    series: values,
+                    labels: labels,
+                    plotOptions: { pie: { donut: { size: '60%' } } },
+                    dataLabels: { enabled: false },
+                    legend: { show: false }
+                };
+            } else if (renderType === 'event') {
+                const events = (t.events || []).map(ev => {
+                    const evDate = new Date(ev.date);
+                    const utcDate = new Date(evDate.valueOf() + evDate.getTimezoneOffset() * 60000);
+                    return { name: ev.name, date: utcDate.getTime() };
+                });
+
+                events.sort((a, b) => a.date - b.date);
+
+                const data = events.map((e, i) => ({
+                    x: e.date,
+                    y: i % 2 === 0 ? 1 : -1,
+                    meta: e.name
+                }));
+
+                visualHTML = `<div id="${chartId}" style="width:100%; height:${chartHeight}px;"></div>`;
+
+                const common = getCommonApexOptions();
+                chartConfig = {
+                    ...common,
+                    chart: { ...common.chart, type: 'bar', height: chartHeight, toolbar: { show: false } },
+                    series: [{ name: 'Timeline', data: data }],
+                    xaxis: {
+                        ...common.xaxis,
+                        type: 'datetime',
+                        labels: { show: true, format: 'dd MMM', style: { colors: '#aaa', fontSize: '10px' } },
+                        axisBorder: { show: false },
+                        axisTicks: { show: false },
+                        tooltip: { enabled: false }
+                    },
+                    yaxis: {
+                        min: -2, max: 2,
+                        show: false,
+                    },
+                    grid: {
+                        show: true,
+                        yaxis: { lines: { show: false } },
+                        xaxis: { lines: { show: false } },
+                        padding: { top: 0, bottom: 0 }
+                    },
+                    plotOptions: {
+                        bar: {
+                            columnWidth: '2%',
+                            borderRadius: 0,
+                            colors: {
+                                ranges: [{ from: -10, to: 10, color: '#03dac6' }]
+                            },
+                            dataLabels: {
+                                position: 'top'
+                            }
+                        }
+                    },
+                    annotations: {
+                        yaxis: [{
+                            y: 0,
+                            strokeDashArray: 0,
+                            borderColor: '#666',
+                            borderWidth: 1,
+                            width: '100%',
+                            opacity: 0.5
+                        }]
+                    },
+                    dataLabels: {
+                        enabled: true,
+                        formatter: function(val, opts) {
+                            try {
+                                return opts.w.config.series[0].data[opts.dataPointIndex].meta;
+                            } catch(e) { return ''; }
+                        },
+                        style: {
+                            fontSize: '9px',
+                            colors: ['#e0e0e0']
+                        },
+                        background: {
+                            enabled: true,
+                            foreColor: '#000',
+                            padding: 2,
+                            borderRadius: 2,
+                            opacity: 0.7,
+                            borderColor: '#333'
+                        }
+                    },
+                    tooltip: {
+                        custom: function({series, seriesIndex, dataPointIndex, w}) {
+                            const d = w.config.series[seriesIndex].data[dataPointIndex];
+                            if (!d) return '';
+                            const date = new Date(d.x).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+                            return `<div style="padding:8px; background:#222; border:1px solid #444; font-size:12px;">
+                                <div style="font-weight:bold; color:#fff; margin-bottom:4px;">${d.meta}</div>
+                                <div style="color:#aaa;">${date}</div>
+                            </div>`;
+                        }
+                    }
+                };
+            } else if (renderType === 'gantt') {
+                const tasks = t.tasks || [];
+                // Sort by Start Date
+                tasks.sort((a, b) => new Date(a.start) - new Date(b.start));
+
+                const data = tasks.map(tk => ({
+                    x: tk.name,
+                    y: [new Date(tk.start).getTime(), new Date(tk.end).getTime()],
+                    fillColor: tk.status === 'done' ? '#00e676' : (tk.status === 'wip' ? '#ffb300' : '#666')
+                }));
+
+                visualHTML = `<div id="${chartId}" style="width:100%; height:${chartHeight}px;"></div>`;
+
+                const common = getCommonApexOptions();
+                chartConfig = {
+                    ...common,
+                    chart: { ...common.chart, type: 'rangeBar', height: chartHeight },
+                    series: [{ data: data }],
+                    plotOptions: {
+                        bar: { horizontal: true, barHeight: '50%', borderRadius: 4 }
+                    },
+                    xaxis: { type: 'datetime' }
+                };
             }
 
             card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
@@ -402,10 +883,18 @@ export const renderBoard = () => {
             card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
             
             tGrid.appendChild(card);
+
+            // Render ApexChart if config exists
+            if (chartConfig) {
+                const el = document.getElementById(chartId);
+                if (el) {
+                    const chart = new ApexCharts(el, chartConfig);
+                    chart.render();
+                    chartInstances.push(chart);
+                }
+            }
         });
     }
-
-
 
     const grid = getEl('teamGrid');
     if (grid) {
@@ -529,12 +1018,25 @@ export const ZoomManager = {
         const t = State.trackers[index];
         if(!t) return;
 
+        // Cleanup existing zoomed chart
+        if (zoomedChartInstance) {
+            zoomedChartInstance.destroy();
+            zoomedChartInstance = null;
+        }
+
         const titleEl = getEl('zoomTitle');
         if (titleEl) titleEl.innerText = t.desc;
-        let content = '';
         
+        const bodyEl = getEl('zoomBody');
+        if (!bodyEl) return;
+        bodyEl.className = 'zoom-body-chart';
+
+        let chartConfig = null;
+        let htmlContent = '';
         let renderType = t.type;
-        if (renderType === 'line' || renderType === 'bar') {
+        const chartId = 'zoomedChartContainer';
+
+        if (renderType === 'line' || renderType === 'bar' || renderType === 'line1' || renderType === 'line2') {
             let labels = t.labels || [];
             let series = t.series || [];
             if ((!labels.length) && t.data) {
@@ -543,104 +1045,486 @@ export const ZoomManager = {
             }
             
             const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
-            if (style === 'bar') content = Visuals.createMultiBarChartSVG(labels, series, 'XL');
-            else content = Visuals.createLineChartSVG(labels, series, t.yLabel, 'XL');
-        } else if (renderType === 'counter') {
-            content = `<div style="font-size: 6rem; font-weight:300; color:${t.color1}; text-shadow:0 0 20px ${t.color1}">${t.value}</div><div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${t.subtitle}</div>`;
-        } else if (renderType === 'rag' || renderType === 'ryg') {
-            const status = t.status || 'grey';
-            const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
-            content = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message || ''}</div>`;
-        } else if (renderType === 'waffle') {
-            content = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969');
-        } else if (renderType === 'note') {
-            content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
+            htmlContent = `<div id="${chartId}" style="width:100%; height:100%;"></div>`;
+
+            const common = getCommonApexOptions(true);
+            chartConfig = {
+                ...common,
+                chart: { ...common.chart, type: style, height: '100%' },
+                series: series.map(s => ({ name: s.name, data: s.values, color: s.color })),
+                xaxis: { ...common.xaxis, categories: labels },
+                yaxis: { ...common.yaxis, title: { text: t.yLabel || '' } },
+                stroke: { width: style === 'line' ? 3 : 0, curve: 'smooth' }
+            };
+
         } else if (renderType === 'gauge') {
-            const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
-            const c1 = t.colorVal || t.color1 || '#00e676'; 
-            const c2 = t.color2 || '#ff1744';
-            // c2 is Progress Colour, c1 is Target Colour
-            const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
-            content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
+             const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
+             const c1 = t.colorVal || t.color1 || '#00e676';
+
+             htmlContent = `<div id="${chartId}" style="width:100%; height:100%; display:flex; justify-content:center; align-items:center;"></div>`;
+
+             const common = getCommonApexOptions(true);
+             chartConfig = {
+                 ...common,
+                 chart: { ...common.chart, type: 'radialBar', height: 500 },
+                 series: [pct],
+                 plotOptions: {
+                     radialBar: {
+                         hollow: { size: '70%' },
+                         track: { background: '#333' },
+                         dataLabels: {
+                             show: true,
+                             name: { show: false },
+                             value: { color: '#fff', fontSize: '40px', show: true, offsetY: 10 }
+                         }
+                     }
+                 },
+                 fill: { colors: [c1] },
+                 stroke: { lineCap: 'round' }
+             };
+
         } else if (renderType === 'donut') {
             const labels = (t.dataPoints || []).map(dp => dp.label);
             const values = (t.dataPoints || []).map(dp => dp.value);
-            content = Visuals.createDonutChartWithCalloutsSVG(labels, values);
-        }
 
-        const bodyEl = getEl('zoomBody');
-        if (bodyEl) {
-            bodyEl.className = 'zoom-body-chart';
-            let html = '';
-            
-            if (renderType === 'donut') {
-                 html = `<div style="width:100%; height:100%; display:flex; flex-direction:row; gap:20px;">`;
-                 html += `<div style="flex: 2; display:flex; align-items:center; justify-content:center; min-height: 400px;">${content}</div>`;
-                 
-                 html += `<div class="zoom-notes-section" style="flex: 1; padding:20px; border-left:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px; overflow-y:auto; display:flex; flex-direction:column; gap:20px;">`;
-                 
-                 if (t.notes || t.content) {
-                     const notesHtml = parseMarkdown(t.notes || t.content || '');
-                     html += `<div>
-                                 <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
-                                 <div style="font-size:0.9rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
-                              </div>`;
-                 }
+            htmlContent = `<div style="width:100%; height:100%; display:flex; flex-direction:row; gap:20px;">
+                            <div style="flex: 2; display:flex; align-items:center; justify-content:center; min-height: 400px;">
+                                <div id="${chartId}" style="width:100%; height:100%;"></div>
+                            </div>
+                            <div class="zoom-notes-section" style="flex: 1; padding:20px; border-left:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px; overflow-y:auto;">
+                                ${t.notes ? `<h4 style="color:var(--accent); margin-bottom:10px;">Notes</h4><div>${parseMarkdown(t.notes)}</div>` : ''}
+                            </div>
+                           </div>`;
 
-                 // Data Table
-                 const labels = (t.dataPoints || []).map(dp => dp.label);
-                 const values = (t.dataPoints || []).map(dp => dp.value);
-                 const total = values.reduce((a, b) => a + b, 0);
-                 
-                 if (labels.length > 0) {
-                     let tableHtml = `<h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Data Details</h4>
-                                      <table style="width:100%; border-collapse: collapse; font-size:0.9rem; color:#ddd;">
-                                        <thead>
-                                            <tr style="border-bottom: 1px solid #444;">
-                                                <th style="text-align:left; padding:8px;">Label</th>
-                                                <th style="text-align:right; padding:8px;">Value</th>
-                                                <th style="text-align:right; padding:8px;">%</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>`;
-                     
-                     labels.forEach((l, i) => {
-                         const v = values[i];
-                         const pct = total > 0 ? Math.round((v / total) * 100) : 0;
-                         tableHtml += `<tr style="border-bottom: 1px solid #333;">
-                                         <td style="padding:8px;">${l}</td>
-                                         <td style="text-align:right; padding:8px;">${v}</td>
-                                         <td style="text-align:right; padding:8px;">${pct}%</td>
-                                       </tr>`;
-                     });
-                     
-                     tableHtml += `<tr style="font-weight:bold; background:rgba(255,255,255,0.05);">
-                                     <td style="padding:8px;">Total</td>
-                                     <td style="text-align:right; padding:8px;">${total}</td>
-                                     <td style="text-align:right; padding:8px;">100%</td>
-                                   </tr>`;
-                     
-                     tableHtml += `</tbody></table>`;
-                     html += `<div>${tableHtml}</div>`;
-                 }
-                 
-                 html += `</div></div>`;
-            } else {
-                html = `<div style="width:100%; height:100%; display:flex; flex-direction:column; padding:20px;">`;
-                html += `<div style="flex: 1; min-height: 300px; display:flex; align-items:center; justify-content:center;">${content}</div>`;
-                
-                if ((t.notes || t.content) && t.type !== 'note') {
-                    const notesHtml = parseMarkdown(t.notes || t.content || '');
-                    html += `<div class="zoom-notes-section" style="margin-top:20px; padding:20px; border-top:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px;">
-                                <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
-                                <div style="font-size:0.9rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
-                             </div>`;
+            const common = getCommonApexOptions(true);
+            chartConfig = {
+                ...common,
+                chart: { ...common.chart, type: 'donut', height: '100%' },
+                series: values,
+                labels: labels,
+                plotOptions: { pie: { donut: { size: '60%' } } },
+                dataLabels: { enabled: true },
+                legend: { position: 'right', fontSize: '14px', labels: { colors: '#fff' } }
+            };
+
+        } else if (renderType === 'counter') {
+             // Multi-Counter Zoom
+             const counters = t.counters || [{ label: t.subtitle, value: t.value, color: t.color1 }];
+             htmlContent = `<div style="width:100%; height:100%; display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center; align-items:center; gap:20px;">`;
+             counters.forEach(c => {
+                 htmlContent += `<div style="display:flex; flex-direction:column; align-items:center;">
+                                    <div style="font-size: 6rem; font-weight:300; color:${c.color}; text-shadow:0 0 20px ${c.color}">${c.value}</div>
+                                    <div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${c.label || ''}</div>
+                                </div>`;
+             });
+             htmlContent += `</div>`;
+
+        } else if (renderType === 'rag' || renderType === 'ryg') {
+            const status = t.status || 'grey';
+            const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
+            htmlContent = `<div style="width:100%; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                            <div class="ryg-indicator ryg-${status}" style="background:${t.color1}; width:300px; height:300px; font-size:3rem;">${icon}</div>
+                            <div style="margin-top:2rem; font-size:2rem;">${t.message || ''}</div>
+                           </div>`;
+        } else if (renderType === 'waffle') {
+             htmlContent = `<div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">${createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969')}</div>`;
+        } else if (renderType === 'note') {
+             htmlContent = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}; font-size: 1.2rem; padding: 2rem;">${parseMarkdown(t.content || '')}</div>`;
+        } else if (renderType === 'event') {
+            const events = t.events || [];
+            events.sort((a, b) => new Date(a.date) - new Date(b.date));
+            const data = events.map((e, i) => ({
+                x: e.date,
+                y: i % 2 === 0 ? 1 : -1,
+                meta: e.name
+            }));
+
+            htmlContent = `<div id="${chartId}" style="width:100%; height:100%;"></div>`;
+
+            const common = getCommonApexOptions(true);
+            chartConfig = {
+                ...common,
+                chart: { ...common.chart, type: 'bar', height: '100%' },
+                series: [{ name: 'Timeline', data: data }],
+                xaxis: {
+                    ...common.xaxis,
+                    type: 'datetime',
+                    labels: { show: true, format: 'dd MMM yyyy', style: { colors: '#aaa', fontSize: '14px' } },
+                    axisBorder: { show: false },
+                    axisTicks: { show: false }
+                },
+                yaxis: {
+                    min: -2, max: 2,
+                    show: false,
+                },
+                grid: {
+                    show: true,
+                    yaxis: { lines: { show: false } },
+                    xaxis: { lines: { show: false } },
+                    padding: { top: 0, bottom: 0 }
+                },
+                plotOptions: {
+                    bar: {
+                        columnWidth: '1%', // Very thin lines for zoomed view
+                        borderRadius: 0,
+                        colors: {
+                            ranges: [{ from: -10, to: 10, color: '#03dac6' }]
+                        },
+                        dataLabels: {
+                            position: 'top'
+                        }
+                    }
+                },
+                annotations: {
+                    yaxis: [{
+                        y: 0,
+                        strokeDashArray: 0,
+                        borderColor: '#666',
+                        borderWidth: 2,
+                        width: '100%',
+                        opacity: 0.5
+                    }]
+                },
+                dataLabels: {
+                    enabled: true,
+                    formatter: function(val, opts) {
+                        try {
+                            return opts.w.config.series[0].data[opts.dataPointIndex].meta;
+                        } catch(e) { return ''; }
+                    },
+                    style: {
+                        fontSize: '14px',
+                        colors: ['#e0e0e0']
+                    },
+                    background: {
+                        enabled: true,
+                        foreColor: '#000',
+                        padding: 6,
+                        borderRadius: 4,
+                        opacity: 0.8,
+                        borderColor: '#333'
+                    }
+                },
+                tooltip: {
+                    custom: function({series, seriesIndex, dataPointIndex, w}) {
+                        const d = w.config.series[seriesIndex].data[dataPointIndex];
+                        if (!d) return '';
+                        const date = new Date(d.x).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+                        return `<div style="padding:15px; background:#222; border:1px solid #444; font-size:16px;">
+                            <div style="font-weight:bold; color:#fff; margin-bottom:8px;">${d.meta}</div>
+                            <div style="color:#aaa;">${date}</div>
+                        </div>`;
+                    }
                 }
-                html += `</div>`;
-            }
-            bodyEl.innerHTML = html;
+            };
+        } else if (renderType === 'gantt') {
+            const tasks = t.tasks || [];
+            tasks.sort((a, b) => new Date(a.start) - new Date(b.start));
+            const data = tasks.map(tk => ({
+                x: tk.name,
+                y: [new Date(tk.start).getTime(), new Date(tk.end).getTime()],
+                fillColor: tk.status === 'done' ? '#00e676' : (tk.status === 'wip' ? '#ffb300' : '#666')
+            }));
+
+            htmlContent = `<div id="${chartId}" style="width:100%; height:100%;"></div>`;
+            const common = getCommonApexOptions(true);
+            chartConfig = {
+                ...common,
+                chart: { ...common.chart, type: 'rangeBar', height: '100%' },
+                series: [{ data: data }],
+                plotOptions: {
+                    bar: { horizontal: true, barHeight: '50%', borderRadius: 4 }
+                },
+                xaxis: { type: 'datetime', labels: { style: { colors: '#aaa', fontSize:'14px' } } },
+                tooltip: { theme: 'dark' }
+            };
         }
+
+        // Add Notes Section for non-donut types if notes exist
+        if (renderType !== 'donut' && (t.notes || (t.content && renderType !== 'note'))) {
+            const notesHtml = parseMarkdown(t.notes || t.content || '');
+             if (!htmlContent.includes('zoom-notes-section')) {
+                 // Wrapper
+                 const content = htmlContent;
+                 htmlContent = `<div style="width:100%; height:100%; display:flex; flex-direction:column; padding:20px;">
+                                    <div style="flex: 1; min-height: 300px; display:flex; align-items:center; justify-content:center;">${content}</div>
+                                    <div class="zoom-notes-section" style="margin-top:20px; padding:20px; border-top:1px solid #444; background:rgba(0,0,0,0.2); border-radius:8px;">
+                                        <h4 style="color:var(--accent); margin-bottom:10px; font-size:0.9rem; text-transform:uppercase;">Notes</h4>
+                                        <div style="font-size:0.9rem; line-height:1.6; color:#ddd;">${notesHtml}</div>
+                                    </div>
+                                </div>`;
+             }
+        }
+
+        bodyEl.innerHTML = htmlContent;
+
+        // Render ApexChart if config exists
+        if (chartConfig) {
+             // Wait for DOM update
+             setTimeout(() => {
+                 const el = document.getElementById(chartId);
+                 if (el) {
+                     zoomedChartInstance = new ApexCharts(el, chartConfig);
+                     zoomedChartInstance.render();
+                 }
+             }, 50);
+        }
+
         ModalManager.openModal('zoomModal');
+    }
+};
+
+export const OverviewManager = {
+    handleOverviewClick: (type) => {},
+    handleInfoClick: () => {
+        const current = State.additionalInfo || "";
+        const newVal = prompt("Edit Additional Info (Markdown supported):", current);
+        if (newVal !== null) {
+            State.additionalInfo = newVal;
+            renderBoard();
+        }
+    }
+};
+
+export const UserManager = {
+    openUserModal: (index = -1) => {
+        const modal = document.getElementById('userModal');
+        const title = document.getElementById('modalTitle');
+        const nameIn = document.getElementById('mName');
+        const notesIn = document.getElementById('mNotes');
+        const editIdx = document.getElementById('editIndex');
+        const delBtn = document.getElementById('deleteBtn');
+
+        if(title) title.innerText = index === -1 ? "Add User" : "Edit User";
+        if(editIdx) editIdx.value = index;
+        if(delBtn) delBtn.style.display = index === -1 ? 'none' : 'inline-block';
+
+        if(nameIn) nameIn.value = '';
+        if(notesIn) notesIn.value = '';
+
+        ['lw','nw','fw'].forEach(p => {
+            for(let i=1; i<=3; i++) {
+                const el = document.getElementById(`${p}Task${i}`);
+                if(el) el.value = '';
+            }
+        });
+
+        const defLoad = ['N','N','N','N','N','X','X'];
+        for(let i=0; i<7; i++) {
+            UserManager.setLoad(i, defLoad[i]);
+            UserManager.setFutureLoad(i, defLoad[i]);
+            const oc1 = document.getElementById(`nwOc${i}`); if(oc1) oc1.checked = false;
+            const oc2 = document.getElementById(`fwOc${i}`); if(oc2) oc2.checked = false;
+        }
+
+        if (index > -1) {
+            const m = State.members[index];
+            if(nameIn) nameIn.value = m.name;
+            if(notesIn) notesIn.value = m.notes || '';
+
+            if(m.lastWeek && m.lastWeek.tasks) {
+                m.lastWeek.tasks.forEach((t, i) => { const el = document.getElementById(`lwTask${i+1}`); if(el) el.value = t.text; });
+            }
+            if(m.thisWeek && m.thisWeek.tasks) {
+                m.thisWeek.tasks.forEach((t, i) => { const el = document.getElementById(`nwTask${i+1}`); if(el) el.value = t.text; });
+            }
+            if(m.nextWeek && m.nextWeek.tasks) {
+                m.nextWeek.tasks.forEach((t, i) => { const el = document.getElementById(`fwTask${i+1}`); if(el) el.value = t.text; });
+            }
+
+            const tLoad = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : defLoad;
+            tLoad.forEach((v, i) => UserManager.setLoad(i, v));
+            const tOc = (m.thisWeek && m.thisWeek.onCall) ? m.thisWeek.onCall : [];
+            tOc.forEach((v, i) => { const el = document.getElementById(`nwOc${i}`); if(el) el.checked = v; });
+
+            const nLoad = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : defLoad;
+            nLoad.forEach((v, i) => UserManager.setFutureLoad(i, v));
+            const nOc = (m.nextWeek && m.nextWeek.onCall) ? m.nextWeek.onCall : [];
+            nOc.forEach((v, i) => { const el = document.getElementById(`fwOc${i}`); if(el) el.checked = v; });
+        }
+
+        ModalManager.openModal('userModal');
+    },
+
+    setLoad: (dayIdx, val) => {
+        const inp = document.getElementById(`nw${dayIdx}`);
+        if(inp) inp.value = val;
+        const container = inp ? inp.parentNode : null;
+        if(container) {
+            const pills = container.querySelectorAll('.w-pill');
+            pills.forEach(p => p.classList.remove('active'));
+            const map = {'L':'.wp-l', 'N':'.wp-n', 'R':'.wp-r', 'X':'.wp-x'};
+            const activePill = container.querySelector(map[val]);
+            if(activePill) activePill.classList.add('active');
+        }
+    },
+
+    setFutureLoad: (dayIdx, val) => {
+        const inp = document.getElementById(`fw${dayIdx}`);
+        if(inp) inp.value = val;
+        const container = inp ? inp.parentNode : null;
+        if(container) {
+            const pills = container.querySelectorAll('.w-pill');
+            pills.forEach(p => p.classList.remove('active'));
+            const map = {'L':'.wp-l', 'N':'.wp-n', 'R':'.wp-r', 'X':'.wp-x'};
+            const activePill = container.querySelector(map[val]);
+            if(activePill) activePill.classList.add('active');
+        }
+    },
+
+    submitUser: () => {
+        const name = document.getElementById('mName').value.trim();
+        if(!name) return App.alert("Name required");
+
+        const idx = parseInt(document.getElementById('editIndex').value);
+        const notes = document.getElementById('mNotes').value;
+
+        const getTasks = (prefix) => {
+            const tasks = [];
+            for(let i=1; i<=3; i++) {
+                const val = document.getElementById(`${prefix}Task${i}`).value.trim();
+                let isChecked = false;
+                if(idx > -1) {
+                    const m = State.members[idx];
+                    let oldTasks = [];
+                    if(prefix==='lw') oldTasks = m.lastWeek.tasks;
+                    if(prefix==='nw') oldTasks = m.thisWeek.tasks;
+                    if(prefix==='fw') oldTasks = m.nextWeek.tasks;
+
+                    if(oldTasks && oldTasks[i-1] && oldTasks[i-1].text === val) {
+                         isChecked = (prefix==='lw') ? oldTasks[i-1].isTeamSuccess : ((prefix==='nw') ? oldTasks[i-1].isTeamSuccess : oldTasks[i-1].isTeamActivity);
+                    }
+                }
+
+                const taskObj = { text: val };
+                if (prefix === 'lw') taskObj.isTeamSuccess = isChecked;
+                else if (prefix === 'nw') taskObj.isTeamSuccess = isChecked;
+                else taskObj.isTeamActivity = isChecked;
+                tasks.push(taskObj);
+            }
+            return tasks;
+        };
+
+        const getLoad = (prefix) => {
+            const load = [];
+            const oc = [];
+            for(let i=0; i<7; i++) {
+                load.push(document.getElementById(`${prefix}${i}`).value);
+                const cb = document.getElementById(`${prefix}Oc${i}`);
+                oc.push(cb ? cb.checked : false);
+            }
+            return { load, oc };
+        };
+
+        const lwTasks = getTasks('lw');
+        const nwTasks = getTasks('nw');
+        const fwTasks = getTasks('fw');
+
+        const thisLoad = getLoad('nw');
+        const nextLoad = getLoad('fw');
+
+        const user = {
+            name,
+            notes,
+            lastWeek: { tasks: lwTasks, status: 'busy', onCall: [] },
+            thisWeek: { tasks: nwTasks, load: thisLoad.load, onCall: thisLoad.oc },
+            nextWeek: { tasks: fwTasks, load: nextLoad.load, onCall: nextLoad.oc }
+        };
+
+        if(idx === -1) {
+            State.members.push(user);
+        } else {
+            State.members[idx] = user;
+        }
+
+        ModalManager.closeModal('userModal');
+        renderBoard();
+        const gs = document.getElementById('ganttSection');
+        if(gs && gs.style.display !== 'none') {
+             Visuals.renderResourcePlanner(State.members);
+        }
+    },
+
+    deleteUser: () => {
+        const idx = parseInt(document.getElementById('editIndex').value);
+        if(idx === -1) return;
+        App.confirm("Delete this user?", () => {
+            State.members.splice(idx, 1);
+            ModalManager.closeModal('userModal');
+            renderBoard();
+            const gs = document.getElementById('ganttSection');
+            if(gs && gs.style.display !== 'none') {
+                 Visuals.renderResourcePlanner(State.members);
+            }
+        });
+    },
+
+    resetSelections: (type) => {
+        State.members.forEach(m => {
+            if (type === 'success') {
+                if(m.lastWeek) m.lastWeek.tasks.forEach(t => t.isTeamSuccess = false);
+                if(m.thisWeek) m.thisWeek.tasks.forEach(t => t.isTeamSuccess = false);
+            } else {
+                if(m.nextWeek) m.nextWeek.tasks.forEach(t => t.isTeamActivity = false);
+            }
+        });
+        renderBoard();
+    },
+
+    toggleSuccess: (mIdx, tIdx) => {
+        const t = State.members[mIdx].lastWeek.tasks[tIdx];
+        if(!t.isTeamSuccess) {
+            let count = 0;
+            State.members.forEach(m => {
+                if(m.lastWeek) m.lastWeek.tasks.forEach(x => { if(x.isTeamSuccess) count++; });
+                if(m.thisWeek) m.thisWeek.tasks.forEach(x => { if(x.isTeamSuccess) count++; });
+            });
+            if(count >= 5) {
+                renderBoard(); // Revert UI
+                return App.alert("Max 5 Team Achievements allowed.");
+            }
+            t.isTeamSuccess = true;
+        } else {
+            t.isTeamSuccess = false;
+        }
+        renderBoard();
+    },
+
+    toggleActivity: (mIdx, tIdx) => {
+        const t = State.members[mIdx].thisWeek.tasks[tIdx];
+        if(!t.isTeamSuccess) {
+             let count = 0;
+             State.members.forEach(m => {
+                if(m.lastWeek) m.lastWeek.tasks.forEach(x => { if(x.isTeamSuccess) count++; });
+                if(m.thisWeek) m.thisWeek.tasks.forEach(x => { if(x.isTeamSuccess) count++; });
+            });
+            if(count >= 5) {
+                renderBoard();
+                return App.alert("Max 5 Team Achievements allowed.");
+            }
+            t.isTeamSuccess = true;
+        } else {
+            t.isTeamSuccess = false;
+        }
+        renderBoard();
+    },
+
+    toggleFuture: (mIdx, tIdx) => {
+        const t = State.members[mIdx].nextWeek.tasks[tIdx];
+        if(!t.isTeamActivity) {
+            let count = 0;
+            State.members.forEach(m => {
+                if(m.nextWeek) m.nextWeek.tasks.forEach(x => { if(x.isTeamActivity) count++; });
+            });
+            if(count >= 5) {
+                renderBoard();
+                return App.alert("Max 5 Future Activities allowed.");
+            }
+            t.isTeamActivity = true;
+        } else {
+            t.isTeamActivity = false;
+        }
+        renderBoard();
     }
 };
 
@@ -701,6 +1585,11 @@ export const TrackerManager = {
         const sizeVal = tracker ? (tracker.size || 'M') : 'M';
         const sizeRadio = document.querySelector(`input[name="tkSize"][value="${sizeVal}"]`);
         if (sizeRadio) sizeRadio.checked = true;
+
+        // Height
+        const heightVal = tracker ? (tracker.height || 'standard') : 'standard';
+        const heightRadio = document.querySelector(`input[name="tkHeight"][value="${heightVal}"]`);
+        if (heightRadio) heightRadio.checked = true;
 
         if (type === 'line') {
              // Init Style Radio
@@ -827,9 +1716,10 @@ export const TrackerManager = {
                 if(sizeRad) sizeRad.checked = true;
             } else if (!isEdit && type === 'counter') {
                 // Reset Counter defaults for new trackers
-                const tcsIn = getEl('tkCounterSub'); if(tcsIn) tcsIn.value = '';
+                const container = getEl('counterDataContainer');
+                if(container) container.innerHTML = '';
+
                 const tcnIn = getEl('tkCounterNotes'); if(tcnIn) tcnIn.value = '';
-                const tcvIn = getEl('tkCounterVal'); if(tcvIn) tcvIn.value = 0;
                 
                 // Set Size to S
                 const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
@@ -858,6 +1748,7 @@ export const TrackerManager = {
                 if(sizeRad) sizeRad.checked = true;
             }
 
+            // Populate Color Pickers dynamically
             if (type === 'gauge') {
                 const tmIn = getEl('tkMetric');
                 // Only populate if tracker exists, otherwise keep blank (from reset above)
@@ -872,19 +1763,31 @@ export const TrackerManager = {
                 const nIn = getEl('tkNotes');
                 if (tracker && nIn) nIn.value = tracker.notes || '';
                 
-                const pcIn = getEl('tkPieColor');
-                if (pcIn) pcIn.value = tracker ? (tracker.colorVal || tracker.color1 || '#696969') : '#696969';
-                const pc2In = getEl('tkPieColor2');
-                if (pc2In) pc2In.value = tracker ? (tracker.color2 || '#228B22') : '#228B22';
+                const c1 = tracker ? (tracker.colorVal || tracker.color1 || '#696969') : '#696969';
+                getEl('tkPieColor').value = c1;
+                getEl('tkPieColorPicker').innerHTML = createColorPickerHTML('tkPieColor', c1);
+
+                const c2 = tracker ? (tracker.color2 || '#228B22') : '#228B22';
+                getEl('tkPieColor2').value = c2;
+                getEl('tkPieColor2Picker').innerHTML = createColorPickerHTML('tkPieColor2', c2);
+
             } else if (type === 'counter') {
-                const cvIn = getEl('tkCounterVal');
-                if (tracker && cvIn) cvIn.value = tracker.value || 0;
-                const csIn = getEl('tkCounterSub');
-                if (tracker && csIn) csIn.value = tracker.subtitle || '';
+                const container = getEl('counterDataContainer');
+                if (container) container.innerHTML = '';
+
+                if (tracker && tracker.counters) {
+                    tracker.counters.forEach(c => this.addCounterRow(c.label, c.value, c.color));
+                } else if (tracker && tracker.value !== undefined) {
+                    // Backwards compatibility for single counter
+                    this.addCounterRow(tracker.subtitle, tracker.value, tracker.color1);
+                } else {
+                    // Default row for new counter
+                    this.addCounterRow();
+                }
+
                 const cnIn = getEl('tkCounterNotes');
                 if (tracker && cnIn) cnIn.value = tracker.notes || '';
-                const ccIn = getEl('tkCounterColor');
-                if (ccIn) ccIn.value = tracker ? (tracker.color1 || '#bb86fc') : '#bb86fc';
+
             } else if (type === 'rag') {
                 this.selectRag(tracker ? (tracker.status || 'grey') : 'grey');
                 const rmIn = getEl('tkRagMsg');
@@ -901,14 +1804,21 @@ export const TrackerManager = {
                 const twnIn = getEl('tkWaffleNotes');
                 if (tracker && twnIn) twnIn.value = tracker.notes || '';
                 
-                const wcIn = getEl('tkWaffleColorVal');
-                if (wcIn) wcIn.value = tracker ? (tracker.colorVal || '#228B22') : '#228B22';
-                const wbIn = getEl('tkWaffleColorBg');
-                if (wbIn) wbIn.value = tracker ? (tracker.colorBg || '#696969') : '#696969';
+                // Set MAX limit on input based on config
+                if (twtIn) twtIn.max = (State.config && State.config.maxWaffle) ? State.config.maxWaffle : 450;
+
+                const cVal = tracker ? (tracker.colorVal || '#228B22') : '#228B22';
+                getEl('tkWaffleColorVal').value = cVal;
+                getEl('tkWaffleColorValPicker').innerHTML = createColorPickerHTML('tkWaffleColorVal', cVal);
+
+                const cBg = tracker ? (tracker.colorBg || '#696969') : '#696969';
+                getEl('tkWaffleColorBg').value = cBg;
+                getEl('tkWaffleColorBgPicker').innerHTML = createColorPickerHTML('tkWaffleColorBg', cBg);
+
             } else if (type === 'note') {
                 const tcnIn = getEl('tkNoteContent');
                 if (tracker && tcnIn) tcnIn.value = tracker.content || '';
-                
+
                 const align = tracker ? (tracker.align || 'left') : 'left';
                 const alignRad = document.querySelector(`input[name="tkNoteAlign"][value="${align}"]`);
                 if(alignRad) alignRad.checked = true;
@@ -946,10 +1856,27 @@ export const TrackerManager = {
         });
 
         const sizeCont = getEl('sizeContainer');
-        if(sizeCont) sizeCont.style.display = (type === 'gauge' || type === 'waffle' || type === 'rag' || type === 'counter' || type === 'donut') ? 'none' : 'block';
+        if(sizeCont) sizeCont.style.display = (type === 'gauge' || type === 'waffle' || type === 'rag' || type === 'counter' || type === 'donut' || type === 'event' || type === 'gantt') ? 'none' : 'block';
 
         if (inputType === 'line') {
              this.renderTimeTable();
+        }
+
+        // Initialize default row for list types if empty and creating new
+        if (State.editingTrackerIndex === -1) {
+            if (type === 'counter') {
+                const c = getEl('counterDataContainer');
+                if(c && c.children.length === 0) this.addCounterRow();
+            } else if (type === 'donut') {
+                const c = getEl('donutDataContainer');
+                if(c && c.children.length === 0) this.addDonutRow();
+            } else if (type === 'event') {
+                const c = getEl('eventDataContainer');
+                if(c && c.children.length === 0) this.addEventRow();
+            } else if (type === 'gantt') {
+                const c = getEl('ganttDataContainer');
+                if(c && c.children.length === 0) this.addGanttRow();
+            }
         }
     },
 
@@ -981,9 +1908,6 @@ export const TrackerManager = {
                 this.updateTimeOptions(true);
             });
             // Revert immediately, will be re-checked if confirmed
-            // But App.confirm is async-like in UI but sync in code if using standard confirm, 
-            // but here App.confirm is custom modal.
-            // So we must revert the radio button visually now.
             const prevRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${prevUnit}"]`);
             if (prevRad) prevRad.checked = true;
         } else {
@@ -996,7 +1920,7 @@ export const TrackerManager = {
         const ctx = this.getContext();
         const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
         const unit = unitRad ? unitRad.value : 'day';
-        
+
         // Ensure dataset is synced if updateTimeOptions called directly (e.g. from openModal)
         const container = document.getElementById('tkTimeUnitContainer');
         if(container) container.dataset.currentUnit = unit;
@@ -1024,7 +1948,7 @@ export const TrackerManager = {
         } else if (unit === 'day') {
             countSel.value = 30;
         }
-        
+
         // When changing unit, we must reset the table to match the new unit's dates
         if (clearData) {
              const currentSeries = this.scrapeTimeSeries();
@@ -1045,7 +1969,7 @@ export const TrackerManager = {
         let startDateVal = sdIn ? sdIn.value : '';
         if(!startDateVal) {
              const d = new Date();
-             const day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1); 
+             const day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1);
              const monday = new Date(d.setDate(diff));
              startDateVal = monday.toISOString().split('T')[0];
              if(sdIn) sdIn.value = startDateVal;
@@ -1061,7 +1985,7 @@ export const TrackerManager = {
             const start = new Date(startDateVal);
             for(let i=0; i<count; i++) {
                 let label = '';
-                const offset = (count - 1) - i; 
+                const offset = (count - 1) - i;
                 if (unit === 'year') {
                     label = (start.getFullYear() - offset).toString();
                 } else if (unit === 'month') {
@@ -1079,17 +2003,17 @@ export const TrackerManager = {
 
         const container = getEl(ctx.tableId);
         if (!container) return;
-        
+
         let html = '<table style="width:100%; border-collapse: separate; border-spacing: 0;">';
-        
+
         html += '<thead><tr><th style="padding:8px; text-align:left; border-bottom:1px solid #444; position:sticky; left:0; top:0; background:var(--modal-bg); z-index:20; min-width:160px;">Series Name</th>';
-        
+
         labels.forEach((l, li) => {
             html += `<th style="padding:8px; border-bottom:1px solid #444; position:sticky; top:0; background:var(--modal-bg); z-index:10; min-width:80px; text-align:center; font-size:0.7rem; white-space:nowrap;">
                 ${l} <span onclick="TrackerManager.removeDateColumn(${li})" style="color:var(--g-red); cursor:pointer; margin-left:2px; font-weight:bold;">&times;</span>
             </th>`;
         });
-        
+
         html += `<th style="padding:8px; text-align:center; min-width:40px; cursor:pointer; background:var(--modal-bg); border-bottom:1px solid #444; position:sticky; top:0; z-index:10;" onclick="TrackerManager.addDateColumn()" title="Add Historic Date">+</th>`;
         html += '</tr></thead><tbody>';
 
@@ -1098,11 +2022,12 @@ export const TrackerManager = {
                 <td style="padding:8px; border-bottom:1px solid #333; position:sticky; left:0; background:var(--modal-bg); z-index:10;">
                     <div style="display:flex; align-items:center; gap:5px;">
                         <input type="checkbox" class="ts-select" data-idx="${si}" style="accent-color:var(--accent);" onchange="TrackerManager.updateDeleteSeriesButtonVisibility()">
-                        <input type="color" class="ts-color" value="${s.color}" style="width:20px; height:20px; border:none; padding:0; cursor:pointer;" data-idx="${si}">
+                        <div class="ts-color-swatch" style="width:20px; height:20px; background:${s.color}; border:1px solid #fff; cursor:pointer;" onclick="this.nextElementSibling.click()"></div>
+                        <input type="color" class="ts-color" value="${s.color}" style="width:0; height:0; visibility:hidden; padding:0; border:0;" data-idx="${si}" onchange="this.previousElementSibling.style.background=this.value">
                         <input type="text" class="ts-name" value="${s.name}" style="width:100px; font-size:0.8rem; background:#222; border:1px solid #444; color:#fff; padding:2px;" data-idx="${si}">
                     </div>
                 </td>`;
-            
+
             labels.forEach((l, li) => {
                 const val = (s.values && s.values[li] !== undefined) ? s.values[li] : 0;
                 html += `<td style="padding:2px; border-bottom:1px solid #333;">
@@ -1113,7 +2038,10 @@ export const TrackerManager = {
             html += '</tr>';
         });
 
-        if (series.length < 6) {
+        // Use Config for limits
+        const maxSeries = (State.config && State.config.maxSeries) ? State.config.maxSeries : 6;
+
+        if (series.length < maxSeries) {
             html += `<tr class="add-series-row">
                 <td colspan="${labels.length + 2}" style="padding: 10px; border-top: 1px dashed #444; text-align: left;">
                     <div onclick="TrackerManager.addTimeSeriesColumn()" style="width: 30px; height: 30px; background: #444; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; cursor: pointer; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.5);">+</div>
@@ -1122,7 +2050,7 @@ export const TrackerManager = {
         }
 
         html += '</tbody></table>';
-        
+
         container.innerHTML = html;
         container.dataset.labels = JSON.stringify(labels);
         this.updateDeleteSeriesButtonVisibility();
@@ -1149,21 +2077,22 @@ export const TrackerManager = {
             const colorIn = row.querySelector('.ts-color');
             const name = nameIn ? nameIn.value : `Series ${si+1}`;
             const color = colorIn ? colorIn.value : '#03dac6';
-            
+
             const values = [];
             const valInputs = row.querySelectorAll('.ts-val');
             valInputs.forEach(inp => values.push(parseFloat(inp.value) || 0));
-            
+
             series.push({ name, color, values });
         });
-        
+
         return series;
     },
 
     addTimeSeriesColumn() {
         const series = this.scrapeTimeSeries();
-        if (series.length >= 6) return App.alert("Max 6 series allowed.");
-        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
+        const maxSeries = (State.config && State.config.maxSeries) ? State.config.maxSeries : 6;
+        if (series.length >= maxSeries) return App.alert(`Max ${maxSeries} series allowed.`);
+        const colors = State.config.colors || ['#03dac6'];
         const color = colors[series.length % colors.length];
         series.push({ name: `Series ${series.length+1}`, color: color, values: [] });
         this.renderTimeTable(series);
@@ -1176,12 +2105,12 @@ export const TrackerManager = {
              this.renderTimeTable();
              return;
         }
-        
+
         const oldCount = series[0].values.length;
         const delta = newCount - oldCount;
-        
+
         if (delta === 0) return;
-        
+
         series.forEach(s => {
             if (delta > 0) {
                 for(let i=0; i<delta; i++) s.values.unshift(0);
@@ -1189,7 +2118,7 @@ export const TrackerManager = {
                 for(let i=0; i<Math.abs(delta); i++) s.values.shift();
             }
         });
-        
+
         this.renderTimeTable(series);
     },
 
@@ -1209,7 +2138,7 @@ export const TrackerManager = {
             return;
         }
 
-        input.value = prevVal; 
+        input.value = prevVal;
 
         App.confirm("Changing the End Date will clear existing manual data. Proceed?", () => {
             input.value = newVal;
@@ -1222,15 +2151,15 @@ export const TrackerManager = {
     exportTimeSeriesCSV() {
         const series = this.scrapeTimeSeries();
         if (series.length === 0) return App.alert("No data to export.");
-        
+
         const ctx = this.getContext();
         const container = getEl(ctx.tableId);
         const labels = JSON.parse(container.dataset.labels || '[]');
-        
+
         let csv = "Date";
         series.forEach(s => csv += `,${s.name}`);
         csv += "\n";
-        
+
         labels.forEach((date, dateIdx) => {
             csv += `${date}`;
             series.forEach(s => {
@@ -1239,10 +2168,10 @@ export const TrackerManager = {
             });
             csv += "\n";
         });
-        
+
         const title = getEl('tkDesc').value || "chart_data";
         const filename = title.replace(/[^a-z0-9]/gi, '_').toLowerCase() + ".csv";
-        
+
         const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement("a");
         if (link.download !== undefined) {
@@ -1262,13 +2191,13 @@ export const TrackerManager = {
         if (!container) return;
         const checks = container.querySelectorAll('.ts-select:checked');
         if (checks.length === 0) return App.alert("No series selected.");
-        
+
         const indicesToDelete = new Set();
         checks.forEach(c => indicesToDelete.add(parseInt(c.dataset.idx)));
-        
+
         const currentSeries = this.scrapeTimeSeries();
         const newSeries = currentSeries.filter((_, i) => !indicesToDelete.has(i));
-        
+
         this.renderTimeTable(newSeries);
     },
 
@@ -1278,23 +2207,23 @@ export const TrackerManager = {
         const sdIn = getEl(`${ctx.prefix}StartDate`);
         if (tcIn && sdIn) {
              const series = this.scrapeTimeSeries();
-             
+
              const d = new Date(sdIn.value);
              const unitRad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
              const unit = unitRad ? unitRad.value : 'day';
-             
+
              if (unit === 'year') d.setFullYear(d.getFullYear() + 1);
              else if (unit === 'month') d.setMonth(d.getMonth() + 1);
              else d.setDate(d.getDate() + 1);
-             
+
              sdIn.value = d.toISOString().split('T')[0];
              sdIn.dataset.prev = sdIn.value;
-             
+
              series.forEach(s => {
-                 s.values.shift(); 
-                 s.values.push(0); 
+                 s.values.shift();
+                 s.values.push(0);
              });
-             
+
              this.renderTimeTable(series);
         }
     },
@@ -1304,12 +2233,12 @@ export const TrackerManager = {
         const tcIn = getEl(`${ctx.prefix}TimeCount`);
         const count = parseInt(tcIn.value);
         if (count <= 1) return App.alert("Cannot remove the last date.");
-        
+
         const series = this.scrapeTimeSeries();
-        
+
         if (index === 0) {
             series.forEach(s => s.values.shift());
-            
+
             let exists = false;
             for(let opt of tcIn.options) { if(parseInt(opt.value) === count - 1) exists = true; }
             if (!exists) {
@@ -1318,7 +2247,7 @@ export const TrackerManager = {
                  opt.innerText = count - 1;
                  tcIn.appendChild(opt);
             }
-            
+
             tcIn.value = count - 1;
             this.renderTimeTable(series);
         } else if (index === count - 1) {
@@ -1334,7 +2263,7 @@ export const TrackerManager = {
                  sdIn.value = d.toISOString().split('T')[0];
                  sdIn.dataset.prev = sdIn.value;
             }
-            
+
             let exists = false;
             for(let opt of tcIn.options) { if(parseInt(opt.value) === count - 1) exists = true; }
             if (!exists) {
@@ -1343,7 +2272,7 @@ export const TrackerManager = {
                  opt.innerText = count - 1;
                  tcIn.appendChild(opt);
             }
-            
+
             tcIn.value = count - 1;
             this.renderTimeTable(series);
         } else {
@@ -1364,13 +2293,11 @@ export const TrackerManager = {
     addDonutRow(label = '', value = '') {
         const container = getEl('donutDataContainer');
         if (!container) return;
-        if (container.children.length >= 10) return App.alert("Max 10 data points allowed.");
+        const max = State.config.maxDonut || 10;
+        if (container.children.length >= max) return App.alert(`Max ${max} data points allowed.`);
 
         const div = document.createElement('div');
         div.className = 'donut-row';
-        div.style.display = 'flex';
-        div.style.gap = '10px';
-        div.style.marginBottom = '5px';
         div.innerHTML = `
             <input type="text" class="dr-label" maxlength="15" placeholder="Label" value="${label}" style="flex: 2;">
             <input type="number" class="dr-value" placeholder="Value" value="${value}" style="flex: 1;">
@@ -1406,13 +2333,13 @@ export const TrackerManager = {
     },
 
     parseCSV(type) {
-        const ctx = this.getContext(); 
+        const ctx = this.getContext();
         const txtArea = getEl('csvInput');
         if (!txtArea) return;
-        
+
         const text = txtArea.value.trim();
         if (!text) return App.alert("Please paste CSV data.");
-        
+
         // Check for existing data
         const series = this.scrapeTimeSeries();
         let hasData = false;
@@ -1421,17 +2348,17 @@ export const TrackerManager = {
         const processCSV = () => {
             const lines = text.split('\n').map(l => l.trim()).filter(l => l);
             if (lines.length < 2) return App.alert("Invalid CSV format.");
-            
+
             const headers = lines[0].split(',').map(h => h.trim());
             const seriesNames = headers.slice(1);
-            
+
             const labels = [];
             const seriesData = seriesNames.map(name => ({ name: name, values: [] }));
-            
+
             for(let i=1; i<lines.length; i++) {
                 const cols = lines[i].split(',').map(c => c.trim());
-                labels.push(cols[0]); 
-                
+                labels.push(cols[0]);
+
                 for(let j=0; j<seriesNames.length; j++) {
                     const val = parseFloat(cols[j+1]) || 0;
                     seriesData[j].values.push(val);
@@ -1459,7 +2386,7 @@ export const TrackerManager = {
             // Set Unit Radio
             const rad = document.querySelector(`input[name="${ctx.prefix}TimeUnit"][value="${unit}"]`);
             if(rad) rad.checked = true;
-            
+
             // Sync current unit dataset
             const container = document.getElementById('tkTimeUnitContainer');
             if(container) container.dataset.currentUnit = unit;
@@ -1475,7 +2402,7 @@ export const TrackerManager = {
                  // Normalize to YYYY-MM-DD
                  if (unit === 'year' && /^\d{4}$/.test(lastLbl)) dateStr = `${lastLbl}-01-01`;
                  if (unit === 'month' && /^\d{4}-\d{2}$/.test(lastLbl)) dateStr = `${lastLbl}-01`;
-                 
+
                  // Ensure valid date object
                  const d = new Date(dateStr);
                  if(!isNaN(d.getTime())) {
@@ -1483,7 +2410,7 @@ export const TrackerManager = {
                      sdIn.dataset.prev = sdIn.value;
                  }
             }
-            
+
             // Update Time Count
             const tcIn = getEl(`${ctx.prefix}TimeCount`);
             if(tcIn) {
@@ -1498,10 +2425,10 @@ export const TrackerManager = {
                 }
                 tcIn.value = count;
             }
-            
+
             const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
             seriesData.forEach((s, i) => s.color = colors[i % colors.length]);
-            
+
             this.renderTimeTable(seriesData, labels);
             App.alert("CSV Parsed Successfully!");
         };
@@ -1529,10 +2456,16 @@ export const TrackerManager = {
         const desc = descIn ? descIn.value : '';
         const sizeRadio = document.querySelector('input[name="tkSize"]:checked');
         const size = sizeRadio ? sizeRadio.value : 'M';
+        const heightRadio = document.querySelector('input[name="tkHeight"]:checked');
+        const height = heightRadio ? heightRadio.value : 'standard';
+
         if (!desc) return App.alert("Title required");
 
         const type = State.currentTrackerType;
-        let newTracker = { desc, type, size };
+        let newTracker = { desc, type, size, height };
+
+        // Capture Timestamp
+        newTracker.lastUpdated = new Date().toISOString();
 
         if (type === 'gauge') {
             const mIn = getEl('tkMetric');
@@ -1550,49 +2483,62 @@ export const TrackerManager = {
             newTracker.notes = nIn ? nIn.value : '';
             newTracker.size = 'S'; // Force Small Size
             const pcIn = getEl('tkPieColor');
-            newTracker.colorVal = pcIn ? pcIn.value : '#00e676'; 
+            newTracker.colorVal = pcIn ? pcIn.value : '#00e676';
             const pc2In = getEl('tkPieColor2');
             newTracker.color2 = pc2In ? pc2In.value : '#ff1744';
         } else if (type === 'line' || type === 'bar') {
             const ctx = this.getContext();
             const yIn = getEl(`${ctx.prefix}YLabel`);
             newTracker.yLabel = yIn ? yIn.value : '';
-            
+
             const series = this.scrapeTimeSeries();
             const container = getEl(ctx.tableId);
             const labels = container ? JSON.parse(container.dataset.labels || '[]') : [];
-            
+
             if (series.length === 0) return App.alert("Add at least one series");
-            
+
             const urIn = document.querySelector(`input[name="${ctx.prefix}TimeUnit"]:checked`);
             newTracker.timeUnit = urIn ? urIn.value : 'day';
             const sdIn = getEl(`${ctx.prefix}StartDate`);
             newTracker.startDate = sdIn ? sdIn.value : '';
             const tcIn = getEl(`${ctx.prefix}TimeCount`);
             newTracker.timeCount = tcIn ? parseInt(tcIn.value) : 7;
-            
+
             newTracker.labels = labels;
             newTracker.series = series;
-            
+
             const styleRad = document.querySelector('input[name="tkDisplayStyle"]:checked');
             newTracker.displayStyle = styleRad ? styleRad.value : 'line';
-            
+
             const lnIn = getEl('tkLineNotes');
             newTracker.notes = lnIn ? lnIn.value : '';
         } else if (type === 'counter') {
-            const cvIn = getEl('tkCounterVal');
-            const val = cvIn ? parseFloat(cvIn.value) || 0 : 0;
-            if (val < 0 || val > 9999999) return App.alert("Counter value must be between 0 and 9,999,999.");
-            newTracker.value = val;
-            const csIn = getEl('tkCounterSub');
-            newTracker.subtitle = csIn ? csIn.value : '';
+            // New logic: scrape multiple counters
+            const rows = document.querySelectorAll('.counter-row');
+            const counters = [];
+            rows.forEach(row => {
+                const label = row.querySelector('.cr-label').value.trim();
+                const value = parseFloat(row.querySelector('.cr-value').value) || 0;
+                const color = row.querySelector('.cr-color').value;
+                counters.push({ label, value, color });
+            });
+
+            if (counters.length === 0) {
+                // Fallback or alert? Let's just create one default if empty
+                counters.push({ label: '', value: 0, color: '#bb86fc' });
+            }
+
+            newTracker.counters = counters;
+            newTracker.value = counters[0].value;
+            newTracker.subtitle = counters[0].label;
+            newTracker.color1 = counters[0].color;
+
             const cnIn = getEl('tkCounterNotes');
             newTracker.notes = cnIn ? cnIn.value : '';
             newTracker.size = 'S'; // Force Small Size
-            const ccIn = getEl('tkCounterColor');
-            newTracker.color1 = ccIn ? ccIn.value : '#bb86fc';
+
         } else if (type === 'rag') {
-            newTracker.type = 'rag'; 
+            newTracker.type = 'rag';
             const rsIn = getEl('tkRagStatus');
             newTracker.status = rsIn ? rsIn.value : 'grey';
             const rmIn = getEl('tkRagMsg');
@@ -1612,20 +2558,21 @@ export const TrackerManager = {
             const wtIn = getEl('tkWaffleTotal');
             const waIn = getEl('tkWaffleActive');
             const wnIn = getEl('tkWaffleNotes');
-            
+
             const total = wtIn ? (parseInt(wtIn.value) || 100) : 100;
             const active = waIn ? (parseInt(waIn.value) || 0) : 0;
-            
+            const maxWaffle = (State.config && State.config.maxWaffle) ? State.config.maxWaffle : 450;
+
             if (total <= 0) return App.alert("Target must be a positive number.");
-            if (total > 450) return App.alert("Target cannot exceed 450.");
+            if (total > maxWaffle) return App.alert(`Target cannot exceed ${maxWaffle}.`);
             if (active > total) return App.alert("Progress cannot exceed the Target.");
-            
+
             newTracker.metric = wmIn ? wmIn.value : '';
             newTracker.total = total;
             newTracker.active = active;
             newTracker.notes = wnIn ? wnIn.value : '';
             newTracker.size = total < 201 ? 'S' : 'M'; // Inferred size
-            
+
             const wcIn = getEl('tkWaffleColorVal');
             newTracker.colorVal = wcIn ? wcIn.value : '#228B22';
             const wbIn = getEl('tkWaffleColorBg');
@@ -1643,6 +2590,34 @@ export const TrackerManager = {
             const notesIn = getEl('tkDonutNotes');
             newTracker.notes = notesIn ? notesIn.value : '';
             newTracker.size = size; // Use selected size
+        } else if (type === 'event') {
+            const rows = document.querySelectorAll('.event-row');
+            const events = [];
+            rows.forEach(row => {
+                const name = row.querySelector('.er-name').value.trim();
+                const date = row.querySelector('.er-date').value;
+                if (name && date) events.push({ name, date });
+            });
+            if (events.length === 0) return App.alert("At least one event with a name and date is required.");
+            newTracker.events = events;
+            const notesIn = getEl('tkEventNotes');
+            newTracker.notes = notesIn ? notesIn.value : '';
+            newTracker.size = size; // Explicitly set size
+        } else if (type === 'gantt') {
+            const rows = document.querySelectorAll('.gantt-row');
+            const tasks = [];
+            rows.forEach(row => {
+                const name = row.querySelector('.gr-name').value.trim();
+                const start = row.querySelector('.gr-start').value;
+                const end = row.querySelector('.gr-end').value;
+                const status = row.querySelector('.gr-status').value;
+                if (name && start && end) tasks.push({ name, start, end, status });
+            });
+            if (tasks.length === 0) return App.alert("At least one task with name and dates is required.");
+            newTracker.tasks = tasks;
+            const notesIn = getEl('tkGanttNotes');
+            newTracker.notes = notesIn ? notesIn.value : '';
+            newTracker.size = size;
         }
 
         if(index === -1) {
@@ -1657,199 +2632,8 @@ export const TrackerManager = {
     }
 };
 
-export const UserManager = {
-    openUserModal: (index = -1) => {
-        const isEdit = index > -1;
-        getEl('modalTitle').innerText = isEdit ? 'Edit User' : 'Add User';
-        getEl('editIndex').value = index;
-        
-        const m = isEdit ? State.members[index] : {
-            name: '',
-            lastWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}] },
-            thisWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], load: ['N','N','N','N','N','X','X'] },
-            nextWeek: { tasks: [{text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}], load: ['N','N','N','N','N','X','X'] }
-        };
-
-        getEl('mName').value = m.name || '';
-        
-        // Populate tasks
-        for(let i=1; i<=3; i++) {
-            getEl('lwTask'+i).value = m.lastWeek.tasks[i-1]?.text || '';
-            getEl('nwTask'+i).value = m.thisWeek.tasks[i-1]?.text || '';
-            getEl('fwTask'+i).value = m.nextWeek.tasks[i-1]?.text || '';
-        }
-
-        // Loads
-        const defaultLoad = ['N','N','N','N','N','X','X'];
-        const thisLoad = (m.thisWeek && m.thisWeek.load) ? [...m.thisWeek.load, ...defaultLoad.slice(m.thisWeek.load.length)] : defaultLoad;
-        const nextLoad = (m.nextWeek && m.nextWeek.load) ? [...m.nextWeek.load, ...defaultLoad.slice(m.nextWeek.load.length)] : defaultLoad;
-        
-        thisLoad.forEach((v, i) => UserManager.setLoad(i, v));
-        nextLoad.forEach((v, i) => UserManager.setFutureLoad(i, v));
-
-        // On Call
-        const defaultOnCall = [false, false, false, false, false, false, false];
-        const thisOnCall = (m.thisWeek && m.thisWeek.onCall) ? [...m.thisWeek.onCall, ...defaultOnCall.slice(m.thisWeek.onCall.length)] : defaultOnCall;
-        const nextOnCall = (m.nextWeek && m.nextWeek.onCall) ? [...m.nextWeek.onCall, ...defaultOnCall.slice(m.nextWeek.onCall.length)] : defaultOnCall;
-
-        thisOnCall.forEach((v, i) => { const el = getEl('nwOc'+i); if(el) el.checked = v; });
-        nextOnCall.forEach((v, i) => { const el = getEl('fwOc'+i); if(el) el.checked = v; });
-
-        getEl('mNotes').value = m.notes || '';
-
-        getEl('deleteBtn').style.display = isEdit ? 'block' : 'none';
-        ModalManager.openModal('userModal');
-    },
-    setStatus: (status) => {
-        getEl('lwStatus').value = status;
-        document.querySelectorAll('.status-option').forEach(el => {
-            el.classList.toggle('selected', el.classList.contains('so-' + status));
-        });
-    },
-    setLoad: (day, val) => {
-        getEl('nw' + day).value = val;
-        // Search globally for all load select rows
-        const rows = document.querySelectorAll('.load-select-row');
-        if (rows.length > 0) {
-            const boxes = rows[0].querySelectorAll('.ls-box');
-            if (boxes[day]) {
-                boxes[day].querySelectorAll('.w-pill').forEach(p => {
-                    const text = p.innerText;
-                    const expected = (val === 'N' ? 'M' : (val === 'L' ? 'L' : (val === 'R' ? 'H' : 'A')));
-                    p.classList.toggle('selected', text === expected);
-                });
-            }
-        }
-    },
-    setFutureLoad: (day, val) => {
-        getEl('fw' + day).value = val;
-        const rows = document.querySelectorAll('.load-select-row');
-        if (rows.length > 1) {
-            const boxes = rows[1].querySelectorAll('.ls-box');
-            if (boxes[day]) {
-                boxes[day].querySelectorAll('.w-pill').forEach(p => {
-                    const text = p.innerText;
-                    const expected = (val === 'N' ? 'M' : (val === 'L' ? 'L' : (val === 'R' ? 'H' : 'A')));
-                    p.classList.toggle('selected', text === expected);
-                });
-            }
-        }
-    },
-    submitUser: () => {
-        const idx = parseInt(getEl('editIndex').value);
-        const name = getEl('mName').value.trim();
-        if(!name) return App.alert("Name is required");
-
-        const member = {
-            name,
-            notes: getEl('mNotes').value.trim(),
-            lastWeek: {
-                onCall: (idx > -1 && State.members[idx].lastWeek?.onCall) ? State.members[idx].lastWeek.onCall : [],
-                tasks: [
-                    { text: getEl('lwTask1').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[0]?.isTeamSuccess || false) : false },
-                    { text: getEl('lwTask2').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[1]?.isTeamSuccess || false) : false },
-                    { text: getEl('lwTask3').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[2]?.isTeamSuccess || false) : false }
-                ]
-            },
-            thisWeek: {
-                load: [
-                    getEl('nw0').value, getEl('nw1').value, getEl('nw2').value, getEl('nw3').value, getEl('nw4').value,
-                    getEl('nw5').value, getEl('nw6').value
-                ],
-                onCall: [
-                    getEl('nwOc0').checked, getEl('nwOc1').checked, getEl('nwOc2').checked, getEl('nwOc3').checked, getEl('nwOc4').checked,
-                    getEl('nwOc5').checked, getEl('nwOc6').checked
-                ],
-                tasks: [
-                    { text: getEl('nwTask1').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[0]?.isTeamSuccess || false) : false },
-                    { text: getEl('nwTask2').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[1]?.isTeamSuccess || false) : false },
-                    { text: getEl('nwTask3').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[2]?.isTeamSuccess || false) : false }
-                ]
-            },
-            nextWeek: {
-                load: [
-                    getEl('fw0').value, getEl('fw1').value, getEl('fw2').value, getEl('fw3').value, getEl('fw4').value,
-                    getEl('fw5').value, getEl('fw6').value
-                ],
-                onCall: [
-                    getEl('fwOc0').checked, getEl('fwOc1').checked, getEl('fwOc2').checked, getEl('fwOc3').checked, getEl('fwOc4').checked,
-                    getEl('fwOc5').checked, getEl('fwOc6').checked
-                ],
-                tasks: [
-                    { text: getEl('fwTask1').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[0]?.isTeamActivity || false) : false },
-                    { text: getEl('fwTask2').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[1]?.isTeamActivity || false) : false },
-                    { text: getEl('fwTask3').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[2]?.isTeamActivity || false) : false }
-                ]
-            }
-        };
-
-        if(idx === -1) State.members.push(member);
-        else State.members[idx] = member;
-
-        ModalManager.closeModal('userModal');
-        renderBoard();
-    },
-    deleteUser: () => {
-        const idx = parseInt(getEl('editIndex').value);
-        App.confirm("Delete this user?", () => {
-            State.members.splice(idx, 1);
-            ModalManager.closeModal('userModal');
-            renderBoard();
-        });
-    },
-    toggleSuccess: (mIdx, tIdx) => {
-        State.members[mIdx].lastWeek.tasks[tIdx].isTeamSuccess = !State.members[mIdx].lastWeek.tasks[tIdx].isTeamSuccess;
-        renderBoard();
-    },
-    toggleActivity: (mIdx, tIdx) => {
-        State.members[mIdx].thisWeek.tasks[tIdx].isTeamSuccess = !State.members[mIdx].thisWeek.tasks[tIdx].isTeamSuccess;
-        renderBoard();
-    },
-    toggleFuture: (mIdx, tIdx) => {
-        State.members[mIdx].nextWeek.tasks[tIdx].isTeamActivity = !State.members[mIdx].nextWeek.tasks[tIdx].isTeamActivity;
-        renderBoard();
-    },
-    resetSelections: (type) => {
-        State.members.forEach(m => {
-            if(type === 'success') {
-                m.lastWeek.tasks.forEach(t => t.isTeamSuccess = false);
-                m.thisWeek.tasks.forEach(t => t.isTeamSuccess = false);
-            } else {
-                m.nextWeek.tasks.forEach(t => t.isTeamActivity = false);
-            }
-        });
-        renderBoard();
-    }
-};
-
-export const OverviewManager = {
-    handleOverviewClick: (type) => {
-        if(document.body.classList.contains('publishing')) {
-            const list = type === 'success' ? getEl('teamSuccessList') : getEl('teamActivityList');
-            const title = type === 'success' ? 'Team Achievements' : 'Activities Next Week';
-            const body = `<div class="zoomed-content"><ul>${list.innerHTML}</ul></div>`;
-            getEl('zoomTitle').innerText = title;
-            getEl('zoomBody').innerHTML = body;
-            ModalManager.openModal('zoomModal');
-        }
-    },
-    handleInfoClick: () => {
-        if(!document.body.classList.contains('publishing')) {
-            const val = prompt("Enter Additional Info (Markdown supported):", State.additionalInfo);
-            if(val !== null) {
-                State.additionalInfo = val;
-                renderBoard();
-            }
-        } else {
-            getEl('zoomTitle').innerText = "Additional Info";
-            getEl('zoomBody').innerHTML = `<div class="zoomed-content">${parseMarkdown(State.additionalInfo)}</div>`;
-            ModalManager.openModal('zoomModal');
-        }
-    }
-};
-
 export const DataSaver = {
-    saveData: () => {
+    saveData: async () => {
         const today = new Date();
         const d = today.getDay();
         const diff = d === 0 ? -6 : 1 - d;
@@ -1858,13 +2642,37 @@ export const DataSaver = {
         const savedDate = cm.toISOString().split('T')[0];
 
         const data = JSON.stringify({ ...State, savedDate }, null, 2);
-        const blob = new Blob([data], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `team_tracker_${new Date().toISOString().split('T')[0]}.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+        const filename = `team_tracker_${new Date().toISOString().split('T')[0]}.json`;
+
+        if ('showSaveFilePicker' in window) {
+            try {
+                const handle = await window.showSaveFilePicker({
+                    suggestedName: filename,
+                    types: [{
+                        description: 'JSON File',
+                        accept: { 'application/json': ['.json'] }
+                    }]
+                });
+                const writable = await handle.createWritable();
+                await writable.write(data);
+                await writable.close();
+                App.alert("File saved successfully.");
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('File save failed:', err);
+                    App.alert("Failed to save file.");
+                }
+            }
+        } else {
+            // Fallback for browsers not supporting File System Access API
+            const blob = new Blob([data], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
     }
 };
 
@@ -1969,6 +2777,39 @@ export const DataLoader = {
         };
         reader.readAsText(file);
         input.value = '';
+    },
+    syncFromGitHub: async () => {
+        const repo = State.config.githubRepo;
+        if (!repo) return App.alert("Please configure a GitHub Repo in Settings.");
+
+        App.alert("Syncing data from GitHub...");
+        let updatedCount = 0;
+
+        // Iterate through existing members and try to fetch their data
+        for (let i = 0; i < State.members.length; i++) {
+            const member = State.members[i];
+            // Assume filename is Name.json (spaces replaced? let's try direct first)
+            // Or "Steve-short.json" per prompt example.
+            // Simple strategy: Try "Name.json"
+            const filename = member.name.replace(/\s+/g, '-') + ".json";
+            const url = `https://raw.githubusercontent.com/${repo}/main/user/${filename}`;
+
+            try {
+                const response = await fetch(url);
+                if (response.ok) {
+                    const userData = await response.json();
+                    // Merge logic: Update tasks/availability if present in JSON
+                    // Expecting JSON structure similar to member object
+                    State.members[i] = { ...member, ...userData };
+                    updatedCount++;
+                }
+            } catch (e) {
+                console.warn(`Failed to fetch for ${member.name}:`, e);
+            }
+        }
+
+        renderBoard();
+        App.alert(`Sync complete. Updated ${updatedCount} users.`);
     }
 };
 
