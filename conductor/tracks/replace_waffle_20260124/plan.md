@@ -1,4 +1,3 @@
-
 # Implementation Plan - Replace Waffle with Stacked Bar Chart
 
 ## Phase 1: Waffle Removal
@@ -6,13 +5,13 @@
     - [x] Delete `createWaffleHTML` from `charts.js`.
     - [x] Delete `createWaffleData` from `charts.js`.
     - [x] Remove `test_waffle_limit.js` and `test_waffle_apex.js`.
-- [ ] Task: Refactor \pp.js\ Waffle handling.
-    - [ ] Remove \waffle\ import from \pp.js\.
-    - [ ] Remove \waffle\ block from \enderBoard\.
-    - [ ] Remove \waffle\ block from \submitTracker\.
-    - [ ] Remove \waffle\ block from \ZoomManager.openChartModal\.
-    - [ ] Remove \waffle\ from \TrackerManager.setType\ and \calculateTrackerSize\.
-    - [ ] Remove \	ypeWaffleBtn\ from \	rackerModal\ HTML.
+- [x] Task: Refactor `app.js` Waffle handling. [a51d75d]
+    - [x] Remove `waffle` import from `app.js`.
+    - [x] Remove `waffle` block from `renderBoard`.
+    - [x] Remove `waffle` block from `submitTracker`.
+    - [x] Remove `waffle` block from `ZoomManager.openChartModal`.
+    - [x] Remove `waffle` from `TrackerManager.setType` and `calculateTrackerSize`.
+    - [x] Remove `typeWaffleBtn` from `trackerModal` HTML.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Waffle Removal' (Protocol in workflow.md)
 
 ## Phase 2: Stacked Bar Chart Implementation
@@ -22,11 +21,10 @@
     - [ ] Add input fields for \completed\, \	otal\, \metric\ to \completionBarInputs\.
 - [ ] Task: Implement \completionBar\ logic.
     - [ ] Add \completionBar\ block to \submitTracker\.
-    - [ ] Implement \completionBar\ block in \enderBoard\ using ApexCharts.
+    - [ ] Implement \completionBar\ block in \enderBoard\ using ApexCharts.
         - \	ype: 'bar'\, \stacked: true\, \horizontal: true\.
-        - Data: \completed\, \emaining\.
+        - Data: \completed\, \emaining\.
         - Colors.
     - [ ] Implement \completionBar\ block in \ZoomManager.openChartModal\.
     - [ ] Force "Small" card size.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Stacked Bar' (Protocol in workflow.md)
-
