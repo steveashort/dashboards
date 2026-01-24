@@ -2,8 +2,8 @@
  * SERVER PLATFORMS TRACKER v31
  * ES6 MODULE STRUCTURE
  */
-export { createGaugeSVG, createWaffleHTML, Visuals, renderChart, calculateTrackerSize, createWaffleData } from './charts.js';
-import { createGaugeSVG, createWaffleHTML, Visuals, renderChart, calculateTrackerSize, createWaffleData } from './charts.js';
+export { createGaugeSVG, createWaffleHTML, Visuals, renderChart, calculateTrackerSize, createWaffleData, formatCountdown } from './charts.js';
+import { createGaugeSVG, createWaffleHTML, Visuals, renderChart, calculateTrackerSize, createWaffleData, formatCountdown } from './charts.js';
 
 // --- GLOBAL STATE ---
 let State = {
@@ -458,27 +458,47 @@ export const renderBoard = () => {
                 visualHTML = `<div class="donut-chart">${html}</div>`;
                 statsHTML = '';
             } else if (renderType === 'countdown') {
-                visualHTML = '<div class="countdown-list" style="width:100%; height:100%; overflow-y:auto; padding:5px;">';
                 const items = t.items || [];
+                // Sort ascending by date
                 items.sort((a,b) => new Date(a.date) - new Date(b.date));
-                items.forEach(item => {
-                    const d = new Date(item.date);
-                    const now = new Date();
-                    now.setHours(0,0,0,0);
-                    const dStart = new Date(d); dStart.setHours(0,0,0,0);
-                    const diffTime = dStart - now;
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    let timeText = '';
-                    let color = '#00e676';
-                    if (diffDays < 0) { timeText = `${Math.abs(diffDays)} days ago`; color = '#ff1744'; }
-                    else if (diffDays === 0) { timeText = 'Today'; color = '#ffb300'; }
-                    else if (diffDays === 1) { timeText = 'Tomorrow'; color = '#ffb300'; }
-                    else { timeText = `${diffDays} days`; if(diffDays < 7) color = '#ffb300'; }
-                    visualHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:2px;"><span style="font-size:0.9rem; color:#e0e0e0;">${item.label}</span><span style="font-size:0.9rem; font-weight:bold; color:${color};">${timeText}</span></div>`;
-                });
-                visualHTML += '</div>';
-                statsHTML = '';
-            }
+                
+                const style = t.displayStyle || 'list';
+                
+                if (style === 'bar') {
+                    const chartId = `count-viz-${i}`;
+                    visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:150px;"></div>`;
+                    
+                    setTimeout(() => {
+                        const el = document.getElementById(chartId);
+                        if(el) {
+                            const labels = items.map(x => x.label);
+                            const data = items.map(x => formatCountdown(x.date).diff);
+                            
+                            const colors = data.map(d => {
+                                if (d < 0) return '#ff1744';
+                                if (d < 7) return '#ffb300';
+                                return '#00e676';
+                            });
+                            
+                            renderChart(el, 'bar', { labels, series: [{name: 'Days', data}] }, {
+                                colors,
+                                plotOptions: { bar: { horizontal: true, distributed: true } },
+                                legend: { show: false },
+                                chart: { toolbar: { show: false } },
+                                tooltip: { y: { formatter: (val) => val + ' days' } }
+                            });
+                        }
+                    }, 0);
+                    statsHTML = '';
+                } else {
+                    visualHTML = '<div class="countdown-list" style="width:100%; height:100%; overflow-y:auto; padding:5px;">';
+                    items.forEach(item => {
+                        const f = formatCountdown(item.date);
+                        visualHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:2px;"><span style="font-size:0.9rem; color:#e0e0e0;">${item.label}</span><span style="font-size:0.9rem; font-weight:bold; color:${f.color};">${f.text}</span></div>`;
+                    });
+                    visualHTML += '</div>';
+                    statsHTML = '';
+                }
 
             card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
             card.innerHTML += `<div class="tracker-desc">${t.desc}</div>`;
@@ -674,25 +694,37 @@ export const ZoomManager = {
             } else if (renderType === 'note') {
                 content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
             } else if (renderType === 'countdown') {
-                content = '<div style="width:100%; height:100%; overflow-y:auto; padding:20px;">';
-                const items = t.items || [];
-                items.sort((a,b) => new Date(a.date) - new Date(b.date));
-                items.forEach(item => {
-                    const d = new Date(item.date);
-                    const now = new Date();
-                    now.setHours(0,0,0,0);
-                    const dStart = new Date(d); dStart.setHours(0,0,0,0);
-                    const diffTime = dStart - now;
-                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                    let timeText = '';
-                    let color = '#00e676';
-                    if (diffDays < 0) { timeText = `${Math.abs(diffDays)} days ago`; color = '#ff1744'; }
-                    else if (diffDays === 0) { timeText = 'Today'; color = '#ffb300'; }
-                    else if (diffDays === 1) { timeText = 'Tomorrow'; color = '#ffb300'; }
-                    else { timeText = `${diffDays} days`; if(diffDays < 7) color = '#ffb300'; }
-                    content += `<div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;"><span style="font-size:1.5rem; color:#e0e0e0;">${item.label}</span><span style="font-size:1.5rem; font-weight:bold; color:${color};">${timeText}</span></div>`;
-                });
-                content += '</div>';
+                const style = t.displayStyle || 'list';
+                
+                if (style === 'bar') {
+                    content = '<div id="zoomChartContainer" style="width:100%; height:100%;"></div>';
+                    renderAction = () => {
+                        const el = document.getElementById('zoomChartContainer');
+                        if(el) {
+                            const items = t.items || [];
+                            items.sort((a,b) => new Date(a.date) - new Date(b.date));
+                            const labels = items.map(x => x.label);
+                            const data = items.map(x => formatCountdown(x.date).diff);
+                            const colors = data.map(d => (d < 0 ? '#ff1744' : (d < 7 ? '#ffb300' : '#00e676')));
+                            
+                            renderChart(el, 'bar', { labels, series: [{name: 'Days', data}] }, {
+                                colors,
+                                plotOptions: { bar: { horizontal: true, distributed: true } },
+                                legend: { show: false },
+                                chart: { toolbar: { show: true } }
+                            });
+                        }
+                    };
+                } else {
+                    content = '<div style="width:100%; height:100%; overflow-y:auto; padding:20px;">';
+                    const items = t.items || [];
+                    items.sort((a,b) => new Date(a.date) - new Date(b.date));
+                    items.forEach(item => {
+                        const f = formatCountdown(item.date);
+                        content += `<div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;"><span style="font-size:1.5rem; color:#e0e0e0;">${item.label}</span><span style="font-size:1.5rem; font-weight:bold; color:${f.color};">${f.text}</span></div>`;
+                    });
+                    content += '</div>';
+                }
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
                 const values = (t.dataPoints || []).map(dp => dp.value);

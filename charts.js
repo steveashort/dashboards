@@ -150,6 +150,33 @@ export const createWaffleData = (total, active) => {
     return { series };
 };
 
+export const formatCountdown = (dateStr) => {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return { text: 'Invalid Date', diff: 0, color: 'grey' };
+    
+    const now = new Date();
+    now.setHours(0,0,0,0);
+    const dStart = new Date(d); dStart.setHours(0,0,0,0);
+    
+    const diffTime = dStart - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    const dateText = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
+    let daysText = '';
+    let color = '#00e676';
+    
+    if (diffDays < 0) { daysText = `${Math.abs(diffDays)} days ago`; color = '#ff1744'; }
+    else if (diffDays === 0) { daysText = 'Today'; color = '#ffb300'; }
+    else if (diffDays === 1) { daysText = 'Tomorrow'; color = '#ffb300'; }
+    else { daysText = `${diffDays} days`; if(diffDays < 7) color = '#ffb300'; }
+    
+    return {
+        text: `${dateText} (${daysText})`,
+        diff: diffDays,
+        color
+    };
+};
+
 export const Visuals = {
     showTooltip: (evt, text) => {
         const tt = document.getElementById('globalTooltip');
