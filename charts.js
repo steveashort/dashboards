@@ -27,6 +27,29 @@ export const createGaugeSVG = (loadArr) => {
 
 export const getApexConfig = (type, data, options = {}) => {
     const palette = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#03a9f4', '#ffeb3b'];
+    
+    let xaxisConfig = {
+        categories: data.labels || [],
+        labels: { style: { colors: '#aaa' } },
+        axisBorder: { show: false },
+        axisTicks: { show: false }
+    };
+    let yaxisConfig = {
+        labels: { style: { colors: '#aaa' } }
+    };
+
+    // Special handling for rangeBar (Gantt style)
+    if (type === 'rangeBar') {
+        xaxisConfig = {
+            type: 'numeric',
+            labels: { style: { colors: '#aaa' } }
+        };
+        yaxisConfig = {
+            categories: data.series && data.series[0] && data.series[0].data ? data.series[0].data.map(d => d.x) : [],
+            labels: { style: { colors: '#aaa' } }
+        };
+    }
+
     return {
         chart: {
             type: type,
@@ -44,15 +67,8 @@ export const getApexConfig = (type, data, options = {}) => {
             borderColor: '#333',
             strokeDashArray: 2,
         },
-        xaxis: {
-            categories: data.labels || [],
-            labels: { style: { colors: '#aaa' } },
-            axisBorder: { show: false },
-            axisTicks: { show: false }
-        },
-        yaxis: {
-            labels: { style: { colors: '#aaa' } }
-        },
+        xaxis: xaxisConfig,
+        yaxis: yaxisConfig,
         series: data.series || [],
         legend: { labels: { colors: '#aaa' } },
         tooltip: { theme: 'dark' },
@@ -68,13 +84,6 @@ export const renderChart = (el, type, data, options) => {
 };
 
 export const calculateTrackerSize = (tracker) => {
-    if (tracker.type === 'waffle') {
-        const t = tracker.total || 100;
-        if (t <= 100) return 'S';
-        if (t <= 400) return 'M';
-        if (t <= 1000) return 'L';
-        return 'XL';
-    }
     if (['gauge', 'rag', 'counter', 'ryg', 'donut'].includes(tracker.type)) return 'S';
     if (['line', 'bar', 'note', 'countdown'].includes(tracker.type)) return 'M'; 
     return 'M';
