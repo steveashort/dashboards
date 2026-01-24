@@ -318,7 +318,7 @@ export const renderBoard = () => {
                  console.log("Card clicked. Type:", t.type, "Publishing:", document.body.classList.contains('publishing'));
                  if (document.body.classList.contains('publishing')) {
                      // Zoom requested for: Time Series (line/bar), Note Tracker (note), Date Tracker (rag/ryg), Schedule Tracker (waffle)
-                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut'].includes(t.type);
+                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'completionBar'].includes(t.type);
                      if (canZoom) ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
@@ -326,7 +326,7 @@ export const renderBoard = () => {
             };
 
             // Zoom Icon
-            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut'].includes(t.type)) {
+            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'completionBar'].includes(t.type)) {
                 card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
             }
 
@@ -485,6 +485,38 @@ export const renderBoard = () => {
                     visualHTML += '</div>';
                     statsHTML = '';
                 }
+            } else if (renderType === 'completionBar') {
+                const chartId = `compbar-viz-${i}`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:80px;"></div>`;
+                
+                setTimeout(() => {
+                    const el = document.getElementById(chartId);
+                    if(el) {
+                        const completed = t.active || 0;
+                        const total = t.total || 100;
+                        const remaining = Math.max(0, total - completed);
+                        const cVal = t.colorVal || '#228B22';
+                        const cBg = t.colorBg || '#696969';
+
+                        renderChart(el, 'bar', {
+                            labels: ['Progress'],
+                            series: [
+                                { name: 'Completed', data: [completed] },
+                                { name: 'Remaining', data: [remaining] }
+                            ]
+                        }, {
+                            chart: { stacked: true, sparkline: { enabled: true } },
+                            plotOptions: { bar: { horizontal: true, barHeight: '70%' } },
+                            colors: [cVal, cBg],
+                            tooltip: {
+                                y: {
+                                    formatter: (val, opts) => `${val} ${t.metric || ''}`
+                                }
+                            }
+                        });
+                    }
+                }, 0);
+                statsHTML = `<div class="tracker-stats">${t.active} / ${t.total} ${t.metric || ''}</div>`;
             }
 
             card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
@@ -734,6 +766,37 @@ export const ZoomManager = {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
                 const values = (t.dataPoints || []).map(dp => dp.value);
                 content = Visuals.createDonutChartWithCalloutsSVG(labels, values);
+            } else if (renderType === 'completionBar') {
+                content = '<div id="zoomChartContainer" style="width:100%; height:100%;"></div>';
+                renderAction = () => {
+                    const el = document.getElementById('zoomChartContainer');
+                    if(el) {
+                        const completed = t.active || 0;
+                        const total = t.total || 100;
+                        const remaining = Math.max(0, total - completed);
+                        const cVal = t.colorVal || '#228B22';
+                        const cBg = t.colorBg || '#696969';
+
+                        renderChart(el, 'bar', {
+                            labels: ['Progress'],
+                            series: [
+                                { name: 'Completed', data: [completed] },
+                                { name: 'Remaining', data: [remaining] }
+                            ]
+                        }, {
+                            chart: { stacked: true, toolbar: { show: true } },
+                            plotOptions: { bar: { horizontal: true, barHeight: '50%' } },
+                            colors: [cVal, cBg],
+                            xaxis: { categories: ['Progress'], labels: { show: false } },
+                            yaxis: { labels: { show: false } },
+                            tooltip: {
+                                y: {
+                                    formatter: (val) => `${val} ${t.metric || ''}`
+                                }
+                            }
+                        });
+                    }
+                };
             }
     
             const bodyEl = getEl('zoomBody');
@@ -823,7 +886,7 @@ export const TrackerManager = {
         const titleEl = getEl('trackerModalTitle');
         if (titleEl) titleEl.innerText = isEdit ? 'Edit Progress Tracker' : 'Add Progress Tracker';
         
-        ['gauge','bar','line','counter','rag','waffle','countdown'].forEach(type => {
+        ['gauge','bar','line','counter','rag','waffle','countdown','completionBar'].forEach(type => {
             const div = getEl(`${type}Inputs`);
             if (div) div.style.display = 'none';
         });
@@ -1009,6 +1072,13 @@ export const TrackerManager = {
                 // Default Size S
                 const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
                 if(sizeRad) sizeRad.checked = true;
+            } else if (!isEdit && type === 'completionBar') {
+                const tmIn = getEl('tkCompBarMetric'); if(tmIn) tmIn.value = '';
+                const ttIn = getEl('tkCompBarTotal'); if(ttIn) ttIn.value = '';
+                const taIn = getEl('tkCompBarActive'); if(taIn) taIn.value = '';
+                const tnIn = getEl('tkCompBarNotes'); if(tnIn) tnIn.value = '';
+                const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
+                if(sizeRad) sizeRad.checked = true;
             } else if (!isEdit && type === 'countdown') {
                 const notesIn = getEl('tkCountdownNotes');
                 if(notesIn) notesIn.value = '';
@@ -1094,6 +1164,19 @@ export const TrackerManager = {
 
                 const notesIn = getEl('tkCountdownNotes');
                 if (tracker && notesIn) notesIn.value = tracker.notes || '';
+            } else if (type === 'completionBar') {
+                const tmIn = getEl('tkCompBarMetric');
+                if (tracker && tmIn) tmIn.value = tracker.metric || '';
+                const ttIn = getEl('tkCompBarTotal');
+                if (tracker && ttIn) ttIn.value = tracker.total || '';
+                const taIn = getEl('tkCompBarActive');
+                if (tracker && taIn) taIn.value = tracker.active || '';
+                const tnIn = getEl('tkCompBarNotes');
+                if (tracker && tnIn) tnIn.value = tracker.notes || '';
+                const cbIn = getEl('tkCompBarColorBg');
+                if (cbIn) cbIn.value = tracker ? (tracker.colorBg || '#696969') : '#696969';
+                const cvIn = getEl('tkCompBarColorVal');
+                if (cvIn) cvIn.value = tracker ? (tracker.colorVal || '#228B22') : '#228B22';
             }
         }
 
@@ -1104,7 +1187,7 @@ export const TrackerManager = {
         State.currentTrackerType = type;
         // Map 'bar' to 'line' for input visibility
         const inputType = (type === 'bar') ? 'line' : type;
-        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown'].forEach(x => {
+        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar'].forEach(x => {
             const btn = getEl(`type${x}Btn`);
             if (btn) btn.className = (type === x.toLowerCase()) ? 'type-option active' : 'type-option';
             const div = getEl(`${x.toLowerCase()}Inputs`);
@@ -1773,7 +1856,29 @@ export const TrackerManager = {
             const alignRad = document.querySelector('input[name="tkNoteAlign"]:checked');
             newTracker.align = alignRad ? alignRad.value : 'left';
             newTracker.notes = ''; // No notes for Note Tracker
-                } else if (type === 'donut') {            const rows = document.querySelectorAll('.donut-row');
+                } else if (type === 'completionBar') {
+            const tmIn = getEl('tkCompBarMetric');
+            const ttIn = getEl('tkCompBarTotal');
+            const taIn = getEl('tkCompBarActive');
+            const tnIn = getEl('tkCompBarNotes');
+
+            const total = ttIn ? (parseInt(ttIn.value) || 100) : 100;
+            const active = taIn ? (parseInt(taIn.value) || 0) : 0;
+
+            if (total <= 0) return App.alert("Target must be a positive number.");
+            if (active > total) return App.alert("Progress cannot exceed the Target.");
+
+            newTracker.metric = tmIn ? tmIn.value : '';
+            newTracker.total = total;
+            newTracker.active = active;
+            newTracker.notes = tnIn ? tnIn.value : '';
+            newTracker.size = 'S'; // Always use Small card
+
+            const cvIn = getEl('tkCompBarColorVal');
+            newTracker.colorVal = cvIn ? cvIn.value : '#228B22';
+            const cbIn = getEl('tkCompBarColorBg');
+            newTracker.colorBg = cbIn ? cbIn.value : '#696969';
+        } else if (type === 'donut') {
             const dataPoints = [];
             rows.forEach(row => {
                 const label = row.querySelector('.dr-label').value.trim();
