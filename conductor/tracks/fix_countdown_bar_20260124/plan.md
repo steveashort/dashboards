@@ -17,3 +17,14 @@
     - [x] Apply changes to both List and Bar Chart views.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Urgency Visuals' (Protocol in workflow.md) [checkpoint: 4259e0c]
 
+
+## Phase 3: Countdown Bar Chart & Sizing Fixes
+- [ ] Task: Implement sizing logic for Countdown tracker.
+    - [ ] If list form, force S (1x1) size.
+    - [ ] If bar chart form, force M (2x1) size.
+- [ ] Task: Fix Countdown Bar Chart Rendering.
+    - [ ] Re-evaluate data structure and ApexCharts configuration.
+    - [ ] Ensure chart actually draws with labels and bars.
+    - [ ] Ensure X-axis represents days with today at 0.
+- [ ] Task: Conductor - User Manual Verification 'Phase 3: Fixes' (Protocol in workflow.md)
+
