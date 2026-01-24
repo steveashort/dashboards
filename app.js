@@ -434,9 +434,6 @@ export const renderBoard = () => {
                                 chart: { toolbar: { show: false } },
                                 xaxis: {
                                     type: 'numeric',
-                                    min: -30, // Show some past context
-                                    max: 60, // Show some future context
-                                    tickAmount: 5,
                                     labels: {
                                         formatter: function(val) {
                                             if (val === 0) return 'Today';
@@ -664,9 +661,6 @@ export const ZoomManager = {
                                 chart: { toolbar: { show: true } },
                                 xaxis: {
                                     type: 'numeric',
-                                    min: -30, // Show some past context
-                                    max: 60, // Show some future context
-                                    tickAmount: 5,
                                     labels: {
                                         formatter: function(val) {
                                             if (val === 0) return 'Today';
