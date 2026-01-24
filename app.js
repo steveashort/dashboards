@@ -506,7 +506,7 @@ export const renderBoard = () => {
             let nw = '';
             if(m.nextWeek && m.nextWeek.tasks) {
                 m.nextWeek.tasks.forEach((t,x) => {
-                    if(t.text.trim()) nw += `<li class="card-task-li">${t.text}</li>`;
+                    if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleFuture(${i},${x})"><span>${t.text}</span></li>`;
                 });
             }
             
