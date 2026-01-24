@@ -425,6 +425,27 @@ export const renderBoard = () => {
                 const html = Visuals.createDonutChartSVG(labels, values, displaySize);
                 visualHTML = `<div class="donut-chart">${html}</div>`;
                 statsHTML = '';
+            } else if (renderType === 'countdown') {
+                visualHTML = '<div class="countdown-list" style="width:100%; height:100%; overflow-y:auto; padding:5px;">';
+                const items = t.items || [];
+                items.sort((a,b) => new Date(a.date) - new Date(b.date));
+                items.forEach(item => {
+                    const d = new Date(item.date);
+                    const now = new Date();
+                    now.setHours(0,0,0,0);
+                    const dStart = new Date(d); dStart.setHours(0,0,0,0);
+                    const diffTime = dStart - now;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    let timeText = '';
+                    let color = '#00e676';
+                    if (diffDays < 0) { timeText = `${Math.abs(diffDays)} days ago`; color = '#ff1744'; }
+                    else if (diffDays === 0) { timeText = 'Today'; color = '#ffb300'; }
+                    else if (diffDays === 1) { timeText = 'Tomorrow'; color = '#ffb300'; }
+                    else { timeText = `${diffDays} days`; if(diffDays < 7) color = '#ffb300'; }
+                    visualHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:2px;"><span style="font-size:0.9rem; color:#e0e0e0;">${item.label}</span><span style="font-size:0.9rem; font-weight:bold; color:${color};">${timeText}</span></div>`;
+                });
+                visualHTML += '</div>';
+                statsHTML = '';
             }
 
             card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
@@ -594,13 +615,26 @@ export const ZoomManager = {
                 content = createWaffleHTML(t.total || 100, t.active || 0, t.colorVal || '#228B22', t.colorBg || '#696969');
             } else if (renderType === 'note') {
                 content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
-            } else if (renderType === 'gauge') {
-                const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
-                const c1 = t.colorVal || t.color1 || '#00e676'; 
-                const c2 = t.color2 || '#ff1744';
-                // c2 is Progress Colour, c1 is Target Colour
-                const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
-                content = `<div class="pie-chart" style="width:300px; height:300px; background:${grad}"><div class="pie-overlay" style="width:260px; height:260px;"><div class="pie-pct" style="font-size:3rem;">${pct}%</div><div style="margin-top:10px; color:#aaa;">${t.completed} / ${t.total}</div></div></div>`;
+            } else if (renderType === 'countdown') {
+                content = '<div style="width:100%; height:100%; overflow-y:auto; padding:20px;">';
+                const items = t.items || [];
+                items.sort((a,b) => new Date(a.date) - new Date(b.date));
+                items.forEach(item => {
+                    const d = new Date(item.date);
+                    const now = new Date();
+                    now.setHours(0,0,0,0);
+                    const dStart = new Date(d); dStart.setHours(0,0,0,0);
+                    const diffTime = dStart - now;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    let timeText = '';
+                    let color = '#00e676';
+                    if (diffDays < 0) { timeText = `${Math.abs(diffDays)} days ago`; color = '#ff1744'; }
+                    else if (diffDays === 0) { timeText = 'Today'; color = '#ffb300'; }
+                    else if (diffDays === 1) { timeText = 'Tomorrow'; color = '#ffb300'; }
+                    else { timeText = `${diffDays} days`; if(diffDays < 7) color = '#ffb300'; }
+                    content += `<div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;"><span style="font-size:1.5rem; color:#e0e0e0;">${item.label}</span><span style="font-size:1.5rem; font-weight:bold; color:${color};">${timeText}</span></div>`;
+                });
+                content += '</div>';
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
                 const values = (t.dataPoints || []).map(dp => dp.value);
@@ -1685,6 +1719,19 @@ export const TrackerManager = {
             const notesIn = getEl('tkDonutNotes');
             newTracker.notes = notesIn ? notesIn.value : '';
             newTracker.size = size; // Use selected size
+        } else if (type === 'countdown') {
+            const rows = document.querySelectorAll('.countdown-row');
+            const items = [];
+            rows.forEach(row => {
+                const label = row.querySelector('.cd-label').value.trim();
+                const date = row.querySelector('.cd-date').value;
+                if (label && date) items.push({ label, date });
+            });
+            if (items.length === 0) return App.alert("At least one event with a label and date is required.");
+            newTracker.items = items;
+            const notesIn = getEl('tkCountdownNotes');
+            newTracker.notes = notesIn ? notesIn.value : '';
+            newTracker.size = 'M';
         }
 
         if(index === -1) {
