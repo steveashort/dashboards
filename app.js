@@ -112,33 +112,6 @@ export const App = {
         initApp();
         App.initDragAndDrop();
     },
-    renderTop5: () => {
-        const el = getEl('top5Container');
-        if(!el) return;
-        el.innerHTML = '';
-        
-        const top5 = getTop5FromTrackers(State.trackers);
-        
-        if (top5.length === 0) {
-            el.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#666;">No metrics available. Add Gauge or Countdown trackers.</div>';
-            return;
-        }
-        
-        const labels = top5.map(i => i.label + (i.value ? ` (${i.value})` : ''));
-        const values = top5.map(i => Math.round(i.score));
-        
-        const series = [{ name: 'Criticality', data: values }];
-        const colors = ['#ff1744', '#ffb300', '#00e676', '#03dac6', '#bb86fc'];
-        
-        renderChart(el, 'bar', { labels, series }, { 
-            colors, 
-            plotOptions: { bar: { horizontal: true, distributed: true, borderRadius: 4 } },
-            legend: { show: false },
-            chart: { toolbar: { show: false }, height: '100%', width: '100%' },
-            xaxis: { max: 100 },
-            tooltip: { y: { formatter: (val) => val + ' Score' } }
-        });
-    },
     initDragAndDrop: () => {
         const grid = getEl('trackerGrid');
         if (!grid) return;
@@ -499,6 +472,7 @@ export const renderBoard = () => {
                     visualHTML += '</div>';
                     statsHTML = '';
                 }
+            }
 
             card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
             card.innerHTML += `<div class="tracker-desc">${t.desc}</div>`;
@@ -532,7 +506,7 @@ export const renderBoard = () => {
             let nw = '';
             if(m.nextWeek && m.nextWeek.tasks) {
                 m.nextWeek.tasks.forEach((t,x) => {
-                    if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleFuture(${i},${x})"><span>${t.text}</span></li>`;
+                    if(t.text.trim()) nw += `<li class="card-task-li">${t.text}</li>`;
                 });
             }
             
@@ -805,7 +779,8 @@ export const ZoomManager = {
             }
             ModalManager.openModal('zoomModal');
             if(renderAction) setTimeout(renderAction, 100);
-        }};
+        }
+};
 
 export const TrackerManager = {
     openModal(index) {
