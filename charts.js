@@ -177,6 +177,41 @@ export const formatCountdown = (dateStr) => {
     };
 };
 
+export const getCountdownGanttData = (items) => {
+    const seriesData = [];
+    const today = new Date();
+    today.setHours(0,0,0,0);
+
+    items.forEach(item => {
+        const d = new Date(item.date);
+        d.setHours(0,0,0,0);
+        const diffDays = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+
+        let color = '#00e676'; // Green (far future)
+        if (diffDays < 0) { color = '#ff1744'; } // Red (overdue)
+        else if (diffDays <= 7) { color = '#ffb300'; } // Amber (within a week)
+
+        seriesData.push({
+            x: item.label,
+            y: [Math.min(0, diffDays), Math.max(0, diffDays)], // Range from today (0) to event date (diffDays)
+            fillColor: color
+        });
+    });
+
+    // Sort by the closest date to today (smallest absolute diff)
+    seriesData.sort((a,b) => {
+        const aMid = (a.y[0] + a.y[1]) / 2;
+        const bMid = (b.y[0] + b.y[1]) / 2;
+        return aMid - bMid;
+    });
+
+    return {
+        series: [{
+            data: seriesData
+        }]
+    };
+};
+
 export const Visuals = {
     showTooltip: (evt, text) => {
         const tt = document.getElementById('globalTooltip');
