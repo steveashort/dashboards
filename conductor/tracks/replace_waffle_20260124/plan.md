@@ -2,10 +2,10 @@
 # Implementation Plan - Replace Waffle with Stacked Bar Chart
 
 ## Phase 1: Waffle Removal
-- [ ] Task: Remove Waffle functions and tests.
-    - [ ] Delete \createWaffleHTML\ from \charts.js\.
-    - [ ] Delete \createWaffleData\ from \charts.js\.
-    - [ ] Remove \	est_waffle_limit.js\ and \	est_waffle_apex.js\.
+- [x] Task: Remove Waffle functions and tests. [90e9265]
+    - [x] Delete `createWaffleHTML` from `charts.js`.
+    - [x] Delete `createWaffleData` from `charts.js`.
+    - [x] Remove `test_waffle_limit.js` and `test_waffle_apex.js`.
 - [ ] Task: Refactor \pp.js\ Waffle handling.
     - [ ] Remove \waffle\ import from \pp.js\.
     - [ ] Remove \waffle\ block from \enderBoard\.
