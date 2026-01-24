@@ -642,7 +642,7 @@ export const ZoomManager = {
                             const colors = data.map(d => (d < 0 ? '#ff1744' : (d < 7 ? '#ffb300' : '#00e676')));
                             
                             const ganttData = getCountdownGanttData(items);
-                            
+                            console.log('ganttData for ZoomManager:', JSON.stringify(ganttData));
                             renderChart(el, 'rangeBar', ganttData, {
                                 plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
                                 dataLabels: {
