@@ -417,36 +417,7 @@ export const renderBoard = () => {
                             });
                             const ganttData = getCountdownGanttData(items);
                             renderChart(el, 'rangeBar', ganttData, {
-                                plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
-                                dataLabels: {
-                                    enabled: true,
-                                    formatter: function(val, opts) {
-                                        const label = opts.w.globals.labels[opts.dataPointIndex];
-                                        const start = opts.w.globals.seriesRangeStart[0][opts.dataPointIndex];
-                                        const end = opts.w.globals.seriesRangeEnd[0][opts.dataPointIndex];
-                                        const duration = end - start;
-                                        if (duration === 0) return label + ' (Today)';
-                                        if (duration < 0) return label + ' (' + Math.abs(duration) + ' days ago)';
-                                        return label + ' (' + duration + ' days)';
-                                    },
-                                    style: { colors: ['#f3f4f5', '#fff'] }
-                                },
-                                chart: { toolbar: { show: false } },
-                                xaxis: {
-                                    type: 'numeric',
-                                    labels: {
-                                        formatter: function(val) {
-                                            if (val === 0) return 'Today';
-                                            if (val < 0) return Math.abs(val) + 'd ago';
-                                            return val + 'd';
-                                        }
-                                    }
-                                },
-                                yaxis: { labels: { show: false } },
-                                grid: { show: false, padding: { left: 0, right: 0 } },
-                                tooltip: { enabled: false },
-                                legend: { show: false },
-                                colors: ganttData.series[0].data.map(d => d.fillColor)
+                                plotOptions: { bar: { horizontal: true } }
                             });
                         }
                     }, 0);
@@ -644,36 +615,7 @@ export const ZoomManager = {
                             const ganttData = getCountdownGanttData(items);
 
                             renderChart(el, 'rangeBar', ganttData, {
-                                plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
-                                dataLabels: {
-                                    enabled: true,
-                                    formatter: function(val, opts) {
-                                        const label = opts.w.globals.labels[opts.dataPointIndex];
-                                        const start = opts.w.globals.seriesRangeStart[0][opts.dataPointIndex];
-                                        const end = opts.w.globals.seriesRangeEnd[0][opts.dataPointIndex];
-                                        const duration = end - start;
-                                        if (duration === 0) return label + ' (Today)';
-                                        if (duration < 0) return label + ' (' + Math.abs(duration) + ' days ago)';
-                                        return label + ' (' + duration + ' days)';
-                                    },
-                                    style: { colors: ['#f3f4f5', '#fff'] }
-                                },
-                                chart: { toolbar: { show: true } },
-                                xaxis: {
-                                    type: 'numeric',
-                                    labels: {
-                                        formatter: function(val) {
-                                            if (val === 0) return 'Today';
-                                            if (val < 0) return Math.abs(val) + 'd ago';
-                                            return val + 'd';
-                                        }
-                                    }
-                                },
-                                yaxis: { labels: { show: false } },
-                                grid: { show: false, padding: { left: 0, right: 0 } },
-                                tooltip: { enabled: false },
-                                legend: { show: false },
-                                colors: ganttData.series[0].data.map(d => d.fillColor)
+                                plotOptions: { bar: { horizontal: true } }
                             });
                         }
                     };
