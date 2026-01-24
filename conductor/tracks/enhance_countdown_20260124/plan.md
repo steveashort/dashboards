@@ -18,4 +18,4 @@
     - [x] Update colors based on urgency.
 - [x] Task: Update `ZoomManager`. [d736cc6]
     - [x] Reflect same logic in Zoom view.
-- [x] Task: Conductor - User Manual Verification 'Phase 2: Render' (Protocol in workflow.md) [checkpoint: ed4c4c3]
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Render' (Protocol in workflow.md) [checkpoint: 549b4d1]
