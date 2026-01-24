@@ -2,10 +2,10 @@
 # Implementation Plan - Enhance Waffle Charts and Dynamic Sizing
 
 ## Phase 1: Waffle Enhancement
-- [ ] Task: Increase Waffle Chart Limit.
-    - [ ] Update charts.js createWaffleHTML to accept up to 5000.
-    - [ ] Update pp.js TrackerManager validation to allow 5000.
-    - [ ] Verify performance with 5000 items.
+- [x] Task: Increase Waffle Chart Limit. [5cb3b0f]
+    - [x] Update `charts.js` `createWaffleHTML` to accept up to 5000.
+    - [x] Update `app.js` `TrackerManager` validation to allow 5000.
+    - [x] Verify performance with 5000 items.
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Waffle' (Protocol in workflow.md)
 
 ## Phase 2: Dynamic Sizing Logic
