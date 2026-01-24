@@ -1,4 +1,3 @@
-
 # Implementation Plan - Enhance Countdown Tracker
 
 ## Phase 1: Edit Modal & Data
@@ -8,11 +7,10 @@
     - [x] Update `TrackerManager.openModal` to populate `displayStyle`.
 
 ## Phase 2: Rendering Logic
-- [ ] Task: Update \enderBoard\.
-    - [ ] Implement sorting (Ascending date).
-    - [ ] Implement List rendering with new format.
-    - [ ] Implement Bar rendering using \enderChart\.
-- [ ] Task: Update \ZoomManager\.
-    - [ ] Reflect same logic in Zoom view.
+- [x] Task: Update `renderBoard`. [d736cc6]
+    - [x] Implement sorting (Ascending date).
+    - [x] Implement List rendering with new format.
+    - [x] Implement Bar rendering using `renderChart`.
+- [x] Task: Update `ZoomManager`. [d736cc6]
+    - [x] Reflect same logic in Zoom view.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Render' (Protocol in workflow.md)
-
