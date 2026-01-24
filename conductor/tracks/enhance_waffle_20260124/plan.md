@@ -9,9 +9,9 @@
 - [ ] Task: Conductor - User Manual Verification 'Phase 1: Waffle' (Protocol in workflow.md)
 
 ## Phase 2: Dynamic Sizing Logic
-- [ ] Task: Implement Size Calculation Logic.
-    - [ ] Create calculateTrackerSize(tracker) function in charts.js.
-    - [ ] Define thresholds for Waffle and defaults for other types.
+- [x] Task: Implement Size Calculation Logic. [41f3467]
+    - [x] Create `calculateTrackerSize(tracker)` function in `charts.js`.
+    - [x] Define thresholds for Waffle and defaults for other types.
 - [ ] Task: Update Card Rendering.
     - [ ] Update pp.js to use calculated size.
     - [ ] Update TrackerManager to remove manual size input.
