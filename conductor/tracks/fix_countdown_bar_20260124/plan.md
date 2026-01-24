@@ -10,3 +10,10 @@
     - [x] Consider adding a default `yaxis.min` and `yaxis.max` or `xaxis.min`/`max` if the problem is axis scaling.
     - [x] Ensure `labels` are correct.
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Fix' (Protocol in workflow.md) [checkpoint: 1e3af16]
+## Phase 2: Reminder Urgency Visuals
+- [ ] Task: Implement visual cues for Countdown urgency.
+    - [ ] Define color/flashing logic for each threshold (7, 14, 30, 60 days).
+    - [ ] Integrate icons (siren, yellow).
+    - [ ] Apply changes to both List and Bar Chart views.
+- [ ] Task: Conductor - User Manual Verification 'Phase 2: Urgency Visuals' (Protocol in workflow.md)
+
