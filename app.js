@@ -71,7 +71,6 @@ export const initApp = () => {
 
     updateDateUI();
     renderBoard();
-    if(App.renderTop5) App.renderTop5();
     console.log("App Initialized");
 };
 
