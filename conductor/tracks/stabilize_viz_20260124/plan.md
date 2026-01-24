@@ -32,10 +32,10 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Integration' (Protocol in workflow.md) [checkpoint: 29073cd]
 
 ## Phase 3: Data Wiring and Final Polish
-- [ ] Task: Fix Chart Sizing and Grid Layout.
-    - [ ] Update CSS to enforce a 5-column grid layout.
-    - [ ] Implement sizing logic: S(1x1), M(2x1), L(3x1), XL(3x2).
-    - [ ] Fix ApexCharts sizing to fit within cards and allow editing interaction.
+- [x] Task: Fix Chart Sizing and Grid Layout. [8fe7d27]
+    - [x] Update CSS to enforce a 5-column grid layout.
+    - [x] Implement sizing logic: S(1x1), M(2x1), L(3x1), XL(3x2).
+    - [x] Fix ApexCharts sizing to fit within cards and allow editing interaction.
 - [ ] Task: Wire "Top 5" Chart to App State.
     - [ ] Update pp.js to extract real "Top 5" metrics from State.trackers.
     - [ ] Create an update function to refresh the chart when data changes.
