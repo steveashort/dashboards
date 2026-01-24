@@ -2,9 +2,9 @@
 # Implementation Plan - Multi-value Counter Tracker
 
 ## Phase 1: Modal & Data Model
-- [ ] Task: Update \index.html\ for Multi-Counter inputs.
-    - [ ] Add \counterDataContainer\ to \counterInputs\.
-    - [ ] Add "+ Add Counter" button.
+- [x] Task: Update `index.html` for Multi-Counter inputs. [3ee3eff]
+    - [x] Add `counterDataContainer` to `counterInputs`.
+    - [x] Add "+ Add Counter" button.
 - [ ] Task: Update \pp.js\ \TrackerManager\.
     - [ ] Implement \ddCounterRow\ and \emoveCounterRow\.
     - [ ] Update \setType\ and \openModal\ to handle multiple counters.
