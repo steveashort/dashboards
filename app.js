@@ -407,14 +407,6 @@ export const renderBoard = () => {
                     setTimeout(() => {
                         const el = document.getElementById(chartId);
                         if(el) {
-                            const labels = items.map(x => x.label);
-                            const data = items.map(x => formatCountdown(x.date).diff);
-                            
-                            const colors = data.map(d => {
-                                if (d < 0) return '#ff1744';
-                                if (d < 7) return '#ffb300';
-                                return '#00e676';
-                            });
                             const barData = getCountdownBarData(items);
                             // Only render if there's actual data after filtering past events
                             if (barData.series[0].data.length > 0) {
@@ -459,7 +451,23 @@ export const renderBoard = () => {
                                         }
                                     },
                                     grid: { show: false, padding: { left: 0, right: 0 } },
-                                    legend: { show: false }
+                                    legend: { show: false },
+                                    colors: barData.series[0].data.map(d => d.fillColor),
+                                    tooltip: {
+                                        enabled: true,
+                                        custom: function({series, seriesIndex, dataPointIndex, w}) {
+                                            const item = w.config.series[seriesIndex].data[dataPointIndex];
+                                            const eventLabel = item.x;
+                                            const days = item.meta.diffDays;
+                                            const originalDate = item.meta.originalDate;
+                                            const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
+                                            return `<div class="apexcharts-tooltip-box">
+                                                        <div class="tooltip-title">${eventLabel}</div>
+                                                        <div class="tooltip-value">${eventDate}</div>
+                                                        <div class="tooltip-value">${days} days from today</div>
+                                                    </div>`;
+                                        }
+                                    }
                                 });
                             } else {
                                 // If no future events, display a message
@@ -646,16 +654,16 @@ export const ZoomManager = {
                 content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
             } else if (renderType === 'countdown') {
                 const style = t.displayStyle || 'list';
-                
+                const items = t.items || [];
+                items.sort((a,b) => new Date(a.date) - new Date(b.date));
+
                 if (style === 'bar') {
                     content = '<div id="zoomChartContainer" style="width:100%; height:100%;"></div>';
                     renderAction = () => {
                         const el = document.getElementById('zoomChartContainer');
                         if(el) {
                             const barData = getCountdownBarData(items);
-                            const barData = getCountdownBarData(items);
                             if (barData.series[0].data.length > 0) {
-                                // Get today's timestamp for xaxis min
                                 const today = new Date();
                                 today.setHours(0,0,0,0);
                                 const todayTimestamp = today.getTime();
@@ -672,18 +680,15 @@ export const ZoomManager = {
                                     },
                                     chart: {
                                         toolbar: { show: true },
-                                        height: barData.series[0].data.length * 40 + 50 // Dynamic height based on number of items
+                                        height: barData.series[0].data.length * 40 + 50
                                     },
                                     xaxis: {
                                         type: 'datetime',
-                                        min: todayTimestamp, // Start X-axis from today's timestamp
+                                        min: todayTimestamp,
                                         labels: {
                                             formatter: function(val, timestamp) {
                                                 const date = new Date(timestamp);
-                                                // If it's the start of the chart (today), display "Today", otherwise default ApexCharts format
-                                                if (timestamp === todayTimestamp) {
-                                                    return 'Today';
-                                                }
+                                                if (timestamp === todayTimestamp) return 'Today';
                                                 return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
                                             },
                                             style: { colors: '#aaa' }
@@ -691,12 +696,26 @@ export const ZoomManager = {
                                     },
                                     yaxis: {
                                         show: true,
-                                        labels: {
-                                            style: { colors: '#aaa' }
-                                        }
+                                        labels: { style: { colors: '#aaa' } }
                                     },
                                     grid: { show: false, padding: { left: 0, right: 0 } },
-                                    legend: { show: false }
+                                    legend: { show: false },
+                                    colors: barData.series[0].data.map(d => d.fillColor),
+                                    tooltip: {
+                                        enabled: true,
+                                        custom: function({series, seriesIndex, dataPointIndex, w}) {
+                                            const item = w.config.series[seriesIndex].data[dataPointIndex];
+                                            const eventLabel = item.x;
+                                            const days = item.meta.diffDays;
+                                            const originalDate = item.meta.originalDate;
+                                            const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
+                                            return `<div class="apexcharts-tooltip-box">
+                                                        <div class="tooltip-title">${eventLabel}</div>
+                                                        <div class="tooltip-value">${eventDate}</div>
+                                                        <div class="tooltip-value">${days} days from today</div>
+                                                    </div>`;
+                                        }
+                                    }
                                 });
                             } else {
                                 el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
@@ -705,8 +724,6 @@ export const ZoomManager = {
                     };
                 } else {
                     content = '<div style="width:100%; height:100%; overflow-y:auto; padding:20px;">';
-                    const items = t.items || [];
-                    items.sort((a,b) => new Date(a.date) - new Date(b.date));
                     items.forEach(item => {
                         const f = formatCountdown(item.date);
                         content += `<div style="display:flex; justify-content:space-between; margin-bottom:15px; border-bottom:1px solid #444; padding-bottom:10px;"><span style="font-size:1.5rem; color:#e0e0e0;"><span class="${f.flashClass}" style="margin-right:10px;">${f.icon}</span>${item.label}</span><span style="font-size:1.5rem; font-weight:bold; color:${f.color};">${f.text}</span></div>`;
