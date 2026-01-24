@@ -12,7 +12,7 @@
     - [x] Remove `waffle` block from `ZoomManager.openChartModal`.
     - [x] Remove `waffle` from `TrackerManager.setType` and `calculateTrackerSize`.
     - [x] Remove `typeWaffleBtn` from `trackerModal` HTML.
-- [ ] Task: Conductor - User Manual Verification 'Phase 1: Waffle Removal' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 1: Waffle Removal' (Protocol in workflow.md) [checkpoint: 66b0e42]
 
 ## Phase 2: Stacked Bar Chart Implementation
 - [ ] Task: Add new \completionBar\ tracker type.
