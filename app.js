@@ -984,6 +984,8 @@ export const TrackerManager = {
             } else if (!isEdit && type === 'countdown') {
                 const notesIn = getEl('tkCountdownNotes');
                 if(notesIn) notesIn.value = '';
+                const styleRad = document.querySelector('input[name="tkCountdownStyle"][value="list"]');
+                if(styleRad) styleRad.checked = true;
                 // Default Size M
                 const sizeRad = document.querySelector('input[name="tkSize"][value="M"]');
                 if(sizeRad) sizeRad.checked = true;
@@ -1057,6 +1059,11 @@ export const TrackerManager = {
                 if (tracker && tracker.items) {
                     tracker.items.forEach(item => this.addCountdownRow(item.label, item.date));
                 }
+                
+                const style = tracker ? (tracker.displayStyle || 'list') : 'list';
+                const styleRad = document.querySelector(`input[name="tkCountdownStyle"][value="${style}"]`);
+                if(styleRad) styleRad.checked = true;
+
                 const notesIn = getEl('tkCountdownNotes');
                 if (tracker && notesIn) notesIn.value = tracker.notes || '';
             }
@@ -1787,6 +1794,10 @@ export const TrackerManager = {
             });
             if (items.length === 0) return App.alert("At least one event with a label and date is required.");
             newTracker.items = items;
+            
+            const styleRad = document.querySelector('input[name="tkCountdownStyle"]:checked');
+            newTracker.displayStyle = styleRad ? styleRad.value : 'list';
+            
             const notesIn = getEl('tkCountdownNotes');
             newTracker.notes = notesIn ? notesIn.value : '';
             newTracker.size = 'M';
