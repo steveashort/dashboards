@@ -19,9 +19,9 @@
 
 
 ## Phase 3: Countdown Bar Chart & Sizing Fixes
-- [ ] Task: Implement sizing logic for Countdown tracker.
-    - [ ] If list form, force S (1x1) size.
-    - [ ] If bar chart form, force M (2x1) size.
+- [x] Task: Implement sizing logic for Countdown tracker. [6fda2e2]
+    - [x] If list form, force S (1x1) size.
+    - [x] If bar chart form, force M (2x1) size.
 - [ ] Task: Fix Countdown Bar Chart Rendering.
     - [ ] Re-evaluate data structure and ApexCharts configuration.
     - [ ] Ensure chart actually draws with labels and bars.
