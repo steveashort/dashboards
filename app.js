@@ -418,13 +418,18 @@ export const renderBoard = () => {
                             const barData = getCountdownBarData(items);
                             // Only render if there's actual data after filtering past events
                             if (barData.series[0].data.length > 0) {
+                                // Get today's timestamp for xaxis min
+                                const today = new Date();
+                                today.setHours(0,0,0,0);
+                                const todayTimestamp = today.getTime();
+
                                 renderChart(el, 'rangeBar', barData, {
                                     plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
                                     dataLabels: {
                                         enabled: true,
                                         formatter: function(val, opts) {
-                                            // val will be [start, end], we want the end value (diffDays)
-                                            return `${val[1]} days`;
+                                            const item = opts.w.config.series[opts.seriesIndex].data[opts.dataPointIndex];
+                                            return `${item.meta.diffDays} days`;
                                         },
                                         style: { colors: ['#f3f4f5', '#fff'] }
                                     },
@@ -433,19 +438,22 @@ export const renderBoard = () => {
                                         height: barData.series[0].data.length * 40 + 50 // Dynamic height based on number of items
                                     },
                                     xaxis: {
-                                        type: 'numeric',
-                                        min: 0, // Explicitly start at 0
-                                        tickAmount: 5, // Sensible intervals
+                                        type: 'datetime',
+                                        min: todayTimestamp, // Start X-axis from today's timestamp
                                         labels: {
-                                            formatter: function(val) {
-                                                if (val === 0) return 'Today';
-                                                return `${val}d`;
+                                            formatter: function(val, timestamp) {
+                                                const date = new Date(timestamp);
+                                                // If it's the start of the chart (today), display "Today", otherwise default ApexCharts format
+                                                if (timestamp === todayTimestamp) {
+                                                    return 'Today';
+                                                }
+                                                return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
                                             },
                                             style: { colors: '#aaa' }
                                         }
                                     },
                                     yaxis: {
-                                        show: true,
+                                        show: true, // Show Y-axis for event names
                                         labels: {
                                             style: { colors: '#aaa' }
                                         }
@@ -458,7 +466,7 @@ export const renderBoard = () => {
                                         custom: function({series, seriesIndex, dataPointIndex, w}) {
                                             const item = w.config.series[seriesIndex].data[dataPointIndex];
                                             const eventLabel = item.x;
-                                            const days = item.y[1]; // The end of the range is diffDays
+                                            const days = item.meta.diffDays;
                                             const originalDate = item.meta.originalDate;
                                             const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
                                             return `<div class="apexcharts-tooltip-box">
@@ -469,6 +477,10 @@ export const renderBoard = () => {
                                         }
                                     }
                                 });
+                            } else {
+                                // If no future events, display a message
+                                el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
+                            }
                             } else {
                                 // If no future events, display a message
                                 el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
@@ -661,14 +673,20 @@ export const ZoomManager = {
                         const el = document.getElementById('zoomChartContainer');
                         if(el) {
                             const barData = getCountdownBarData(items);
+                            const barData = getCountdownBarData(items);
                             if (barData.series[0].data.length > 0) {
+                                // Get today's timestamp for xaxis min
+                                const today = new Date();
+                                today.setHours(0,0,0,0);
+                                const todayTimestamp = today.getTime();
+
                                 renderChart(el, 'rangeBar', barData, {
                                     plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
                                     dataLabels: {
                                         enabled: true,
                                         formatter: function(val, opts) {
-                                            // val will be [start, end], we want the end value (diffDays)
-                                            return `${val[1]} days`;
+                                            const item = opts.w.config.series[opts.seriesIndex].data[opts.dataPointIndex];
+                                            return `${item.meta.diffDays} days`;
                                         },
                                         style: { colors: ['#f3f4f5', '#fff'] }
                                     },
@@ -677,13 +695,16 @@ export const ZoomManager = {
                                         height: barData.series[0].data.length * 40 + 50 // Dynamic height based on number of items
                                     },
                                     xaxis: {
-                                        type: 'numeric',
-                                        min: 0, // Explicitly start at 0
-                                        tickAmount: 5, // Sensible intervals
+                                        type: 'datetime',
+                                        min: todayTimestamp, // Start X-axis from today's timestamp
                                         labels: {
-                                            formatter: function(val) {
-                                                if (val === 0) return 'Today';
-                                                return `${val}d`;
+                                            formatter: function(val, timestamp) {
+                                                const date = new Date(timestamp);
+                                                // If it's the start of the chart (today), display "Today", otherwise default ApexCharts format
+                                                if (timestamp === todayTimestamp) {
+                                                    return 'Today';
+                                                }
+                                                return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
                                             },
                                             style: { colors: '#aaa' }
                                         }
@@ -702,7 +723,7 @@ export const ZoomManager = {
                                         custom: function({series, seriesIndex, dataPointIndex, w}) {
                                             const item = w.config.series[seriesIndex].data[dataPointIndex];
                                             const eventLabel = item.x;
-                                            const days = item.y[1]; // The end of the range is diffDays
+                                            const days = item.meta.diffDays;
                                             const originalDate = item.meta.originalDate;
                                             const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
                                             return `<div class="apexcharts-tooltip-box">
