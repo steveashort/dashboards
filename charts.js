@@ -38,14 +38,14 @@ export const getApexConfig = (type, data, options = {}) => {
         labels: { style: { colors: '#aaa' } }
     };
 
-    // Special handling for rangeBar (Gantt style)
-    if (type === 'rangeBar') {
+    // Special handling for rangeBar and horizontal bar (Countdown)
+    if (type === 'rangeBar' || (type === 'bar' && options.plotOptions && options.plotOptions.bar && options.plotOptions.bar.horizontal)) {
         xaxisConfig = {
             type: 'numeric',
             labels: { style: { colors: '#aaa' } }
         };
         yaxisConfig = {
-            categories: data.series && data.series[0] && data.series[0].data ? data.series[0].data.map(d => d.x) : [],
+            categories: data.labels || (data.series && data.series[0] && data.series[0].data ? data.series[0].data.map(d => d.x) : []),
             labels: { style: { colors: '#aaa' } }
         };
     }
@@ -140,8 +140,10 @@ export const formatCountdown = (dateStr) => {
     };
 };
 
-export const getCountdownGanttData = (items) => {
-    const seriesData = [];
+export const getCountdownBarData = (items) => {
+    const labels = [];
+    const data = [];
+    const colors = [];
     const today = new Date();
     today.setHours(0,0,0,0);
 
@@ -150,28 +152,28 @@ export const getCountdownGanttData = (items) => {
         d.setHours(0,0,0,0);
         const diffDays = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
 
-        let color = '#00e676'; // Green (far future)
-        if (diffDays < 0) { color = '#ff1744'; } // Red (overdue)
-        else if (diffDays <= 7) { color = '#ffb300'; } // Amber (within a week)
+        labels.push(item.label);
+        data.push(diffDays);
 
-        seriesData.push({
-            x: item.label,
-            y: [Math.min(0, diffDays), Math.max(0, diffDays)], // Range from today (0) to event date (diffDays)
-            fillColor: color
-        });
+        // Aligning color logic with formatCountdown
+        if (diffDays < 0) { colors.push('#ff1744'); } // Red (overdue)
+        else if (diffDays === 0) { colors.push('#ffb300'); } // Amber (Today)
+        else if (diffDays === 1) { colors.push('#ff1744'); } // Red (Tomorrow)
+        else if (diffDays <= 7) { colors.push('#ff1744'); } // Red (very urgent)
+        else if (diffDays <= 14) { colors.push('#ff1744'); } // Red (urgent)
+        else if (diffDays <= 30) { colors.push('#ffb300'); } // Amber (flashing yellow)
+        else if (diffDays <= 60) { colors.push('#ffb300'); } // Amber (yellow)
+        else { colors.push('#00e676'); } // Green (far future)
     });
 
-    // Sort by the closest date to today (smallest absolute diff)
-    seriesData.sort((a,b) => {
-        const aMid = (a.y[0] + a.y[1]) / 2;
-        const bMid = (b.y[0] + b.y[1]) / 2;
-        return aMid - bMid;
-    });
+    // Sort based on diffDays
+    const sorted = labels.map((label, index) => ({ label, data: data[index], color: colors[index] }))
+                         .sort((a,b) => a.data - b.data);
 
     return {
-        series: [{
-            data: seriesData
-        }]
+        labels: sorted.map(s => s.label),
+        series: [{ name: 'Days', data: sorted.map(s => s.data) }],
+        colors: sorted.map(s => s.color)
     };
 };
 

@@ -2,8 +2,8 @@
  * SERVER PLATFORMS TRACKER v31
  * ES6 MODULE STRUCTURE
  */
-export { createGaugeSVG, Visuals, renderChart, calculateTrackerSize, formatCountdown, getCountdownGanttData } from './charts.js';
-import { createGaugeSVG, Visuals, renderChart, calculateTrackerSize, formatCountdown, getCountdownGanttData } from './charts.js';
+export { createGaugeSVG, Visuals, renderChart, calculateTrackerSize, formatCountdown, getCountdownBarData } from './charts.js';
+import { createGaugeSVG, Visuals, renderChart, calculateTrackerSize, formatCountdown, getCountdownBarData } from './charts.js';
 
 // --- GLOBAL STATE ---
 let State = {
@@ -415,9 +415,33 @@ export const renderBoard = () => {
                                 if (d < 7) return '#ffb300';
                                 return '#00e676';
                             });
-                            const ganttData = getCountdownGanttData(items);
-                            renderChart(el, 'rangeBar', ganttData, {
-                                plotOptions: { bar: { horizontal: true } }
+                            const barData = getCountdownBarData(items);
+                            renderChart(el, 'bar', barData, {
+                                plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
+                                dataLabels: {
+                                    enabled: true,
+                                    formatter: function(val, opts) {
+                                        const label = opts.w.globals.labels[opts.dataPointIndex];
+                                        return `${label}: ${val} days`;
+                                    },
+                                    style: { colors: ['#f3f4f5', '#fff'] }
+                                },
+                                chart: { toolbar: { show: false } },
+                                xaxis: {
+                                    type: 'numeric',
+                                    labels: {
+                                        formatter: function(val) {
+                                            if (val === 0) return 'Today';
+                                            if (val < 0) return Math.abs(val) + 'd ago';
+                                            return val + 'd';
+                                        }
+                                    }
+                                },
+                                yaxis: { show: true, labels: { style: { colors: '#aaa' } } }, // Show Y-axis labels for categories
+                                grid: { show: false, padding: { left: 0, right: 0 } },
+                                tooltip: { enabled: false },
+                                legend: { show: false },
+                                colors: barData.colors
                             });
                         }
                     }, 0);
@@ -612,10 +636,33 @@ export const ZoomManager = {
                             const data = items.map(x => formatCountdown(x.date).diff);
                             const colors = data.map(d => (d < 0 ? '#ff1744' : (d < 7 ? '#ffb300' : '#00e676')));
                             
-                            const ganttData = getCountdownGanttData(items);
-
-                            renderChart(el, 'rangeBar', ganttData, {
-                                plotOptions: { bar: { horizontal: true } }
+                            const barData = getCountdownBarData(items);
+                            renderChart(el, 'bar', barData, {
+                                plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
+                                dataLabels: {
+                                    enabled: true,
+                                    formatter: function(val, opts) {
+                                        const label = opts.w.globals.labels[opts.dataPointIndex];
+                                        return `${label}: ${val} days`;
+                                    },
+                                    style: { colors: ['#f3f4f5', '#fff'] }
+                                },
+                                chart: { toolbar: { show: true } },
+                                xaxis: {
+                                    type: 'numeric',
+                                    labels: {
+                                        formatter: function(val) {
+                                            if (val === 0) return 'Today';
+                                            if (val < 0) return Math.abs(val) + 'd ago';
+                                            return val + 'd';
+                                        }
+                                    }
+                                },
+                                yaxis: { show: true, labels: { style: { colors: '#aaa' } } }, // Show Y-axis labels for categories
+                                grid: { show: false, padding: { left: 0, right: 0 } },
+                                tooltip: { enabled: false },
+                                legend: { show: false },
+                                colors: barData.colors
                             });
                         }
                     };
