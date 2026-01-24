@@ -459,23 +459,7 @@ export const renderBoard = () => {
                                         }
                                     },
                                     grid: { show: false, padding: { left: 0, right: 0 } },
-                                    legend: { show: false },
-                                    colors: barData.series[0].data.map(d => d.fillColor), // Apply colors per bar from data
-                                    tooltip: {
-                                        enabled: true,
-                                        custom: function({series, seriesIndex, dataPointIndex, w}) {
-                                            const item = w.config.series[seriesIndex].data[dataPointIndex];
-                                            const eventLabel = item.x;
-                                            const days = item.meta.diffDays;
-                                            const originalDate = item.meta.originalDate;
-                                            const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
-                                            return `<div class="apexcharts-tooltip-box">
-                                                        <div class="tooltip-title">${eventLabel}</div>
-                                                        <div class="tooltip-value">${eventDate}</div>
-                                                        <div class="tooltip-value">${days} days from today</div>
-                                                    </div>`;
-                                        }
-                                    }
+                                    legend: { show: false }
                                 });
                             } else {
                                 // If no future events, display a message
@@ -712,23 +696,7 @@ export const ZoomManager = {
                                         }
                                     },
                                     grid: { show: false, padding: { left: 0, right: 0 } },
-                                    legend: { show: false },
-                                    colors: barData.series[0].data.map(d => d.fillColor), // Apply colors per bar from data
-                                    tooltip: {
-                                        enabled: true,
-                                        custom: function({series, seriesIndex, dataPointIndex, w}) {
-                                            const item = w.config.series[seriesIndex].data[dataPointIndex];
-                                            const eventLabel = item.x;
-                                            const days = item.meta.diffDays;
-                                            const originalDate = item.meta.originalDate;
-                                            const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
-                                            return `<div class="apexcharts-tooltip-box">
-                                                        <div class="tooltip-title">${eventLabel}</div>
-                                                        <div class="tooltip-value">${eventDate}</div>
-                                                        <div class="tooltip-value">${days} days from today</div>
-                                                    </div>`;
-                                        }
-                                    }
+                                    legend: { show: false }
                                 });
                             } else {
                                 el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
