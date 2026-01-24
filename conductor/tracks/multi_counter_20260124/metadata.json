@@ -1,0 +1,8 @@
+{
+  "track_id": "multi_counter_20260124",
+  "type": "feature",
+  "status": "new",
+  "created_at": "2026-01-24T12:30:00Z",
+  "updated_at": "2026-01-24T12:30:00Z",
+  "description": "Enhance Counter with support for up to 6 values"
+}

@@ -17,3 +17,4 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [ ] **Track: Fix Countdown Bar Chart Rendering**
   *Link: [./tracks/fix_countdown_bar_20260124/](./tracks/fix_countdown_bar_20260124/)*
 
+- [ ] **Track: Multi-value Counter Tracker**n  *Link: [./tracks/multi_counter_20260124/](./tracks/multi_counter_20260124/)*
