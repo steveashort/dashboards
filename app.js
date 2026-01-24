@@ -722,12 +722,6 @@ export const ZoomManager = {
                             } else {
                                 el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
                             }
-                                    grid: { show: false, padding: { left: 0, right: 0 } },
-                                    legend: { show: false },
-                                    colors: barData.colors, // Apply colors per bar
-                                    tooltip: {
-                                        enabled: true,
-                                        custom: function({series, seriesIndex, dataPointIndex, w}) {
                                             const eventLabel = w.globals.labels[dataPointIndex];
                                             const days = series[seriesIndex][dataPointIndex];
                                             const originalItem = items.find(item => item.label === eventLabel); // Find original item for date
