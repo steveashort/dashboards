@@ -14,9 +14,9 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 1: Stabilization' (Protocol in workflow.md) [checkpoint: 453c018]
 
 ## Phase 2: Integration of ApexCharts
-- [ ] Task: Add ApexCharts dependency.
-    - [ ] Update `index.html` to include ApexCharts script (CDN).
-    - [ ] Verify library availability in the global scope.
+- [x] Task: Add ApexCharts dependency. [809cc75]
+    - [x] Update `index.html` to include ApexCharts script (CDN).
+    - [x] Verify library availability in the global scope.
 - [ ] Task: Create ApexCharts Helper wrapper.
     - [ ] Create/Update `charts.js` (or `apex-helpers.js`) with a factory function to generate standard chart config.
     - [ ] Map `styles.css` CSS variables to ApexCharts theme palette.
