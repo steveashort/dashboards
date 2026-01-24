@@ -8,6 +8,6 @@ This file tracks all major tracks for the project. Each track has its own detail
 - [x] **Track: Enhance Waffle Charts and Dynamic Sizing**
   *Link: [./tracks/enhance_waffle_20260124/](./tracks/enhance_waffle_20260124/)*
 
-- [ ] **Track: Enhance Countdown Tracker**
+- [x] **Track: Enhance Countdown Tracker**
   *Link: [./tracks/enhance_countdown_20260124/](./tracks/enhance_countdown_20260124/)*
 
