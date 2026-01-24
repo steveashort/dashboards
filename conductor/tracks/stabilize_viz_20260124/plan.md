@@ -36,9 +36,9 @@
     - [x] Update CSS to enforce a 5-column grid layout.
     - [x] Implement sizing logic: S(1x1), M(2x1), L(3x1), XL(3x2).
     - [x] Fix ApexCharts sizing to fit within cards and allow editing interaction.
-- [ ] Task: Wire "Top 5" Chart to App State.
-    - [ ] Update pp.js to extract real "Top 5" metrics from State.trackers.
-    - [ ] Create an update function to refresh the chart when data changes.
+- [x] Task: Wire "Top 5" Chart to App State. [a89a34e]
+    - [x] Update `app.js` to extract real "Top 5" metrics from `State.trackers`.
+    - [x] Create an update function to refresh the chart when data changes.
 - [ ] Task: Verify Responsiveness.
     - [ ] Test dashboard resizing to ensure both SVG and ApexCharts resize correctly.
     - [ ] Adjust media queries if necessary for 1440x900 optimization.
