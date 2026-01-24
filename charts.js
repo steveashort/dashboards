@@ -23,43 +23,7 @@ export const createGaugeSVG = (loadArr) => {
     return `<svg width="60" height="35" viewBox="0 0 60 35"><path d="${bg}" fill="none" stroke="#333" stroke-width="4" stroke-linecap="round"/><path d="${val}" fill="none" stroke="${color}" stroke-width="4" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="2" fill="#fff"/></svg><div class="gauge-val" style="color:${color}">${s}%</div>`;
 };
 
-export const createWaffleHTML = (total, active, colorVal, colorBg) => {
-    const maxCells = Math.min(total, 5000);
-    
-    // Dynamic columns and sizing for large datasets
-    let cols = 15;
-    let cellSize = 7;
-    let gap = 2;
 
-    if (total <= 15) {
-        cols = total;
-    } else if (total <= 200) {
-        cols = 15;
-        cellSize = 7;
-    } else if (total <= 1000) {
-        cols = 25;
-        cellSize = 5;
-    } else {
-        // > 1000 items (up to 5000)
-        // Try to keep aspect ratio reasonable
-        cols = 50;
-        cellSize = 3; 
-        gap = 1;
-    }
-
-    // Calculate exact width to force wrap at 'cols'
-    const gridWidth = (cols * (cellSize + gap)) - gap;
-    
-    let html = `<div style="display:flex; flex-wrap: wrap-reverse; gap: ${gap}px; width: ${gridWidth}px; margin: 0 auto;">`;
-    for(let i=0; i<maxCells; i++) {
-        // With wrap-reverse, index 0 is at the bottom row.
-        // As i increases, it fills left-to-right, then moves to the row ABOVE.
-        const isActive = i < active;
-        html += `<div class="waffle-cell" style="width:${cellSize}px; height:${cellSize}px; flex: 0 0 ${cellSize}px; ${isActive ? `background-color:${colorVal}; box-shadow: 0 0 5px ${colorVal}` : `background-color:${colorBg}`}"></div>`;
-    }
-    html += '</div>';
-    return html;
-};
 
 export const getApexConfig = (type, data, options = {}) => {
     const palette = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#03a9f4', '#ffeb3b'];
@@ -116,39 +80,7 @@ export const calculateTrackerSize = (tracker) => {
     return 'M';
 };
 
-export const createWaffleData = (total, active) => {
-    let cols = 10;
-    if (total <= 10) cols = total;
-    else if (total <= 100) cols = 10;
-    else if (total <= 500) cols = 20;
-    else cols = 50; 
-    
-    const series = [];
-    let current = 0;
-    
-    // Fill row by row
-    // We want row 0 at the top.
-    // Heatmap renders Series[0] at the top usually.
-    
-    while(current < total) {
-        const rowData = [];
-        for(let c=0; c<cols; c++) {
-            if (current >= total) {
-                // Pad with "empty" logic or just break?
-                // Heatmap works best with rectangular data.
-                // We'll add "empty" cells (-1) if needed to complete the row visually?
-                // Or just break.
-                break; 
-            }
-            const isActive = current < active;
-            rowData.push({ x: `${c}`, y: isActive ? 1 : 0 });
-            current++;
-        }
-        series.push({ name: `Row`, data: rowData });
-    }
-    
-    return { series };
-};
+
 
 export const formatCountdown = (dateStr) => {
     const d = new Date(dateStr);
