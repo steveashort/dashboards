@@ -2,10 +2,10 @@
 # Implementation Plan - Enhance Countdown Tracker
 
 ## Phase 1: Edit Modal & Data
-- [ ] Task: Update Edit Modal.
-    - [ ] Add Radio buttons for "List" vs "Bar" in \#countdownInputs\.
-    - [ ] Update \TrackerManager.submitTracker\ to capture \displayStyle\.
-    - [ ] Update \TrackerManager.openModal\ to populate \displayStyle\.
+- [x] Task: Update Edit Modal. [4a467dc]
+    - [x] Add Radio buttons for "List" vs "Bar" in `#countdownInputs`.
+    - [x] Update `TrackerManager.submitTracker` to capture `displayStyle`.
+    - [x] Update `TrackerManager.openModal` to populate `displayStyle`.
 
 ## Phase 2: Rendering Logic
 - [ ] Task: Update \enderBoard\.
