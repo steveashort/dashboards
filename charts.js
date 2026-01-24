@@ -47,6 +47,41 @@ export const createWaffleHTML = (total, active, colorVal, colorBg) => {
     return html;
 };
 
+export const getApexConfig = (type, data, options = {}) => {
+    const palette = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#03a9f4', '#ffeb3b'];
+    return {
+        chart: {
+            type: type,
+            background: 'transparent',
+            toolbar: { show: false },
+            animations: { enabled: false },
+            height: '100%',
+            width: '100%'
+        },
+        theme: { mode: 'dark' },
+        colors: palette,
+        stroke: { curve: 'smooth', width: 2 },
+        dataLabels: { enabled: false },
+        grid: {
+            borderColor: '#333',
+            strokeDashArray: 2,
+        },
+        xaxis: {
+            categories: data.labels || [],
+            labels: { style: { colors: '#aaa' } },
+            axisBorder: { show: false },
+            axisTicks: { show: false }
+        },
+        yaxis: {
+            labels: { style: { colors: '#aaa' } }
+        },
+        series: data.series || [],
+        legend: { labels: { colors: '#aaa' } },
+        tooltip: { theme: 'dark' },
+        ...options
+    };
+};
+
 export const Visuals = {
     showTooltip: (evt, text) => {
         const tt = document.getElementById('globalTooltip');
