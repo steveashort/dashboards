@@ -15,5 +15,5 @@
     - [x] Define color/flashing logic for each threshold (7, 14, 30, 60 days).
     - [x] Integrate icons (siren, yellow).
     - [x] Apply changes to both List and Bar Chart views.
-- [ ] Task: Conductor - User Manual Verification 'Phase 2: Urgency Visuals' (Protocol in workflow.md)
+- [x] Task: Conductor - User Manual Verification 'Phase 2: Urgency Visuals' (Protocol in workflow.md) [checkpoint: 4259e0c]
 
