@@ -152,13 +152,16 @@ export const getCountdownBarData = (items) => {
         d.setHours(0,0,0,0);
         const diffDays = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
 
+        // Filter out past events or events happening today
+        if (diffDays <= 0) {
+            return; // Skip this item
+        }
+
         labels.push(item.label);
         data.push(diffDays);
 
         // Aligning color logic with formatCountdown
-        if (diffDays < 0) { colors.push('#ff1744'); } // Red (overdue)
-        else if (diffDays === 0) { colors.push('#ffb300'); } // Amber (Today)
-        else if (diffDays === 1) { colors.push('#ff1744'); } // Red (Tomorrow)
+        if (diffDays === 1) { colors.push('#ff1744'); } // Red (Tomorrow)
         else if (diffDays <= 7) { colors.push('#ff1744'); } // Red (very urgent)
         else if (diffDays <= 14) { colors.push('#ff1744'); } // Red (urgent)
         else if (diffDays <= 30) { colors.push('#ffb300'); } // Amber (flashing yellow)
