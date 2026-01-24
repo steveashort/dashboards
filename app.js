@@ -2,8 +2,8 @@
  * SERVER PLATFORMS TRACKER v31
  * ES6 MODULE STRUCTURE
  */
-export { createGaugeSVG, createWaffleHTML, Visuals, renderChart } from './charts.js';
-import { createGaugeSVG, createWaffleHTML, Visuals, renderChart } from './charts.js';
+export { createGaugeSVG, createWaffleHTML, Visuals, renderChart, getTop5FromTrackers } from './charts.js';
+import { createGaugeSVG, createWaffleHTML, Visuals, renderChart, getTop5FromTrackers } from './charts.js';
 
 // --- GLOBAL STATE ---
 let State = {
@@ -118,9 +118,15 @@ export const App = {
         if(!el) return;
         el.innerHTML = '';
         
-        // Mock Data
-        const labels = ['Server A Load', 'Server B Load', 'License Exp', 'Cert Exp', 'Deployment'];
-        const values = [85, 45, 12, 5, 90]; 
+        const top5 = getTop5FromTrackers(State.trackers);
+        
+        if (top5.length === 0) {
+            el.innerHTML = '<div style="display:flex; align-items:center; justify-content:center; height:100%; color:#666;">No metrics available. Add Gauge or Countdown trackers.</div>';
+            return;
+        }
+        
+        const labels = top5.map(i => i.label + (i.value ? ` (${i.value})` : ''));
+        const values = top5.map(i => Math.round(i.score));
         
         const series = [{ name: 'Criticality', data: values }];
         const colors = ['#ff1744', '#ffb300', '#00e676', '#03dac6', '#bb86fc'];
@@ -129,8 +135,9 @@ export const App = {
             colors, 
             plotOptions: { bar: { horizontal: true, distributed: true, borderRadius: 4 } },
             legend: { show: false },
-            chart: { toolbar: { show: false } },
-            xaxis: { max: 100 }
+            chart: { toolbar: { show: false }, height: '100%', width: '100%' },
+            xaxis: { max: 100 },
+            tooltip: { y: { formatter: (val) => val + ' Score' } }
         });
     },
     initDragAndDrop: () => {

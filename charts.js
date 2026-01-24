@@ -82,6 +82,38 @@ export const getApexConfig = (type, data, options = {}) => {
     };
 };
 
+export const renderChart = (el, type, data, options) => {
+    const config = getApexConfig(type, data, options);
+    const chart = new ApexCharts(el, config);
+    chart.render();
+    return chart;
+};
+
+export const getTop5FromTrackers = (trackers) => {
+    const items = [];
+    trackers.forEach(t => {
+        if (t.type === 'gauge' || t.type === 'waffle') {
+            const val = (t.active !== undefined) ? t.active : (t.completed !== undefined ? t.completed : 0);
+            const tot = t.total || 100;
+            const pct = tot > 0 ? (val / tot) * 100 : 0;
+            items.push({ label: t.desc, score: pct, value: Math.round(pct) + '%' });
+        } else if (t.type === 'countdown' && t.items) {
+            t.items.forEach(i => {
+                const d = new Date(i.date);
+                const now = new Date();
+                const diff = (d - now) / (1000 * 60 * 60 * 24); 
+                let score = 0;
+                if (diff < 0) score = 100; 
+                else if (diff < 30) score = 100 - (diff * 2); 
+                else score = 10; 
+                items.push({ label: i.label, score: Math.max(0, score), value: Math.ceil(diff) + 'd' });
+            });
+        }
+    });
+    items.sort((a, b) => b.score - a.score);
+    return items.slice(0, 5);
+};
+
 export const Visuals = {
     showTooltip: (evt, text) => {
         const tt = document.getElementById('globalTooltip');
