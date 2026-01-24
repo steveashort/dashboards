@@ -22,8 +22,8 @@
 - [x] Task: Implement sizing logic for Countdown tracker. [6fda2e2]
     - [x] If list form, force S (1x1) size.
     - [x] If bar chart form, force M (2x1) size.
-- [x] Task: Fix Countdown Bar Chart Rendering. [2a89945]
-    - [x] Re-evaluate data structure and ApexCharts configuration.
+- [x] Task: Fix Countdown Bar Chart Rendering. [6b52499]
+    - [x] Re-evaluate data structure and ApexCharts configuration for rangeBar.
     - [x] Ensure chart actually draws with labels and bars.
-    - [x] Ensure X-axis represents days with today at 0.
+    - [x] Ensure X-axis represents days with today at 0, and Y-axis shows event names.
 
