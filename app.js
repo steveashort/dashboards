@@ -416,33 +416,61 @@ export const renderBoard = () => {
                                 return '#00e676';
                             });
                             const barData = getCountdownBarData(items);
-                            renderChart(el, 'bar', barData, {
-                                plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
-                                dataLabels: {
-                                    enabled: true,
-                                    formatter: function(val, opts) {
-                                        const label = opts.w.globals.labels[opts.dataPointIndex];
-                                        return `${label}: ${val} days`;
-                                    },
-                                    style: { colors: ['#f3f4f5', '#fff'] }
-                                },
-                                chart: { toolbar: { show: false } },
-                                xaxis: {
-                                    type: 'numeric',
-                                    labels: {
+                            // Only render if there's actual data after filtering past events
+                            if (barData.series[0].data.length > 0) {
+                                renderChart(el, 'bar', barData, {
+                                    plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
+                                    dataLabels: {
+                                        enabled: true,
                                         formatter: function(val) {
-                                            if (val === 0) return 'Today';
-                                            if (val < 0) return Math.abs(val) + 'd ago';
-                                            return val + 'd';
+                                            return `${val} days`;
+                                        },
+                                        style: { colors: ['#f3f4f5', '#fff'] }
+                                    },
+                                    chart: {
+                                        toolbar: { show: false },
+                                        height: barData.labels.length * 40 + 50 // Dynamic height based on number of items
+                                    },
+                                    xaxis: {
+                                        type: 'numeric',
+                                        min: 0, // Explicitly start at 0
+                                        tickAmount: 5, // Sensible intervals
+                                        labels: {
+                                            formatter: function(val) {
+                                                if (val === 0) return 'Today';
+                                                return val + 'd';
+                                            },
+                                            style: { colors: '#aaa' }
+                                        }
+                                    },
+                                    yaxis: {
+                                        show: true,
+                                        labels: {
+                                            style: { colors: '#aaa' }
+                                        }
+                                    },
+                                    grid: { show: false, padding: { left: 0, right: 0 } },
+                                    legend: { show: false },
+                                    colors: barData.colors, // Apply colors per bar
+                                    tooltip: {
+                                        enabled: true,
+                                        custom: function({series, seriesIndex, dataPointIndex, w}) {
+                                            const eventLabel = w.globals.labels[dataPointIndex];
+                                            const days = series[seriesIndex][dataPointIndex];
+                                            const originalItem = items.find(item => item.label === eventLabel); // Find original item for date
+                                            const eventDate = originalItem ? new Date(originalItem.date).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
+                                            return `<div class="apexcharts-tooltip-box">
+                                                        <div class="tooltip-title">${eventLabel}</div>
+                                                        <div class="tooltip-value">${eventDate}</div>
+                                                        <div class="tooltip-value">${days} days from today</div>
+                                                    </div>`;
                                         }
                                     }
-                                },
-                                yaxis: { show: true, labels: { style: { colors: '#aaa' } } }, // Show Y-axis labels for categories
-                                grid: { show: false, padding: { left: 0, right: 0 } },
-                                tooltip: { enabled: false },
-                                legend: { show: false },
-                                colors: barData.colors
-                            });
+                                });
+                            } else {
+                                // If no future events, display a message
+                                el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
+                            }
                         }
                     }, 0);
                     statsHTML = '';
@@ -637,33 +665,59 @@ export const ZoomManager = {
                             const colors = data.map(d => (d < 0 ? '#ff1744' : (d < 7 ? '#ffb300' : '#00e676')));
                             
                             const barData = getCountdownBarData(items);
-                            renderChart(el, 'bar', barData, {
-                                plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
-                                dataLabels: {
-                                    enabled: true,
-                                    formatter: function(val, opts) {
-                                        const label = opts.w.globals.labels[opts.dataPointIndex];
-                                        return `${label}: ${val} days`;
-                                    },
-                                    style: { colors: ['#f3f4f5', '#fff'] }
-                                },
-                                chart: { toolbar: { show: true } },
-                                xaxis: {
-                                    type: 'numeric',
-                                    labels: {
+                            if (barData.series[0].data.length > 0) {
+                                renderChart(el, 'bar', barData, {
+                                    plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
+                                    dataLabels: {
+                                        enabled: true,
                                         formatter: function(val) {
-                                            if (val === 0) return 'Today';
-                                            if (val < 0) return Math.abs(val) + 'd ago';
-                                            return val + 'd';
+                                            return `${val} days`;
+                                        },
+                                        style: { colors: ['#f3f4f5', '#fff'] }
+                                    },
+                                    chart: {
+                                        toolbar: { show: true },
+                                        height: barData.labels.length * 40 + 50 // Dynamic height based on number of items
+                                    },
+                                    xaxis: {
+                                        type: 'numeric',
+                                        min: 0, // Explicitly start at 0
+                                        tickAmount: 5, // Sensible intervals
+                                        labels: {
+                                            formatter: function(val) {
+                                                if (val === 0) return 'Today';
+                                                return val + 'd';
+                                            },
+                                            style: { colors: '#aaa' }
+                                        }
+                                    },
+                                    yaxis: {
+                                        show: true,
+                                        labels: {
+                                            style: { colors: '#aaa' }
+                                        }
+                                    },
+                                    grid: { show: false, padding: { left: 0, right: 0 } },
+                                    legend: { show: false },
+                                    colors: barData.colors, // Apply colors per bar
+                                    tooltip: {
+                                        enabled: true,
+                                        custom: function({series, seriesIndex, dataPointIndex, w}) {
+                                            const eventLabel = w.globals.labels[dataPointIndex];
+                                            const days = series[seriesIndex][dataPointIndex];
+                                            const originalItem = items.find(item => item.label === eventLabel); // Find original item for date
+                                            const eventDate = originalItem ? new Date(originalItem.date).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
+                                            return `<div class="apexcharts-tooltip-box">
+                                                        <div class="tooltip-title">${eventLabel}</div>
+                                                        <div class="tooltip-value">${eventDate}</div>
+                                                        <div class="tooltip-value">${days} days from today</div>
+                                                    </div>`;
                                         }
                                     }
-                                },
-                                yaxis: { show: true, labels: { style: { colors: '#aaa' } } }, // Show Y-axis labels for categories
-                                grid: { show: false, padding: { left: 0, right: 0 } },
-                                tooltip: { enabled: false },
-                                legend: { show: false },
-                                colors: barData.colors
-                            });
+                                });
+                            } else {
+                                el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
+                            }
                         }
                     };
                 } else {
