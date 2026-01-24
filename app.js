@@ -692,10 +692,10 @@ export const ZoomManager = {
                                         }
                                     },
                                     yaxis: {
-                                        show: true,
-                                        labels: {
-                                            style: { colors: '#aaa' }
-                                        }
+                                        show: false, // Hide Y-axis entirely
+                                        labels: { show: false },
+                                        axisBorder: { show: false },
+                                        axisTicks: { show: false }
                                     },
                                     grid: { show: false, padding: { left: 0, right: 0 } },
                                     legend: { show: false },
