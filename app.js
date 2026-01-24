@@ -2,8 +2,8 @@
  * SERVER PLATFORMS TRACKER v31
  * ES6 MODULE STRUCTURE
  */
-export { createGaugeSVG, createWaffleHTML, Visuals, renderChart, calculateTrackerSize, createWaffleData, formatCountdown, getCountdownGanttData } from './charts.js';
-import { createGaugeSVG, createWaffleHTML, Visuals, renderChart, calculateTrackerSize, createWaffleData, formatCountdown, getCountdownGanttData } from './charts.js';
+export { createGaugeSVG, Visuals, renderChart, calculateTrackerSize, formatCountdown, getCountdownGanttData } from './charts.js';
+import { createGaugeSVG, Visuals, renderChart, calculateTrackerSize, formatCountdown, getCountdownGanttData } from './charts.js';
 
 // --- GLOBAL STATE ---
 let State = {
@@ -385,44 +385,7 @@ export const renderBoard = () => {
                 const iconHTML = Visuals.createRAGIconHTML(status);
                 visualHTML = `<div class="ryg-icon-wrapper">${iconHTML}</div>`;
                 statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
-            } else if (renderType === 'waffle') {
-                const chartId = `waffle-viz-${i}`;
-                visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:150px;"></div>`;
-                
-                setTimeout(() => {
-                    const el = document.getElementById(chartId);
-                    if(el) {
-                        const wData = createWaffleData(t.total, t.active);
-                        const cVal = t.colorVal || '#228B22';
-                        const cBg = t.colorBg || '#696969';
-                        
-                        renderChart(el, 'heatmap', { series: wData.series }, {
-                            chart: { toolbar: { show: false }, sparkline: { enabled: true } },
-                            dataLabels: { enabled: false },
-                            stroke: { width: 1, colors: ['#1e1e1e'] }, 
-                            plotOptions: {
-                                heatmap: {
-                                    radius: 0,
-                                    enableShades: false,
-                                    colorScale: {
-                                        ranges: [
-                                            { from: 0, to: 0, color: cBg },
-                                            { from: 1, to: 1, color: cVal }
-                                        ]
-                                    }
-                                }
-                            },
-                            grid: { padding: { top: 0, bottom: 0, left: 0, right: 0 } },
-                            tooltip: { enabled: false },
-                            xaxis: { labels: { show: false }, axisBorder: { show: false }, axisTicks: { show: false } },
-                            yaxis: { show: false }
-                        });
-                    }
-                }, 0);
-                
-                statsHTML = `<div class="tracker-stats">${t.active} / ${t.total} ${t.metric || ''}</div>`;
-            } else if (renderType === 'note') {
-                visualHTML = `<div class="note-render-container" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
+                        } else if (renderType === 'note') {                visualHTML = `<div class="note-render-container" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
                 statsHTML = '';
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
@@ -665,34 +628,6 @@ export const ZoomManager = {
                 const status = t.status || 'grey';
                 const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
                 content = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message || ''}</div>`;
-            } else if (renderType === 'waffle') {
-                content = '<div id="zoomChartContainer" style="width:100%; height:100%;"></div>';
-                renderAction = () => {
-                    const el = document.getElementById('zoomChartContainer');
-                    if(el) {
-                        const wData = createWaffleData(t.total, t.active);
-                        const cVal = t.colorVal || '#228B22';
-                        const cBg = t.colorBg || '#696969';
-                        renderChart(el, 'heatmap', { series: wData.series }, {
-                            chart: { toolbar: { show: false } },
-                            dataLabels: { enabled: false },
-                            stroke: { width: 1, colors: ['#1e1e1e'] },
-                            plotOptions: {
-                                heatmap: {
-                                    radius: 0,
-                                    enableShades: false,
-                                    colorScale: {
-                                        ranges: [
-                                            { from: 0, to: 0, color: cBg },
-                                            { from: 1, to: 1, color: cVal }
-                                        ]
-                                    }
-                                }
-                            },
-                            tooltip: { enabled: false }
-                        });
-                    }
-                };
             } else if (renderType === 'note') {
                 content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
             } else if (renderType === 'countdown') {
@@ -1002,16 +937,6 @@ export const TrackerManager = {
                 const nIn = getEl('tkNotes'); if(nIn) nIn.value = '';
                 
                 // Set Size to S
-                const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
-                if(sizeRad) sizeRad.checked = true;
-            } else if (!isEdit && type === 'waffle') {
-                // Reset Waffle defaults for new trackers
-                const twmIn = getEl('tkWaffleMetric'); if(twmIn) twmIn.value = '';
-                const twtIn = getEl('tkWaffleTotal'); if(twtIn) twtIn.value = '';
-                const twaIn = getEl('tkWaffleActive'); if(twaIn) twaIn.value = '';
-                const twnIn = getEl('tkWaffleNotes'); if(twnIn) twnIn.value = '';
-                
-                // Set Size to S (will be re-inferred on submit)
                 const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
                 if(sizeRad) sizeRad.checked = true;
             } else if (!isEdit && type === 'rag') {
@@ -1811,34 +1736,7 @@ export const TrackerManager = {
             const alignRad = document.querySelector('input[name="tkNoteAlign"]:checked');
             newTracker.align = alignRad ? alignRad.value : 'left';
             newTracker.notes = ''; // No notes for Note Tracker
-        } else if (type === 'waffle') {
-            const wmIn = getEl('tkWaffleMetric');
-            const wtIn = getEl('tkWaffleTotal');
-            const waIn = getEl('tkWaffleActive');
-            const wnIn = getEl('tkWaffleNotes');
-            
-            const total = wtIn ? (parseInt(wtIn.value) || 100) : 100;
-            const active = waIn ? (parseInt(waIn.value) || 0) : 0;
-            
-            if (total <= 0) return App.alert("Target must be a positive number.");
-            if (total > 5000) return App.alert("Target cannot exceed 5000.");
-            if (active > total) return App.alert("Progress cannot exceed the Target.");
-            
-            newTracker.metric = wmIn ? wmIn.value : '';
-            newTracker.total = total;
-            newTracker.active = active;
-            newTracker.notes = wnIn ? wnIn.value : '';
-            // Size will be dynamically calculated in render if not set here, or we can pre-calc.
-            // Requirement says "make the card automatically adjust".
-            // We'll address dynamic sizing in Phase 2.
-            newTracker.size = 'M'; // Default placeholder, will be overridden by dynamic logic later.
-            
-            const wcIn = getEl('tkWaffleColorVal');
-            newTracker.colorVal = wcIn ? wcIn.value : '#228B22';
-            const wbIn = getEl('tkWaffleColorBg');
-            newTracker.colorBg = wbIn ? wbIn.value : '#696969';
-        } else if (type === 'donut') {
-            const rows = document.querySelectorAll('.donut-row');
+                } else if (type === 'donut') {            const rows = document.querySelectorAll('.donut-row');
             const dataPoints = [];
             rows.forEach(row => {
                 const label = row.querySelector('.dr-label').value.trim();
