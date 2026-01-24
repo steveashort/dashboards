@@ -71,6 +71,7 @@ export const initApp = () => {
 
     updateDateUI();
     renderBoard();
+    if(App.renderTop5) App.renderTop5();
     console.log("App Initialized");
 };
 
@@ -111,6 +112,26 @@ export const App = {
     init: () => {
         initApp();
         App.initDragAndDrop();
+    },
+    renderTop5: () => {
+        const el = getEl('top5Container');
+        if(!el) return;
+        el.innerHTML = '';
+        
+        // Mock Data
+        const labels = ['Server A Load', 'Server B Load', 'License Exp', 'Cert Exp', 'Deployment'];
+        const values = [85, 45, 12, 5, 90]; 
+        
+        const series = [{ name: 'Criticality', data: values }];
+        const colors = ['#ff1744', '#ffb300', '#00e676', '#03dac6', '#bb86fc'];
+        
+        renderChart(el, 'bar', { labels, series }, { 
+            colors, 
+            plotOptions: { bar: { horizontal: true, distributed: true, borderRadius: 4 } },
+            legend: { show: false },
+            chart: { toolbar: { show: false } },
+            xaxis: { max: 100 }
+        });
     },
     initDragAndDrop: () => {
         const grid = getEl('trackerGrid');
