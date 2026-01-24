@@ -11,11 +11,11 @@
     - [x] Implement sorting (Ascending date).
     - [x] Implement List rendering with new format.
     - [x] Implement Bar rendering using `renderChart`.
-- [ ] Task: Refactor Countdown Bar Chart to Gantt Style.
-    - [ ] Update `app.js` `renderBoard` to use ApexCharts `rangeBar` type.
-    - [ ] Update data structure for Gantt visualization (start/end dates or durations).
-    - [ ] Handle X-axis `x=0` as today.
-    - [ ] Update colors based on urgency.
+- [x] Task: Refactor Countdown Bar Chart to Gantt Style. [e8ace16]
+    - [x] Update `app.js` `renderBoard` to use ApexCharts `rangeBar` type.
+    - [x] Update data structure for Gantt visualization (start/end dates or durations).
+    - [x] Handle X-axis `x=0` as today.
+    - [x] Update colors based on urgency.
 - [x] Task: Update `ZoomManager`. [d736cc6]
     - [x] Reflect same logic in Zoom view.
 - [x] Task: Conductor - User Manual Verification 'Phase 2: Render' (Protocol in workflow.md) [checkpoint: ed4c4c3]
