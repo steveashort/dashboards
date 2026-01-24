@@ -143,12 +143,15 @@ export const formatCountdown = (dateStr) => {
 export const getCountdownBarData = (items) => {
     const seriesData = [];
     const today = new Date();
-    today.setHours(0,0,0,0);
+    today.setHours(0,0,0,0); // Ensure today is start of day for consistent comparison
 
     items.forEach(item => {
         const d = new Date(item.date);
-        d.setHours(0,0,0,0);
-        const diffDays = Math.ceil((d - today) / (1000 * 60 * 60 * 24));
+        d.setHours(0,0,0,0); // Ensure event date is start of day for consistent comparison
+        
+        // Calculate diffDays for color logic, but use timestamps for chart data
+        const diffTime = d.getTime() - today.getTime();
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
         // Filter out past events or events happening today
         if (diffDays <= 0) {
@@ -165,15 +168,16 @@ export const getCountdownBarData = (items) => {
 
         seriesData.push({
             x: item.label,
-            y: [0, diffDays], // Range starts at 0, ends at diffDays
+            y: [today.getTime(), d.getTime()], // Range starts at today's timestamp, ends at event date's timestamp
             fillColor: color,
             meta: {
-                originalDate: item.date // Store original date for tooltip
+                originalDate: item.date, // Store original date string for tooltip
+                diffDays: diffDays // Store diffDays for dataLabel and tooltip
             }
         });
     });
 
-    // Sort by diffDays, smallest at the top
+    // Sort by diffDays (effectively by end date), smallest at the top
     seriesData.sort((a,b) => a.y[1] - b.y[1]);
 
     return {
@@ -182,6 +186,7 @@ export const getCountdownBarData = (items) => {
         }]
     };
 };
+
 
 export const Visuals = {
     showTooltip: (evt, text) => {
