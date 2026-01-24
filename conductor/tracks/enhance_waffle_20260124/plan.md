@@ -12,8 +12,8 @@
 - [x] Task: Implement Size Calculation Logic. [41f3467]
     - [x] Create `calculateTrackerSize(tracker)` function in `charts.js`.
     - [x] Define thresholds for Waffle and defaults for other types.
-- [ ] Task: Update Card Rendering.
-    - [ ] Update pp.js to use calculated size.
-    - [ ] Update TrackerManager to remove manual size input.
+- [x] Task: Update Card Rendering. [b950288]
+    - [x] Update `app.js` to use calculated size.
+    - [x] Update `TrackerManager` to remove manual size input.
 - [ ] Task: Conductor - User Manual Verification 'Phase 2: Sizing' (Protocol in workflow.md)
 
