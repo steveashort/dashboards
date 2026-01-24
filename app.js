@@ -1108,14 +1108,20 @@ export const TrackerManager = {
                 const pc2In = getEl('tkPieColor2');
                 if (pc2In) pc2In.value = tracker ? (tracker.color2 || '#228B22') : '#228B22';
             } else if (type === 'counter') {
-                const cvIn = getEl('tkCounterVal');
-                if (tracker && cvIn) cvIn.value = tracker.value || 0;
-                const csIn = getEl('tkCounterSub');
-                if (tracker && csIn) csIn.value = tracker.subtitle || '';
+                const container = getEl('counterDataContainer');
+                if (container) container.innerHTML = '';
+                
+                if (tracker && tracker.counters) {
+                    tracker.counters.forEach(c => this.addCounterRow(c.label, c.value, c.color));
+                } else if (tracker && tracker.value !== undefined) {
+                    // Migration for single-value counters
+                    this.addCounterRow(tracker.subtitle || 'Value', tracker.value, tracker.color1 || '#bb86fc');
+                } else if (!tracker) {
+                    this.addCounterRow('', 0, '#bb86fc');
+                }
+
                 const cnIn = getEl('tkCounterNotes');
                 if (tracker && cnIn) cnIn.value = tracker.notes || '';
-                const ccIn = getEl('tkCounterColor');
-                if (ccIn) ccIn.value = tracker ? (tracker.color1 || '#bb86fc') : '#bb86fc';
             } else if (type === 'rag') {
                 this.selectRag(tracker ? (tracker.status || 'grey') : 'grey');
                 const rmIn = getEl('tkRagMsg');
@@ -1654,6 +1660,29 @@ export const TrackerManager = {
         btn.parentElement.remove();
     },
 
+    addCounterRow(label = '', value = '', color = '#bb86fc') {
+        const container = getEl('counterDataContainer');
+        if (!container) return;
+        if (container.children.length >= 6) return App.alert("Max 6 counters allowed.");
+
+        const div = document.createElement('div');
+        div.className = 'counter-row';
+        div.style.display = 'flex';
+        div.style.gap = '10px';
+        div.style.marginBottom = '5px';
+        div.innerHTML = `
+            <input type="text" class="cr-label" maxlength="15" placeholder="Label" value="${label}" style="flex: 2;">
+            <input type="number" class="cr-value" placeholder="Value" value="${value}" style="flex: 1;">
+            <input type="color" class="cr-color" value="${color}" style="flex: 0 0 40px;">
+            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeCounterRow(this)">&times;</button>
+        `;
+        container.appendChild(div);
+    },
+
+    removeCounterRow(btn) {
+        btn.parentElement.remove();
+    },
+
     parseCSV(type) {
         const ctx = this.getContext(); 
         const txtArea = getEl('csvInput');
@@ -1829,17 +1858,21 @@ export const TrackerManager = {
             const lnIn = getEl('tkLineNotes');
             newTracker.notes = lnIn ? lnIn.value : '';
         } else if (type === 'counter') {
-            const cvIn = getEl('tkCounterVal');
-            const val = cvIn ? parseFloat(cvIn.value) || 0 : 0;
-            if (val < 0 || val > 9999999) return App.alert("Counter value must be between 0 and 9,999,999.");
-            newTracker.value = val;
-            const csIn = getEl('tkCounterSub');
-            newTracker.subtitle = csIn ? csIn.value : '';
+            const rows = document.querySelectorAll('.counter-row');
+            const counters = [];
+            rows.forEach(row => {
+                const label = row.querySelector('.cr-label').value.trim();
+                const value = parseFloat(row.querySelector('.cr-value').value) || 0;
+                const color = row.querySelector('.cr-color').value;
+                if (label || value !== 0) counters.push({ label, value, color });
+            });
+            
+            if (counters.length === 0) return App.alert("At least one counter is required.");
+            newTracker.counters = counters;
+            
             const cnIn = getEl('tkCounterNotes');
             newTracker.notes = cnIn ? cnIn.value : '';
             newTracker.size = 'S'; // Force Small Size
-            const ccIn = getEl('tkCounterColor');
-            newTracker.color1 = ccIn ? ccIn.value : '#bb86fc';
         } else if (type === 'rag') {
             newTracker.type = 'rag'; 
             const rsIn = getEl('tkRagStatus');
