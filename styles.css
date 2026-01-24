@@ -403,10 +403,10 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 .zoomed-content li::before { content: "★"; position: absolute; left: 0; color: gold; font-size: 1.5rem; line-height: 2; }
 
 @keyframes flash {
-    0% { opacity: 1; filter: drop-shadow(0 0 5px #00FFFF); }
-    50% { opacity: 0.5; filter: none; }
-    100% { opacity: 1; filter: drop-shadow(0 0 5px #00FFFF); }
+    0% { opacity: 1; }
+    50% { opacity: 0.2; }
+    100% { opacity: 1; }
 }
-.flash-icon {
-    animation: flash 1s infinite;
-}
+.flash-siren { animation: flash 1s infinite steps(1, end); color: #ff1744; }
+.flash-yellow { animation: flash 1s infinite steps(1, end); color: #ffb300; }
+.flash-red { animation: flash 1s infinite steps(1, end); color: #ff1744; }

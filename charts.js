@@ -93,7 +93,7 @@ export const calculateTrackerSize = (tracker) => {
 
 export const formatCountdown = (dateStr) => {
     const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return { text: 'Invalid Date', diff: 0, color: 'grey' };
+    if (isNaN(d.getTime())) return { text: 'Invalid Date', diff: 0, color: 'grey', icon: '', flashClass: '' };
     
     const now = new Date();
     now.setHours(0,0,0,0);
@@ -102,19 +102,38 @@ export const formatCountdown = (dateStr) => {
     const diffTime = dStart - now;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
+    
     const dateText = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: '2-digit' });
     let daysText = '';
-    let color = '#00e676';
+    let color = '#00e676'; // Green
+    let icon = '';
+    let flashClass = '';
     
-    if (diffDays < 0) { daysText = `${Math.abs(diffDays)} days ago`; color = '#ff1744'; }
-    else if (diffDays === 0) { daysText = 'Today'; color = '#ffb300'; }
-    else if (diffDays === 1) { daysText = 'Tomorrow'; color = '#ffb300'; }
-    else { daysText = `${diffDays} days`; if(diffDays < 7) color = '#ffb300'; }
+    // New Urgency Logic
+    if (diffDays < 0) { // Overdue
+        daysText = `${Math.abs(diffDays)} days ago`; color = '#ff1744'; icon = '⚠️'; flashClass = 'flash-red';
+    } else if (diffDays === 0) { // Today
+        daysText = 'Today'; color = '#ffb300'; icon = '🚨'; flashClass = 'flash-siren';
+    } else if (diffDays === 1) { // Tomorrow
+        daysText = 'Tomorrow'; color = '#ff1744'; icon = '🚨'; flashClass = 'flash-siren';
+    } else if (diffDays <= 7) { // Very urgent (Red, Flashing Siren)
+        daysText = `${diffDays} days`; color = '#ff1744'; icon = '🚨'; flashClass = 'flash-siren';
+    } else if (diffDays <= 14) { // Urgent (Red)
+        daysText = `${diffDays} days`; color = '#ff1744'; icon = '🚨'; // No flash
+    } else if (diffDays <= 30) { // Soon (Flashing Yellow)
+        daysText = `${diffDays} days`; color = '#ffb300'; icon = '🔔'; flashClass = 'flash-yellow';
+    } else if (diffDays <= 60) { // Soon (Yellow)
+        daysText = `${diffDays} days`; color = '#ffb300'; icon = '🔔'; // No flash
+    } else { // Far future (Green)
+        daysText = `${diffDays} days`; color = '#00e676'; icon = '✅'; // No flash
+    }
     
     return {
         text: `${dateText} (${daysText})`,
         diff: diffDays,
-        color
+        color,
+        icon,
+        flashClass
     };
 };
 
