@@ -45,8 +45,8 @@
 - [x] Task: Conductor - User Manual Verification 'Phase 3: Data Wiring' (Protocol in workflow.md) [checkpoint: 2e2348d]
 
 ## Phase 4: Refinement
-- [ ] Task: Remove Top 5 Metrics Card.
-    - [ ] Remove HTML container from `index.html`.
-    - [ ] Remove `App.renderTop5` and its call in `app.js`.
-    - [ ] Remove `getTop5FromTrackers` from `charts.js`.
+- [x] Task: Remove Top 5 Metrics Card. [3ec0c38]
+    - [x] Remove HTML container from `index.html`.
+    - [x] Remove `App.renderTop5` and its call in `app.js`.
+    - [x] Remove `getTop5FromTrackers` from `charts.js`.
 
