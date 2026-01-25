@@ -540,77 +540,39 @@ export const Visuals = {
     },
 
     createCompletionBarSVG: (completed, total, activeColor, remainingColor, height = 40, orientation = 'horizontal') => {
-        const radius = 4;
         const safeTotal = total > 0 ? total : 1;
         const pct = Math.min(100, Math.max(0, (completed / safeTotal) * 100));
         const remPct = 100 - pct;
+        const remVal = total - completed;
         
-        let svg = '';
+        // Common Label Logic
+        const showLabel = (p) => p > 15;
+        const labelStyle = 'font-size:14px; font-weight:bold; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.8); overflow:hidden; white-space:nowrap; text-overflow:ellipsis;';
         
         if (orientation === 'vertical') {
-            const w = height < 100 ? 60 : 120; // Auto-width based on height context
-            // In vertical mode, 'height' param effectively becomes height, but we need width control.
-            // Actually, in grid card, height is fixed (160px). Width is fluid.
-            // Let's use viewBox 0 0 100 100 and scale.
-            
-            // For Vertical:
-            // Top rect is Remaining (starts at 0, height = remPct)
-            // Bottom rect is Completed (starts at remPct, height = pct)
-            
-            svg = `<svg width="100%" height="100%" viewBox="0 0 60 100" preserveAspectRatio="xMidYMid meet">`;
-            
-            // Remaining (Top)
-            if (remPct > 0) {
-                svg += `<rect x="0" y="0" width="60" height="${remPct}" fill="${remainingColor}" />`;
-                if (remPct > 15) {
-                    const remVal = total - completed;
-                    if (remVal > 0) {
-                        svg += `<text x="30" y="${remPct/2}" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="14">${remVal}</text>`;
-                    }
-                }
-            }
-            
-            // Active (Bottom)
-            if (pct > 0) {
-                svg += `<rect x="0" y="${remPct}" width="60" height="${pct}" fill="${activeColor}" />`;
-                if (pct > 15) {
-                    svg += `<text x="30" y="${remPct + (pct/2)}" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="14">${completed}</text>`;
-                }
-            }
-            
-            svg += `</svg>`;
-            return `<div style="width:100%; height:100%; border-radius:${radius}px; overflow:hidden; display:flex; justify-content:center;">${svg}</div>`;
-            
+            // Vertical: Ignore 'height' param, use 100% of container. Fixed width.
+            return `
+                <div style="display:flex; flex-direction:column-reverse; width:50%; max-width:60px; height:100%; margin:0 auto; border-radius:4px; overflow:hidden; background:${remainingColor};">
+                    <div style="height:${pct}%; background:${activeColor}; display:flex; align-items:center; justify-content:center; transition:height 0.3s;">
+                        ${showLabel(pct) ? `<span style="${labelStyle}">${completed}</span>` : ''}
+                    </div>
+                    <div style="height:${remPct}%; background:${remainingColor}; display:flex; align-items:center; justify-content:center; transition:height 0.3s;">
+                        ${showLabel(remPct) && remVal > 0 ? `<span style="${labelStyle}">${remVal}</span>` : ''}
+                    </div>
+                </div>
+            `;
         } else {
-            // Horizontal Logic
-            const h = height; // Fixed height passed in
-            // Use 100% width viewBox
-            svg = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">`;
-            
-            // Active bar (left)
-            if (pct > 0) {
-                svg += `<rect x="0" y="0" width="${pct}" height="100" fill="${activeColor}" />`;
-            }
-            
-            // Remaining bar (right)
-            if (remPct > 0) {
-                svg += `<rect x="${pct}" y="0" width="${remPct}" height="100" fill="${remainingColor}" />`;
-            }
-            
-            // Labels
-            if (pct > 15) {
-                svg += `<text x="${pct / 2}" y="50" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="25">${completed}</text>`;
-            }
-            
-            if (remPct > 15) {
-                const remVal = total - completed;
-                if (remVal > 0) {
-                    svg += `<text x="${pct + (remPct / 2)}" y="50" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="25">${remVal}</text>`;
-                }
-            }
-            
-            svg += `</svg>`;
-            return `<div style="width:50%; margin: 0 auto; height:${h}px; border-radius:${radius}px; overflow:hidden;">${svg}</div>`;
+            // Horizontal: Use 'height' param. Width 50%.
+            return `
+                <div style="display:flex; width:80%; max-width:250px; height:${height}px; margin:0 auto; border-radius:4px; overflow:hidden; background:${remainingColor};">
+                    <div style="width:${pct}%; background:${activeColor}; display:flex; align-items:center; justify-content:center; transition:width 0.3s;">
+                        ${showLabel(pct) ? `<span style="${labelStyle}">${completed}</span>` : ''}
+                    </div>
+                    <div style="width:${remPct}%; background:${remainingColor}; display:flex; align-items:center; justify-content:center; transition:width 0.3s;">
+                        ${showLabel(remPct) && remVal > 0 ? `<span style="${labelStyle}">${remVal}</span>` : ''}
+                    </div>
+                </div>
+            `;
         }
     },
 
