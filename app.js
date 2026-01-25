@@ -408,13 +408,7 @@ export const renderBoard = () => {
                         const el = document.getElementById(chartId);
                         if(el) {
                             const barData = getCountdownBarData(items);
-                            // Only render if there's actual data after filtering past events
                             if (barData.series[0].data.length > 0) {
-                                // Get today's timestamp for xaxis min
-                                const today = new Date();
-                                today.setHours(0,0,0,0);
-                                const todayTimestamp = today.getTime();
-
                                 renderChart(el, 'rangeBar', barData, {
                                     plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
                                     dataLabels: {
@@ -425,32 +419,28 @@ export const renderBoard = () => {
                                         },
                                         style: { colors: ['#f3f4f5', '#fff'] }
                                     },
-                                    chart: {
-                                        toolbar: { show: false },
-                                        height: barData.series[0].data.length * 40 + 50 // Dynamic height based on number of items
-                                    },
                                     xaxis: {
-                                        type: 'datetime',
-                                        min: todayTimestamp, // Start X-axis from today's timestamp
-                                        labels: {
-                                            formatter: function(val, timestamp) {
-                                                const date = new Date(timestamp);
-                                                // If it's the start of the chart (today), display "Today", otherwise default ApexCharts format
-                                                if (timestamp === todayTimestamp) {
-                                                    return 'Today';
-                                                }
-                                                return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
-                                            },
-                                            style: { colors: '#aaa' }
-                                        }
+                                        type: 'numeric',
+                                        title: { text: 'Days from Today', style: { color: '#aaa' } },
+                                        labels: { style: { colors: '#aaa' } }
+                                    },
+                                    annotations: {
+                                        xaxis: [{
+                                            x: 0.4,
+                                            borderColor: '#ff1744',
+                                            label: {
+                                                style: { color: '#fff', background: '#ff1744' },
+                                                text: 'Today',
+                                            }
+                                        }]
                                     },
                                     yaxis: {
-                                        show: true, // Show Y-axis for event names
-                                        labels: {
-                                            style: { colors: '#aaa' }
-                                        }
+                                        show: true,
+                                        categories: barData.series[0].data.map(d => d.x),
+                                        reversed: true,
+                                        labels: { style: { colors: '#aaa' } }
                                     },
-                                    grid: { show: false, padding: { left: 0, right: 0 } },
+                                    grid: { show: false },
                                     legend: { show: false },
                                     colors: barData.series[0].data.map(d => d.fillColor),
                                     tooltip: {
@@ -470,7 +460,6 @@ export const renderBoard = () => {
                                     }
                                 });
                             } else {
-                                // If no future events, display a message
                                 el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
                             }
                         }
@@ -696,12 +685,8 @@ export const ZoomManager = {
                         if(el) {
                             const barData = getCountdownBarData(items);
                             if (barData.series[0].data.length > 0) {
-                                const today = new Date();
-                                today.setHours(0,0,0,0);
-                                const todayTimestamp = today.getTime();
-
                                 renderChart(el, 'rangeBar', barData, {
-                                    plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
+                                    plotOptions: { bar: { horizontal: true, distributed: true, barHeight: '50%', dataLabels: { hideOverflowingLabels: false } } },
                                     dataLabels: {
                                         enabled: true,
                                         formatter: function(val, opts) {
@@ -712,25 +697,32 @@ export const ZoomManager = {
                                     },
                                     chart: {
                                         toolbar: { show: true },
-                                        height: barData.series[0].data.length * 40 + 50
+                                        height: barData.series[0].data.length * 30 + 50,
+                                        padding: { top: 0, bottom: 0 }
                                     },
                                     xaxis: {
-                                        type: 'datetime',
-                                        min: todayTimestamp,
-                                        labels: {
-                                            formatter: function(val, timestamp) {
-                                                const date = new Date(timestamp);
-                                                if (timestamp === todayTimestamp) return 'Today';
-                                                return date.toLocaleDateString('en-GB', { month: 'short', day: 'numeric' });
-                                            },
-                                            style: { colors: '#aaa' }
-                                        }
+                                        type: 'numeric',
+                                        title: { text: 'Days from Today', style: { color: '#aaa' } },
+                                        labels: { style: { colors: '#aaa' } },
+                                        min: 0
+                                    },
+                                    annotations: {
+                                        xaxis: [{
+                                            x: 0,
+                                            borderColor: '#ff1744',
+                                            label: {
+                                                style: { color: '#fff', background: '#ff1744' },
+                                                text: 'Today',
+                                            }
+                                        }]
                                     },
                                     yaxis: {
                                         show: true,
+                                        categories: barData.series[0].data.map(d => d.x),
+                                        reversed: true,
                                         labels: { style: { colors: '#aaa' } }
                                     },
-                                    grid: { show: false, padding: { left: 0, right: 0 } },
+                                    grid: { show: false },
                                     legend: { show: false },
                                     colors: barData.series[0].data.map(d => d.fillColor),
                                     tooltip: {

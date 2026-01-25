@@ -143,42 +143,40 @@ export const formatCountdown = (dateStr) => {
 export const getCountdownBarData = (items) => {
     const seriesData = [];
     const today = new Date();
-    today.setHours(0,0,0,0); // Ensure today is start of day for consistent comparison
+    today.setHours(0,0,0,0);
 
     items.forEach(item => {
         const d = new Date(item.date);
-        d.setHours(0,0,0,0); // Ensure event date is start of day for consistent comparison
+        d.setHours(0,0,0,0);
         
-        // Calculate diffDays for color logic, but use timestamps for chart data
         const diffTime = d.getTime() - today.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-        // Filter out past events or events happening today
-        if (diffDays <= 0) {
-            return; // Skip this item
+        // Filter out past events
+        if (diffDays < 0) {
+            return;
         }
 
-        let color = '#00e676'; // Green (far future)
-        if (diffDays === 1) { color = '#ff1744'; } // Red (Tomorrow)
-        else if (diffDays <= 7) { color = '#ff1744'; } // Red (very urgent)
-        else if (diffDays <= 14) { color = '#ff1744'; } // Red (urgent)
-        else if (diffDays <= 30) { color = '#ffb300'; } // Amber (flashing yellow)
-        else if (diffDays <= 60) { color = '#ffb300'; } // Amber (yellow)
-        // else color remains green
+        let color = '#00e676'; // Green
+        if (diffDays === 0) { color = '#ffb300'; } // Today
+        else if (diffDays === 1) { color = '#ff1744'; } // Tomorrow
+        else if (diffDays <= 7) { color = '#ff1744'; } 
+        else if (diffDays <= 14) { color = '#ff1744'; } 
+        else if (diffDays <= 30) { color = '#ffb300'; } 
+        else if (diffDays <= 60) { color = '#ffb300'; } 
 
         seriesData.push({
             x: item.label,
-            y: [today.getTime(), d.getTime()], // Range starts at today's timestamp, ends at event date's timestamp
+            y: [0, diffDays], // Start at 0 (Today)
             fillColor: color,
             meta: {
-                originalDate: item.date, // Store original date string for tooltip
-                diffDays: diffDays // Store diffDays for dataLabel and tooltip
+                originalDate: item.date,
+                diffDays: diffDays
             }
         });
     });
 
-    // Sort by diffDays (effectively by end date), smallest at the top
-    seriesData.sort((a,b) => a.y[1] - b.y[1]);
+    seriesData.sort((a,b) => a.meta.diffDays - b.meta.diffDays);
 
     return {
         series: [{
