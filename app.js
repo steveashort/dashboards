@@ -396,15 +396,19 @@ export const renderBoard = () => {
                 if (t.counters && t.counters.length > 0) {
                     if (t.counters.length === 1) {
                         const c = t.counters[0];
-                        visualHTML = `<div class="counter-display" style="color:${c.color}">${c.value}</div>`;
+                        const bgStyle = c.useBg ? `background-color:${c.bgColor}; padding:15px; border-radius:12px; display:inline-block; min-width:80px;` : '';
+                        visualHTML = `<div style="${bgStyle}"><div class="counter-display" style="color:${c.color}">${c.value}</div></div>`;
                         statsHTML = `<div class="counter-sub">${c.label}</div>`;
                     } else {
                         visualHTML = '<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; width:100%; height:100%; align-items:center; align-content:center; overflow:hidden;">';
                         const fontSize = t.counters.length > 4 ? '1.5rem' : '2rem';
                         t.counters.forEach(c => {
+                            const bgStyle = c.useBg ? `background-color:${c.bgColor}; border-radius:8px; padding:5px 10px; box-shadow:0 2px 5px rgba(0,0,0,0.2);` : '';
                             visualHTML += `<div style="text-align:center; flex: 1 0 30%;">
-                                <div style="font-size:${fontSize}; font-weight:bold; color:${c.color}; line-height:1;">${c.value}</div>
-                                <div style="font-size:0.7rem; color:#aaa; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.label}</div>
+                                <div style="${bgStyle} display:inline-block; width:100%;">
+                                    <div style="font-size:${fontSize}; font-weight:bold; color:${c.color}; line-height:1;">${c.value}</div>
+                                    <div style="font-size:0.7rem; color:#aaa; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.label}</div>
+                                </div>
                             </div>`;
                         });
                         visualHTML += '</div>';
@@ -702,8 +706,11 @@ export const ZoomManager = {
                 if (t.counters && t.counters.length > 0) {
                     content = '<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:40px; width:100%; height:100%; align-items:center; align-content:center;">';
                     t.counters.forEach(c => {
+                        const bgStyle = c.useBg ? `background-color:${c.bgColor}; padding:20px 40px; border-radius:20px; box-shadow:0 4px 10px rgba(0,0,0,0.3);` : '';
                         content += `<div style="text-align:center;">
-                            <div style="font-size:5rem; font-weight:300; color:${c.color}; text-shadow:0 0 20px ${c.color}40;">${c.value}</div>
+                            <div style="${bgStyle} display:inline-block;">
+                                <div style="font-size:5rem; font-weight:300; color:${c.color}; text-shadow:0 0 20px ${c.color}40;">${c.value}</div>
+                            </div>
                             <div style="font-size:1.5rem; color:#aaa; margin-top:10px;">${c.label}</div>
                         </div>`;
                     });
@@ -1136,7 +1143,7 @@ export const TrackerManager = {
                 if (container) container.innerHTML = '';
                 
                 if (tracker && tracker.counters) {
-                    tracker.counters.forEach(c => this.addCounterRow(c.label, c.value, c.color));
+                    tracker.counters.forEach(c => this.addCounterRow(c.label, c.value, c.color, c.bgColor, c.useBg));
                 } else if (tracker && tracker.value !== undefined) {
                     // Migration for single-value counters
                     this.addCounterRow(tracker.subtitle || 'Value', tracker.value, tracker.color1 || '#bb86fc');
@@ -1722,7 +1729,7 @@ export const TrackerManager = {
         btn.parentElement.remove();
     },
 
-    addCounterRow(label = '', value = '', color = '#bb86fc') {
+    addCounterRow(label = '', value = '', color = '#bb86fc', bgColor = '#333333', useBg = false) {
         const container = getEl('counterDataContainer');
         if (!container) return;
         if (container.children.length >= 6) return App.alert("Max 6 counters allowed.");
@@ -1732,11 +1739,21 @@ export const TrackerManager = {
         div.style.display = 'flex';
         div.style.gap = '10px';
         div.style.marginBottom = '5px';
+        div.style.alignItems = 'center';
+        
         div.innerHTML = `
             <input type="text" class="cr-label" maxlength="15" placeholder="Label" value="${label}" style="flex: 2;">
             <input type="number" class="cr-value" placeholder="Value" value="${value}" style="flex: 1;">
-            <input type="color" class="cr-color" value="${color}" style="flex: 0 0 40px;">
-            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeCounterRow(this)">&times;</button>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <label style="font-size:0.6rem; color:#aaa; margin-bottom:2px;">Text</label>
+                <input type="color" class="cr-color" value="${color}" style="width:30px; height:30px; border:none; padding:0;">
+            </div>
+            <div style="display:flex; flex-direction:column; align-items:center;">
+                <label style="font-size:0.6rem; color:#aaa; margin-bottom:2px;">Bg?</label>
+                <input type="checkbox" class="cr-use-bg" ${useBg ? 'checked' : ''} onchange="this.nextElementSibling.style.visibility = this.checked ? 'visible' : 'hidden'">
+                <input type="color" class="cr-bg-color" value="${bgColor}" style="width:30px; height:30px; border:none; padding:0; visibility: ${useBg ? 'visible' : 'hidden'}; margin-top:2px;">
+            </div>
+            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px; height:30px; margin-top:auto; margin-bottom:2px;" onclick="TrackerManager.removeCounterRow(this)">&times;</button>
         `;
         container.appendChild(div);
     },
@@ -1926,7 +1943,10 @@ export const TrackerManager = {
                 const label = row.querySelector('.cr-label').value.trim();
                 const value = parseFloat(row.querySelector('.cr-value').value) || 0;
                 const color = row.querySelector('.cr-color').value;
-                if (label || value !== 0) counters.push({ label, value, color });
+                const useBg = row.querySelector('.cr-use-bg').checked;
+                const bgColor = row.querySelector('.cr-bg-color').value;
+                
+                if (label || value !== 0) counters.push({ label, value, color, useBg, bgColor });
             });
             
             if (counters.length === 0) return App.alert("At least one counter is required.");
