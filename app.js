@@ -2104,6 +2104,7 @@ export const TrackerManager = {
             const cbIn = getEl('tkCompBarColorBg');
             newTracker.colorBg = cbIn ? cbIn.value : '#696969';
         } else if (type === 'donut') {
+            const rows = document.querySelectorAll('.donut-row');
             const dataPoints = [];
             rows.forEach(row => {
                 const label = row.querySelector('.dr-label').value.trim();
