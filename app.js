@@ -1309,8 +1309,17 @@ export const TrackerManager = {
         ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar'].forEach(x => {
             const btn = getEl(`type${x}Btn`);
             if (btn) btn.className = (type.toLowerCase() === x.toLowerCase()) ? 'type-option active' : 'type-option';
-            const div = getEl(`${x.toLowerCase()}Inputs`);
-            if (div) div.style.display = (inputType.toLowerCase() === x.toLowerCase()) ? 'block' : 'none';
+            
+            // Explicitly handle ID casing if needed, but lowercase should work if HTML is lowercase
+            const divId = `${x.toLowerCase()}Inputs`;
+            const div = getEl(divId);
+            if (div) {
+                const shouldShow = (inputType.toLowerCase() === x.toLowerCase());
+                div.style.display = shouldShow ? 'block' : 'none';
+                console.log(`Checking ${divId}: Show=${shouldShow}`); // Debug logging
+            } else {
+                console.warn(`Div not found: ${divId}`);
+            }
         });
 
         const sizeCont = getEl('sizeContainer');
