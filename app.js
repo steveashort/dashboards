@@ -442,7 +442,7 @@ export const renderBoard = () => {
                 const date = new Date(t.lastUpdated);
                 const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                 const dateStr = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
-                timestampHTML = `<div class="last-updated" style="position:absolute; top:10px; left:12px; color:#666; font-size:0.65rem; pointer-events:none; z-index:5;">${dateStr} ${timeStr}</div>`;
+                timestampHTML = `<div class="last-updated" style="position:absolute; top:10px; left:12px; color:#aaa; font-size:0.65rem; pointer-events:none; z-index:5;">${dateStr} ${timeStr}</div>`;
             }
 
             const noteText = (t.notes || t.content || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
