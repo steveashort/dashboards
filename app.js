@@ -9,7 +9,11 @@ import { createGaugeSVG, Visuals, renderChart, calculateTrackerSize, formatCount
 let State = {
     title: "Server Platforms",
     additionalInfo: "",
-    trackers: [],
+    // Multi-tab support
+    trackerTabs: [
+        { id: 'default', name: 'Cards', trackers: [] }
+    ],
+    activeTabId: 'default',
     members: [],
     editingTrackerIndex: -1,
     currentTrackerType: 'gauge'
@@ -47,15 +51,18 @@ const getRanges = () => {
 
 // --- CORE FUNCTIONS ---
 export const initApp = () => {
-    
+    // Migration: Move legacy trackers to default tab
+    if (State.trackers && State.trackers.length > 0) {
+        const defTab = State.trackerTabs.find(t => t.id === 'default');
+        if(defTab) defTab.trackers = [...State.trackers];
+        State.trackers = [];
+    }
+
     const updateDateUI = () => {
         const r = getRanges();
         const drd = getEl('dateRangeDisplay');
         if (drd) drd.innerText = `Last: ${r.last} | Current: ${r.current} | Next: ${r.next}`;
         
-        // Overview titles are now static in HTML or updated via renderBoard if dynamic
-        // But for now, they are in viewTeamData.
-        // We can keep updating them here if IDs exist.
         const otc = getEl('overviewTitleCurrent');
         if (otc) otc.innerHTML = `Top 5 Team Achievements <span class="date-suffix">${r.current}</span>`;
         
@@ -217,19 +224,37 @@ export const App = {
         App.switchView('trackers'); // Default view
     },
     switchView: (viewName) => {
-        // Toggle Nav Active State
-        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-        if (viewName === 'trackers') getEl('navTrackers').classList.add('active');
-        if (viewName === 'team') getEl('navTeam').classList.add('active');
-
-        // Toggle View Containers
-        getEl('viewTrackers').style.display = (viewName === 'trackers') ? 'block' : 'none';
-        getEl('viewTeamData').style.display = (viewName === 'team') ? 'block' : 'none';
-        
-        // Update Header Title
-        getEl('pageTitle').innerText = (viewName === 'trackers') ? 'Cards' : 'Team Data';
-        
-        // Update Drag/Drop listeners if needed (already bound to grid, fine)
+        // Deprecated: Internal use only for Team Data vs Trackers high level switch logic
+        // Handled by switchTrackerTab mostly now.
+        if (viewName === 'team') App.switchTrackerTab('team');
+    },
+    switchTrackerTab: (tabId) => {
+        State.activeTabId = tabId;
+        renderBoard();
+    },
+    addTab: () => {
+        const newId = 'tab_' + Date.now();
+        State.trackerTabs.push({ id: newId, name: 'New Cards', trackers: [] });
+        App.switchTrackerTab(newId);
+    },
+    renameTab: (id, newName) => {
+        const tab = State.trackerTabs.find(t => t.id === id);
+        if (tab) {
+            tab.name = newName;
+            // No render needed immediately if triggered by blur, but good for sync
+            // renderBoard(); // Optional, blur handles UI
+        }
+    },
+    deleteTab: (id) => {
+        App.confirm("Are you sure you want to delete this tab and all its cards?", () => {
+            const idx = State.trackerTabs.findIndex(t => t.id === id);
+            if (idx > -1) {
+                State.trackerTabs.splice(idx, 1);
+                // Switch to previous or first tab
+                const newActive = State.trackerTabs[Math.max(0, idx - 1)];
+                App.switchTrackerTab(newActive ? newActive.id : 'team');
+            }
+        });
     },
     toggleTheme: () => {
         document.body.classList.toggle('theme-day');
@@ -277,11 +302,13 @@ export const App = {
                 const srcIdx = parseInt(dragSrcEl.dataset.index);
                 const tgtIdx = parseInt(target.dataset.index);
                 
-                const temp = State.trackers[srcIdx];
-                State.trackers.splice(srcIdx, 1);
-                State.trackers.splice(tgtIdx, 0, temp);
-                
-                renderBoard();
+                const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
+                if (currentTab) {
+                    const temp = currentTab.trackers[srcIdx];
+                    currentTab.trackers.splice(srcIdx, 1);
+                    currentTab.trackers.splice(tgtIdx, 0, temp);
+                    renderBoard();
+                }
             }
             return false;
         });
@@ -380,6 +407,319 @@ export const renderBoard = () => {
     const titleEl = getEl('appTitleSidebar');
     if (titleEl) titleEl.innerText = State.title || "Server Platforms";
     
+    // --- SIDEBAR TABS RENDRING ---
+    const navContainer = document.querySelector('.sidebar-nav');
+    if (navContainer) {
+        navContainer.innerHTML = '';
+        const isPub = document.body.classList.contains('publishing');
+        const activeTabId = State.activeTabId;
+
+        // Render Tracker Tabs
+        State.trackerTabs.forEach(tab => {
+            const btn = document.createElement('div');
+            btn.className = `nav-item ${activeTabId === tab.id ? 'active' : ''}`;
+            btn.style.display = 'flex';
+            btn.style.alignItems = 'center';
+            btn.style.justifyContent = 'space-between';
+            btn.style.padding = '0.5rem 1rem';
+            
+            const label = document.createElement('span');
+            label.innerText = tab.name;
+            label.style.cursor = 'pointer';
+            label.style.flexGrow = '1';
+            label.onclick = () => App.switchTrackerTab(tab.id);
+            
+            // Editable Name in Edit Mode
+            if (!isPub && activeTabId === tab.id) {
+                label.contentEditable = true;
+                label.spellcheck = false;
+                label.style.borderBottom = '1px dashed #666';
+                label.onblur = () => App.renameTab(tab.id, label.innerText);
+                label.onkeydown = (e) => { if(e.key==='Enter') { e.preventDefault(); label.blur(); }};
+            }
+
+            btn.appendChild(label);
+
+            // Delete Button in Edit Mode (if not the only tab)
+            if (!isPub && State.trackerTabs.length > 1) {
+                const delBtn = document.createElement('span');
+                delBtn.innerHTML = '&times;';
+                delBtn.style.cursor = 'pointer';
+                delBtn.style.color = '#ff1744';
+                delBtn.style.marginLeft = '10px';
+                delBtn.style.fontWeight = 'bold';
+                delBtn.onclick = (e) => { e.stopPropagation(); App.deleteTab(tab.id); };
+                btn.appendChild(delBtn);
+            }
+
+            navContainer.appendChild(btn);
+        });
+
+        // Add Tab Button
+        if (!isPub) {
+            const addBtn = document.createElement('button');
+            addBtn.className = 'nav-item';
+            addBtn.style.border = '1px dashed var(--text-muted)';
+            addBtn.style.textAlign = 'center';
+            addBtn.style.justifyContent = 'center';
+            addBtn.innerText = "+ New Tab";
+            addBtn.onclick = () => App.addTab();
+            navContainer.appendChild(addBtn);
+        }
+
+        // Render Team Data Tab
+        const teamBtn = document.createElement('button');
+        teamBtn.className = `nav-item ${activeTabId === 'team' ? 'active' : ''}`;
+        teamBtn.innerText = "Team Data";
+        teamBtn.onclick = () => App.switchTrackerTab('team');
+        navContainer.appendChild(teamBtn);
+    }
+
+    // --- VIEW SWITCHING LOGIC ---
+    const viewTrackers = getEl('viewTrackers');
+    const viewTeam = getEl('viewTeamData');
+    const pageTitle = getEl('pageTitle');
+    
+    if (State.activeTabId === 'team') {
+        if(viewTrackers) viewTrackers.style.display = 'none';
+        if(viewTeam) viewTeam.style.display = 'block';
+        if(pageTitle) pageTitle.innerText = "Team Data";
+    } else {
+        if(viewTrackers) viewTrackers.style.display = 'block';
+        if(viewTeam) viewTeam.style.display = 'none';
+        const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
+        if(pageTitle) pageTitle.innerText = currentTab ? currentTab.name : "Cards";
+    }
+
+    // --- TRACKER GRID RENDERING ---
+    const tGrid = getEl('trackerGrid');
+    if (tGrid && State.activeTabId !== 'team') {
+        tGrid.innerHTML = '';
+        const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
+        const trackers = currentTab ? currentTab.trackers : [];
+        
+        trackers.forEach((t, i) => {
+            const card = document.createElement('div');
+            // Auto-calculate size
+            const displaySize = calculateTrackerSize(t);
+            card.className = `tracker-card size-${displaySize} type-${t.type}`;
+            card.dataset.index = i;
+            
+            if (!document.body.classList.contains('publishing')) {
+                card.draggable = true;
+            }
+
+            card.onclick = () => {
+                 if (document.body.classList.contains('publishing')) {
+                     // Zoom restricted per type requirements
+                     const canZoom = ['line', 'bar', 'note', 'countdown', 'donut', 'waffle'].includes(t.type);
+                     if (canZoom) ZoomManager.openChartModal(i);
+                 } else {
+                     TrackerManager.openModal(i);
+                 }
+            };
+
+            // Zoom Icon
+            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'countdown', 'donut', 'waffle'].includes(t.type)) {
+                card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
+            }
+
+            // Last Updated
+            let timestampHTML = '';
+            if (t.lastUpdated) {
+                const date = new Date(t.lastUpdated);
+                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+                timestampHTML = `<div class="last-updated" style="position:absolute; top:10px; left:12px; color:#aaa; font-size:0.65rem; pointer-events:none; z-index:5;">${dateStr} ${timeStr}</div>`;
+            }
+
+            const noteText = (t.notes || t.content || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
+            if (noteText && t.type !== 'note') {
+                card.onmousemove = (e) => {
+                    if (!document.body.classList.contains('publishing')) return;
+                    // Prevent overwriting specific tooltips on chart points/bars/segments
+                    if (e.target.closest('circle, rect, path')) return;
+                    Visuals.showTooltip(e, noteText);
+                };
+                card.onmouseout = () => Visuals.hideTooltip();
+            }
+
+            let visualHTML = '';
+            let statsHTML = '';
+            
+            let renderType = t.type;
+            if (renderType === 'line' || renderType === 'bar' || renderType === 'line1' || renderType === 'line2') {
+                let labels = t.labels || [];
+                let series = t.series || [];
+                
+                if ((!t.labels || t.labels.length === 0) && t.data) {
+                    labels = t.data.map(d => d.label);
+                    series = [{ name: 'Series 1', color: t.color1 || '#03dac6', values: t.data.map(d => d.val) }];
+                }
+
+                const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
+                
+                const chartId = `chart-viz-${i}`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:150px; margin-bottom:10px;"></div>`;
+                
+                setTimeout(() => {
+                    const el = document.getElementById(chartId);
+                    if(el) {
+                        // ApexCharts Series format: [{name, data}]
+                        const apexSeries = series.map(s => ({ name: s.name, data: s.values }));
+                        const colors = series.map(s => s.color);
+                        renderChart(el, style, { labels, series: apexSeries }, { colors });
+                    }
+                }, 0);
+            } else if (renderType === 'gauge') {
+                const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
+                const c1 = t.colorVal || t.color1 || '#00e676'; 
+                const c2 = t.color2 || '#ff1744';
+                // c2 is Progress Colour, c1 is Target Colour
+                const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
+                
+                visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
+                statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
+            } else if (renderType === 'counter') {
+                if (t.counters && t.counters.length > 0) {
+                    if (t.counters.length === 1) {
+                        const c = t.counters[0];
+                        const bgStyle = c.useBg ? `background-color:${c.bgColor}; padding:15px; border-radius:12px; display:inline-block; min-width:80px;` : '';
+                        visualHTML = `<div style="${bgStyle}"><div class="counter-display" style="color:${c.color}">${c.value}</div></div>`;
+                        statsHTML = `<div class="counter-sub">${c.label}</div>`;
+                    } else {
+                        visualHTML = '<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; width:100%; height:100%; align-items:center; align-content:center; overflow:hidden;">';
+                        const fontSize = t.counters.length > 4 ? '1.5rem' : '2rem';
+                        t.counters.forEach(c => {
+                            const bgStyle = c.useBg ? `background-color:${c.bgColor}; border-radius:8px; padding:5px 10px; box-shadow:0 2px 5px rgba(0,0,0,0.2);` : '';
+                            visualHTML += `<div style="text-align:center; flex: 1 0 30%;">
+                                <div style="${bgStyle} display:inline-block; width:100%;">
+                                    <div style="font-size:${fontSize}; font-weight:bold; color:${c.color}; line-height:1;">${c.value}</div>
+                                    <div style="font-size:0.7rem; color:#aaa; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.label}</div>
+                                </div>
+                            </div>`;
+                        });
+                        visualHTML += '</div>';
+                        statsHTML = '';
+                    }
+                } else {
+                    visualHTML = `<div class="counter-display" style="color:${t.color1 || '#e0e0e0'}">${t.value !== undefined ? t.value : 0}</div>`;
+                    statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
+                }
+            } else if (renderType === 'rag' || renderType === 'ryg') {
+                const status = t.status || 'grey';
+                const iconHTML = Visuals.createRAGIconHTML(status);
+                visualHTML = `<div class="ryg-icon-wrapper">${iconHTML}</div>`;
+                statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
+                        } else if (renderType === 'note') {                visualHTML = `<div class="note-render-container" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
+                statsHTML = '';
+            } else if (renderType === 'donut') {
+                const labels = (t.dataPoints || []).map(dp => dp.label);
+                const values = (t.dataPoints || []).map(dp => dp.value);
+                const colors = (t.dataPoints || []).map(dp => dp.color);
+                const html = Visuals.createDonutChartSVG(labels, values, displaySize, colors);
+                visualHTML = `<div class="donut-chart">${html}</div>`;
+                statsHTML = '';
+            } else if (renderType === 'countdown') {
+                const items = t.items || [];
+                // Sort ascending by date
+                items.sort((a,b) => new Date(a.date) - new Date(b.date));
+                
+                const style = t.displayStyle || 'list';
+                
+                if (style === 'bar') {
+                    const chartId = `count-viz-${i}`;
+                    visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:150px;"></div>`;
+                    
+                    const itemsToRender = items.slice(0, 6);
+                    
+                    setTimeout(() => {
+                        const el = document.getElementById(chartId);
+                        if(el) {
+                            const barData = getCountdownBarData(itemsToRender);
+                            if (barData.series[0].data.length > 0) {
+                                renderChart(el, 'rangeBar', barData, {
+                                    stroke: { width: 0 },
+                                    plotOptions: { bar: { horizontal: true, distributed: true, barHeight: '50%', dataLabels: { hideOverflowingLabels: false } } },
+                                    dataLabels: {
+                                        enabled: true,
+                                        formatter: function(val, opts) {
+                                            const item = opts.w.config.series[opts.seriesIndex].data[opts.dataPointIndex];
+                                            return `${item.meta.diffDays} days`;
+                                        },
+                                        style: { colors: ['#f3f4f5', '#fff'] }
+                                    },
+                                    xaxis: {
+                                        type: 'numeric',
+                                        min: 0,
+                                        axisBorder: { show: false },
+                                        axisTicks: { show: false },
+                                        labels: { show: false }
+                                    },
+                                    annotations: {
+                                        xaxis: []
+                                    },
+                                    yaxis: {
+                                        show: true,
+                                        categories: barData.series[0].data.map(d => d.x),
+                                        reversed: true,
+                                        labels: { style: { colors: '#aaa' } }
+                                    },
+                                    grid: { show: false },
+                                    legend: { show: false },
+                                    colors: barData.series[0].data.map(d => d.fillColor),
+                                    tooltip: {
+                                        enabled: true,
+                                        custom: function({series, seriesIndex, dataPointIndex, w}) {
+                                            const item = w.config.series[seriesIndex].data[dataPointIndex];
+                                            const eventLabel = item.x;
+                                            const days = item.meta.diffDays;
+                                            const originalDate = item.meta.originalDate;
+                                            const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
+                                            return `<div class="apexcharts-tooltip-box">
+                                                        <div class="tooltip-title">${eventLabel}</div>
+                                                        <div class="tooltip-value">${eventDate}</div>
+                                                        <div class="tooltip-value">${days} days from today</div>
+                                                    </div>`;
+                                        }
+                                    }
+                                });
+                            } else {
+                                el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
+                            }
+                        }
+                    }, 0);
+                    statsHTML = '';
+                } else {
+                    visualHTML = '<div class="countdown-list" style="width:100%; height:100%; overflow-y:auto; padding:5px;">';
+                    items.forEach(item => {
+                        const f = formatCountdown(item.date);
+                        visualHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:2px;"><span style="font-size:0.9rem; color:#e0e0e0;"><span class="${f.flashClass}" style="margin-right:5px;">${f.icon}</span>${item.label}</span><span style="font-size:0.9rem; font-weight:bold; color:${f.color};">${f.text}</span></div>`;
+                    });
+                    visualHTML += '</div>';
+                    statsHTML = '';
+                }
+            } else if (renderType === 'completionBar') {
+                const completed = t.active || 0;
+                const total = t.total || 100;
+                const cVal = t.colorVal || '#228B22';
+                const cBg = t.colorBg || '#696969';
+                const orient = t.orientation || 'horizontal';
+                
+                visualHTML = Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 60, orient);
+                statsHTML = `<div class="tracker-stats">${completed} / ${total} ${t.metric || ''}</div>`;
+            }
+
+            card.innerHTML = timestampHTML;
+            card.innerHTML += `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
+            card.innerHTML += `<div class="tracker-desc">${t.desc}</div>`;
+            card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
+            card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
+            
+            tGrid.appendChild(card);
+        });
+    }
+
     const sL = getEl('teamSuccessList'); 
     const aL = getEl('teamActivityList');
     if (sL) sL.innerHTML = ''; 
@@ -1019,7 +1359,9 @@ export const TrackerManager = {
         const countdownContainer = getEl('countdownDataContainer');
         if (countdownContainer) countdownContainer.innerHTML = '';
 
-        const tracker = isEdit ? State.trackers[index] : null;
+        const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
+        const tracker = isEdit ? (currentTab ? currentTab.trackers[index] : null) : null;
+        
         let type = tracker ? tracker.type : 'gauge';
         
         // Migrate legacy bar to line
@@ -1047,14 +1389,7 @@ export const TrackerManager = {
         const sizeRadio = document.querySelector(`input[name="tkSize"][value="${sizeVal}"]`);
         if (sizeRadio) sizeRadio.checked = true;
         else {
-            // Fallback if specific size not available or hidden?
-            // Actually, updateSizeOptions handles hiding, but we should select *something* valid if current is hidden.
-            // But here we are setting the value. If it's hidden, it stays checked but user can't click it.
-            // If it's a new tracker, we might want to default to allowed size.
             if (!isEdit) {
-                // Default based on type logic which is handled by setType -> updateSizeOptions
-                // But we need to physically check the radio.
-                // Let's check the first visible radio.
                 setTimeout(() => {
                     const visible = Array.from(document.querySelectorAll('input[name="tkSize"]')).find(r => r.parentElement.style.display !== 'none');
                     if (visible) visible.checked = true;
@@ -1984,9 +2319,13 @@ export const TrackerManager = {
     },
 
     deleteTracker(index) {
-        if(index < 0 || index >= State.trackers.length) return;
+        // Find active tab
+        const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
+        if (!currentTab) return;
+        if(index < 0 || index >= currentTab.trackers.length) return;
+        
         App.confirm("Are you sure you want to delete this card?", () => {
-            State.trackers.splice(index, 1);
+            currentTab.trackers.splice(index, 1);
             renderBoard();
         });
     },
@@ -2139,10 +2478,13 @@ export const TrackerManager = {
             // Size is handled by radio
         }
 
+        const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
+        if (!currentTab) return App.alert("No active tab selected.");
+
         if(index === -1) {
-            State.trackers.push(newTracker);
+            currentTab.trackers.push(newTracker);
         } else {
-            State.trackers[index] = newTracker;
+            currentTab.trackers[index] = newTracker;
         }
 
         ModalManager.closeModal('trackerModal');
