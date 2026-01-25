@@ -419,18 +419,14 @@ export const renderBoard = () => {
                                         },
                                         style: { colors: ['#f3f4f5', '#fff'] }
                                     },
-                                    chart: {
-                                        toolbar: { show: false },
-                                        height: barData.series[0].data.length * 30 + 40
-                                    },
                                     xaxis: {
                                         type: 'numeric',
-                                        reversed: true,
+                                        opposite: true, // Labels at top
                                         title: { text: 'Days from Today', style: { color: '#aaa' } },
                                         labels: { 
-                                            style: { colors: '#aaa' },
-                                            formatter: (val) => Math.abs(val)
-                                        }
+                                            style: { colors: '#aaa' }
+                                        },
+                                        min: 0
                                     },
                                     annotations: {
                                         xaxis: [{
@@ -709,12 +705,12 @@ export const ZoomManager = {
                                     },
                                     xaxis: {
                                         type: 'numeric',
-                                        reversed: true,
+                                        opposite: true,
                                         title: { text: 'Days from Today', style: { color: '#aaa' } },
                                         labels: { 
-                                            style: { colors: '#aaa' },
-                                            formatter: (val) => Math.abs(val)
-                                        }
+                                            style: { colors: '#aaa' }
+                                        },
+                                        min: 0
                                     },
                                     annotations: {
                                         xaxis: [{

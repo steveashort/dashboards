@@ -167,7 +167,7 @@ export const getCountdownBarData = (items) => {
 
         seriesData.push({
             x: item.label,
-            y: [0, -diffDays], // Use negative for reversed axis support
+            y: [0, diffDays], // Restore positive values
             fillColor: color,
             meta: {
                 originalDate: item.date,
