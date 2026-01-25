@@ -654,12 +654,23 @@ export const Visuals = {
                 // Assignment Name
                 svg += `<text x="15" y="${y + rowHeight/2 + 5}" fill="#555" font-size="12" font-weight="500">${obj.assignment}</text>`;
 
-                // Calculate Bar Position
-                let startIdx = rollingPeriods.indexOf(obj.start);
-                let endIdx = rollingPeriods.indexOf(obj.end);
+                // Robust period range detection (handling wrap-around)
+                const coveredIndices = [];
+                rollingPeriods.forEach((rp, ri) => {
+                    let inRange = false;
+                    if (obj.start <= obj.end) {
+                        if (rp >= obj.start && rp <= obj.end) inRange = true;
+                    } else {
+                        // Wraps around P12 -> P01
+                        if (rp >= obj.start || rp <= obj.end) inRange = true;
+                    }
+                    if (inRange) coveredIndices.push(ri);
+                });
 
-                if (startIdx === -1) startIdx = 0; // Starts before
-                if (endIdx === -1) endIdx = 5;   // Ends after
+                if (coveredIndices.length === 0) return;
+
+                const startIdx = coveredIndices[0];
+                const endIdx = coveredIndices[coveredIndices.length - 1];
 
                 const barStart = nameColWidth + (startIdx * colWidth) + 5;
                 const barEnd = nameColWidth + ((endIdx + 1) * colWidth) - 5;
