@@ -1308,9 +1308,9 @@ export const TrackerManager = {
         const inputType = (type === 'bar') ? 'line' : type;
         ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar'].forEach(x => {
             const btn = getEl(`type${x}Btn`);
-            if (btn) btn.className = (type === x.toLowerCase()) ? 'type-option active' : 'type-option';
+            if (btn) btn.className = (type.toLowerCase() === x.toLowerCase()) ? 'type-option active' : 'type-option';
             const div = getEl(`${x.toLowerCase()}Inputs`);
-            if (div) div.style.display = (inputType === x.toLowerCase()) ? 'block' : 'none';
+            if (div) div.style.display = (inputType.toLowerCase() === x.toLowerCase()) ? 'block' : 'none';
         });
 
         const sizeCont = getEl('sizeContainer');
