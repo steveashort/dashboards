@@ -615,16 +615,16 @@ export const Visuals = {
         let svg = `<svg width="100%" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="http://www.w3.org/2000/svg">`;
         
         // Background
-        svg += `<rect x="0" y="0" width="${width}" height="${totalHeight}" fill="#f8f9fa" rx="8"/>`;
+        svg += `<rect x="0" y="0" width="${width}" height="${totalHeight}" fill="var(--card-bg)" rx="8"/>`;
 
         // Timeline Header
         rollingPeriods.forEach((p, i) => {
             const x = nameColWidth + (i * colWidth);
-            svg += `<text x="${x + colWidth/2}" y="${timelineHeaderHeight - 15}" fill="#444" font-size="12" text-anchor="middle" font-weight="bold">${getPeriodLabelShort(p)}</text>`;
-            svg += `<line x1="${x}" y1="${timelineHeaderHeight}" x2="${x}" y2="${totalHeight}" stroke="#dee2e6" stroke-width="1"/>`;
+            svg += `<text x="${x + colWidth/2}" y="${timelineHeaderHeight - 15}" fill="var(--text-main)" font-size="12" text-anchor="middle" font-weight="bold">${getPeriodLabelShort(p)}</text>`;
+            svg += `<line x1="${x}" y1="${timelineHeaderHeight}" x2="${x}" y2="${totalHeight}" stroke="var(--border)" stroke-width="1"/>`;
         });
-        svg += `<line x1="${width}" y1="${timelineHeaderHeight}" x2="${width}" y2="${totalHeight}" stroke="#dee2e6" stroke-width="1"/>`;
-        svg += `<line x1="0" y1="${timelineHeaderHeight}" x2="${width}" y2="${timelineHeaderHeight}" stroke="#dee2e6" stroke-width="1"/>`;
+        svg += `<line x1="${width}" y1="${timelineHeaderHeight}" x2="${width}" y2="${totalHeight}" stroke="var(--border)" stroke-width="1"/>`;
+        svg += `<line x1="0" y1="${timelineHeaderHeight}" x2="${width}" y2="${timelineHeaderHeight}" stroke="var(--border)" stroke-width="1"/>`;
 
         // Content
         let currentY = timelineHeaderHeight;
@@ -639,12 +639,12 @@ export const Visuals = {
             if (activeObjectives.length === 0) return;
 
             // Member Header
-            svg += `<rect x="0" y="${currentY}" width="${width}" height="${memberHeaderHeight}" fill="#e9ecef" opacity="0.5"/>`;
-            svg += `<text x="15" y="${currentY + memberHeaderHeight/2 + 6}" fill="#333" font-size="14" font-weight="bold">${m.name}'s Portfolio & Resource Allocation</text>`;
+            svg += `<rect x="0" y="${currentY}" width="${width}" height="${memberHeaderHeight}" fill="rgba(255,255,255,0.05)" opacity="0.5"/>`;
+            svg += `<text x="15" y="${currentY + memberHeaderHeight/2 + 6}" fill="var(--accent)" font-size="14" font-weight="bold">${m.name}'s Portfolio & Resource Allocation</text>`;
             
             // Allocation Legend Style (Top Right of section)
-            svg += `<rect x="${width - 150}" y="${currentY + 15}" width="20" height="20" rx="10" fill="#008080" opacity="0.8"/>`;
-            svg += `<text x="${width - 125}" y="${currentY + 30}" fill="#666" font-size="11">${m.name} (Teal)</text>`;
+            svg += `<rect x="${width - 150}" y="${currentY + 15}" width="20" height="20" rx="10" fill="var(--accent)" opacity="0.8"/>`;
+            svg += `<text x="${width - 125}" y="${currentY + 30}" fill="var(--text-muted)" font-size="11">${m.name}</text>`;
 
             currentY += memberHeaderHeight;
 
@@ -652,7 +652,7 @@ export const Visuals = {
                 const y = currentY + (oi * rowHeight);
                 
                 // Assignment Name
-                svg += `<text x="15" y="${y + rowHeight/2 + 5}" fill="#555" font-size="12" font-weight="500">${obj.assignment}</text>`;
+                svg += `<text x="15" y="${y + rowHeight/2 + 5}" fill="var(--text-main)" font-size="12" font-weight="500">${obj.assignment}</text>`;
 
                 // Robust period range detection (handling wrap-around)
                 const coveredIndices = [];
@@ -680,7 +680,7 @@ export const Visuals = {
 
                 // Pill Bar
                 const assignmentDef = (allAssignments || []).find(a => a.name === obj.assignment);
-                const barColor = assignmentDef ? assignmentDef.color : '#008080';
+                const barColor = assignmentDef ? assignmentDef.color : 'var(--accent)';
 
                 svg += `<rect x="${barStart}" y="${barY}" width="${barWidth}" height="${barHeight}" fill="${barColor}" rx="${barHeight/2}" opacity="0.8">
                             <title>${m.name}: ${obj.assignment} (${obj.load}%)</title>
@@ -690,7 +690,7 @@ export const Visuals = {
                 svg += `<text x="${barStart + barWidth/2}" y="${barY + barHeight/2 + 4}" fill="#fff" font-size="11" text-anchor="middle" font-weight="bold" pointer-events="none">${obj.load}%</text>`;
 
                 // Subtle Row Line
-                svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="#eee" stroke-width="1"/>`;
+                svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="var(--border)" stroke-width="0.5" opacity="0.5"/>`;
             });
 
             currentY += activeObjectives.length * rowHeight;
@@ -698,5 +698,6 @@ export const Visuals = {
 
         svg += `</svg>`;
         return svg;
+    }
     }
 };
