@@ -115,6 +115,18 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="colorPickerModal" style="z-index: 3000;">
+        <div class="modal-content modal-mini" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 style="color:var(--accent);">Select Color</h3>
+                <button class="btn" onclick="ModalManager.closeModal('colorPickerModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="colorPickerGrid" class="color-picker-grid"></div>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="userModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -246,7 +258,7 @@
 
                                             <label>Target Colour</label>
 
-                                            <input type="color" id="tkPieColor" value="#696969">
+                                            <input type="text" readonly class="color-input" id="tkPieColor" value="#696969">
 
                                         </div>
 
@@ -254,7 +266,7 @@
 
                                             <label>Progress Colour</label>
 
-                                            <input type="color" id="tkPieColor2" value="#228B22">
+                                            <input type="text" readonly class="color-input" id="tkPieColor2" value="#228B22">
 
                                         </div>
 
@@ -393,11 +405,11 @@
                                                                                                     <div class="form-row" style="margin-top: 1rem; margin-bottom: 0; gap: 1rem;">
                                                                                                         <div class="input-group">
                                                                                                             <label>Target Colour</label>
-                                                                                                            <input type="color" id="tkCompBarColorBg" value="#696969">
+                                                                                                            <input type="text" readonly class="color-input" id="tkCompBarColorBg" value="#696969">
                                                                                                         </div>
                                                                                                         <div class="input-group">
                                                                                                             <label>Progress Colour</label>
-                                                                                                            <input type="color" id="tkCompBarColorVal" value="#228B22">
+                                                                                                            <input type="text" readonly class="color-input" id="tkCompBarColorVal" value="#228B22">
                                                                                                         </div>
                                                                                                     </div>
                                                                                                     <div class="input-group" style="margin-top: 1rem;">

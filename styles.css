@@ -426,3 +426,38 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 .flash-siren { animation: flash 1s infinite steps(1, end); color: #ff1744; }
 .flash-yellow { animation: flash 1s infinite steps(1, end); color: #ffb300; }
 .flash-red { animation: flash 1s infinite steps(1, end); color: #ff1744; }
+
+/* Color Picker Styles */
+.color-picker-grid {
+    display: grid;
+    grid-template-columns: repeat(14, 1fr); /* 14 columns for 140 colors = 10 rows */
+    gap: 4px;
+    padding: 10px;
+}
+.color-swatch {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 4px;
+    cursor: pointer;
+    border: 1px solid #444;
+    transition: transform 0.1s, border-color 0.1s;
+}
+.color-swatch:hover {
+    transform: scale(1.2);
+    border-color: #fff;
+    z-index: 10;
+}
+.color-input {
+    cursor: pointer;
+    text-align: center;
+    color: transparent;
+    text-shadow: 0 0 0 transparent; /* Hide text initially */
+    caret-color: transparent;
+    transition: border-color 0.2s;
+    background-clip: padding-box;
+}
+.color-input:focus {
+    color: transparent;
+    text-shadow: 0 0 0 transparent;
+}
+/* When input has a value, we can optionally show it, but for now we rely on background color */
