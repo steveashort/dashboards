@@ -305,8 +305,14 @@ export const renderBoard = () => {
         
         State.trackers.forEach((t, i) => {
             const card = document.createElement('div');
-            // Auto-calculate size
-            const displaySize = calculateTrackerSize(t);
+            
+            let displaySize = t.size || '2x1';
+            // Legacy Mapping
+            if (displaySize === 'S') displaySize = '1x1';
+            if (displaySize === 'M') displaySize = '2x1';
+            if (displaySize === 'L') displaySize = '3x2';
+            if (displaySize === 'XL') displaySize = '3x2';
+
             card.className = `tracker-card size-${displaySize} type-${t.type}`;
             card.dataset.index = i;
             
@@ -328,6 +334,15 @@ export const renderBoard = () => {
             // Zoom Icon
             if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'completionBar'].includes(t.type)) {
                 card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
+            }
+
+            // Last Updated
+            let timestampHTML = '';
+            if (t.lastUpdated) {
+                const date = new Date(t.lastUpdated);
+                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const dateStr = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
+                timestampHTML = `<div class="last-updated" style="position:absolute; top:10px; left:12px; color:#666; font-size:0.65rem; pointer-events:none; z-index:5;">${dateStr} ${timeStr}</div>`;
             }
 
             const noteText = (t.notes || t.content || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
@@ -506,7 +521,8 @@ export const renderBoard = () => {
                 statsHTML = `<div class="tracker-stats">${t.active} / ${t.total} ${t.metric || ''}</div>`;
             }
 
-            card.innerHTML = `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
+            card.innerHTML = timestampHTML;
+            card.innerHTML += `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
             card.innerHTML += `<div class="tracker-desc">${t.desc}</div>`;
             card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
             card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
@@ -910,9 +926,30 @@ export const TrackerManager = {
         const descIn = getEl('tkDesc');
         if (descIn) descIn.value = tracker ? tracker.desc : '';
         
-        const sizeVal = tracker ? (tracker.size || 'M') : 'M';
+        let sizeVal = tracker ? (tracker.size || '2x1') : '2x1';
+        // Map Legacy Sizes
+        if (sizeVal === 'S') sizeVal = '1x1';
+        if (sizeVal === 'M') sizeVal = '2x1';
+        if (sizeVal === 'L') sizeVal = '3x2'; // Map L to 3x2 as best fit
+        if (sizeVal === 'XL') sizeVal = '3x2';
+
         const sizeRadio = document.querySelector(`input[name="tkSize"][value="${sizeVal}"]`);
         if (sizeRadio) sizeRadio.checked = true;
+        else {
+            // Fallback if specific size not available or hidden?
+            // Actually, updateSizeOptions handles hiding, but we should select *something* valid if current is hidden.
+            // But here we are setting the value. If it's hidden, it stays checked but user can't click it.
+            // If it's a new tracker, we might want to default to allowed size.
+            if (!isEdit) {
+                // Default based on type logic which is handled by setType -> updateSizeOptions
+                // But we need to physically check the radio.
+                // Let's check the first visible radio.
+                setTimeout(() => {
+                    const visible = Array.from(document.querySelectorAll('input[name="tkSize"]')).find(r => r.parentElement.style.display !== 'none');
+                    if (visible) visible.checked = true;
+                }, 0);
+            }
+        }
 
         if (type === 'line') {
              // Init Style Radio
@@ -1015,58 +1052,35 @@ export const TrackerManager = {
                 const tcIn = getEl('tkComp'); if(tcIn) tcIn.value = '';
                 const ttIn = getEl('tkTotal'); if(ttIn) ttIn.value = '';
                 const nIn = getEl('tkNotes'); if(nIn) nIn.value = '';
-                
-                // Set Size to S
-                const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
-                if(sizeRad) sizeRad.checked = true;
             } else if (!isEdit && type === 'rag') {
                 // Reset RAG defaults for new trackers
                 const trmIn = getEl('tkRagMsg'); if(trmIn) trmIn.value = '';
                 const trnIn = getEl('tkRagNotes'); if(trnIn) trnIn.value = '';
-                
-                // Set Size to S
-                const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
-                if(sizeRad) sizeRad.checked = true;
             } else if (!isEdit && type === 'counter') {
                 // Reset Counter defaults for new trackers
                 const tcsIn = getEl('tkCounterSub'); if(tcsIn) tcsIn.value = '';
                 const tcnIn = getEl('tkCounterNotes'); if(tcnIn) tcnIn.value = '';
                 const tcvIn = getEl('tkCounterVal'); if(tcvIn) tcvIn.value = 0;
-                
-                // Set Size to S
-                const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
-                if(sizeRad) sizeRad.checked = true;
             } else if (!isEdit && type === 'note') {
                 const tcnIn = getEl('tkNoteContent'); if(tcnIn) tcnIn.value = '';
                 // Default Align Left
                 const alignRad = document.querySelector('input[name="tkNoteAlign"][value="left"]');
                 if(alignRad) alignRad.checked = true;
-                // Set Size to M
-                const sizeRad = document.querySelector('input[name="tkSize"][value="M"]');
-                if(sizeRad) sizeRad.checked = true;
             } else if (!isEdit && type === 'donut') {
                 const container = getEl('donutDataContainer');
                 if(container) container.innerHTML = '';
                 const notesIn = getEl('tkDonutNotes');
                 if(notesIn) notesIn.value = '';
-                // Default Size S
-                const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
-                if(sizeRad) sizeRad.checked = true;
             } else if (!isEdit && type === 'completionBar') {
                 const tmIn = getEl('tkCompBarMetric'); if(tmIn) tmIn.value = '';
                 const ttIn = getEl('tkCompBarTotal'); if(ttIn) ttIn.value = '';
                 const taIn = getEl('tkCompBarActive'); if(taIn) taIn.value = '';
                 const tnIn = getEl('tkCompBarNotes'); if(tnIn) tnIn.value = '';
-                const sizeRad = document.querySelector('input[name="tkSize"][value="S"]');
-                if(sizeRad) sizeRad.checked = true;
             } else if (!isEdit && type === 'countdown') {
                 const notesIn = getEl('tkCountdownNotes');
                 if(notesIn) notesIn.value = '';
                 const styleRad = document.querySelector('input[name="tkCountdownStyle"][value="list"]');
                 if(styleRad) styleRad.checked = true;
-                // Default Size M
-                const sizeRad = document.querySelector('input[name="tkSize"][value="M"]');
-                if(sizeRad) sizeRad.checked = true;
             }
 
             if (type === 'gauge') {
@@ -1169,6 +1183,33 @@ export const TrackerManager = {
         ModalManager.openModal('trackerModal');
     },
 
+    updateSizeOptions(type) {
+        const inputType = (type === 'bar') ? 'line' : type;
+        const allSizes = ['1x1', '2x1', '1x2', '2x2', '3x2'];
+        let allowed = allSizes;
+
+        if (['gauge', 'rag'].includes(inputType)) allowed = ['1x1'];
+        else if (inputType === 'donut') allowed = ['1x1', '2x2'];
+        else if (inputType === 'completionBar') allowed = ['1x1', '1x2'];
+        else if (inputType === 'countdown') allowed = ['1x1', '2x1', '2x2'];
+        // Time Series (line/bar) and Note allow all sizes.
+        // Waffle allows all for now.
+
+        allSizes.forEach(s => {
+            const lbl = getEl(`lblSize${s}`);
+            if (lbl) {
+                lbl.style.display = allowed.includes(s) ? 'inline-flex' : 'none';
+                // If currently checked option is hidden, select the first allowed one
+                const rad = lbl.querySelector('input');
+                if (rad && rad.checked && !allowed.includes(s)) {
+                    rad.checked = false;
+                    const first = getEl(`lblSize${allowed[0]}`).querySelector('input');
+                    if(first) first.checked = true;
+                }
+            }
+        });
+    },
+
     setType(type) {
         State.currentTrackerType = type;
         // Map 'bar' to 'line' for input visibility
@@ -1181,7 +1222,18 @@ export const TrackerManager = {
         });
 
         const sizeCont = getEl('sizeContainer');
-        if(sizeCont) sizeCont.style.display = (['line', 'gauge', 'rag', 'counter', 'note', 'donut', 'completionBar', 'countdown'].includes(inputType)) ? 'block' : 'none';
+        if(sizeCont) {
+            // Show size container for all types except maybe those that are strictly fixed? 
+            // Actually, prompt implies users can choose size for most, but limited options.
+            // If only 1 option exists, we could hide it, but better to show it for clarity.
+            // Counter wasn't in the list? "Note... Donut... Completion bar... Note... RAG... Countdowns... Time Series... Gauge"
+            // Counter is missing from prompt. I'll treat Counter as Gauge (1x1) or allow all? 
+            // In original code, Counter was forced to S (1x1). I'll default Counter to 1x1.
+            sizeCont.style.display = 'block'; 
+        }
+        
+        if (inputType === 'counter') this.updateSizeOptions('gauge'); // Treat as 1x1
+        else this.updateSizeOptions(inputType);
 
         if (inputType === 'line') {
              this.renderTimeTable();
@@ -1786,11 +1838,11 @@ export const TrackerManager = {
         const descIn = getEl('tkDesc');
         const desc = descIn ? descIn.value : '';
         const sizeRadio = document.querySelector('input[name="tkSize"]:checked');
-        const size = sizeRadio ? sizeRadio.value : 'M';
+        const size = sizeRadio ? sizeRadio.value : '2x1';
         if (!desc) return App.alert("Title required");
 
         const type = State.currentTrackerType;
-        let newTracker = { desc, type, size };
+        let newTracker = { desc, type, size, lastUpdated: new Date().toISOString() };
 
         if (type === 'gauge') {
             const mIn = getEl('tkMetric');
@@ -1806,7 +1858,7 @@ export const TrackerManager = {
             newTracker.completed = c;
             newTracker.total = t;
             newTracker.notes = nIn ? nIn.value : '';
-            newTracker.size = 'S'; // Force Small Size
+            // Size is handled by radio
             const pcIn = getEl('tkPieColor');
             newTracker.colorVal = pcIn ? pcIn.value : '#00e676'; 
             const pc2In = getEl('tkPieColor2');
@@ -1852,7 +1904,7 @@ export const TrackerManager = {
             
             const cnIn = getEl('tkCounterNotes');
             newTracker.notes = cnIn ? cnIn.value : '';
-            newTracker.size = 'S'; // Force Small Size
+            // Size is handled by radio
         } else if (type === 'rag') {
             newTracker.type = 'rag'; 
             const rsIn = getEl('tkRagStatus');
@@ -1861,7 +1913,7 @@ export const TrackerManager = {
             newTracker.message = rmIn ? rmIn.value : '';
             const rnIn = getEl('tkRagNotes');
             newTracker.notes = rnIn ? rnIn.value : '';
-            newTracker.size = 'S'; // Force Small Size
+            // Size is handled by radio
             newTracker.color1 = (newTracker.status === 'green' ? '#00e676' : (newTracker.status === 'amber' ? '#ffb300' : (newTracker.status === 'red' ? '#ff1744' : '#666666')));
         } else if (type === 'note') {
             const contentIn = getEl('tkNoteContent');
@@ -1885,7 +1937,7 @@ export const TrackerManager = {
             newTracker.total = total;
             newTracker.active = active;
             newTracker.notes = tnIn ? tnIn.value : '';
-            newTracker.size = 'S'; // Always use Small card
+            // Size is handled by radio
 
             const cvIn = getEl('tkCompBarColorVal');
             newTracker.colorVal = cvIn ? cvIn.value : '#228B22';
@@ -1902,7 +1954,7 @@ export const TrackerManager = {
             newTracker.dataPoints = dataPoints;
             const notesIn = getEl('tkDonutNotes');
             newTracker.notes = notesIn ? notesIn.value : '';
-            newTracker.size = size; // Use selected size
+            // Size is handled by radio
         } else if (type === 'countdown') {
             const rows = document.querySelectorAll('.countdown-row');
             const items = [];
@@ -1919,7 +1971,7 @@ export const TrackerManager = {
             
             const notesIn = getEl('tkCountdownNotes');
             newTracker.notes = notesIn ? notesIn.value : '';
-            newTracker.size = size;
+            // Size is handled by radio
         }
 
         if(index === -1) {

@@ -2,8 +2,11 @@
  * SERVER PLATFORMS TRACKER - VISUALIZATIONS MODULE
  */
 
-const sizeMap = { 'S': 300, 'M': 500, 'L': 900, 'XL': 1200 };
-const getWidth = (s) => sizeMap[s] || 500;
+const sizeMap = { 
+    'S': 300, 'M': 600, 'L': 900, 'XL': 1200,
+    '1x1': 300, '2x1': 600, '1x2': 300, '2x2': 600, '3x2': 900 
+};
+const getWidth = (s) => sizeMap[s] || 600;
 
 export const getColor = (s) => s >= 90 ? '#ff1744' : s >= 51 ? '#ffb300' : '#00e676';
 

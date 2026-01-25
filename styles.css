@@ -110,6 +110,13 @@ header {
     display: flex; flex-direction: column; justify-content: space-between;
     overflow: hidden;
 }
+.tracker-card.size-1x1 { grid-column: span 1; grid-row: span 1; }
+.tracker-card.size-2x1 { grid-column: span 2; grid-row: span 1; }
+.tracker-card.size-1x2 { grid-column: span 1; grid-row: span 2; }
+.tracker-card.size-2x2 { grid-column: span 2; grid-row: span 2; }
+.tracker-card.size-3x2 { grid-column: span 3; grid-row: span 2; }
+
+/* Backward compatibility mapping if needed, or just remove */
 .tracker-card.size-S { grid-column: span 1; grid-row: span 1; }
 .tracker-card.size-M { grid-column: span 2; grid-row: span 1; }
 .tracker-card.size-L { grid-column: span 3; grid-row: span 1; }
@@ -118,6 +125,13 @@ header {
 /* Fallback for smaller screens */
 @media (max-width: 1200px) {
     .tracker-grid { grid-template-columns: repeat(3, 1fr); }
+    .tracker-card.size-1x1 { grid-column: span 1; }
+    .tracker-card.size-2x1 { grid-column: span 2; }
+    .tracker-card.size-1x2 { grid-column: span 1; grid-row: span 2; }
+    .tracker-card.size-2x2 { grid-column: span 2; grid-row: span 2; }
+    .tracker-card.size-3x2 { grid-column: span 3; grid-row: span 2; }
+    
+    /* Compat */
     .tracker-card.size-S { grid-column: span 1; }
     .tracker-card.size-M { grid-column: span 2; }
     .tracker-card.size-L { grid-column: span 3; }
@@ -125,6 +139,8 @@ header {
 }
 @media (max-width: 768px) {
     .tracker-grid { grid-template-columns: 1fr; }
+    .tracker-card.size-1x1, .tracker-card.size-2x1, .tracker-card.size-1x2, 
+    .tracker-card.size-2x2, .tracker-card.size-3x2,
     .tracker-card.size-S, .tracker-card.size-M, .tracker-card.size-L, .tracker-card.size-XL {
         grid-column: span 1;
         grid-row: auto;
