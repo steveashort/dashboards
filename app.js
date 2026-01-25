@@ -50,6 +50,25 @@ const getRanges = () => {
     };
 };
 
+const getPeriodLabel = (p) => {
+    // P01 (Feb) ... P12 (Jan)
+    const monthNames = ["Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan"];
+    const idx = (p - 1) % 12;
+    const name = monthNames[idx];
+    return `P${p.toString().padStart(2,'0')} (${name})`;
+};
+
+const getCurrentPeriod = () => {
+    const d = new Date();
+    const m = d.getMonth(); // 0=Jan, 1=Feb
+    // If Jan (0), it's P12. If Feb (1), it's P01.
+    // Formula: (m + 11) % 12 + 1 ?
+    // 0 -> 11 % 12 + 1 = 12.
+    // 1 -> 12 % 12 + 1 = 1.
+    // 2 -> 13 % 12 + 1 = 2.
+    return ((m + 11) % 12) + 1;
+};
+
 // --- CORE FUNCTIONS ---
 export const initApp = () => {
     // Migration: Move legacy trackers to default tab
@@ -785,8 +804,29 @@ export const renderBoard = () => {
             content += `<div class="card-col"><div class="col-header">Current Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().current.split(' - ')[0]})</span></div><div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.thisWeek ? m.thisWeek.load : [])}</div><ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${tw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul><div class="daily-mini-grid" style="margin-top:auto;">${mgThis}</div></div>`;
             content += `<div class="card-col"><div class="col-header">Next Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().next.split(' - ')[0]})</span></div><div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.nextWeek ? m.nextWeek.load : [])}</div><ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${nw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul><div class="daily-mini-grid" style="margin-top:auto;">${mgNext}</div></div>`;
             content += `</div>`;
-            if (m.notes) { content += `<div style="padding: 10px 1.5rem; border-top: 1px solid #333; font-size: 0.85rem; color: #ccc;">${m.notes}</div>`; }
-            c.innerHTML += content; teamGrid.appendChild(c);
+                        if (m.notes) {
+                            content += `<div style="padding: 10px 1.5rem; border-top: 1px solid #333; font-size: 0.85rem; color: #ccc;">${m.notes}</div>`;
+                        }
+            
+                        if (m.objectives && m.objectives.length > 0) {
+                            // Sort by Start Period (simple numeric sort for now)
+                            const sorted = [...m.objectives].sort((a,b) => a.start - b.start);
+                            content += `<div style="padding: 10px 1.5rem; border-top: 1px solid var(--border); display:flex; flex-direction:column; gap:4px;">`;
+                            content += `<div style="font-size:0.75rem; color:var(--accent); text-transform:uppercase; font-weight:bold; margin-bottom:2px;">Long Term Objectives</div>`;
+                            sorted.forEach(o => {
+                                const assign = State.assignments.find(a => a.name === o.assignment);
+                                const color = assign ? assign.color : '#03dac6'; // Default color
+                                const pStart = getPeriodLabel(o.start).split(' ')[0]; // Just P01
+                                const pEnd = getPeriodLabel(o.end).split(' ')[0];
+                                content += `<div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;">
+                                    <span style="background:${color}; color:#fff; padding:1px 6px; border-radius:4px; font-size:0.7rem; min-width:60px; text-align:center;">${pStart} - ${pEnd}</span>
+                                    <span style="color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${o.assignment}</span>
+                                </div>`;
+                            });
+                            content += `</div>`;
+                        }
+                        
+                        c.innerHTML += content; teamGrid.appendChild(c);
         });
     }
 };
@@ -2234,6 +2274,79 @@ export const TrackerManager = {
 };
 
 export const UserManager = {
+    addObjectiveRow: (data = null) => {
+        const container = getEl('objectivesContainer');
+        if (!container) return;
+        if (container.children.length >= 24) return App.alert("Max 24 objectives.");
+
+        const div = document.createElement('div');
+        div.className = 'objective-row';
+        div.style.display = 'flex';
+        div.style.gap = '5px';
+        div.style.alignItems = 'center';
+        
+        // Assignment Select
+        const assignSel = document.createElement('select');
+        assignSel.className = 'obj-assign';
+        assignSel.style.flex = '2';
+        assignSel.style.minWidth = '100px';
+        assignSel.style.background = 'var(--input-bg)';
+        assignSel.style.color = '#fff';
+        assignSel.style.border = '1px solid var(--border)';
+        assignSel.style.padding = '4px';
+        
+        const defOpt = document.createElement('option');
+        defOpt.value = ""; defOpt.innerText = "Select Assignment...";
+        assignSel.appendChild(defOpt);
+        
+        State.assignments.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.name;
+            opt.innerText = a.name;
+            if(data && data.assignment === a.name) opt.selected = true;
+            assignSel.appendChild(opt);
+        });
+
+        // Period Selects
+        const createPerSel = (val) => {
+            const s = document.createElement('select');
+            s.className = 'obj-period';
+            s.style.flex = '1';
+            s.style.background = 'var(--input-bg)';
+            s.style.color = '#fff';
+            s.style.border = '1px solid var(--border)';
+            s.style.padding = '4px';
+            for(let i=1; i<=12; i++) {
+                const opt = document.createElement('option');
+                opt.value = i;
+                opt.innerText = getPeriodLabel(i);
+                if(val && parseInt(val) === i) opt.selected = true;
+                s.appendChild(opt);
+            }
+            return s;
+        };
+
+        const startSel = createPerSel(data ? data.start : getCurrentPeriod());
+        startSel.classList.add('obj-start');
+        const endSel = createPerSel(data ? data.end : getCurrentPeriod());
+        endSel.classList.add('obj-end');
+
+        const delBtn = document.createElement('button');
+        delBtn.innerHTML = '&times;';
+        delBtn.className = 'btn btn-sm';
+        delBtn.style.color = 'var(--g-red)';
+        delBtn.style.borderColor = 'var(--g-red)';
+        delBtn.style.padding = '0 8px';
+        delBtn.onclick = () => div.remove();
+
+        div.appendChild(assignSel);
+        div.appendChild(startSel);
+        div.appendChild(endSel);
+        div.appendChild(delBtn);
+        
+        container.appendChild(div);
+    },
+
     openUserModal: (index = -1) => {
         const isEdit = index > -1;
         getEl('modalTitle').innerText = isEdit ? 'Edit User' : 'Add User';
@@ -2243,7 +2356,8 @@ export const UserManager = {
             name: '',
             lastWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}] },
             thisWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], load: ['N','N','N','N','N','X','X'] },
-            nextWeek: { tasks: [{text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}], load: ['N','N','N','N','N','X','X'] }
+            nextWeek: { tasks: [{text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}], load: ['N','N','N','N','N','X','X'] },
+            objectives: []
         };
 
         getEl('mName').value = m.name || '';
@@ -2272,6 +2386,13 @@ export const UserManager = {
         nextOnCall.forEach((v, i) => { const el = getEl('fwOc'+i); if(el) el.checked = v; });
 
         getEl('mNotes').value = m.notes || '';
+
+        // Objectives
+        const objContainer = getEl('objectivesContainer');
+        if(objContainer) objContainer.innerHTML = '';
+        if(m.objectives && m.objectives.length > 0) {
+            m.objectives.forEach(o => UserManager.addObjectiveRow(o));
+        }
 
         getEl('deleteBtn').style.display = isEdit ? 'block' : 'none';
         ModalManager.openModal('userModal');
@@ -2316,6 +2437,18 @@ export const UserManager = {
         const name = getEl('mName').value.trim();
         if(!name) return App.alert("Name is required");
 
+        // Scrape Objectives
+        const objectives = [];
+        const objContainer = getEl('objectivesContainer');
+        if(objContainer) {
+            objContainer.querySelectorAll('.objective-row').forEach(row => {
+                const assign = row.querySelector('.obj-assign').value;
+                const start = parseInt(row.querySelector('.obj-start').value);
+                const end = parseInt(row.querySelector('.obj-end').value);
+                if (assign) objectives.push({ assignment: assign, start, end });
+            });
+        }
+
         const member = {
             name,
             notes: getEl('mNotes').value.trim(),
@@ -2356,7 +2489,8 @@ export const UserManager = {
                     { text: getEl('fwTask2').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[1]?.isTeamActivity || false) : false },
                     { text: getEl('fwTask3').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[2]?.isTeamActivity || false) : false }
                 ]
-            }
+            },
+            objectives: objectives
         };
 
         if(idx === -1) State.members.push(member);

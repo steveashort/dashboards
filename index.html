@@ -219,6 +219,14 @@
                     <label>Notes (Max 200 chars)</label>
                     <textarea id="mNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="General notes, key updates..."></textarea>
                 </div>
+                
+                <div class="input-group" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label>Long Term Objectives (Max 24)</label>
+                        <button class="btn btn-sm" onclick="UserManager.addObjectiveRow()">+ Add Objective</button>
+                    </div>
+                    <div id="objectivesContainer" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1); margin-top:5px; display:flex; flex-direction:column; gap:5px;"></div>
+                </div>
                 </div>
             </div>
             <div class="modal-footer">
