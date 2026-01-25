@@ -659,7 +659,29 @@ export const renderBoard = () => {
 
             card.innerHTML = timestampHTML;
             card.innerHTML += `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
-            card.innerHTML += `<div class="tracker-desc">${t.desc}</div>`;
+            
+            const descEl = document.createElement('div');
+            descEl.className = 'tracker-desc';
+            descEl.innerText = t.desc;
+            if (!document.body.classList.contains('publishing')) {
+                descEl.contentEditable = "true";
+                descEl.spellcheck = false;
+                descEl.style.cursor = "text";
+                descEl.style.borderBottom = "1px dashed #444";
+                descEl.style.zIndex = "10";
+                descEl.style.position = "relative";
+                
+                descEl.onclick = (e) => e.stopPropagation();
+                descEl.onblur = () => { t.desc = descEl.innerText; };
+                descEl.onkeydown = (e) => { 
+                    if(e.key === 'Enter') { 
+                        e.preventDefault(); 
+                        descEl.blur(); 
+                    } 
+                };
+            }
+            card.appendChild(descEl);
+
             card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
             card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
             tGrid.appendChild(card);
