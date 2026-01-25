@@ -611,37 +611,13 @@ export const renderBoard = () => {
                     statsHTML = '';
                 }
             } else if (renderType === 'completionBar') {
-                const chartId = `compbar-viz-${i}`;
-                visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:80px;"></div>`;
+                const completed = t.active || 0;
+                const total = t.total || 100;
+                const cVal = t.colorVal || '#228B22';
+                const cBg = t.colorBg || '#696969';
                 
-                setTimeout(() => {
-                    const el = document.getElementById(chartId);
-                    if(el) {
-                        const completed = t.active || 0;
-                        const total = t.total || 100;
-                        const remaining = Math.max(0, total - completed);
-                        const cVal = t.colorVal || '#228B22';
-                        const cBg = t.colorBg || '#696969';
-
-                        renderChart(el, 'bar', {
-                            labels: ['Progress'],
-                            series: [
-                                { name: 'Completed', data: [completed] },
-                                { name: 'Remaining', data: [remaining] }
-                            ]
-                        }, {
-                            chart: { stacked: true, sparkline: { enabled: true } },
-                            plotOptions: { bar: { horizontal: true, barHeight: '70%' } },
-                            colors: [cVal, cBg],
-                            tooltip: {
-                                y: {
-                                    formatter: (val, opts) => `${val} ${t.metric || ''}`
-                                }
-                            }
-                        });
-                    }
-                }, 0);
-                statsHTML = `<div class="tracker-stats">${t.active} / ${t.total} ${t.metric || ''}</div>`;
+                visualHTML = Visuals.createCompletionBarSVG(completed, total, cVal, cBg);
+                statsHTML = `<div class="tracker-stats">${completed} / ${total} ${t.metric || ''}</div>`;
             }
 
             card.innerHTML = timestampHTML;
@@ -900,36 +876,12 @@ export const ZoomManager = {
                 const values = (t.dataPoints || []).map(dp => dp.value);
                 content = Visuals.createDonutChartWithCalloutsSVG(labels, values);
             } else if (renderType === 'completionBar') {
-                content = '<div id="zoomChartContainer" style="width:100%; height:100%;"></div>';
-                renderAction = () => {
-                    const el = document.getElementById('zoomChartContainer');
-                    if(el) {
-                        const completed = t.active || 0;
-                        const total = t.total || 100;
-                        const remaining = Math.max(0, total - completed);
-                        const cVal = t.colorVal || '#228B22';
-                        const cBg = t.colorBg || '#696969';
-
-                        renderChart(el, 'bar', {
-                            labels: ['Progress'],
-                            series: [
-                                { name: 'Completed', data: [completed] },
-                                { name: 'Remaining', data: [remaining] }
-                            ]
-                        }, {
-                            chart: { stacked: true, toolbar: { show: true } },
-                            plotOptions: { bar: { horizontal: true, barHeight: '50%' } },
-                            colors: [cVal, cBg],
-                            xaxis: { categories: ['Progress'], labels: { show: false } },
-                            yaxis: { labels: { show: false } },
-                            tooltip: {
-                                y: {
-                                    formatter: (val) => `${val} ${t.metric || ''}`
-                                }
-                            }
-                        });
-                    }
-                };
+                const completed = t.active || 0;
+                const total = t.total || 100;
+                const cVal = t.colorVal || '#228B22';
+                const cBg = t.colorBg || '#696969';
+                // Use a larger custom SVG for zoom or reuse the standard one scaled
+                content = `<div style="width:100%; padding:40px;">${Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 100)}</div>`;
             }
     
             const bodyEl = getEl('zoomBody');
