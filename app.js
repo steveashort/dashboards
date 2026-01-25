@@ -500,7 +500,6 @@ export const renderBoard = () => {
         
         trackers.forEach((t, i) => {
             const card = document.createElement('div');
-            // Auto-calculate size
             const displaySize = calculateTrackerSize(t);
             card.className = `tracker-card size-${displaySize} type-${t.type}`;
             card.dataset.index = i;
@@ -511,7 +510,6 @@ export const renderBoard = () => {
 
             card.onclick = () => {
                  if (document.body.classList.contains('publishing')) {
-                     // Zoom restricted per type requirements
                      const canZoom = ['line', 'bar', 'note', 'countdown', 'donut', 'waffle'].includes(t.type);
                      if (canZoom) ZoomManager.openChartModal(i);
                  } else {
@@ -519,12 +517,10 @@ export const renderBoard = () => {
                  }
             };
 
-            // Zoom Icon
             if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'countdown', 'donut', 'waffle'].includes(t.type)) {
                 card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
             }
 
-            // Last Updated
             let timestampHTML = '';
             if (t.lastUpdated) {
                 const date = new Date(t.lastUpdated);
@@ -537,7 +533,6 @@ export const renderBoard = () => {
             if (noteText && t.type !== 'note') {
                 card.onmousemove = (e) => {
                     if (!document.body.classList.contains('publishing')) return;
-                    // Prevent overwriting specific tooltips on chart points/bars/segments
                     if (e.target.closest('circle, rect, path')) return;
                     Visuals.showTooltip(e, noteText);
                 };
@@ -551,21 +546,16 @@ export const renderBoard = () => {
             if (renderType === 'line' || renderType === 'bar' || renderType === 'line1' || renderType === 'line2') {
                 let labels = t.labels || [];
                 let series = t.series || [];
-                
                 if ((!t.labels || t.labels.length === 0) && t.data) {
                     labels = t.data.map(d => d.label);
                     series = [{ name: 'Series 1', color: t.color1 || '#03dac6', values: t.data.map(d => d.val) }];
                 }
-
                 const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
-                
                 const chartId = `chart-viz-${i}`;
                 visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:150px; margin-bottom:10px;"></div>`;
-                
                 setTimeout(() => {
                     const el = document.getElementById(chartId);
                     if(el) {
-                        // ApexCharts Series format: [{name, data}]
                         const apexSeries = series.map(s => ({ name: s.name, data: s.values }));
                         const colors = series.map(s => s.color);
                         renderChart(el, style, { labels, series: apexSeries }, { colors });
@@ -575,9 +565,7 @@ export const renderBoard = () => {
                 const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
                 const c1 = t.colorVal || t.color1 || '#00e676'; 
                 const c2 = t.color2 || '#ff1744';
-                // c2 is Progress Colour, c1 is Target Colour
                 const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
-                
                 visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
                 statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
             } else if (renderType === 'counter') {
@@ -611,7 +599,8 @@ export const renderBoard = () => {
                 const iconHTML = Visuals.createRAGIconHTML(status);
                 visualHTML = `<div class="ryg-icon-wrapper">${iconHTML}</div>`;
                 statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
-                        } else if (renderType === 'note') {                visualHTML = `<div class="note-render-container" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
+            } else if (renderType === 'note') {
+                visualHTML = `<div class="note-render-container" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
                 statsHTML = '';
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
@@ -622,17 +611,12 @@ export const renderBoard = () => {
                 statsHTML = '';
             } else if (renderType === 'countdown') {
                 const items = t.items || [];
-                // Sort ascending by date
                 items.sort((a,b) => new Date(a.date) - new Date(b.date));
-                
                 const style = t.displayStyle || 'list';
-                
                 if (style === 'bar') {
                     const chartId = `count-viz-${i}`;
                     visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:150px;"></div>`;
-                    
                     const itemsToRender = items.slice(0, 6);
-                    
                     setTimeout(() => {
                         const el = document.getElementById(chartId);
                         if(el) {
@@ -641,52 +625,15 @@ export const renderBoard = () => {
                                 renderChart(el, 'rangeBar', barData, {
                                     stroke: { width: 0 },
                                     plotOptions: { bar: { horizontal: true, distributed: true, barHeight: '50%', dataLabels: { hideOverflowingLabels: false } } },
-                                    dataLabels: {
-                                        enabled: true,
-                                        formatter: function(val, opts) {
-                                            const item = opts.w.config.series[opts.seriesIndex].data[opts.dataPointIndex];
-                                            return `${item.meta.diffDays} days`;
-                                        },
-                                        style: { colors: ['#f3f4f5', '#fff'] }
-                                    },
-                                    xaxis: {
-                                        type: 'numeric',
-                                        min: 0,
-                                        axisBorder: { show: false },
-                                        axisTicks: { show: false },
-                                        labels: { show: false }
-                                    },
-                                    annotations: {
-                                        xaxis: []
-                                    },
-                                    yaxis: {
-                                        show: true,
-                                        categories: barData.series[0].data.map(d => d.x),
-                                        reversed: true,
-                                        labels: { style: { colors: '#aaa' } }
-                                    },
-                                    grid: { show: false },
-                                    legend: { show: false },
+                                    dataLabels: { enabled: true, formatter: function(val, opts) { const item = opts.w.config.series[opts.seriesIndex].data[opts.dataPointIndex]; return `${item.meta.diffDays} days`; }, style: { colors: ['#f3f4f5', '#fff'] } },
+                                    xaxis: { type: 'numeric', min: 0, axisBorder: { show: false }, axisTicks: { show: false }, labels: { show: false } },
+                                    annotations: { xaxis: [] },
+                                    yaxis: { show: true, categories: barData.series[0].data.map(d => d.x), reversed: true, labels: { style: { colors: '#aaa' } } },
+                                    grid: { show: false }, legend: { show: false },
                                     colors: barData.series[0].data.map(d => d.fillColor),
-                                    tooltip: {
-                                        enabled: true,
-                                        custom: function({series, seriesIndex, dataPointIndex, w}) {
-                                            const item = w.config.series[seriesIndex].data[dataPointIndex];
-                                            const eventLabel = item.x;
-                                            const days = item.meta.diffDays;
-                                            const originalDate = item.meta.originalDate;
-                                            const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
-                                            return `<div class="apexcharts-tooltip-box">
-                                                        <div class="tooltip-title">${eventLabel}</div>
-                                                        <div class="tooltip-value">${eventDate}</div>
-                                                        <div class="tooltip-value">${days} days from today</div>
-                                                    </div>`;
-                                        }
-                                    }
+                                    tooltip: { enabled: true, custom: function({series, seriesIndex, dataPointIndex, w}) { const item = w.config.series[seriesIndex].data[dataPointIndex]; const eventLabel = item.x; const days = item.meta.diffDays; const originalDate = item.meta.originalDate; const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : ''; return `<div class="apexcharts-tooltip-box"><div class="tooltip-title">${eventLabel}</div><div class="tooltip-value">${eventDate}</div><div class="tooltip-value">${days} days from today</div></div>`; } }
                                 });
-                            } else {
-                                el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
-                            }
+                            } else { el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>'; }
                         }
                     }, 0);
                     statsHTML = '';
@@ -705,7 +652,6 @@ export const renderBoard = () => {
                 const cVal = t.colorVal || '#228B22';
                 const cBg = t.colorBg || '#696969';
                 const orient = t.orientation || 'horizontal';
-                
                 visualHTML = Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 60, orient);
                 statsHTML = `<div class="tracker-stats">${completed} / ${total} ${t.metric || ''}</div>`;
             }
@@ -715,11 +661,11 @@ export const renderBoard = () => {
             card.innerHTML += `<div class="tracker-desc">${t.desc}</div>`;
             card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
             card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
-            
             tGrid.appendChild(card);
         });
     }
 
+    // --- TEAM DATA RENDERING ---
     const sL = getEl('teamSuccessList'); 
     const aL = getEl('teamActivityList');
     if (sL) sL.innerHTML = ''; 
@@ -756,348 +702,30 @@ export const renderBoard = () => {
     const aip = getEl('additionalInfoPreview');
     if (aip) aip.innerHTML = parseMarkdown(State.additionalInfo) || "No additional info.";
 
-    const tGrid = getEl('trackerGrid');
-    if (tGrid) {
-        tGrid.innerHTML = '';
-        
-        State.trackers.forEach((t, i) => {
-            const card = document.createElement('div');
-            
-            let displaySize = t.size || '2x1';
-            // Legacy Mapping
-            if (displaySize === 'S') displaySize = '1x1';
-            if (displaySize === 'M') displaySize = '2x1';
-            if (displaySize === 'L') displaySize = '3x2';
-            if (displaySize === 'XL') displaySize = '3x2';
-
-            card.className = `tracker-card size-${displaySize} type-${t.type}`;
-            card.dataset.index = i;
-            
-            if (!document.body.classList.contains('publishing')) {
-                card.draggable = true;
-            }
-
-            card.onclick = () => {
-                 console.log("Card clicked. Type:", t.type, "Publishing:", document.body.classList.contains('publishing'));
-                 if (document.body.classList.contains('publishing')) {
-                     // Zoom restricted per type requirements
-                     const canZoom = ['line', 'bar', 'note', 'countdown', 'donut', 'waffle'].includes(t.type);
-                     if (canZoom) ZoomManager.openChartModal(i);
-                 } else {
-                     TrackerManager.openModal(i);
-                 }
-            };
-
-            // Zoom Icon
-            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'countdown', 'donut', 'waffle'].includes(t.type)) {
-                card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
-            }
-
-            // Last Updated
-            let timestampHTML = '';
-            if (t.lastUpdated) {
-                const date = new Date(t.lastUpdated);
-                const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                const dateStr = date.toLocaleDateString([], { day: 'numeric', month: 'short' });
-                timestampHTML = `<div class="last-updated" style="position:absolute; top:10px; left:12px; color:#aaa; font-size:0.65rem; pointer-events:none; z-index:5;">${dateStr} ${timeStr}</div>`;
-            }
-
-            const noteText = (t.notes || t.content || '').replace(/\\/g, "\\\\").replace(/'/g, "\\'").replace(/"/g, "&quot;").replace(/\n/g, "<br>");
-            if (noteText && t.type !== 'note') {
-                card.onmousemove = (e) => {
-                    if (!document.body.classList.contains('publishing')) return;
-                    // Prevent overwriting specific tooltips on chart points/bars/segments
-                    if (e.target.closest('circle, rect, path')) return;
-                    Visuals.showTooltip(e, noteText);
-                };
-                card.onmouseout = () => Visuals.hideTooltip();
-            }
-
-            let visualHTML = '';
-            let statsHTML = '';
-            
-            let renderType = t.type;
-            if (renderType === 'line' || renderType === 'bar' || renderType === 'line1' || renderType === 'line2') {
-                let labels = t.labels || [];
-                let series = t.series || [];
-                
-                if ((!t.labels || t.labels.length === 0) && t.data) {
-                    labels = t.data.map(d => d.label);
-                    series = [{ name: 'Series 1', color: t.color1 || '#03dac6', values: t.data.map(d => d.val) }];
-                }
-
-                const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
-                
-                const chartId = `chart-viz-${i}`;
-                visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:150px; margin-bottom:10px;"></div>`;
-                
-                setTimeout(() => {
-                    const el = document.getElementById(chartId);
-                    if(el) {
-                        // ApexCharts Series format: [{name, data}]
-                        const apexSeries = series.map(s => ({ name: s.name, data: s.values }));
-                        const colors = series.map(s => s.color);
-                        renderChart(el, style, { labels, series: apexSeries }, { colors });
-                    }
-                }, 0);
-            } else if (renderType === 'gauge') {
-                const pct = t.total>0 ? Math.round((t.completed/t.total)*100) : 0;
-                const c1 = t.colorVal || t.color1 || '#00e676'; 
-                const c2 = t.color2 || '#ff1744';
-                // c2 is Progress Colour, c1 is Target Colour
-                const grad = `conic-gradient(${c2} 0% ${pct}%, ${c1} ${pct}% 100%)`;
-                
-                visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
-                statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
-            } else if (renderType === 'counter') {
-                if (t.counters && t.counters.length > 0) {
-                    if (t.counters.length === 1) {
-                        const c = t.counters[0];
-                        const bgStyle = c.useBg ? `background-color:${c.bgColor}; padding:15px; border-radius:12px; display:inline-block; min-width:80px;` : '';
-                        visualHTML = `<div style="${bgStyle}"><div class="counter-display" style="color:${c.color}">${c.value}</div></div>`;
-                        statsHTML = `<div class="counter-sub">${c.label}</div>`;
-                    } else {
-                        visualHTML = '<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; width:100%; height:100%; align-items:center; align-content:center; overflow:hidden;">';
-                        const fontSize = t.counters.length > 4 ? '1.5rem' : '2rem';
-                        t.counters.forEach(c => {
-                            const bgStyle = c.useBg ? `background-color:${c.bgColor}; border-radius:8px; padding:5px 10px; box-shadow:0 2px 5px rgba(0,0,0,0.2);` : '';
-                            visualHTML += `<div style="text-align:center; flex: 1 0 30%;">
-                                <div style="${bgStyle} display:inline-block; width:100%;">
-                                    <div style="font-size:${fontSize}; font-weight:bold; color:${c.color}; line-height:1;">${c.value}</div>
-                                    <div style="font-size:0.7rem; color:#aaa; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.label}</div>
-                                </div>
-                            </div>`;
-                        });
-                        visualHTML += '</div>';
-                        statsHTML = '';
-                    }
-                } else {
-                    visualHTML = `<div class="counter-display" style="color:${t.color1 || '#e0e0e0'}">${t.value !== undefined ? t.value : 0}</div>`;
-                    statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
-                }
-            } else if (renderType === 'rag' || renderType === 'ryg') {
-                const status = t.status || 'grey';
-                const iconHTML = Visuals.createRAGIconHTML(status);
-                visualHTML = `<div class="ryg-icon-wrapper">${iconHTML}</div>`;
-                statsHTML = `<div class="counter-sub" style="margin-top:10px; font-weight:bold;">${t.message || ''}</div>`;
-                        } else if (renderType === 'note') {                visualHTML = `<div class="note-render-container" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
-                statsHTML = '';
-            } else if (renderType === 'donut') {
-                const labels = (t.dataPoints || []).map(dp => dp.label);
-                const values = (t.dataPoints || []).map(dp => dp.value);
-                const colors = (t.dataPoints || []).map(dp => dp.color);
-                const html = Visuals.createDonutChartSVG(labels, values, displaySize, colors);
-                visualHTML = `<div class="donut-chart">${html}</div>`;
-                statsHTML = '';
-            } else if (renderType === 'countdown') {
-                const items = t.items || [];
-                // Sort ascending by date
-                items.sort((a,b) => new Date(a.date) - new Date(b.date));
-                
-                const style = t.displayStyle || 'list';
-                
-                if (style === 'bar') {
-                    const chartId = `count-viz-${i}`;
-                    visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:150px;"></div>`;
-                    
-                    const itemsToRender = items.slice(0, 6);
-                    
-                    setTimeout(() => {
-                        const el = document.getElementById(chartId);
-                        if(el) {
-                            const barData = getCountdownBarData(itemsToRender);
-                            if (barData.series[0].data.length > 0) {
-                                renderChart(el, 'rangeBar', barData, {
-                                    stroke: { width: 0 },
-                                    plotOptions: { bar: { horizontal: true, distributed: true, barHeight: '50%', dataLabels: { hideOverflowingLabels: false } } },
-                                    dataLabels: {
-                                        enabled: true,
-                                        formatter: function(val, opts) {
-                                            const item = opts.w.config.series[opts.seriesIndex].data[opts.dataPointIndex];
-                                            return `${item.meta.diffDays} days`;
-                                        },
-                                        style: { colors: ['#f3f4f5', '#fff'] }
-                                    },
-                                    xaxis: {
-                                        type: 'numeric',
-                                        min: 0,
-                                        axisBorder: { show: false },
-                                        axisTicks: { show: false },
-                                        labels: { show: false }
-                                    },
-                                    annotations: {
-                                        xaxis: []
-                                    },
-                                    yaxis: {
-                                        show: true,
-                                        categories: barData.series[0].data.map(d => d.x),
-                                        reversed: true,
-                                        labels: { style: { colors: '#aaa' } }
-                                    },
-                                    grid: { show: false },
-                                    legend: { show: false },
-                                    colors: barData.series[0].data.map(d => d.fillColor),
-                                    tooltip: {
-                                        enabled: true,
-                                        custom: function({series, seriesIndex, dataPointIndex, w}) {
-                                            const item = w.config.series[seriesIndex].data[dataPointIndex];
-                                            const eventLabel = item.x;
-                                            const days = item.meta.diffDays;
-                                            const originalDate = item.meta.originalDate;
-                                            const eventDate = originalDate ? new Date(originalDate).toLocaleDateString('en-GB', {day: 'numeric', month: 'short', year: 'numeric'}) : '';
-                                            return `<div class="apexcharts-tooltip-box">
-                                                        <div class="tooltip-title">${eventLabel}</div>
-                                                        <div class="tooltip-value">${eventDate}</div>
-                                                        <div class="tooltip-value">${days} days from today</div>
-                                                    </div>`;
-                                        }
-                                    }
-                                });
-                            } else {
-                                el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No upcoming events.</div>';
-                            }
-                        }
-                    }, 0);
-                    statsHTML = '';
-                } else {
-                    visualHTML = '<div class="countdown-list" style="width:100%; height:100%; overflow-y:auto; padding:5px;">';
-                    items.forEach(item => {
-                        const f = formatCountdown(item.date);
-                        visualHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:2px;"><span style="font-size:0.9rem; color:#e0e0e0;"><span class="${f.flashClass}" style="margin-right:5px;">${f.icon}</span>${item.label}</span><span style="font-size:0.9rem; font-weight:bold; color:${f.color};">${f.text}</span></div>`;
-                    });
-                    visualHTML += '</div>';
-                    statsHTML = '';
-                }
-            } else if (renderType === 'completionBar') {
-                const completed = t.active || 0;
-                const total = t.total || 100;
-                const cVal = t.colorVal || '#228B22';
-                const cBg = t.colorBg || '#696969';
-                const orient = t.orientation || 'horizontal';
-                
-                visualHTML = Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 60, orient);
-                statsHTML = `<div class="tracker-stats">${completed} / ${total} ${t.metric || ''}</div>`;
-            }
-
-            card.innerHTML = timestampHTML;
-            card.innerHTML += `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
-            card.innerHTML += `<div class="tracker-desc">${t.desc}</div>`;
-            card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
-            card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
-            
-            tGrid.appendChild(card);
-        });
-    }
-
-
-
-    const grid = getEl('teamGrid');
-    if (grid) {
-        grid.innerHTML = '';
+    const teamGrid = getEl('teamGrid');
+    if (teamGrid) {
+        teamGrid.innerHTML = '';
         State.members.forEach((m, i) => {
-            let lw = ''; 
-            if(m.lastWeek && m.lastWeek.tasks) {
-                m.lastWeek.tasks.forEach((t,x) => {
-                    if(t.text.trim()) lw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleSuccess(${i},${x})"><span>${t.text}</span></li>`;
-                });
-            }
-
-            let tw = ''; 
-            if(m.thisWeek && m.thisWeek.tasks) {
-                m.thisWeek.tasks.forEach((t,x) => {
-                    if(t.text.trim()) tw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleActivity(${i},${x})"><span>${t.text}</span></li>`;
-                });
-            }
-
-            let nw = '';
-            if(m.nextWeek && m.nextWeek.tasks) {
-                m.nextWeek.tasks.forEach((t,x) => {
-                    if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleFuture(${i},${x})"><span>${t.text}</span></li>`;
-                });
-            }
-            
-            const getAvgPill = (loadArr) => {
-                let score = 0; let count = 0;
-                (loadArr||[]).forEach(v => {
-                    if(v === 'L') { score += 1; count++; } 
-                    else if(v === 'N') { score += 2; count++; } 
-                    else if(v === 'R') { score += 3; count++; }
-                    else { count++; } // Absent counts as 0, but increments count
-                });
-                const avg = count === 0 ? 0 : score / count;
-                let text = 'Medium'; let cls = 'status-busy'; // Default Amber
-                if(avg > 2.4) { text = 'High'; cls = 'status-over'; } // Green
-                else if(avg <= 1.4) { text = 'Low'; cls = 'status-under'; } // Red
-                
-                return `<div class="status-pill ${cls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${text}</div>`;
-            };
-
-            const c = document.createElement('div');
-            c.className = 'member-card';
-            c.onclick = () => UserManager.openUserModal(i);
-            
-            const mapDisplay = (v) => {
-                if (v === 'R') return 'H';
-                if (v === 'N') return 'M';
-                if (v === 'L') return 'L';
-                if (v === 'X') return 'A';
-                return v;
-            };
-
-            const thisLoadRaw = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N','X','X'];
-            const thisLoad = thisLoadRaw.length === 5 ? [...thisLoadRaw, 'X', 'X'] : thisLoadRaw;
-            const thisOc = (m.thisWeek && m.thisWeek.onCall) ? m.thisWeek.onCall : [false,false,false,false,false,false,false];
-            const mgThis = thisLoad.map((v,k) => {
-                const isOc = thisOc[k] ? '<div style="font-size:0.5rem; position:absolute; bottom:1px; right:1px; color:#00FFFF;">☎</div>' : '';
-                return `<div class="dm-box" style="position:relative;"><span class="dm-day">${['M','T','W','T','F','S','S'][k]}</span><span class="dm-val val-${v}">${mapDisplay(v)}</span>${isOc}</div>`;
-            }).join('');
-
-            const nextLoadRaw = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N','X','X'];
-            const nextLoad = nextLoadRaw.length === 5 ? [...nextLoadRaw, 'X', 'X'] : nextLoadRaw;
-            const nextOc = (m.nextWeek && m.nextWeek.onCall) ? m.nextWeek.onCall : [false,false,false,false,false,false,false];
-            const mgNext = nextLoad.map((v,k) => {
-                const isOc = nextOc[k] ? '<div style="font-size:0.5rem; position:absolute; bottom:1px; right:1px; color:#00FFFF;">☎</div>' : '';
-                return `<div class="dm-box" style="position:relative;"><span class="dm-day">${['M','T','W','T','F','S','S'][k]}</span><span class="dm-val val-${v}">${mapDisplay(v)}</span>${isOc}</div>`;
-            }).join('');
-
+            let lw = ''; if(m.lastWeek && m.lastWeek.tasks) { m.lastWeek.tasks.forEach((t,x) => { if(t.text.trim()) lw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleSuccess(${i},${x})"><span>${t.text}</span></li>`; }); }
+            let tw = ''; if(m.thisWeek && m.thisWeek.tasks) { m.thisWeek.tasks.forEach((t,x) => { if(t.text.trim()) tw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleActivity(${i},${x})"><span>${t.text}</span></li>`; }); }
+            let nw = ''; if(m.nextWeek && m.nextWeek.tasks) { m.nextWeek.tasks.forEach((t,x) => { if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleFuture(${i},${x})"><span>${t.text}</span></li>`; }); }
+            const getAvgPill = (loadArr) => { let score = 0; let count = 0; (loadArr||[]).forEach(v => { if(v === 'L') { score += 1; count++; } else if(v === 'N') { score += 2; count++; } else if(v === 'R') { score += 3; count++; } else { count++; } }); const avg = count === 0 ? 0 : score / count; let text = 'Medium'; let cls = 'status-busy'; if(avg > 2.4) { text = 'High'; cls = 'status-over'; } else if(avg <= 1.4) { text = 'Low'; cls = 'status-under'; } return `<div class="status-pill ${cls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${text}</div>`; };
+            const c = document.createElement('div'); c.className = 'member-card'; c.onclick = () => UserManager.openUserModal(i);
+            const mapDisplay = (v) => { if (v === 'R') return 'H'; if (v === 'N') return 'M'; if (v === 'L') return 'L'; if (v === 'X') return 'A'; return v; };
+            const thisLoadRaw = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N','X','X']; const thisLoad = thisLoadRaw.length === 5 ? [...thisLoadRaw, 'X', 'X'] : thisLoadRaw; const thisOc = (m.thisWeek && m.thisWeek.onCall) ? m.thisWeek.onCall : [false,false,false,false,false,false,false];
+            const mgThis = thisLoad.map((v,k) => { const isOc = thisOc[k] ? '<div style="font-size:0.5rem; position:absolute; bottom:1px; right:1px; color:#00FFFF;">☎</div>' : ''; return `<div class="dm-box" style="position:relative;"><span class="dm-day">${['M','T','W','T','F','S','S'][k]}</span><span class="dm-val val-${v}">${mapDisplay(v)}</span>${isOc}</div>`; }).join('');
+            const nextLoadRaw = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N','X','X']; const nextLoad = nextLoadRaw.length === 5 ? [...nextLoadRaw, 'X', 'X'] : nextLoadRaw; const nextOc = (m.nextWeek && m.nextWeek.onCall) ? m.nextWeek.onCall : [false,false,false,false,false,false,false];
+            const mgNext = nextLoad.map((v,k) => { const isOc = nextOc[k] ? '<div style="font-size:0.5rem; position:absolute; bottom:1px; right:1px; color:#00FFFF;">☎</div>' : ''; return `<div class="dm-box" style="position:relative;"><span class="dm-day">${['M','T','W','T','F','S','S'][k]}</span><span class="dm-val val-${v}">${mapDisplay(v)}</span>${isOc}</div>`; }).join('');
             c.innerHTML = `<div class="member-header">${m.name}</div>`;
-            
-            let content = `<div class="member-card-content">`;
-            content += `<div class="card-col"><div class="col-header">Last Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().last.split(' - ')[0]})</span></div>`;
-            content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${lw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
+            let content = `<div class="member-card-content">`; content += `<div class="card-col"><div class="col-header">Last Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().last.split(' - ')[0]})</span></div><ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${lw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul></div>`;
+            content += `<div class="card-col"><div class="col-header">Current Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().current.split(' - ')[0]})</span></div><div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.thisWeek ? m.thisWeek.load : [])}</div><ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${tw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul><div class="daily-mini-grid" style="margin-top:auto;">${mgThis}</div></div>`;
+            content += `<div class="card-col"><div class="col-header">Next Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().next.split(' - ')[0]})</span></div><div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.nextWeek ? m.nextWeek.load : [])}</div><ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${nw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul><div class="daily-mini-grid" style="margin-top:auto;">${mgNext}</div></div>`;
             content += `</div>`;
-
-            content += `<div class="card-col"><div class="col-header">Current Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().current.split(' - ')[0]})</span></div>`;
-            content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.thisWeek ? m.thisWeek.load : [])}</div>`;
-            content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${tw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
-            content += `<div class="daily-mini-grid" style="margin-top:auto;">${mgThis}</div>`;
-            content += `</div>`;
-
-            content += `<div class="card-col"><div class="col-header">Next Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().next.split(' - ')[0]})</span></div>`;
-            content += `<div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.nextWeek ? m.nextWeek.load : [])}</div>`;
-            content += `<ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${nw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul>`;
-            content += `<div class="daily-mini-grid" style="margin-top:auto;">${mgNext}</div>`;
-            content += `</div>`;
-
-            content += `</div>`;
-            
-            if (m.notes) {
-                content += `<div style="padding: 10px 1.5rem; border-top: 1px solid #333; font-size: 0.85rem; color: #ccc;">${m.notes}</div>`;
-            }
-            
-            c.innerHTML += content;
-
-            grid.appendChild(c);
+            if (m.notes) { content += `<div style="padding: 10px 1.5rem; border-top: 1px solid #333; font-size: 0.85rem; color: #ccc;">${m.notes}</div>`; }
+            c.innerHTML += content; teamGrid.appendChild(c);
         });
     }
 };
-
-export const ZoomManager = {
-    openGanttModal: () => {
-        const titleEl = getEl('zoomTitle');
-        if (titleEl) titleEl.innerText = "Absenteeism Tracker";
-        
-        const r = getRanges();
         const content = Visuals.createGanttChartSVG(State.members, r.current, r.next);
         
         const bodyEl = getEl('zoomBody');
