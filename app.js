@@ -1324,6 +1324,12 @@ export const TrackerManager = {
                 console.warn(`Div not found: ${divId}`);
             }
         });
+        
+        // Explicit fallback for Completion Bar
+        if (inputType === 'completionBar') {
+            const cbDiv = getEl('completionbarInputs');
+            if (cbDiv) cbDiv.style.display = 'block';
+        }
 
         const sizeCont = getEl('sizeContainer');
         if(sizeCont) {
