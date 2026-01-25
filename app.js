@@ -1808,17 +1808,18 @@ export const TrackerManager = {
     addCountdownRow(label = '', date = '') {
         const container = getEl('countdownDataContainer');
         if (!container) return;
-        if (container.children.length >= 10) return App.alert("Max 10 events allowed.");
+        if (container.children.length >= 128) return App.alert("Max 128 events allowed.");
 
         const div = document.createElement('div');
         div.className = 'countdown-row';
         div.style.display = 'flex';
-        div.style.gap = '10px';
+        div.style.gap = '8px';
         div.style.marginBottom = '5px';
+        div.style.alignItems = 'center';
         div.innerHTML = `
-            <input type="text" class="cd-label" maxlength="15" placeholder="Event Label" value="${label}" style="flex: 2;">
-            <input type="date" class="cd-date" value="${date}" style="flex: 1; background:var(--input-bg); color:#fff; color-scheme:dark;">
-            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeCountdownRow(this)">&times;</button>
+            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px; height:34px; flex: 0 0 34px;" title="Delete Event" onclick="TrackerManager.removeCountdownRow(this)">&times;</button>
+            <input type="text" class="cd-label" maxlength="15" placeholder="Event Label" value="${label}" style="flex: 2; height:34px;">
+            <input type="date" class="cd-date" value="${date}" style="flex: 1; background:var(--input-bg); color:#fff; color-scheme:dark; height:34px;">
         `;
         container.appendChild(div);
     },
