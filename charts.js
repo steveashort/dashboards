@@ -86,6 +86,7 @@ export const renderChart = (el, type, data, options) => {
 export const calculateTrackerSize = (tracker) => {
     if (['gauge', 'rag', 'counter', 'ryg', 'donut', 'completionBar'].includes(tracker.type)) return 'S';
     if (tracker.type === 'countdown') {
+        if (tracker.size) return tracker.size;
         return tracker.displayStyle === 'bar' ? 'M' : 'S';
     }
     if (['line', 'bar', 'note', 'countdown'].includes(tracker.type)) return 'M'; 

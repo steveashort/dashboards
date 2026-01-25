@@ -404,10 +404,12 @@ export const renderBoard = () => {
                     const chartId = `count-viz-${i}`;
                     visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:150px;"></div>`;
                     
+                    const itemsToRender = items.slice(0, 6);
+                    
                     setTimeout(() => {
                         const el = document.getElementById(chartId);
                         if(el) {
-                            const barData = getCountdownBarData(items);
+                            const barData = getCountdownBarData(itemsToRender);
                             if (barData.series[0].data.length > 0) {
                                 renderChart(el, 'rangeBar', barData, {
                                     stroke: { width: 0 },
@@ -1179,7 +1181,7 @@ export const TrackerManager = {
         });
 
         const sizeCont = getEl('sizeContainer');
-        if(sizeCont) sizeCont.style.display = 'none';
+        if(sizeCont) sizeCont.style.display = (['line', 'gauge', 'rag', 'counter', 'note', 'donut', 'completionBar', 'countdown'].includes(inputType)) ? 'block' : 'none';
 
         if (inputType === 'line') {
              this.renderTimeTable();
@@ -1917,7 +1919,7 @@ export const TrackerManager = {
             
             const notesIn = getEl('tkCountdownNotes');
             newTracker.notes = notesIn ? notesIn.value : '';
-            newTracker.size = 'M';
+            newTracker.size = size;
         }
 
         if(index === -1) {
