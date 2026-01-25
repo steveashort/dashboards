@@ -617,7 +617,7 @@ export const renderBoard = () => {
                 const cBg = t.colorBg || '#696969';
                 const orient = t.orientation || 'horizontal';
                 
-                visualHTML = Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 140, orient);
+                visualHTML = Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 60, orient);
                 statsHTML = `<div class="tracker-stats">${completed} / ${total} ${t.metric || ''}</div>`;
             }
 

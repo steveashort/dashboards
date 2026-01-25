@@ -599,18 +599,18 @@ export const Visuals = {
             
             // Labels
             if (pct > 15) {
-                svg += `<text x="${pct / 2}" y="50" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="40">${completed}</text>`;
+                svg += `<text x="${pct / 2}" y="50" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="25">${completed}</text>`;
             }
             
             if (remPct > 15) {
                 const remVal = total - completed;
                 if (remVal > 0) {
-                    svg += `<text x="${pct + (remPct / 2)}" y="50" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="40">${remVal}</text>`;
+                    svg += `<text x="${pct + (remPct / 2)}" y="50" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="25">${remVal}</text>`;
                 }
             }
             
             svg += `</svg>`;
-            return `<div style="width:100%; height:${h}px; border-radius:${radius}px; overflow:hidden;">${svg}</div>`;
+            return `<div style="width:50%; margin: 0 auto; height:${h}px; border-radius:${radius}px; overflow:hidden;">${svg}</div>`;
         }
     },
 
