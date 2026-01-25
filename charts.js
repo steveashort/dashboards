@@ -543,33 +543,31 @@ export const Visuals = {
         const safeTotal = total > 0 ? total : 1;
         const pct = Math.min(100, Math.max(0, (completed / safeTotal) * 100));
         const remPct = 100 - pct;
-        const remVal = total - completed;
         
-        // Common Label Logic
-        const showLabel = (p) => p > 15;
-        const labelStyle = 'font-size:14px; font-weight:bold; color:#fff; text-shadow:0 1px 2px rgba(0,0,0,0.8); overflow:hidden; white-space:nowrap; text-overflow:ellipsis;';
+        // Consistent Font Styles
+        const valStyle = 'font-size:16px; font-weight:bold; color:#fff; line-height:1.1;';
+        const labelStyle = 'font-size:10px; font-weight:normal; color:rgba(255,255,255,0.9); text-transform:uppercase; letter-spacing:0.5px;';
+        const containerStyle = 'display:flex; flex-direction:column; align-items:center; justify-content:center; text-shadow:0 1px 2px rgba(0,0,0,0.8); overflow:hidden;';
         
         if (orientation === 'vertical') {
-            // Vertical: Ignore 'height' param, use 100% of container. Fixed width.
             return `
-                <div style="display:flex; flex-direction:column-reverse; width:50%; max-width:60px; height:100%; margin:0 auto; border-radius:4px; overflow:hidden; background:${remainingColor};">
-                    <div style="height:${pct}%; background:${activeColor}; display:flex; align-items:center; justify-content:center; transition:height 0.3s;">
-                        ${showLabel(pct) ? `<span style="${labelStyle}">${completed}</span>` : ''}
+                <div style="display:flex; flex-direction:column-reverse; width:50%; max-width:70px; height:100%; margin:0 auto; border-radius:6px; overflow:hidden; background:${remainingColor}; border:1px solid rgba(255,255,255,0.1);">
+                    <div style="height:${pct}%; background:${activeColor}; ${containerStyle} transition:height 0.3s;">
+                        ${pct > 20 ? `<div style="${valStyle}">${completed}</div><div style="${labelStyle}">Progress</div>` : ''}
                     </div>
-                    <div style="height:${remPct}%; background:${remainingColor}; display:flex; align-items:center; justify-content:center; transition:height 0.3s;">
-                        ${showLabel(remPct) && remVal > 0 ? `<span style="${labelStyle}">${remVal}</span>` : ''}
+                    <div style="height:${remPct}%; background:${remainingColor}; ${containerStyle} transition:height 0.3s;">
+                        ${remPct > 20 ? `<div style="${valStyle}">${total}</div><div style="${labelStyle}">Target</div>` : ''}
                     </div>
                 </div>
             `;
         } else {
-            // Horizontal: Use 'height' param. Width 50%.
             return `
-                <div style="display:flex; width:80%; max-width:250px; height:${height}px; margin:0 auto; border-radius:4px; overflow:hidden; background:${remainingColor};">
-                    <div style="width:${pct}%; background:${activeColor}; display:flex; align-items:center; justify-content:center; transition:width 0.3s;">
-                        ${showLabel(pct) ? `<span style="${labelStyle}">${completed}</span>` : ''}
+                <div style="display:flex; width:90%; max-width:300px; height:${height}px; margin:0 auto; border-radius:6px; overflow:hidden; background:${remainingColor}; border:1px solid rgba(255,255,255,0.1);">
+                    <div style="width:${pct}%; background:${activeColor}; ${containerStyle} transition:width 0.3s;">
+                        ${pct > 15 ? `<div style="${valStyle}">${completed}</div><div style="${labelStyle}">Progress</div>` : ''}
                     </div>
-                    <div style="width:${remPct}%; background:${remainingColor}; display:flex; align-items:center; justify-content:center; transition:width 0.3s;">
-                        ${showLabel(remPct) && remVal > 0 ? `<span style="${labelStyle}">${remVal}</span>` : ''}
+                    <div style="width:${remPct}%; background:${remainingColor}; ${containerStyle} transition:width 0.3s;">
+                        ${remPct > 15 ? `<div style="${valStyle}">${total}</div><div style="${labelStyle}">Target</div>` : ''}
                     </div>
                 </div>
             `;
