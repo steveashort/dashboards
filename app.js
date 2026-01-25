@@ -14,6 +14,7 @@ let State = {
         { id: 'default', name: 'Tracker 1', trackers: [] }
     ],
     activeTabId: 'default',
+    assignments: [],
     members: [],
     editingTrackerIndex: -1,
     currentTrackerType: 'gauge'
@@ -56,6 +57,16 @@ export const initApp = () => {
         const defTab = State.trackerTabs.find(t => t.id === 'default');
         if(defTab) defTab.trackers = [...State.trackers];
         State.trackers = [];
+    }
+
+    // Assignments defaults
+    if (!State.assignments || State.assignments.length === 0) {
+        State.assignments = [
+            { name: 'Firewatch', class: 'Role', priority: 'High', color: '#ff1744', description: 'Monitoring critical alerts.', startDate:'', endDate:'' },
+            { name: '2nd Line Support (Windows Server)', class: 'Role', priority: 'Med', color: '#2979ff', description: 'Server maintenance and support.', startDate:'', endDate:'' },
+            { name: '2nd Line Support (Unix Server)', class: 'Role', priority: 'Med', color: '#00e676', description: 'Unix/Linux server support.', startDate:'', endDate:'' },
+            { name: '2nd Line Support (Azure)', class: 'Role', priority: 'Med', color: '#bb86fc', description: 'Cloud infrastructure support.', startDate:'', endDate:'' }
+        ];
     }
 
     const updateDateUI = () => {
@@ -753,6 +764,9 @@ export const renderBoard = () => {
     if (aip) aip.innerHTML = parseMarkdown(State.additionalInfo) || "No additional info.";
 
     const teamGrid = getEl('teamGrid');
+    if (State.activeTabId === 'team') {
+        AssignmentManager.renderAssignments();
+    }
     if (teamGrid) {
         teamGrid.innerHTML = '';
         State.members.forEach((m, i) => {
@@ -2406,6 +2420,112 @@ export const OverviewManager = {
             getEl('zoomTitle').innerText = "Additional Info";
             getEl('zoomBody').innerHTML = `<div class="zoomed-content">${parseMarkdown(State.additionalInfo)}</div>`;
             ModalManager.openModal('zoomModal');
+        }
+    }
+};
+
+export const AssignmentManager = {
+    renderAssignments: () => {
+        const grid = getEl('assignmentsGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        State.assignments.forEach((a, i) => {
+            const card = document.createElement('div');
+            card.className = 'assignment-card';
+            card.style.background = 'var(--card-bg)';
+            card.style.border = '1px solid var(--border)';
+            card.style.borderRadius = '8px';
+            card.style.padding = '1rem';
+            card.style.position = 'relative';
+            card.style.cursor = 'pointer';
+            card.style.borderLeft = `4px solid ${a.color || '#03dac6'}`;
+            card.onclick = () => AssignmentManager.openModal(i);
+
+            let html = `<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+                            <h4 style="margin:0; font-size:1rem; color:var(--text-main);">${a.name}</h4>
+                            <span style="font-size:0.7rem; background:rgba(255,255,255,0.1); padding:2px 6px; border-radius:4px;">${a.class}</span>
+                        </div>`;
+            
+            if (a.description) {
+                html += `<div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.8rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${a.description}</div>`;
+            }
+
+            html += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#888;">`;
+            
+            let dateText = "Ongoing";
+            if (a.startDate || a.endDate) {
+                dateText = `${a.startDate ? formatDate(new Date(a.startDate)) : '...'} - ${a.endDate ? formatDate(new Date(a.endDate)) : '...'}`;
+            }
+            html += `<span>${dateText}</span>`;
+            
+            const pColor = a.priority === 'High' ? '#ff1744' : (a.priority === 'Med' ? '#ffb300' : '#00e676');
+            html += `<span style="color:${pColor}; font-weight:bold;">${a.priority}</span>`;
+            
+            html += `</div>`;
+            
+            card.innerHTML = html;
+            grid.appendChild(card);
+        });
+    },
+    openModal: (index) => {
+        if(document.body.classList.contains('publishing')) return;
+        getEl('assignmentModalTitle').innerText = index === -1 ? 'Add Assignment' : 'Edit Assignment';
+        getEl('editAssignmentIndex').value = index;
+        
+        const a = index > -1 ? State.assignments[index] : { name: '', description: '', class: 'Task', priority: 'Med', startDate: '', endDate: '', color: '#03dac6' };
+        
+        getEl('asName').value = a.name;
+        getEl('asDesc').value = a.description;
+        getEl('asClass').value = a.class;
+        getEl('asStart').value = a.startDate;
+        getEl('asEnd').value = a.endDate;
+        const colIn = getEl('asColor');
+        colIn.value = a.color;
+        colIn.style.backgroundColor = a.color;
+        
+        const pRad = document.querySelector(`input[name="asPriority"][value="${a.priority}"]`);
+        if(pRad) pRad.checked = true;
+        
+        getEl('btnDelAssignment').style.display = index === -1 ? 'none' : 'block';
+        
+        ModalManager.openModal('assignmentModal');
+    },
+    submitAssignment: () => {
+        const index = parseInt(getEl('editAssignmentIndex').value);
+        const name = getEl('asName').value.trim();
+        if(!name) return App.alert("Name is required");
+        
+        const priorityRad = document.querySelector('input[name="asPriority"]:checked');
+        
+        const newAssignment = {
+            name,
+            description: getEl('asDesc').value.trim(),
+            class: getEl('asClass').value,
+            priority: priorityRad ? priorityRad.value : 'Med',
+            startDate: getEl('asStart').value,
+            endDate: getEl('asEnd').value,
+            color: getEl('asColor').value
+        };
+        
+        if(index === -1) {
+            if(State.assignments.length >= 32) return App.alert("Max 32 assignments reached.");
+            State.assignments.push(newAssignment);
+        } else {
+            State.assignments[index] = newAssignment;
+        }
+        
+        ModalManager.closeModal('assignmentModal');
+        AssignmentManager.renderAssignments();
+    },
+    deleteAssignment: () => {
+        const index = parseInt(getEl('editAssignmentIndex').value);
+        if(index > -1) {
+            App.confirm("Delete this assignment?", () => {
+                State.assignments.splice(index, 1);
+                ModalManager.closeModal('assignmentModal');
+                AssignmentManager.renderAssignments();
+            });
         }
     }
 };

@@ -76,6 +76,14 @@
                     </div>
                 </div>
                 
+                <div id="assignmentsSection" style="margin-bottom: 3rem;">
+                    <div class="section-header">
+                        <h3 style="color:var(--accent); font-weight:300;">Assignments</h3>
+                        <button class="btn" onclick="AssignmentManager.openModal(-1)">+ Add Assignment</button>
+                    </div>
+                    <div id="assignmentsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;"></div>
+                </div>
+                
                 <div id="ganttSection" style="margin-bottom: 3rem;">
                     <div class="section-header">
                         <h3 style="color:var(--accent); font-weight:300;">Resource Planner</h3>
@@ -619,6 +627,62 @@
 
                                                                     </div>
 
+    <div class="modal-overlay" id="assignmentModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="assignmentModalTitle">Add Assignment</h3>
+                <button class="btn" onclick="ModalManager.closeModal('assignmentModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editAssignmentIndex" value="-1">
+                <div class="input-group">
+                    <label>Name</label>
+                    <input type="text" id="asName" placeholder="e.g. Firewatch">
+                </div>
+                <div class="input-group">
+                    <label>Description</label>
+                    <textarea id="asDesc" style="height: 60px; font-size: 0.85rem;" placeholder="Brief description..."></textarea>
+                </div>
+                <div class="form-row" style="gap: 1rem; margin-bottom: 1rem;">
+                    <div class="input-group">
+                        <label>Class</label>
+                        <select id="asClass" style="width: 100%; padding: 8px; background: var(--input-bg); color: #fff; border: 1px solid var(--border); border-radius: 4px;">
+                            <option value="Role">Role</option>
+                            <option value="Task">Task</option>
+                            <option value="Project">Project</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
+                        <label>Priority</label>
+                        <div style="display: flex; gap: 10px; margin-top: 8px;">
+                            <label style="font-size:0.85rem;"><input type="radio" name="asPriority" value="High"> High</label>
+                            <label style="font-size:0.85rem;"><input type="radio" name="asPriority" value="Med" checked> Med</label>
+                            <label style="font-size:0.85rem;"><input type="radio" name="asPriority" value="Low"> Low</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="form-row" style="gap: 1rem; margin-bottom: 1rem;">
+                    <div class="input-group">
+                        <label>Start Date</label>
+                        <input type="date" id="asStart" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                    </div>
+                    <div class="input-group">
+                        <label>End Date</label>
+                        <input type="date" id="asEnd" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Colour tag</label>
+                    <input type="text" readonly class="color-input" id="asColor" value="#03dac6" style="cursor:pointer;">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="AssignmentManager.deleteAssignment()" id="btnDelAssignment">Delete</button>
+                <button class="btn btn-primary" onclick="AssignmentManager.submitAssignment()">Save</button>
+            </div>
+        </div>
+    </div>
+
     <!-- LOAD SCRIPT LAST to ensure it's available -->
     <!-- Changed to type="module" and added an export to window -->
     <script type="module">
@@ -627,6 +691,7 @@
         // When module loads, expose it to window so HTML onclick works
         window.App = AppModule.App;
         window.UserManager = AppModule.UserManager;
+        window.AssignmentManager = AppModule.AssignmentManager;
         window.TrackerManager = AppModule.TrackerManager;
         window.OverviewManager = AppModule.OverviewManager;
         window.ModalManager = AppModule.ModalManager;
