@@ -393,8 +393,27 @@ export const renderBoard = () => {
                 visualHTML = `<div class="pie-chart" style="background:${grad}"><div class="pie-overlay"><div class="pie-pct">${pct}%</div></div></div>`;
                 statsHTML = `<div class="tracker-stats">${t.completed} / ${t.total} ${t.metric}</div>`;
             } else if (renderType === 'counter') {
-                visualHTML = `<div class="counter-display" style="color:${t.color1}">${t.value}</div>`;
-                statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
+                if (t.counters && t.counters.length > 0) {
+                    if (t.counters.length === 1) {
+                        const c = t.counters[0];
+                        visualHTML = `<div class="counter-display" style="color:${c.color}">${c.value}</div>`;
+                        statsHTML = `<div class="counter-sub">${c.label}</div>`;
+                    } else {
+                        visualHTML = '<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px; width:100%; height:100%; align-items:center; align-content:center; overflow:hidden;">';
+                        const fontSize = t.counters.length > 4 ? '1.5rem' : '2rem';
+                        t.counters.forEach(c => {
+                            visualHTML += `<div style="text-align:center; flex: 1 0 30%;">
+                                <div style="font-size:${fontSize}; font-weight:bold; color:${c.color}; line-height:1;">${c.value}</div>
+                                <div style="font-size:0.7rem; color:#aaa; margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${c.label}</div>
+                            </div>`;
+                        });
+                        visualHTML += '</div>';
+                        statsHTML = '';
+                    }
+                } else {
+                    visualHTML = `<div class="counter-display" style="color:${t.color1 || '#e0e0e0'}">${t.value !== undefined ? t.value : 0}</div>`;
+                    statsHTML = `<div class="counter-sub">${t.subtitle || ''}</div>`;
+                }
             } else if (renderType === 'rag' || renderType === 'ryg') {
                 const status = t.status || 'grey';
                 const iconHTML = Visuals.createRAGIconHTML(status);
@@ -680,7 +699,18 @@ export const ZoomManager = {
                     }
                 };
             } else if (renderType === 'counter') {
-                content = `<div style="font-size: 6rem; font-weight:300; color:${t.color1}; text-shadow:0 0 20px ${t.color1}">${t.value}</div><div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${t.subtitle}</div>`;
+                if (t.counters && t.counters.length > 0) {
+                    content = '<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:40px; width:100%; height:100%; align-items:center; align-content:center;">';
+                    t.counters.forEach(c => {
+                        content += `<div style="text-align:center;">
+                            <div style="font-size:5rem; font-weight:300; color:${c.color}; text-shadow:0 0 20px ${c.color}40;">${c.value}</div>
+                            <div style="font-size:1.5rem; color:#aaa; margin-top:10px;">${c.label}</div>
+                        </div>`;
+                    });
+                    content += '</div>';
+                } else {
+                    content = `<div style="font-size: 6rem; font-weight:300; color:${t.color1 || '#e0e0e0'}; text-shadow:0 0 20px ${t.color1 || '#e0e0e0'}">${t.value !== undefined ? t.value : 0}</div><div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${t.subtitle || ''}</div>`;
+                }
             } else if (renderType === 'rag' || renderType === 'ryg') {
                 const status = t.status || 'grey';
                 const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
