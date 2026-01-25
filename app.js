@@ -323,8 +323,8 @@ export const renderBoard = () => {
             card.onclick = () => {
                  console.log("Card clicked. Type:", t.type, "Publishing:", document.body.classList.contains('publishing'));
                  if (document.body.classList.contains('publishing')) {
-                     // Zoom requested for: Time Series (line/bar), Note Tracker (note), Date Tracker (rag/ryg), Schedule Tracker (waffle)
-                     const canZoom = ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'completionBar'].includes(t.type);
+                     // Zoom restricted per type requirements
+                     const canZoom = ['line', 'bar', 'note', 'countdown', 'donut', 'completionBar', 'waffle'].includes(t.type);
                      if (canZoom) ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
@@ -332,7 +332,7 @@ export const renderBoard = () => {
             };
 
             // Zoom Icon
-            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'rag', 'ryg', 'waffle', 'donut', 'completionBar'].includes(t.type)) {
+            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'countdown', 'donut', 'completionBar', 'waffle'].includes(t.type)) {
                 card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
             }
 
