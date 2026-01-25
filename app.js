@@ -726,6 +726,12 @@ export const renderBoard = () => {
         });
     }
 };
+export const ZoomManager = {
+    openGanttModal: () => {
+        const titleEl = getEl('zoomTitle');
+        if (titleEl) titleEl.innerText = "Absenteeism Tracker";
+        
+        const r = getRanges();
         const content = Visuals.createGanttChartSVG(State.members, r.current, r.next);
         
         const bodyEl = getEl('zoomBody');
