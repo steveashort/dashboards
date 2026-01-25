@@ -1019,7 +1019,8 @@ export const TrackerManager = {
         const descIn = getEl('tkDesc');
         if (descIn) descIn.value = tracker ? tracker.desc : '';
         
-        let sizeVal = tracker ? (tracker.size || '2x1') : '2x1';
+        // Default Size: completionBar defaults to 1x1, others to 2x1
+        let sizeVal = tracker ? (tracker.size || '2x1') : (type === 'completionBar' ? '1x1' : '2x1');
         // Map Legacy Sizes
         if (sizeVal === 'S') sizeVal = '1x1';
         if (sizeVal === 'M') sizeVal = '2x1';
@@ -1270,7 +1271,7 @@ export const TrackerManager = {
                                         const cvIn = getEl('tkCompBarColorVal');
                                         if (cvIn) { cvIn.value = tracker ? (tracker.colorVal || '#228B22') : '#228B22'; cvIn.style.backgroundColor = cvIn.value; }
                                         
-                                        const orient = tracker ? (tracker.orientation || 'horizontal') : 'horizontal';
+                                        const orient = tracker ? (tracker.orientation || 'vertical') : 'vertical';
                                         const orientRad = document.querySelector(`input[name="tkCompBarOrient"][value="${orient}"]`);
                                         if(orientRad) orientRad.checked = true;
                                     }
