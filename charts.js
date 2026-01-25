@@ -539,52 +539,79 @@ export const Visuals = {
         return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">${paths}${annotations}<circle cx="${cx}" cy="${cy}" r="${r - thickness}" fill="transparent"/>${totalText}</svg>`;
     },
 
-    createCompletionBarSVG: (completed, total, activeColor, remainingColor, height = 40) => {
-        const w = 100; // Percent based width
-        const h = height;
+    createCompletionBarSVG: (completed, total, activeColor, remainingColor, height = 40, orientation = 'horizontal') => {
         const radius = 4;
-        
         const safeTotal = total > 0 ? total : 1;
         const pct = Math.min(100, Math.max(0, (completed / safeTotal) * 100));
         const remPct = 100 - pct;
         
-        let svg = `<svg width="100%" height="${h}" viewBox="0 0 100 ${h}" preserveAspectRatio="none">`;
+        let svg = '';
         
-        // Active bar (left)
-        if (pct > 0) {
-            svg += `<rect x="0" y="0" width="${pct}" height="${h}" fill="${activeColor}" rx="${remPct === 0 ? radius : 0}" ry="${remPct === 0 ? radius : 0}"/>`;
-            // Only curve left side if not full
-            if (pct < 100) {
-                 // We can't easily do individual corner rounding in simple SVG rect without path, but let's try a simple clip or mask approach?
-                 // Simpler: Just draw a rect. The container overflow:hidden usually handles card rounding.
-                 // For the bar itself, if we want rounded ends:
-                 // We can draw two rects or a path.
-                 // Let's keep it rectangular for stacked look, maybe round the whole container?
+        if (orientation === 'vertical') {
+            const w = height < 100 ? 60 : 120; // Auto-width based on height context
+            // In vertical mode, 'height' param effectively becomes height, but we need width control.
+            // Actually, in grid card, height is fixed (160px). Width is fluid.
+            // Let's use viewBox 0 0 100 100 and scale.
+            
+            // For Vertical:
+            // Top rect is Remaining (starts at 0, height = remPct)
+            // Bottom rect is Completed (starts at remPct, height = pct)
+            
+            svg = `<svg width="100%" height="100%" viewBox="0 0 60 100" preserveAspectRatio="xMidYMid meet">`;
+            
+            // Remaining (Top)
+            if (remPct > 0) {
+                svg += `<rect x="0" y="0" width="60" height="${remPct}" fill="${remainingColor}" />`;
+                if (remPct > 15) {
+                    const remVal = total - completed;
+                    if (remVal > 0) {
+                        svg += `<text x="30" y="${remPct/2}" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="14">${remVal}</text>`;
+                    }
+                }
             }
-        }
-        
-        // Remaining bar (right)
-        if (remPct > 0) {
-            svg += `<rect x="${pct}" y="0" width="${remPct}" height="${h}" fill="${remainingColor}" />`;
-        }
-        
-        // Text Labels (centered in their segments if wide enough)
-        if (pct > 15) {
-            svg += `<text x="${pct / 2}" y="${h/2}" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="${h/2.5}px">${completed}</text>`;
-        }
-        
-        if (remPct > 15) {
-            const remVal = total - completed;
-            // Only show remaining value if it makes sense
-            if (remVal > 0) {
-                svg += `<text x="${pct + (remPct / 2)}" y="${h/2}" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="${h/2.5}px">${remVal}</text>`;
+            
+            // Active (Bottom)
+            if (pct > 0) {
+                svg += `<rect x="0" y="${remPct}" width="60" height="${pct}" fill="${activeColor}" />`;
+                if (pct > 15) {
+                    svg += `<text x="30" y="${remPct + (pct/2)}" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="14">${completed}</text>`;
+                }
             }
+            
+            svg += `</svg>`;
+            return `<div style="width:100%; height:100%; border-radius:${radius}px; overflow:hidden; display:flex; justify-content:center;">${svg}</div>`;
+            
+        } else {
+            // Horizontal Logic
+            const h = height; // Fixed height passed in
+            // Use 100% width viewBox
+            svg = `<svg width="100%" height="100%" viewBox="0 0 100 100" preserveAspectRatio="none">`;
+            
+            // Active bar (left)
+            if (pct > 0) {
+                svg += `<rect x="0" y="0" width="${pct}" height="100" fill="${activeColor}" />`;
+            }
+            
+            // Remaining bar (right)
+            if (remPct > 0) {
+                svg += `<rect x="${pct}" y="0" width="${remPct}" height="100" fill="${remainingColor}" />`;
+            }
+            
+            // Labels
+            if (pct > 15) {
+                svg += `<text x="${pct / 2}" y="50" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="40">${completed}</text>`;
+            }
+            
+            if (remPct > 15) {
+                const remVal = total - completed;
+                if (remVal > 0) {
+                    svg += `<text x="${pct + (remPct / 2)}" y="50" dy="0.35em" text-anchor="middle" fill="#fff" font-weight="bold" font-size="40">${remVal}</text>`;
+                }
+            }
+            
+            svg += `</svg>`;
+            return `<div style="width:100%; height:${h}px; border-radius:${radius}px; overflow:hidden;">${svg}</div>`;
         }
-        
-        svg += `</svg>`;
-        
-        // Wrap in a container with border radius
-        return `<div style="width:100%; height:${h}px; border-radius:${radius}px; overflow:hidden;">${svg}</div>`;
     },
 
     createGanttChartSVG: (members, currentRange, nextRange) => {

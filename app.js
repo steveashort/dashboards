@@ -615,8 +615,9 @@ export const renderBoard = () => {
                 const total = t.total || 100;
                 const cVal = t.colorVal || '#228B22';
                 const cBg = t.colorBg || '#696969';
+                const orient = t.orientation || 'horizontal';
                 
-                visualHTML = Visuals.createCompletionBarSVG(completed, total, cVal, cBg);
+                visualHTML = Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 140, orient);
                 statsHTML = `<div class="tracker-stats">${completed} / ${total} ${t.metric || ''}</div>`;
             }
 
@@ -880,8 +881,9 @@ export const ZoomManager = {
                 const total = t.total || 100;
                 const cVal = t.colorVal || '#228B22';
                 const cBg = t.colorBg || '#696969';
+                const orient = t.orientation || 'horizontal';
                 // Use a larger custom SVG for zoom or reuse the standard one scaled
-                content = `<div style="width:100%; padding:40px;">${Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 100)}</div>`;
+                content = `<div style="width:100%; padding:40px;">${Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 300, orient)}</div>`;
             }
     
             const bodyEl = getEl('zoomBody');
@@ -1263,11 +1265,14 @@ export const TrackerManager = {
                 if (tracker && tnIn) tnIn.value = tracker.notes || '';
                             const cbIn = getEl('tkCompBarColorBg');
                             if (cbIn) { cbIn.value = tracker ? (tracker.colorBg || '#696969') : '#696969'; cbIn.style.backgroundColor = cbIn.value; }
-                            const cvIn = getEl('tkCompBarColorVal');
-                            if (cvIn) { cvIn.value = tracker ? (tracker.colorVal || '#228B22') : '#228B22'; cvIn.style.backgroundColor = cvIn.value; }
-                        }
-                    }
-        ModalManager.openModal('trackerModal');
+                                        const cvIn = getEl('tkCompBarColorVal');
+                                        if (cvIn) { cvIn.value = tracker ? (tracker.colorVal || '#228B22') : '#228B22'; cvIn.style.backgroundColor = cvIn.value; }
+                                        
+                                        const orient = tracker ? (tracker.orientation || 'horizontal') : 'horizontal';
+                                        const orientRad = document.querySelector(`input[name="tkCompBarOrient"][value="${orient}"]`);
+                                        if(orientRad) orientRad.checked = true;
+                                    }
+                                }        ModalManager.openModal('trackerModal');
     },
 
     updateSizeOptions(type) {
@@ -2049,6 +2054,8 @@ export const TrackerManager = {
             newTracker.total = total;
             newTracker.active = active;
             newTracker.notes = tnIn ? tnIn.value : '';
+            const orientRad = document.querySelector('input[name="tkCompBarOrient"]:checked');
+            newTracker.orientation = orientRad ? orientRad.value : 'horizontal';
             // Size is handled by radio
 
             const cvIn = getEl('tkCompBarColorVal');
