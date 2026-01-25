@@ -1737,23 +1737,34 @@ export const TrackerManager = {
         const div = document.createElement('div');
         div.className = 'counter-row';
         div.style.display = 'flex';
-        div.style.gap = '10px';
-        div.style.marginBottom = '5px';
+        div.style.gap = '8px';
+        div.style.marginBottom = '8px';
         div.style.alignItems = 'center';
+        div.style.background = 'rgba(255,255,255,0.03)';
+        div.style.padding = '8px';
+        div.style.borderRadius = '4px';
         
         div.innerHTML = `
-            <input type="text" class="cr-label" maxlength="15" placeholder="Label" value="${label}" style="flex: 2;">
-            <input type="number" class="cr-value" placeholder="Value" value="${value}" style="flex: 1;">
-            <div style="display:flex; flex-direction:column; align-items:center;">
+            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px; height:34px; flex: 0 0 34px;" title="Delete Counter" onclick="TrackerManager.removeCounterRow(this)">&times;</button>
+            <input type="text" class="cr-label" maxlength="32" placeholder="Counter Name" value="${label}" style="flex: 1; min-width: 80px; height:34px;">
+            <input type="number" class="cr-value" placeholder="Val" value="${value}" style="width: 80px; flex: 0 0 80px; height:34px;" oninput="if(this.value.length > 8) this.value = this.value.slice(0,8)">
+            
+            <div style="display:flex; flex-direction:column; align-items:center; flex: 0 0 40px;">
                 <label style="font-size:0.6rem; color:#aaa; margin-bottom:2px;">Text</label>
-                <input type="color" class="cr-color" value="${color}" style="width:30px; height:30px; border:none; padding:0;">
+                <input type="color" class="cr-color" value="${color}" style="width:30px; height:24px; border:none; padding:0; cursor:pointer; background:none;">
             </div>
-            <div style="display:flex; flex-direction:column; align-items:center;">
-                <label style="font-size:0.6rem; color:#aaa; margin-bottom:2px;">Bg?</label>
-                <input type="checkbox" class="cr-use-bg" ${useBg ? 'checked' : ''} onchange="this.nextElementSibling.style.visibility = this.checked ? 'visible' : 'hidden'">
-                <input type="color" class="cr-bg-color" value="${bgColor}" style="width:30px; height:30px; border:none; padding:0; visibility: ${useBg ? 'visible' : 'hidden'}; margin-top:2px;">
+
+            <div style="display:flex; flex-direction:column; align-items:center; flex: 0 0 75px; border-left: 1px solid #444; padding-left: 8px;">
+                <label style="font-size:0.6rem; color:#aaa; margin-bottom:2px;">Pill Bg</label>
+                <div style="display:flex; align-items:center; gap:4px;">
+                    <input type="checkbox" class="cr-use-bg" ${useBg ? 'checked' : ''} style="display:none;">
+                    <input type="color" class="cr-bg-color" value="${bgColor}" 
+                           style="width:30px; height:24px; border:none; padding:0; cursor:pointer; background:none; opacity: ${useBg ? '1' : '0.2'}"
+                           oninput="const p=this.parentElement; p.querySelector('.cr-use-bg').checked = true; this.style.opacity = '1';">
+                    <button class="btn btn-sm" style="padding:0 4px; font-size:0.6rem; height:24px; border-color:#555; color:#888; min-width:30px;" 
+                            onclick="const p=this.parentElement; p.querySelector('.cr-use-bg').checked=false; p.querySelector('.cr-bg-color').style.opacity='0.2'; event.stopPropagation();">None</button>
+                </div>
             </div>
-            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px; height:30px; margin-top:auto; margin-bottom:2px;" onclick="TrackerManager.removeCounterRow(this)">&times;</button>
         `;
         container.appendChild(div);
     },
