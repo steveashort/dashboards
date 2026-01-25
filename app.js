@@ -11,7 +11,7 @@ let State = {
     additionalInfo: "",
     // Multi-tab support
     trackerTabs: [
-        { id: 'default', name: 'Cards', trackers: [] }
+        { id: 'default', name: 'Tracker 1', trackers: [] }
     ],
     activeTabId: 'default',
     members: [],
@@ -234,7 +234,8 @@ export const App = {
     },
     addTab: () => {
         const newId = 'tab_' + Date.now();
-        State.trackerTabs.push({ id: newId, name: 'New Cards', trackers: [] });
+        const nextNum = State.trackerTabs.length + 1;
+        State.trackerTabs.push({ id: newId, name: `Tracker ${nextNum}`, trackers: [] });
         App.switchTrackerTab(newId);
     },
     renameTab: (id, newName) => {
