@@ -58,8 +58,8 @@
         </div>
 
         <div class="section-header first">
-            <h3 style="color:var(--accent); font-weight:300;">Progress Trackers</h3>
-            <button class="btn" onclick="TrackerManager.openModal(-1)">+ Add Tracker</button>
+            <h3 style="color:var(--accent); font-weight:300;">Cards</h3>
+            <button class="btn" onclick="TrackerManager.openModal(-1)">+ Add Card</button>
         </div>
         <div class="tracker-grid" id="trackerGrid"></div>
 
@@ -208,13 +208,13 @@
     <div class="modal-overlay" id="trackerModal">
         <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
-                <h3 id="trackerModalTitle">Add Progress Tracker</h3>
+                <h3 id="trackerModalTitle">Add Card</h3>
                 <button class="btn" onclick="ModalManager.closeModal('trackerModal')">&times;</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editTrackerIndex" value="-1">
                 <div class="type-selector" id="trackerTypeSelector">
-                    <button id="typeGaugeBtn" class="type-option active" onclick="TrackerManager.setType('gauge')">Gauge (Pie)</button>
+                    <button id="typeGaugeBtn" class="type-option active" onclick="TrackerManager.setType('gauge')">Gauge</button>
                     <button id="typeLineBtn" class="type-option" onclick="TrackerManager.setType('line')">Time Series</button>
                     <button id="typeCounterBtn" class="type-option" onclick="TrackerManager.setType('counter')">Counter</button>
                     <button id="typeRagBtn" class="type-option" onclick="TrackerManager.setType('rag')">RAG Status</button>
@@ -225,7 +225,7 @@
                 </div>
                 <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
                     <div class="input-group" style="flex: 2;">
-                        <label>Chart Title</label>
+                        <label>Card Title</label>
                         <input type="text" id="tkDesc">
                     </div>
                     <div class="input-group" style="flex: 0 0 180px;" id="sizeContainer">
@@ -589,7 +589,7 @@
 
                                                                             <div class="modal-footer">
 
-                                                                                <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Tracker</button>
+                                                                                <button class="btn btn-primary" onclick="TrackerManager.submitTracker()">Save Card</button>
 
                                                                             </div>
 

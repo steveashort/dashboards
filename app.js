@@ -1017,7 +1017,7 @@ export const TrackerManager = {
         State.editingTrackerIndex = index;
         const isEdit = index > -1;
         const titleEl = getEl('trackerModalTitle');
-        if (titleEl) titleEl.innerText = isEdit ? 'Edit Progress Tracker' : 'Add Progress Tracker';
+        if (titleEl) titleEl.innerText = isEdit ? 'Edit Card' : 'Add Card';
         
         ['gauge','bar','line','counter','rag','waffle','countdown','completionBar'].forEach(type => {
             const div = getEl(`${type}Inputs`);
@@ -1984,7 +1984,7 @@ export const TrackerManager = {
 
     deleteTracker(index) {
         if(index < 0 || index >= State.trackers.length) return;
-        App.confirm("Are you sure you want to delete this tracker?", () => {
+        App.confirm("Are you sure you want to delete this card?", () => {
             State.trackers.splice(index, 1);
             renderBoard();
         });
@@ -2143,7 +2143,7 @@ export const TrackerManager = {
 
         ModalManager.closeModal('trackerModal');
         renderBoard();
-        console.log("Tracker saved:", type);
+        console.log("Card saved:", type);
     }
 };
 
