@@ -422,22 +422,13 @@ export const renderBoard = () => {
                                     },
                                     xaxis: {
                                         type: 'numeric',
-                                        opposite: true,
                                         min: 0,
-                                        title: { text: 'Days from Today', style: { color: '#aaa' } },
-                                        labels: { style: { colors: '#aaa' } },
-                                        axisBorder: { show: true, color: '#444' },
-                                        axisTicks: { show: true, color: '#444' }
+                                        axisBorder: { show: false },
+                                        axisTicks: { show: false },
+                                        labels: { show: false }
                                     },
                                     annotations: {
-                                        xaxis: [{
-                                            x: 0,
-                                            borderColor: '#ff1744',
-                                            label: {
-                                                style: { color: '#fff', background: '#ff1744' },
-                                                text: 'Today',
-                                            }
-                                        }]
+                                        xaxis: []
                                     },
                                     yaxis: {
                                         show: true,
@@ -703,22 +694,13 @@ export const ZoomManager = {
                                     },
                                     xaxis: {
                                         type: 'numeric',
-                                        opposite: true,
                                         min: 0,
-                                        title: { text: 'Days from Today', style: { color: '#aaa' } },
-                                        labels: { style: { colors: '#aaa' } },
-                                        axisBorder: { show: true, color: '#444' },
-                                        axisTicks: { show: true, color: '#444' }
+                                        axisBorder: { show: false },
+                                        axisTicks: { show: false },
+                                        labels: { show: false }
                                     },
                                     annotations: {
-                                        xaxis: [{
-                                            x: 0,
-                                            borderColor: '#ff1744',
-                                            label: {
-                                                style: { color: '#fff', background: '#ff1744' },
-                                                text: 'Today',
-                                            }
-                                        }]
+                                        xaxis: []
                                     },
                                     yaxis: {
                                         show: true,
