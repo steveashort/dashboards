@@ -53,6 +53,9 @@ export const initApp = () => {
         const drd = getEl('dateRangeDisplay');
         if (drd) drd.innerText = `Last: ${r.last} | Current: ${r.current} | Next: ${r.next}`;
         
+        // Overview titles are now static in HTML or updated via renderBoard if dynamic
+        // But for now, they are in viewTeamData.
+        // We can keep updating them here if IDs exist.
         const otc = getEl('overviewTitleCurrent');
         if (otc) otc.innerHTML = `Top 5 Team Achievements <span class="date-suffix">${r.current}</span>`;
         
@@ -353,7 +356,7 @@ export const App = {
         App.switchView('team');
     },
     saveTitle: () => {
-        const titleEl = getEl('appTitle');
+        const titleEl = getEl('appTitleSidebar');
         if (titleEl) State.title = titleEl.innerText;
         console.log("Title saved");
     }
@@ -374,7 +377,7 @@ export const ModalManager = {
 export const renderBoard = () => {
     console.log("Rendering Board...");
 
-    const titleEl = getEl('appTitle');
+    const titleEl = getEl('appTitleSidebar');
     if (titleEl) titleEl.innerText = State.title || "Server Platforms";
     
     const sL = getEl('teamSuccessList'); 
