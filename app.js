@@ -410,7 +410,7 @@ export const renderBoard = () => {
                             const barData = getCountdownBarData(items);
                             if (barData.series[0].data.length > 0) {
                                 renderChart(el, 'rangeBar', barData, {
-                                    plotOptions: { bar: { horizontal: true, distributed: true, dataLabels: { hideOverflowingLabels: false } } },
+                                    plotOptions: { bar: { horizontal: true, distributed: true, barHeight: '50%', dataLabels: { hideOverflowingLabels: false } } },
                                     dataLabels: {
                                         enabled: true,
                                         formatter: function(val, opts) {
@@ -419,14 +419,21 @@ export const renderBoard = () => {
                                         },
                                         style: { colors: ['#f3f4f5', '#fff'] }
                                     },
+                                    chart: {
+                                        toolbar: { show: false },
+                                        height: barData.series[0].data.length * 30 + 40,
+                                        padding: { top: 0, bottom: 0, left: 0 }
+                                    },
                                     xaxis: {
                                         type: 'numeric',
+                                        position: 'top',
                                         title: { text: 'Days from Today', style: { color: '#aaa' } },
-                                        labels: { style: { colors: '#aaa' } }
+                                        labels: { style: { colors: '#aaa' } },
+                                        min: 0
                                     },
                                     annotations: {
                                         xaxis: [{
-                                            x: 0.4,
+                                            x: 0,
                                             borderColor: '#ff1744',
                                             label: {
                                                 style: { color: '#fff', background: '#ff1744' },
@@ -440,7 +447,7 @@ export const renderBoard = () => {
                                         reversed: true,
                                         labels: { style: { colors: '#aaa' } }
                                     },
-                                    grid: { show: false },
+                                    grid: { show: false, padding: { left: 0 } },
                                     legend: { show: false },
                                     colors: barData.series[0].data.map(d => d.fillColor),
                                     tooltip: {
@@ -698,10 +705,11 @@ export const ZoomManager = {
                                     chart: {
                                         toolbar: { show: true },
                                         height: barData.series[0].data.length * 30 + 50,
-                                        padding: { top: 0, bottom: 0 }
+                                        padding: { top: 0, bottom: 0, left: 0 }
                                     },
                                     xaxis: {
                                         type: 'numeric',
+                                        position: 'top',
                                         title: { text: 'Days from Today', style: { color: '#aaa' } },
                                         labels: { style: { colors: '#aaa' } },
                                         min: 0
@@ -722,7 +730,7 @@ export const ZoomManager = {
                                         reversed: true,
                                         labels: { style: { colors: '#aaa' } }
                                     },
-                                    grid: { show: false },
+                                    grid: { show: false, padding: { left: 0 } },
                                     legend: { show: false },
                                     colors: barData.series[0].data.map(d => d.fillColor),
                                     tooltip: {
