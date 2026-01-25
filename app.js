@@ -211,6 +211,25 @@ export const App = {
         initApp();
         App.initDragAndDrop();
         ColorManager.init();
+        App.switchView('trackers'); // Default view
+    },
+    switchView: (viewName) => {
+        // Toggle Nav Active State
+        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+        if (viewName === 'trackers') getEl('navTrackers').classList.add('active');
+        if (viewName === 'team') getEl('navTeam').classList.add('active');
+
+        // Toggle View Containers
+        getEl('viewTrackers').style.display = (viewName === 'trackers') ? 'block' : 'none';
+        getEl('viewTeamData').style.display = (viewName === 'team') ? 'block' : 'none';
+        
+        // Update Header Title
+        getEl('pageTitle').innerText = (viewName === 'trackers') ? 'Cards' : 'Team Data';
+        
+        // Update Drag/Drop listeners if needed (already bound to grid, fine)
+    },
+    toggleTheme: () => {
+        document.body.classList.toggle('theme-day');
     },
     initDragAndDrop: () => {
         const grid = getEl('trackerGrid');
@@ -297,46 +316,41 @@ export const App = {
     togglePublishMode: () => {
         document.body.classList.toggle('publishing');
         const isPub = document.body.classList.contains('publishing');
-        const btn = getEl('expandTeamBtn');
-        if(btn) {
-            btn.style.display = isPub ? 'inline-block' : 'none';
-            btn.innerText = "Expand Team Data";
+        
+        // Hide sidebar controls in publish mode? 
+        // User said: "Publish (read-only) mode... Hides or disables any controls that change configuration".
+        // The buttons "Load", "Save" should probably be hidden or disabled.
+        // "Add Card" button should be hidden.
+        
+        const sbBottom = document.querySelector('.sidebar-bottom');
+        if(sbBottom) {
+            Array.from(sbBottom.children).forEach(child => {
+                // Keep Theme Toggle and Publish button, hide others?
+                // The Publish button calls this function, so it must stay visible to toggle back.
+                // Or maybe change text?
+                if (child.innerText.includes('Publish')) {
+                    child.innerText = isPub ? "Edit View" : "Publish View";
+                    child.classList.toggle('btn-primary', !isPub); // Toggle highlight
+                } else if (child.innerText.includes('Theme')) {
+                    // Keep theme toggle
+                } else {
+                    child.style.display = isPub ? 'none' : 'block';
+                }
+            });
         }
         
-        const ganttSec = getEl('ganttSection');
-        const teamHead = getEl('teamSectionHeader');
-        const teamGrid = getEl('teamGrid');
-        
-        if (ganttSec) ganttSec.style.display = 'none';
-        if (teamHead) teamHead.style.display = isPub ? 'none' : 'flex';
-        if (teamGrid) teamGrid.style.display = isPub ? 'none' : 'grid';
-        
+        // App Title handling
+        const appTitle = getEl('appTitleSidebar');
+        if(appTitle) appTitle.contentEditable = !isPub;
+
+        // Render board updates interactions
         renderBoard();
     },
     toggleTeamData: () => {
-        const ganttSec = getEl('ganttSection');
-        const teamHead = getEl('teamSectionHeader');
-        const teamGrid = getEl('teamGrid');
-        const btn = getEl('expandTeamBtn');
-        
-        const isHidden = ganttSec.style.display === 'none';
-        
-        if (isHidden) {
-            ganttSec.style.display = 'block';
-            if (teamHead) teamHead.style.display = 'flex';
-            if (teamGrid) teamGrid.style.display = 'grid';
-            if (btn) btn.innerText = "Collapse Team Data";
-            
-            // Render Gantt
-            const r = getRanges();
-            const svg = Visuals.createGanttChartSVG(State.members, r.current, r.next);
-            getEl('ganttContainer').innerHTML = svg;
-        } else {
-            ganttSec.style.display = 'none';
-            if (teamHead) teamHead.style.display = 'none';
-            if (teamGrid) teamGrid.style.display = 'none';
-            if (btn) btn.innerText = "Expand Team Data";
-        }
+        // Legacy function, now handled by switchView('team') logic mostly.
+        // But ganttSection is inside viewTeamData.
+        // We can just ensure the view is active.
+        App.switchView('team');
     },
     saveTitle: () => {
         const titleEl = getEl('appTitle');

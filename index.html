@@ -17,64 +17,77 @@
         <p style="color:var(--text-muted); margin-left: 15px;">Initializing...</p>
     </div>
 
-    <button id="expandTeamBtn" class="btn" onclick="App.toggleTeamData()" style="display:none;">Expand Team Data</button>
-    <button id="publishToggleBtn" class="btn btn-primary" onclick="App.togglePublishMode()" style="display:none;">Edit View</button>
-    
-    <header>
-        <div class="header-left">
-            <img src="logo.svg" alt="Logo" class="header-logo-img">
-            <div>
-                <h1 id="appTitle" contenteditable="true" spellcheck="false" onblur="App.saveTitle()">Server Platforms</h1>
+    <div class="app-layout">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <img src="logo.svg" alt="Logo" class="sidebar-logo">
+                <h2 id="appTitleSidebar" contenteditable="true" spellcheck="false" onblur="App.saveTitle()" style="font-size:1.2rem; font-weight:300; color:var(--accent); margin:0; outline:none; border-bottom:1px dashed transparent;">Server Platforms</h2>
+            </div>
+            
+            <nav class="sidebar-nav">
+                <button id="navTrackers" class="nav-item active" onclick="App.switchView('trackers')">Cards</button>
+                <button id="navTeam" class="nav-item" onclick="App.switchView('team')">Team Data</button>
+            </nav>
+            
+            <div class="sidebar-bottom">
+                <input type="file" id="fileInput" style="display: none;" accept=".json,.csv" onchange="DataLoader.loadFromFile(this)">
+                <button class="btn btn-block" onclick="document.getElementById('fileInput').click()">Load Data</button>
+                <button class="btn btn-block" onclick="DataSaver.saveData()">Save JSON</button>
+                <button class="btn btn-block btn-primary" onclick="App.togglePublishMode()">Publish View</button>
+                <button class="btn btn-block" onclick="App.toggleTheme()">Day/Night Theme</button>
+            </div>
+        </aside>
+        
+        <main class="main-content">
+            <div class="content-header">
+                <h1 id="pageTitle" style="font-weight:300; color:var(--text-main);">Cards</h1>
                 <div class="date-display" id="dateRangeDisplay">...</div>
             </div>
-        </div>
-        <div class="header-actions">
-            <input type="file" id="fileInput" style="display: none;" accept=".json,.csv" onchange="DataLoader.loadFromFile(this)">
-            <button class="btn" onclick="document.getElementById('fileInput').click()">Load Data</button>
-            <button class="btn" onclick="DataSaver.saveData()">Save JSON</button>
-            <button class="btn" onclick="App.togglePublishMode()">Publish View</button>
-        </div>
-    </header>
-
-    <div class="container">
-        <div class="team-overview-panel">
-            <div class="overview-col" onclick="OverviewManager.handleOverviewClick('success')">
-                <h4 id="overviewTitleCurrent">Top 5 Team Achievements</h4>
-                <div class="edit-hint">(Check max 5 boxes in Last Week)</div>
-                <ul class="overview-list" id="teamSuccessList"><li>No items selected.</li></ul>
-                <button class="btn-reset" onclick="event.stopPropagation(); UserManager.resetSelections('success')">Reset Selection</button>
+            
+            <!-- TRACKERS VIEW -->
+            <div id="viewTrackers" class="view-section">
+                <div class="section-header first">
+                    <button class="btn" onclick="TrackerManager.openModal(-1)">+ Add Card</button>
+                </div>
+                <div class="tracker-grid" id="trackerGrid"></div>
             </div>
-            <div class="overview-col" onclick="OverviewManager.handleOverviewClick('activity')">
-                <h4 id="overviewTitleNext">Top 5 Activities Next Week</h4>
-                <div class="edit-hint">(Check max 5 boxes in Next Week)</div>
-                <ul class="overview-list" id="teamActivityList"><li>No items selected.</li></ul>
-                <button class="btn-reset" onclick="event.stopPropagation(); UserManager.resetSelections('activity')">Reset Selection</button>
-            </div>
-            <div class="overview-col interactive" onclick="OverviewManager.handleInfoClick()">
-                <h4>Additional Info</h4>
-                <div class="edit-hint">(Click anywhere to edit)</div>
-                <div id="additionalInfoPreview"></div>
-            </div>
-        </div>
+            
+            <!-- TEAM DATA VIEW -->
+            <div id="viewTeamData" class="view-section" style="display:none;">
+                <div class="team-overview-panel">
+                    <div class="overview-col" onclick="OverviewManager.handleOverviewClick('success')">
+                        <h4 id="overviewTitleCurrent">Top 5 Team Achievements</h4>
+                        <div class="edit-hint">(Check max 5 boxes in Last Week)</div>
+                        <ul class="overview-list" id="teamSuccessList"><li>No items selected.</li></ul>
+                        <button class="btn-reset" onclick="event.stopPropagation(); UserManager.resetSelections('success')">Reset Selection</button>
+                    </div>
+                    <div class="overview-col" onclick="OverviewManager.handleOverviewClick('activity')">
+                        <h4 id="overviewTitleNext">Top 5 Activities Next Week</h4>
+                        <div class="edit-hint">(Check max 5 boxes in Next Week)</div>
+                        <ul class="overview-list" id="teamActivityList"><li>No items selected.</li></ul>
+                        <button class="btn-reset" onclick="event.stopPropagation(); UserManager.resetSelections('activity')">Reset Selection</button>
+                    </div>
+                    <div class="overview-col interactive" onclick="OverviewManager.handleInfoClick()">
+                        <h4>Additional Info</h4>
+                        <div class="edit-hint">(Click anywhere to edit)</div>
+                        <div id="additionalInfoPreview"></div>
+                    </div>
+                </div>
+                
+                <div id="ganttSection" style="margin-bottom: 3rem;">
+                    <div class="section-header">
+                        <h3 style="color:var(--accent); font-weight:300;">Resource Planner</h3>
+                    </div>
+                    <div id="ganttContainer" style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem; overflow-x:auto;"></div>
+                </div>
 
-        <div class="section-header first">
-            <h3 style="color:var(--accent); font-weight:300;">Cards</h3>
-            <button class="btn" onclick="TrackerManager.openModal(-1)">+ Add Card</button>
-        </div>
-        <div class="tracker-grid" id="trackerGrid"></div>
-
-        <div id="ganttSection" style="margin-bottom: 3rem; display: none;">
-            <div class="section-header">
-                <h3 style="color:var(--accent); font-weight:300;">Resource Planner</h3>
+                <div class="section-header" id="teamSectionHeader">
+                    <h3 style="color:var(--accent); font-weight:300;">Team Members</h3>
+                    <button class="btn btn-primary" onclick="UserManager.openUserModal()">+ Add User</button>
+                </div>
+                <div class="team-grid" id="teamGrid"></div>
             </div>
-            <div id="ganttContainer" style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem; overflow-x:auto;"></div>
-        </div>
-
-        <div class="section-header" id="teamSectionHeader">
-            <h3 style="color:var(--accent); font-weight:300;">Team Members</h3>
-            <button class="btn btn-primary" onclick="UserManager.openUserModal()">+ Add User</button>
-        </div>
-        <div class="team-grid" id="teamGrid"></div>
+        </main>
     </div>
 
     <!-- TOOLTIP & MODALS -->
