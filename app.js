@@ -1282,7 +1282,7 @@ export const TrackerManager = {
 
         if (['gauge', 'rag'].includes(inputType)) allowed = ['1x1'];
         else if (inputType === 'donut') allowed = ['1x1', '2x2'];
-        else if (inputType === 'completionBar') allowed = ['1x1', '1x2'];
+        else if (inputType === 'completionBar') allowed = ['1x1', '2x1', '1x2'];
         else if (inputType === 'countdown') allowed = ['1x1', '2x1', '2x2'];
         // Time Series (line/bar) and Note allow all sizes.
         // Waffle allows all for now.
