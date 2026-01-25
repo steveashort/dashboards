@@ -391,7 +391,7 @@ export const Visuals = {
         return `<div style="display:flex; justify-content:center; align-items:center;">${svg}</div>`;
     },
 
-    createDonutChartSVG: (labels, values, size = 'M') => {
+    createDonutChartSVG: (labels, values, size = 'M', customColors = []) => {
         const w = getWidth(size);
         const h = 180;
         const centerX = w / 2;
@@ -407,13 +407,16 @@ export const Visuals = {
         let startAngle = 0;
         let paths = '';
         let annotations = '';
-        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#03a9f4', '#ffeb3b'];
+        const defaultPalette = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#03a9f4', '#ffeb3b'];
 
         values.forEach((v, i) => {
             const percentage = (v / total);
             const angle = percentage * 360;
             const endAngle = startAngle + angle;
             const midAngle = startAngle + (angle / 2);
+
+            // Use custom color if available and valid, else fallback
+            const color = (customColors && customColors[i]) ? customColors[i] : defaultPalette[i % defaultPalette.length];
 
             const x1 = centerX + radius * Math.cos((startAngle - 90) * Math.PI / 180);
             const y1 = centerY + radius * Math.sin((startAngle - 90) * Math.PI / 180);
@@ -435,7 +438,6 @@ export const Visuals = {
                 Z
             `;
 
-            const color = colors[i % colors.length];
             const tooltipText = `${labels[i]}: ${v}`;
             paths += `<path d="${d}" fill="${color}" stroke="#1e1e1e" stroke-width="1" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></path>`;
 
@@ -466,7 +468,7 @@ export const Visuals = {
         return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${paths}${annotations}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/>${totalText}</svg>`;
     },
 
-    createDonutChartWithCalloutsSVG: (labels, values) => {
+    createDonutChartWithCalloutsSVG: (labels, values, customColors = []) => {
         const w = 800;
         const h = 500;
         const cx = w / 2;
@@ -482,7 +484,7 @@ export const Visuals = {
         let startAngle = 0;
         let paths = '';
         let annotations = '';
-        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#03a9f4', '#ffeb3b'];
+        const defaultPalette = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#03a9f4', '#ffeb3b'];
 
         values.forEach((v, i) => {
             const val = v;
@@ -490,6 +492,8 @@ export const Visuals = {
             const angle = pct * 360;
             const endAngle = startAngle + angle;
             const midAngle = startAngle + (angle / 2);
+
+            const color = (customColors && customColors[i]) ? customColors[i] : defaultPalette[i % defaultPalette.length];
 
             const radStart = (startAngle - 90) * Math.PI / 180;
             const radEnd = (endAngle - 90) * Math.PI / 180;
@@ -509,7 +513,7 @@ export const Visuals = {
             const d = `M ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} L ${ix2} ${iy2} A ${r - thickness} ${r - thickness} 0 ${largeArc} 0 ${ix1} ${iy1} Z`;
 
             const tooltipText = `${labels[i]} • ${val} (${Math.round(pct * 100)}%)`;
-            paths += `<path d="${d}" fill="${colors[i % colors.length]}" stroke="#1e1e1e" stroke-width="2" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"/>`;
+            paths += `<path d="${d}" fill="${color}" stroke="#1e1e1e" stroke-width="2" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"/>`;
 
             // Callout
             if (pct > 0.05) {
@@ -522,7 +526,7 @@ export const Visuals = {
                 const isLeft = midAngle > 180;
                 const lx3 = isLeft ? lx2 - 30 : lx2 + 30;
 
-                annotations += `<polyline points="${lx1},${ly1} ${lx2},${ly2} ${lx3},${ly2}" fill="none" stroke="${colors[i % colors.length]}" stroke-width="1.5"/>`;
+                annotations += `<polyline points="${lx1},${ly1} ${lx2},${ly2} ${lx3},${ly2}" fill="none" stroke="${color}" stroke-width="1.5"/>`;
 
                 const tx = isLeft ? lx3 - 8 : lx3 + 8;
                 const anchor = isLeft ? 'end' : 'start';

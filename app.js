@@ -528,7 +528,8 @@ export const renderBoard = () => {
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
                 const values = (t.dataPoints || []).map(dp => dp.value);
-                const html = Visuals.createDonutChartSVG(labels, values, displaySize);
+                const colors = (t.dataPoints || []).map(dp => dp.color);
+                const html = Visuals.createDonutChartSVG(labels, values, displaySize, colors);
                 visualHTML = `<div class="donut-chart">${html}</div>`;
                 statsHTML = '';
             } else if (renderType === 'countdown') {
@@ -875,7 +876,8 @@ export const ZoomManager = {
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
                 const values = (t.dataPoints || []).map(dp => dp.value);
-                content = Visuals.createDonutChartWithCalloutsSVG(labels, values);
+                const colors = (t.dataPoints || []).map(dp => dp.color);
+                content = Visuals.createDonutChartWithCalloutsSVG(labels, values, colors);
             } else if (renderType === 'completionBar') {
                 const completed = t.active || 0;
                 const total = t.total || 100;
@@ -1237,7 +1239,7 @@ export const TrackerManager = {
                 const container = getEl('donutDataContainer');
                 if (container) container.innerHTML = '';
                 if (tracker && tracker.dataPoints) {
-                    tracker.dataPoints.forEach(dp => this.addDonutRow(dp.label, dp.value));
+                    tracker.dataPoints.forEach(dp => this.addDonutRow(dp.label, dp.value, dp.color));
                 }
                 const notesIn = getEl('tkDonutNotes');
                 if (tracker && notesIn) notesIn.value = tracker.notes || '';
@@ -1749,20 +1751,29 @@ export const TrackerManager = {
         if(rs) rs.value = val;
     },
 
-    addDonutRow(label = '', value = '') {
+    addDonutRow(label = '', value = '', color = '') {
         const container = getEl('donutDataContainer');
         if (!container) return;
         if (container.children.length >= 10) return App.alert("Max 10 data points allowed.");
 
+        // Default colors if none provided (cyclic)
+        if (!color) {
+            const defaultPalette = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#03a9f4', '#ffeb3b'];
+            color = defaultPalette[container.children.length % defaultPalette.length];
+        }
+
         const div = document.createElement('div');
         div.className = 'donut-row';
         div.style.display = 'flex';
-        div.style.gap = '10px';
+        div.style.gap = '8px';
         div.style.marginBottom = '5px';
+        div.style.alignItems = 'center';
+        
         div.innerHTML = `
-            <input type="text" class="dr-label" maxlength="15" placeholder="Label" value="${label}" style="flex: 2;">
-            <input type="number" class="dr-value" placeholder="Value" value="${value}" style="flex: 1;">
-            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px;" onclick="TrackerManager.removeDonutRow(this)">&times;</button>
+            <button class="btn btn-sm" style="color:var(--g-red); border-color:var(--g-red); padding: 0 10px; height:34px; flex: 0 0 34px;" title="Delete Segment" onclick="TrackerManager.removeDonutRow(this)">&times;</button>
+            <input type="text" class="dr-label" maxlength="32" placeholder="Label" value="${label}" style="flex: 2; height:34px;">
+            <input type="number" class="dr-value" placeholder="Value" value="${value}" style="flex: 1; height:34px;" oninput="if(this.value.length > 6) this.value = this.value.slice(0,6)">
+            <input type="text" readonly class="color-input dr-color" value="${color}" style="width:34px; height:34px; border:none; padding:0; cursor:pointer; background-color:${color}; border-radius:4px;">
         `;
         container.appendChild(div);
     },
@@ -2077,7 +2088,8 @@ export const TrackerManager = {
             rows.forEach(row => {
                 const label = row.querySelector('.dr-label').value.trim();
                 const value = parseFloat(row.querySelector('.dr-value').value) || 0;
-                if (label) dataPoints.push({ label, value });
+                const color = row.querySelector('.dr-color').value;
+                if (label) dataPoints.push({ label, value, color });
             });
             if (dataPoints.length === 0) return App.alert("At least one data point with a label is required.");
             newTracker.dataPoints = dataPoints;
