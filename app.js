@@ -480,16 +480,43 @@ export const renderBoard = () => {
     const viewTrackers = getEl('viewTrackers');
     const viewTeam = getEl('viewTeamData');
     const pageTitle = getEl('pageTitle');
+    const isPub = document.body.classList.contains('publishing');
     
     if (State.activeTabId === 'team') {
         if(viewTrackers) viewTrackers.style.display = 'none';
         if(viewTeam) viewTeam.style.display = 'block';
-        if(pageTitle) pageTitle.innerText = "Team Data";
+        if(pageTitle) {
+            pageTitle.innerText = "Team Data";
+            pageTitle.contentEditable = "false";
+            pageTitle.style.borderBottom = "none";
+        }
     } else {
         if(viewTrackers) viewTrackers.style.display = 'block';
         if(viewTeam) viewTeam.style.display = 'none';
         const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
-        if(pageTitle) pageTitle.innerText = currentTab ? currentTab.name : "Cards";
+        if(pageTitle) {
+            pageTitle.innerText = currentTab ? currentTab.name : "Cards";
+            if (!isPub && currentTab) {
+                pageTitle.contentEditable = "true";
+                pageTitle.spellcheck = false;
+                pageTitle.style.borderBottom = "1px dashed #666";
+                pageTitle.style.cursor = "text";
+                pageTitle.onblur = () => {
+                    App.renameTab(currentTab.id, pageTitle.innerText);
+                    renderBoard(); // Re-render sidebar to show new name
+                };
+                pageTitle.onkeydown = (e) => { 
+                    if(e.key === 'Enter') { 
+                        e.preventDefault(); 
+                        pageTitle.blur(); 
+                    } 
+                };
+            } else {
+                pageTitle.contentEditable = "false";
+                pageTitle.style.borderBottom = "none";
+                pageTitle.style.cursor = "default";
+            }
+        }
     }
 
     // --- TRACKER GRID RENDERING ---
