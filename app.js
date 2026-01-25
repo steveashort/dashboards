@@ -423,10 +423,9 @@ export const renderBoard = () => {
                                     xaxis: {
                                         type: 'numeric',
                                         opposite: true,
-                                        reversed: false,
+                                        min: 0,
                                         title: { text: 'Days from Today', style: { color: '#aaa' } },
                                         labels: { style: { colors: '#aaa' } },
-                                        min: 0,
                                         axisBorder: { show: true, color: '#444' },
                                         axisTicks: { show: true, color: '#444' }
                                     },
@@ -705,10 +704,9 @@ export const ZoomManager = {
                                     xaxis: {
                                         type: 'numeric',
                                         opposite: true,
-                                        reversed: false,
+                                        min: 0,
                                         title: { text: 'Days from Today', style: { color: '#aaa' } },
                                         labels: { style: { colors: '#aaa' } },
-                                        min: 0,
                                         axisBorder: { show: true, color: '#444' },
                                         axisTicks: { show: true, color: '#444' }
                                     },
