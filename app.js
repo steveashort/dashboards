@@ -728,9 +728,14 @@ export const renderBoard = () => {
     }
 };
 export const ZoomManager = {
+    currentTrackerIndex: -1,
     openGanttModal: () => {
         const titleEl = getEl('zoomTitle');
-        if (titleEl) titleEl.innerText = "Absenteeism Tracker";
+        if (titleEl) {
+            titleEl.innerText = "Absenteeism Tracker";
+            titleEl.contentEditable = "false";
+            titleEl.style.borderBottom = "none";
+        }
         
         const r = getRanges();
         const content = Visuals.createGanttChartSVG(State.members, r.current, r.next);
@@ -743,86 +748,108 @@ export const ZoomManager = {
         ModalManager.openModal('zoomModal');
     },
 
-        openChartModal: (index) => {
-            console.log("ZoomManager.openChartModal called for index:", index);
-            const t = State.trackers[index];
-            if(!t) return;
-    
-            const titleEl = getEl('zoomTitle');
-            if (titleEl) titleEl.innerText = t.desc;
-            let content = '';
-            let renderAction = null;
+    openChartModal: (index) => {
+        console.log("ZoomManager.openChartModal called for index:", index);
+        const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
+        const t = currentTab ? currentTab.trackers[index] : null;
+        if(!t) return;
+
+        ZoomManager.currentTrackerIndex = index;
+        const titleEl = getEl('zoomTitle');
+        if (titleEl) {
+            titleEl.innerText = t.desc;
+            // Enable editing logic for the zoom modal title
+            titleEl.contentEditable = "true";
+            titleEl.spellcheck = false;
+            titleEl.style.borderBottom = "1px dashed transparent";
+            titleEl.style.cursor = "text";
             
-            let renderType = t.type;
-            if (renderType === 'line' || renderType === 'bar' || renderType === 'line1' || renderType === 'line2') {
-                let labels = t.labels || [];
-                let series = t.series || [];
-                if ((!labels.length) && t.data) {
-                    labels = t.data.map(d => d.label);
-                    series = [{ name: 'Series 1', color: t.color1 || '#03dac6', values: t.data.map(d => d.val) }];
+            titleEl.onfocus = () => titleEl.style.borderBottom = "1px dashed var(--accent)";
+            titleEl.onblur = () => {
+                titleEl.style.borderBottom = "1px dashed transparent";
+                ZoomManager.saveTitle(titleEl.innerText);
+            };
+            titleEl.onkeydown = (e) => { 
+                if(e.key === 'Enter') { 
+                    e.preventDefault(); 
+                    titleEl.blur(); 
+                } 
+            };
+        }
+
+        let content = '';
+        let renderAction = null;
+        
+        let renderType = t.type;
+        if (renderType === 'line' || renderType === 'bar' || renderType === 'line1' || renderType === 'line2') {
+            let labels = t.labels || [];
+            let series = t.series || [];
+            if ((!labels.length) && t.data) {
+                labels = t.data.map(d => d.label);
+                series = [{ name: 'Series 1', color: t.color1 || '#03dac6', values: t.data.map(d => d.val) }];
+            }
+            
+            const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
+            content = '<div id="zoomChartContainer" style="width:100%; height:100%;"></div>';
+            renderAction = () => {
+                const el = document.getElementById('zoomChartContainer');
+                if(el) {
+                    const apexSeries = series.map(s => ({ name: s.name, data: s.values }));
+                    const colors = series.map(s => s.color);
+                    renderChart(el, style, { labels, series: apexSeries }, { colors, chart: { toolbar: { show: true }, zoom: { enabled: true } } });
                 }
-                
-                const style = (t.displayStyle === 'bar' || t.type === 'bar') ? 'bar' : 'line';
+            };
+        } else if (renderType === 'counter') {
+            if (t.counters && t.counters.length > 0) {
+                content = '<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:40px; width:100%; height:100%; align-items:center; align-content:center;">';
+                t.counters.forEach(c => {
+                    const bgStyle = c.useBg ? `background-color:${c.bgColor}; padding:20px 40px; border-radius:20px; box-shadow:0 4px 10px rgba(0,0,0,0.3);` : '';
+                    content += `<div style="text-align:center;">
+                        <div style="${bgStyle} display:inline-block;">
+                            <div style="font-size:5rem; font-weight:300; color:${c.color}; text-shadow:0 0 20px ${c.color}40;">${c.value}</div>
+                        </div>
+                        <div style="font-size:1.5rem; color:#aaa; margin-top:10px;">${c.label}</div>
+                    </div>`;
+                });
+                content += '</div>';
+            } else {
+                content = `<div style="font-size: 6rem; font-weight:300; color:${t.color1 || '#e0e0e0'}; text-shadow:0 0 20px ${t.color1 || '#e0e0e0'}">${t.value !== undefined ? t.value : 0}</div><div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${t.subtitle || ''}</div>`;
+            }
+        } else if (renderType === 'rag' || renderType === 'ryg') {
+            const status = t.status || 'grey';
+            const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
+            content = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message || ''}</div>`;
+        } else if (renderType === 'note') {
+            content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
+        } else if (renderType === 'countdown') {
+            const style = t.displayStyle || 'list';
+            const items = t.items || [];
+            items.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+            if (style === 'bar') {
                 content = '<div id="zoomChartContainer" style="width:100%; height:100%;"></div>';
                 renderAction = () => {
                     const el = document.getElementById('zoomChartContainer');
                     if(el) {
-                        const apexSeries = series.map(s => ({ name: s.name, data: s.values }));
-                        const colors = series.map(s => s.color);
-                        renderChart(el, style, { labels, series: apexSeries }, { colors, chart: { toolbar: { show: true }, zoom: { enabled: true } } });
-                    }
-                };
-            } else if (renderType === 'counter') {
-                if (t.counters && t.counters.length > 0) {
-                    content = '<div style="display:flex; flex-wrap:wrap; justify-content:center; gap:40px; width:100%; height:100%; align-items:center; align-content:center;">';
-                    t.counters.forEach(c => {
-                        const bgStyle = c.useBg ? `background-color:${c.bgColor}; padding:20px 40px; border-radius:20px; box-shadow:0 4px 10px rgba(0,0,0,0.3);` : '';
-                        content += `<div style="text-align:center;">
-                            <div style="${bgStyle} display:inline-block;">
-                                <div style="font-size:5rem; font-weight:300; color:${c.color}; text-shadow:0 0 20px ${c.color}40;">${c.value}</div>
-                            </div>
-                            <div style="font-size:1.5rem; color:#aaa; margin-top:10px;">${c.label}</div>
-                        </div>`;
-                    });
-                    content += '</div>';
-                } else {
-                    content = `<div style="font-size: 6rem; font-weight:300; color:${t.color1 || '#e0e0e0'}; text-shadow:0 0 20px ${t.color1 || '#e0e0e0'}">${t.value !== undefined ? t.value : 0}</div><div style="font-size:1.5rem; color:#aaa; margin-top:1rem;">${t.subtitle || ''}</div>`;
-                }
-            } else if (renderType === 'rag' || renderType === 'ryg') {
-                const status = t.status || 'grey';
-                const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
-                content = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message || ''}</div>`;
-            } else if (renderType === 'note') {
-                content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
-            } else if (renderType === 'countdown') {
-                const style = t.displayStyle || 'list';
-                const items = t.items || [];
-                items.sort((a,b) => new Date(a.date) - new Date(b.date));
-
-                if (style === 'bar') {
-                    content = '<div id="zoomChartContainer" style="width:100%; height:100%;"></div>';
-                    renderAction = () => {
-                        const el = document.getElementById('zoomChartContainer');
-                        if(el) {
-                            const barData = getCountdownBarData(items);
-                            if (barData.series[0].data.length > 0) {
-                                renderChart(el, 'rangeBar', barData, {
-                                    stroke: { width: 0 },
-                                    plotOptions: { bar: { horizontal: true, distributed: true, barHeight: '50%', dataLabels: { hideOverflowingLabels: false } } },
-                                    dataLabels: {
-                                        enabled: true,
-                                        formatter: function(val, opts) {
-                                            const item = opts.w.config.series[opts.seriesIndex].data[opts.dataPointIndex];
-                                            return `${item.meta.diffDays} days`;
-                                        },
-                                        style: { colors: ['#f3f4f5', '#fff'] }
+                        const barData = getCountdownBarData(items);
+                        if (barData.series[0].data.length > 0) {
+                            renderChart(el, 'rangeBar', barData, {
+                                stroke: { width: 0 },
+                                plotOptions: { bar: { horizontal: true, distributed: true, barHeight: '50%', dataLabels: { hideOverflowingLabels: false } } },
+                                dataLabels: {
+                                    enabled: true,
+                                    formatter: function(val, opts) {
+                                        const item = opts.w.config.series[opts.seriesIndex].data[opts.dataPointIndex];
+                                        return `${item.meta.diffDays} days`;
                                     },
-                                    xaxis: {
-                                        type: 'numeric',
-                                        min: 0,
-                                        axisBorder: { show: false },
-                                        axisTicks: { show: false },
-                                        labels: { show: false }
+                                    style: { colors: ['#f3f4f5', '#fff'] }
+                                },
+                                xaxis: {
+                                    type: 'numeric',
+                                    min: 0,
+                                    axisBorder: { show: false },
+                                    axisTicks: { show: false },
+                                    labels: { show: false }
                                     },
                                     annotations: {
                                         xaxis: []
@@ -876,7 +903,6 @@ export const ZoomManager = {
                 const cVal = t.colorVal || '#228B22';
                 const cBg = t.colorBg || '#696969';
                 const orient = t.orientation || 'horizontal';
-                // Use a larger custom SVG for zoom or reuse the standard one scaled
                 content = `<div style="width:100%; padding:40px;">${Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 300, orient)}</div>`;
             }
     
@@ -954,6 +980,22 @@ export const ZoomManager = {
             }
             ModalManager.openModal('zoomModal');
             if(renderAction) setTimeout(renderAction, 100);
+        },
+
+        saveTitle: (newTitle) => {
+            const idx = ZoomManager.currentTrackerIndex;
+            if (idx > -1) {
+                const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
+                if (currentTab && currentTab.trackers[idx]) {
+                    currentTab.trackers[idx].desc = newTitle;
+                    // Note: We don't need to re-render the whole board just for this if we don't want to lose scroll,
+                    // but renderBoard() ensures consistency.
+                    // To avoid closing modal/glitches, just update state. 
+                    // But if we want the background grid to update:
+                    const gridCard = document.querySelector(`.tracker-card[data-index="${idx}"] .tracker-desc`);
+                    if (gridCard) gridCard.innerText = newTitle;
+                }
+            }
         }
 };
 
