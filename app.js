@@ -410,6 +410,7 @@ export const renderBoard = () => {
                             const barData = getCountdownBarData(items);
                             if (barData.series[0].data.length > 0) {
                                 renderChart(el, 'rangeBar', barData, {
+                                    stroke: { width: 0 },
                                     plotOptions: { bar: { horizontal: true, distributed: true, barHeight: '50%', dataLabels: { hideOverflowingLabels: false } } },
                                     dataLabels: {
                                         enabled: true,
@@ -421,12 +422,13 @@ export const renderBoard = () => {
                                     },
                                     xaxis: {
                                         type: 'numeric',
-                                        opposite: true, // Labels at top
+                                        opposite: true,
+                                        reversed: false,
                                         title: { text: 'Days from Today', style: { color: '#aaa' } },
-                                        labels: { 
-                                            style: { colors: '#aaa' }
-                                        },
-                                        min: 0
+                                        labels: { style: { colors: '#aaa' } },
+                                        min: 0,
+                                        axisBorder: { show: true, color: '#444' },
+                                        axisTicks: { show: true, color: '#444' }
                                     },
                                     annotations: {
                                         xaxis: [{
@@ -690,6 +692,7 @@ export const ZoomManager = {
                             const barData = getCountdownBarData(items);
                             if (barData.series[0].data.length > 0) {
                                 renderChart(el, 'rangeBar', barData, {
+                                    stroke: { width: 0 },
                                     plotOptions: { bar: { horizontal: true, distributed: true, barHeight: '50%', dataLabels: { hideOverflowingLabels: false } } },
                                     dataLabels: {
                                         enabled: true,
@@ -699,18 +702,15 @@ export const ZoomManager = {
                                         },
                                         style: { colors: ['#f3f4f5', '#fff'] }
                                     },
-                                    chart: {
-                                        toolbar: { show: true },
-                                        height: barData.series[0].data.length * 30 + 50
-                                    },
                                     xaxis: {
                                         type: 'numeric',
                                         opposite: true,
+                                        reversed: false,
                                         title: { text: 'Days from Today', style: { color: '#aaa' } },
-                                        labels: { 
-                                            style: { colors: '#aaa' }
-                                        },
-                                        min: 0
+                                        labels: { style: { colors: '#aaa' } },
+                                        min: 0,
+                                        axisBorder: { show: true, color: '#444' },
+                                        axisTicks: { show: true, color: '#444' }
                                     },
                                     annotations: {
                                         xaxis: [{
