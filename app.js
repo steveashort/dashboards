@@ -515,11 +515,14 @@ export const renderBoard = () => {
     if (State.activeTabId === 'team') {
         if(viewTrackers) viewTrackers.style.display = 'none';
         if(viewTeam) viewTeam.style.display = 'block';
-        if(pageTitle) {
-            pageTitle.innerText = "Team Data";
-            pageTitle.contentEditable = "false";
-            pageTitle.style.borderBottom = "none";
-        }
+        if(pageTitle) pageTitle.innerText = "Team Portfolio & Resource Allocation";
+        
+        AssignmentManager.renderAssignments();
+        
+        // Render Resource Planner (Gantt)
+        const svg = Visuals.createGanttChartSVG(State.members, State.assignments);
+        const container = getEl('ganttContainer');
+        if(container) container.innerHTML = svg;
     } else {
         if(viewTrackers) viewTrackers.style.display = 'block';
         if(viewTeam) viewTeam.style.display = 'none';
@@ -808,24 +811,24 @@ export const renderBoard = () => {
                             content += `<div style="padding: 10px 1.5rem; border-top: 1px solid #333; font-size: 0.85rem; color: #ccc;">${m.notes}</div>`;
                         }
             
-                        if (m.objectives && m.objectives.length > 0) {
-                            // Sort by Start Period (simple numeric sort for now)
-                            const sorted = [...m.objectives].sort((a,b) => a.start - b.start);
-                            content += `<div style="padding: 10px 1.5rem; border-top: 1px solid var(--border); display:flex; flex-direction:column; gap:4px;">`;
-                            content += `<div style="font-size:0.75rem; color:var(--accent); text-transform:uppercase; font-weight:bold; margin-bottom:2px;">Long Term Objectives</div>`;
-                            sorted.forEach(o => {
-                                const assign = State.assignments.find(a => a.name === o.assignment);
-                                const color = assign ? assign.color : '#03dac6'; // Default color
-                                const pStart = getPeriodLabel(o.start).split(' ')[0]; // Just P01
-                                const pEnd = getPeriodLabel(o.end).split(' ')[0];
-                                content += `<div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;">
-                                    <span style="background:${color}; color:#fff; padding:1px 6px; border-radius:4px; font-size:0.7rem; min-width:60px; text-align:center;">${pStart} - ${pEnd}</span>
-                                    <span style="color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${o.assignment}</span>
-                                </div>`;
-                            });
-                            content += `</div>`;
-                        }
-                        
+                                    if (m.objectives && m.objectives.length > 0) {
+                                        // Sort by Start Period (simple numeric sort for now)
+                                        const sorted = [...m.objectives].sort((a,b) => a.start - b.start);
+                                        content += `<div style="padding: 10px 1.5rem; border-top: 1px solid var(--border); display:flex; flex-direction:column; gap:4px;">`;
+                                        content += `<div style="font-size:0.75rem; color:var(--accent); text-transform:uppercase; font-weight:bold; margin-bottom:2px;">Long Term Objectives</div>`;
+                                        sorted.forEach(o => {
+                                            const assign = State.assignments.find(a => a.name === o.assignment);
+                                            const color = assign ? assign.color : '#03dac6'; // Default color
+                                            const pStart = getPeriodLabel(o.start).split(' ')[0]; // Just P01
+                                            const pEnd = getPeriodLabel(o.end).split(' ')[0];
+                                            content += `<div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;">
+                                                <span style="background:${color}; color:#fff; padding:1px 6px; border-radius:4px; font-size:0.7rem; min-width:60px; text-align:center;">${pStart} - ${pEnd}</span>
+                                                <span style="color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1;">${o.assignment}</span>
+                                                <span style="color:var(--text-muted); font-size:0.75rem; font-weight:bold;">${o.load}%</span>
+                                            </div>`;
+                                        });
+                                        content += `</div>`;
+                                    }                        
                         c.innerHTML += content; teamGrid.appendChild(c);
         });
     }
@@ -835,13 +838,12 @@ export const ZoomManager = {
     openGanttModal: () => {
         const titleEl = getEl('zoomTitle');
         if (titleEl) {
-            titleEl.innerText = "Absenteeism Tracker";
+            titleEl.innerText = "Team Portfolio & Resource Allocation";
             titleEl.contentEditable = "false";
             titleEl.style.borderBottom = "none";
         }
         
-        const r = getRanges();
-        const content = Visuals.createGanttChartSVG(State.members, r.current, r.next);
+        const content = Visuals.createGanttChartSVG(State.members, State.assignments);
         
         const bodyEl = getEl('zoomBody');
         if (bodyEl) {
@@ -2288,7 +2290,7 @@ export const UserManager = {
         // Assignment Select
         const assignSel = document.createElement('select');
         assignSel.className = 'obj-assign';
-        assignSel.style.flex = '2';
+        assignSel.style.flex = '3';
         assignSel.style.minWidth = '100px';
         assignSel.style.background = 'var(--input-bg)';
         assignSel.style.color = '#fff';
@@ -2307,6 +2309,19 @@ export const UserManager = {
             assignSel.appendChild(opt);
         });
 
+        // Allocation %
+        const loadIn = document.createElement('input');
+        loadIn.type = 'number';
+        loadIn.className = 'obj-load';
+        loadIn.placeholder = '%';
+        loadIn.style.width = '50px';
+        loadIn.style.background = 'var(--input-bg)';
+        loadIn.style.color = '#fff';
+        loadIn.style.border = '1px solid var(--border)';
+        loadIn.style.padding = '4px';
+        loadIn.style.textAlign = 'center';
+        loadIn.value = data ? data.load : 100;
+
         // Period Selects
         const createPerSel = (val) => {
             const s = document.createElement('select');
@@ -2319,7 +2334,7 @@ export const UserManager = {
             for(let i=1; i<=12; i++) {
                 const opt = document.createElement('option');
                 opt.value = i;
-                opt.innerText = getPeriodLabel(i);
+                opt.innerText = getPeriodLabel(i).split(' ')[0]; // Just P01
                 if(val && parseInt(val) === i) opt.selected = true;
                 s.appendChild(opt);
             }
@@ -2340,6 +2355,7 @@ export const UserManager = {
         delBtn.onclick = () => div.remove();
 
         div.appendChild(assignSel);
+        div.appendChild(loadIn);
         div.appendChild(startSel);
         div.appendChild(endSel);
         div.appendChild(delBtn);
@@ -2443,9 +2459,10 @@ export const UserManager = {
         if(objContainer) {
             objContainer.querySelectorAll('.objective-row').forEach(row => {
                 const assign = row.querySelector('.obj-assign').value;
+                const load = parseInt(row.querySelector('.obj-load').value) || 0;
                 const start = parseInt(row.querySelector('.obj-start').value);
                 const end = parseInt(row.querySelector('.obj-end').value);
-                if (assign) objectives.push({ assignment: assign, start, end });
+                if (assign) objectives.push({ assignment: assign, load, start, end });
             });
         }
 

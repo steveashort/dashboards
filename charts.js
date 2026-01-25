@@ -578,86 +578,113 @@ export const Visuals = {
         }
     },
 
-    createGanttChartSVG: (members, currentRange, nextRange) => {
-        const rowHeight = 25;
-        const headerHeight = 45;
+    createGanttChartSVG: (members, allAssignments) => {
+        const rowHeight = 35;
+        const memberHeaderHeight = 50;
+        const timelineHeaderHeight = 40;
         const width = 1200;
-        const height = headerHeight + (members.length * rowHeight);
-        const nameColWidth = 200;
-        const colWidth = (width - nameColWidth) / 14; 
+        const nameColWidth = 250;
+        const colWidth = (width - nameColWidth) / 6;
         
-        let svg = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}">`;
+        // Rolling 6 periods logic
+        const getCurrentPeriod = () => {
+            const d = new Date();
+            const m = d.getMonth(); 
+            return ((m + 11) % 12) + 1;
+        };
+        const getPeriodLabelShort = (p) => {
+            const monthNames = ["Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan"];
+            return `P${p.toString().padStart(2,'0')} ${monthNames[(p-1)%12]}`;
+        };
+
+        const currentP = getCurrentPeriod();
+        const rollingPeriods = [];
+        for(let i=0; i<6; i++) {
+            rollingPeriods.push(((currentP + i - 1) % 12) + 1);
+        }
+
+        // Calculate total height needed
+        let totalRows = 0;
+        members.forEach(m => {
+            if (m.objectives && m.objectives.length > 0) {
+                totalRows += m.objectives.length;
+            }
+        });
+        const totalHeight = timelineHeaderHeight + (members.filter(m => m.objectives && m.objectives.length > 0).length * memberHeaderHeight) + (totalRows * rowHeight) + 40;
+
+        let svg = `<svg width="100%" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="http://www.w3.org/2000/svg">`;
         
         // Background
-        svg += `<rect x="0" y="0" width="${width}" height="${height}" fill="#1e1e1e" rx="4"/>`;
+        svg += `<rect x="0" y="0" width="${width}" height="${totalHeight}" fill="#f8f9fa" rx="8"/>`;
 
-        // Column Backgrounds
-        svg += `<rect x="${nameColWidth}" y="${headerHeight}" width="${colWidth * 7}" height="${height - headerHeight}" fill="rgba(255,255,255,0.02)"/>`;
-        svg += `<rect x="${nameColWidth + (colWidth * 7)}" y="${headerHeight}" width="${colWidth * 7}" height="${height - headerHeight}" fill="rgba(0,0,0,0.2)"/>`;
-
-        // Header Text
-        svg += `<text x="15" y="${headerHeight/2 + 5}" fill="#bb86fc" font-size="13" font-weight="bold" style="text-transform:uppercase;">Team Member</text>`;
-        
-        // Week headers
-        svg += `<text x="${nameColWidth + (colWidth * 3.5)}" y="18" fill="#bb86fc" font-size="14" text-anchor="middle" font-weight="bold">CURRENT WEEK (${currentRange})</text>`;
-        svg += `<line x1="${nameColWidth + (colWidth * 7)}" y1="5" x2="${nameColWidth + (colWidth * 7)}" y2="${height}" stroke="#444" stroke-dasharray="4"/>`;
-        svg += `<text x="${nameColWidth + (colWidth * 10.5)}" y="18" fill="#bb86fc" font-size="14" text-anchor="middle" font-weight="bold">NEXT WEEK (${nextRange})</text>`;
-
-        // Day Headers
-        const days = ['M','T','W','T','F','S','S'];
-        const allDays = [...days, ...days];
-        allDays.forEach((d, i) => {
+        // Timeline Header
+        rollingPeriods.forEach((p, i) => {
             const x = nameColWidth + (i * colWidth);
-            svg += `<text x="${x + colWidth/2}" y="${headerHeight - 8}" fill="#aaa" font-size="11" text-anchor="middle">${d}</text>`;
-            svg += `<line x1="${x}" y1="${headerHeight}" x2="${x}" y2="${height}" stroke="#333" stroke-width="1"/>`;
+            svg += `<text x="${x + colWidth/2}" y="${timelineHeaderHeight - 15}" fill="#444" font-size="12" text-anchor="middle" font-weight="bold">${getPeriodLabelShort(p)}</text>`;
+            svg += `<line x1="${x}" y1="${timelineHeaderHeight}" x2="${x}" y2="${totalHeight}" stroke="#dee2e6" stroke-width="1"/>`;
         });
-        svg += `<line x1="0" y1="${headerHeight}" x2="${width}" y2="${headerHeight}" stroke="#444" stroke-width="1"/>`;
+        svg += `<line x1="${width}" y1="${timelineHeaderHeight}" x2="${width}" y2="${totalHeight}" stroke="#dee2e6" stroke-width="1"/>`;
+        svg += `<line x1="0" y1="${timelineHeaderHeight}" x2="${width}" y2="${timelineHeaderHeight}" stroke="#dee2e6" stroke-width="1"/>`;
 
-        // Rows
-        members.forEach((m, i) => {
-            const y = headerHeight + (i * rowHeight);
-            if (i % 2 === 0) svg += `<rect x="0" y="${y}" width="${width}" height="${rowHeight}" fill="rgba(255,255,255,0.01)"/>`;
+        // Content
+        let currentY = timelineHeaderHeight;
 
-            // Tooltip generation
-            let tooltip = `<b>${m.name}</b><br><br><u>Current Priorities:</u><br>`;
-            (m.thisWeek?.tasks || []).forEach(t => { if(t.text) tooltip += `• ${t.text}<br>`; });
-            tooltip += `<br><u>Next Week Plans:</u><br>`;
-            (m.nextWeek?.tasks || []).forEach(t => { if(t.text) tooltip += `• ${t.text}<br>`; });
-            const safeTooltip = tooltip.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-
-            // Name
-            svg += `<text x="15" y="${y + rowHeight - 8}" fill="#e0e0e0" font-size="12" style="cursor:help; font-weight:500;" onmousemove="Visuals.showTooltip(event, '${safeTooltip}')" onmouseout="Visuals.hideTooltip()">${m.name}</text>`;
-            
-            // Data
-            const defaultLoad = ['N','N','N','N','N','X','X'];
-            const defaultOnCall = [false, false, false, false, false, false, false];
-            const thisLoad = (m.thisWeek && m.thisWeek.load) ? (m.thisWeek.load.length === 5 ? [...m.thisWeek.load, 'X', 'X'] : m.thisWeek.load) : defaultLoad;
-            const nextLoad = (m.nextWeek && m.nextWeek.load) ? (m.nextWeek.load.length === 5 ? [...m.nextWeek.load, 'X', 'X'] : m.nextWeek.load) : defaultLoad;
-            const thisOnCall = (m.thisWeek && m.thisWeek.onCall) ? (m.thisWeek.onCall.length === 5 ? [...m.thisWeek.onCall, false, false] : m.thisWeek.onCall) : defaultOnCall;
-            const nextOnCall = (m.nextWeek && m.nextWeek.onCall) ? (m.nextWeek.onCall.length === 5 ? [...m.nextWeek.onCall, false, false] : m.nextWeek.onCall) : defaultOnCall;
-            const combined = [...thisLoad, ...nextLoad];
-            const combinedOnCall = [...thisOnCall, ...nextOnCall];
-            
-            combined.forEach((val, d) => {
-                const x = nameColWidth + (d * colWidth);
-                if (val === 'X') {
-                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#bb86fc" rx="4" opacity="0.8"><title>Absent</title></rect>`;
-                } else if (val === 'L') {
-                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#ff1744" rx="12" opacity="0.8"><title>Low Availability</title></rect>`;
-                } else if (val === 'N') {
-                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#ffb300" rx="12" opacity="0.8"><title>Medium Availability</title></rect>`;
-                } else if (val === 'R') {
-                    svg += `<rect x="${x+2}" y="${y+3}" width="${colWidth-4}" height="${rowHeight-6}" fill="#00e676" rx="12" opacity="0.8"><title>High Availability</title></rect>`;
-                }
-                
-                if (combinedOnCall[d]) {
-                    svg += `<text x="${x + colWidth - 12}" y="${y + rowHeight - 5}" text-anchor="middle" font-size="14" fill="#00FFFF" style="font-weight:bold;" class="flash-icon">☎</text>`;
-                }
+        members.forEach(m => {
+            const activeObjectives = (m.objectives || []).filter(o => {
+                // Only show if it touches the rolling 6 periods
+                return rollingPeriods.includes(o.start) || rollingPeriods.includes(o.end) || 
+                       (o.start < rollingPeriods[0] && o.end > rollingPeriods[5]); // Spans across
             });
+
+            if (activeObjectives.length === 0) return;
+
+            // Member Header
+            svg += `<rect x="0" y="${currentY}" width="${width}" height="${memberHeaderHeight}" fill="#e9ecef" opacity="0.5"/>`;
+            svg += `<text x="15" y="${currentY + memberHeaderHeight/2 + 6}" fill="#333" font-size="14" font-weight="bold">${m.name}'s Portfolio & Resource Allocation</text>`;
             
-            svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="#333" stroke-width="0.5"/>`;
+            // Allocation Legend Style (Top Right of section)
+            svg += `<rect x="${width - 150}" y="${currentY + 15}" width="20" height="20" rx="10" fill="#008080" opacity="0.8"/>`;
+            svg += `<text x="${width - 125}" y="${currentY + 30}" fill="#666" font-size="11">${m.name} (Teal)</text>`;
+
+            currentY += memberHeaderHeight;
+
+            activeObjectives.forEach((obj, oi) => {
+                const y = currentY + (oi * rowHeight);
+                
+                // Assignment Name
+                svg += `<text x="15" y="${y + rowHeight/2 + 5}" fill="#555" font-size="12" font-weight="500">${obj.assignment}</text>`;
+
+                // Calculate Bar Position
+                let startIdx = rollingPeriods.indexOf(obj.start);
+                let endIdx = rollingPeriods.indexOf(obj.end);
+
+                if (startIdx === -1) startIdx = 0; // Starts before
+                if (endIdx === -1) endIdx = 5;   // Ends after
+
+                const barStart = nameColWidth + (startIdx * colWidth) + 5;
+                const barEnd = nameColWidth + ((endIdx + 1) * colWidth) - 5;
+                const barWidth = Math.max(20, barEnd - barStart);
+                const barY = y + 6;
+                const barHeight = rowHeight - 12;
+
+                // Pill Bar
+                const assignmentDef = (allAssignments || []).find(a => a.name === obj.assignment);
+                const barColor = assignmentDef ? assignmentDef.color : '#008080';
+
+                svg += `<rect x="${barStart}" y="${barY}" width="${barWidth}" height="${barHeight}" fill="${barColor}" rx="${barHeight/2}" opacity="0.8">
+                            <title>${m.name}: ${obj.assignment} (${obj.load}%)</title>
+                        </rect>`;
+                
+                // Percentage Text
+                svg += `<text x="${barStart + barWidth/2}" y="${barY + barHeight/2 + 4}" fill="#fff" font-size="11" text-anchor="middle" font-weight="bold" pointer-events="none">${obj.load}%</text>`;
+
+                // Subtle Row Line
+                svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="#eee" stroke-width="1"/>`;
+            });
+
+            currentY += activeObjectives.length * rowHeight;
         });
-        
+
         svg += `</svg>`;
         return svg;
     }
