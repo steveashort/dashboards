@@ -421,15 +421,16 @@ export const renderBoard = () => {
                                     },
                                     chart: {
                                         toolbar: { show: false },
-                                        height: barData.series[0].data.length * 30 + 40,
-                                        padding: { top: 0, bottom: 0, left: 0 }
+                                        height: barData.series[0].data.length * 30 + 40
                                     },
                                     xaxis: {
                                         type: 'numeric',
-                                        position: 'top',
+                                        reversed: true,
                                         title: { text: 'Days from Today', style: { color: '#aaa' } },
-                                        labels: { style: { colors: '#aaa' } },
-                                        min: 0
+                                        labels: { 
+                                            style: { colors: '#aaa' },
+                                            formatter: (val) => Math.abs(val)
+                                        }
                                     },
                                     annotations: {
                                         xaxis: [{
@@ -447,7 +448,7 @@ export const renderBoard = () => {
                                         reversed: true,
                                         labels: { style: { colors: '#aaa' } }
                                     },
-                                    grid: { show: false, padding: { left: 0 } },
+                                    grid: { show: false },
                                     legend: { show: false },
                                     colors: barData.series[0].data.map(d => d.fillColor),
                                     tooltip: {
@@ -704,15 +705,16 @@ export const ZoomManager = {
                                     },
                                     chart: {
                                         toolbar: { show: true },
-                                        height: barData.series[0].data.length * 30 + 50,
-                                        padding: { top: 0, bottom: 0, left: 0 }
+                                        height: barData.series[0].data.length * 30 + 50
                                     },
                                     xaxis: {
                                         type: 'numeric',
-                                        position: 'top',
+                                        reversed: true,
                                         title: { text: 'Days from Today', style: { color: '#aaa' } },
-                                        labels: { style: { colors: '#aaa' } },
-                                        min: 0
+                                        labels: { 
+                                            style: { colors: '#aaa' },
+                                            formatter: (val) => Math.abs(val)
+                                        }
                                     },
                                     annotations: {
                                         xaxis: [{
@@ -730,7 +732,7 @@ export const ZoomManager = {
                                         reversed: true,
                                         labels: { style: { colors: '#aaa' } }
                                     },
-                                    grid: { show: false, padding: { left: 0 } },
+                                    grid: { show: false },
                                     legend: { show: false },
                                     colors: barData.series[0].data.map(d => d.fillColor),
                                     tooltip: {
