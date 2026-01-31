@@ -686,10 +686,10 @@ export const Visuals = {
         return svg;
     },
 
-    createResourcePlannerSVG: (items, rangeMonths = 6) => {
+    createResourcePlannerSVG: (items, rangeMonths = 6, size = 'M') => {
         const rowHeight = 40;
         const headerHeight = 50;
-        const width = 800; 
+        const width = getWidth(size) || 800; 
         const nameColWidth = 200;
         const timelineWidth = width - nameColWidth;
         
@@ -710,7 +710,7 @@ export const Visuals = {
         const colWidth = timelineWidth / months.length;
         const totalHeight = headerHeight + (items.length * rowHeight) + 20;
         
-        let svg = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${totalHeight}" preserveAspectRatio="none">`;
+        let svg = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${totalHeight}" preserveAspectRatio="xMinYMin meet">`;
         svg += `<rect x="0" y="0" width="${width}" height="${totalHeight}" fill="var(--card-bg)" rx="8"/>`;
         
         // Vertical Grid & Headers

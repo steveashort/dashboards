@@ -766,7 +766,8 @@ export const renderBoard = () => {
                 
                 // Use new renderer with custom style
                 const range = t.range || 3;
-                const svg = Visuals.createResourcePlannerSVG(filteredAssignments, range);
+                const size = t.size || '2x2';
+                const svg = Visuals.createResourcePlannerSVG(filteredAssignments, range, size);
                 visualHTML = `<div style="width:100%; height:100%; overflow:hidden;">${svg}</div>`;
                 statsHTML = `<div class="tracker-stats">Planner: ${pType} (${range} Months)</div>`;
             } else if (renderType === 'completionBar') {
@@ -1078,7 +1079,7 @@ export const ZoomManager = {
                     filteredAssignments = filteredAssignments.filter(a => t.plannerItems.includes(a.name));
                 }
                 const range = t.range || 3;
-                content = `<div style="width:100%; height:100%; overflow:auto; padding:20px;">${Visuals.createResourcePlannerSVG(filteredAssignments, range)}</div>`;
+                content = `<div style="width:100%; height:100%; overflow:auto; padding:20px;">${Visuals.createResourcePlannerSVG(filteredAssignments, range, '4x4')}</div>`;
             }
     
             const bodyEl = getEl('zoomBody');
