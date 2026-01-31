@@ -684,5 +684,4 @@ export const Visuals = {
         svg += `</svg>`;
         return svg;
     }
-    }
 };
