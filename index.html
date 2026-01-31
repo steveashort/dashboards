@@ -508,10 +508,13 @@
                                         <div class="input-group">
                                             <label>Tracking Type</label>
                                             <div style="display:flex; gap:15px; margin-top:5px;">
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerType" value="Role" checked> Role</label>
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerType" value="Task"> Task</label>
-                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerType" value="Event"> Event</label>
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerType" value="Role" checked onchange="TrackerManager.renderPlannerMultiSelect()"> Role</label>
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerType" value="Task" onchange="TrackerManager.renderPlannerMultiSelect()"> Task</label>
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerType" value="Event" onchange="TrackerManager.renderPlannerMultiSelect()"> Event</label>
                                             </div>
+                                        </div>
+                                        <div class="input-group" id="plannerMultiSelectContainer" style="margin-top: 1rem; max-height: 150px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1);">
+                                            <!-- Checkboxes will be injected here -->
                                         </div>
                                         <div class="input-group" style="margin-top: 1rem;">
                                             <label>Notes for Published View (Max 200 chars)</label>

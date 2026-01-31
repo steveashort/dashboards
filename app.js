@@ -764,9 +764,13 @@ export const renderBoard = () => {
                     statsHTML = '';
                 }
             } else if (renderType === 'planner') {
-                // Filter assignments based on type
+                // Filter assignments based on type AND selected items (if any)
                 const pType = t.plannerType || 'Role';
-                const filteredAssignments = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
+                let filteredAssignments = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
+                
+                if (t.plannerItems && t.plannerItems.length > 0) {
+                    filteredAssignments = filteredAssignments.filter(a => t.plannerItems.includes(a.name));
+                }
                 
                 // SVG generation - assuming createGanttChartSVG can handle it or we use a placeholder if it's too heavy
                 // For a card, a simplified view or just the standard one scaled might work.
@@ -1172,6 +1176,40 @@ export const ZoomManager = {
 };
 
 export const TrackerManager = {
+        }    },
+
+    renderPlannerMultiSelect: (selectedItems = []) => {
+        const container = getEl('plannerMultiSelectContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        const typeRad = document.querySelector('input[name="tkPlannerType"]:checked');
+        const type = typeRad ? typeRad.value : 'Role';
+        
+        // Filter assignments by type
+        // Legacy: 'Project' class counts as 'Event'
+        const items = State.assignments.filter(a => a.class === type || (type === 'Event' && a.class === 'Project'));
+        
+        if (items.length === 0) {
+            container.innerHTML = `<div style="color:var(--text-muted); font-style:italic;">No ${type}s defined. Go to the ${type}s tab to add some.</div>`;
+            return;
+        }
+        
+        items.forEach(item => {
+            const div = document.createElement('div');
+            div.style.marginBottom = '5px';
+            const isChecked = selectedItems.includes(item.name);
+            
+            div.innerHTML = `
+                <label style="display:inline-flex; align-items:center; gap:8px; cursor:pointer;">
+                    <input type="checkbox" class="planner-item-select" value="${item.name}" ${isChecked ? 'checked' : ''} style="accent-color:var(--accent);">
+                    <span style="color:var(--text-main); font-size:0.9rem;">${item.name}</span>
+                </label>
+            `;
+            container.appendChild(div);
+        });
+    },
+
     openModal(index) {
         console.log("Opening Tracker Modal for index:", index);
         if (document.body.classList.contains('publishing')) return;
@@ -1378,6 +1416,7 @@ export const TrackerManager = {
                 if(rRange) rRange.checked = true;
                 const rType = document.querySelector(`input[name="tkPlannerType"][value="Role"]`);
                 if(rType) rType.checked = true;
+                this.renderPlannerMultiSelect();
             } else if (!isEdit && type === 'countdown') {
                 const notesIn = getEl('tkCountdownNotes');
                 if(notesIn) notesIn.value = '';
@@ -1494,6 +1533,8 @@ export const TrackerManager = {
                                         
                                         const rType = document.querySelector(`input[name="tkPlannerType"][value="${pType}"]`);
                                         if(rType) rType.checked = true;
+                                        
+                                        this.renderPlannerMultiSelect(tracker ? (tracker.plannerItems || []) : []);
                                     }
                                 }        ModalManager.openModal('trackerModal');
     },
@@ -2281,13 +2322,21 @@ export const TrackerManager = {
             const alignRad = document.querySelector('input[name="tkNoteAlign"]:checked');
             newTracker.align = alignRad ? alignRad.value : 'left';
                         newTracker.notes = ''; // No notes for Note Tracker
-                    } else if (type === 'planner') {
-                        const rRange = document.querySelector('input[name="tkPlannerRange"]:checked');
-                        const rType = document.querySelector('input[name="tkPlannerType"]:checked');
-                        newTracker.range = rRange ? parseInt(rRange.value) : 3;
-                        newTracker.plannerType = rType ? rType.value : 'Role';
-                        newTracker.notes = getEl('tkPlannerNotes').value.trim();
-                    } else if (type === 'completionBar') {            const tmIn = getEl('tkCompBarMetric');
+                            } else if (type === 'planner') {
+                                const rRange = document.querySelector('input[name="tkPlannerRange"]:checked');
+                                const rType = document.querySelector('input[name="tkPlannerType"]:checked');
+                                newTracker.range = rRange ? parseInt(rRange.value) : 3;
+                                newTracker.plannerType = rType ? rType.value : 'Role';
+                                
+                                const selectedItems = [];
+                                const checkboxes = document.querySelectorAll('.planner-item-select:checked');
+                                checkboxes.forEach(cb => selectedItems.push(cb.value));
+                                
+                                if (selectedItems.length === 0) return App.alert(`Please select at least one ${newTracker.plannerType}.`);
+                                newTracker.plannerItems = selectedItems;
+                                
+                                newTracker.notes = getEl('tkPlannerNotes').value.trim();
+                            } else if (type === 'completionBar') {            const tmIn = getEl('tkCompBarMetric');
             const ttIn = getEl('tkCompBarTotal');
             const taIn = getEl('tkCompBarActive');
             const tnIn = getEl('tkCompBarNotes');
