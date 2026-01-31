@@ -17,6 +17,7 @@ let State = {
     assignments: [],
     members: [],
     planners: [],
+    counters: { cid: 0, uid: 0, rid: 0, tid: 0, eid: 0, aid: 0 },
     editingTrackerIndex: -1,
     currentTrackerType: 'gauge'
 };
@@ -90,8 +91,64 @@ const setupDateValidation = (startId, endId) => {
     });
 };
 
+const generateId = (type) => {
+    if (!State.counters) State.counters = { cid: 0, uid: 0, rid: 0, tid: 0, eid: 0, aid: 0 };
+    State.counters[type]++;
+    const num = State.counters[type].toString().padStart(3, '0');
+    return `${type.toUpperCase()}${num}`;
+};
+
+const syncIds = () => {
+    if (!State.counters) State.counters = { cid: 0, uid: 0, rid: 0, tid: 0, eid: 0, aid: 0 };
+    
+    // Trackers (Cards)
+    if (State.trackerTabs) {
+        State.trackerTabs.forEach(tab => {
+            tab.trackers.forEach(t => {
+                if (!t.id) {
+                    t.id = generateId('cid');
+                } else {
+                    const num = parseInt(t.id.substring(3));
+                    if (!isNaN(num) && num > State.counters.cid) State.counters.cid = num;
+                }
+            });
+        });
+    }
+
+    // Members (Users)
+    if (State.members) {
+        State.members.forEach(m => {
+            if (!m.id) {
+                m.id = generateId('uid');
+            } else {
+                const num = parseInt(m.id.substring(3));
+                if (!isNaN(num) && num > State.counters.uid) State.counters.uid = num;
+            }
+        });
+    }
+
+    // Assignments
+    if (State.assignments) {
+        State.assignments.forEach(a => {
+            let type = 'aid';
+            if (a.class === 'Role') type = 'rid';
+            else if (a.class === 'Task') type = 'tid';
+            else if (a.class === 'Event' || a.class === 'Project') type = 'eid';
+            
+            if (!a.id) {
+                a.id = generateId(type);
+            } else {
+                const num = parseInt(a.id.substring(3));
+                if (!isNaN(num) && num > State.counters[type]) State.counters[type] = num;
+            }
+        });
+    }
+};
+
 // --- CORE FUNCTIONS ---
 export const initApp = () => {
+    syncIds(); // Ensure IDs are populated
+
     // Migration: Move legacy trackers to default tab
     if (State.trackers && State.trackers.length > 0) {
         const defTab = State.trackerTabs.find(t => t.id === 'default');
@@ -2394,8 +2451,10 @@ export const TrackerManager = {
         if (!currentTab) return App.alert("No active tab selected.");
 
         if(index === -1) {
+            newTracker.id = generateId('cid');
             currentTab.trackers.push(newTracker);
         } else {
+            newTracker.id = currentTab.trackers[index].id; // Preserve existing ID
             currentTab.trackers[index] = newTracker;
         }
 
@@ -2680,8 +2739,13 @@ export const UserManager = {
             objectives: objectives
         };
 
-        if(idx === -1) State.members.push(member);
-        else State.members[idx] = member;
+        if(idx === -1) {
+            member.id = generateId('uid');
+            State.members.push(member);
+        } else {
+            member.id = State.members[idx].id;
+            State.members[idx] = member;
+        }
 
         ModalManager.closeModal('userModal');
         renderBoard();
@@ -2837,8 +2901,10 @@ export const AssignmentManager = {
         
         if(index === -1) {
             if(State.assignments.length >= 32) return App.alert("Max 32 assignments reached.");
+            newAssignment.id = generateId('aid');
             State.assignments.push(newAssignment);
         } else {
+            newAssignment.id = State.assignments[index].id;
             State.assignments[index] = newAssignment;
         }
         
@@ -3097,8 +3163,10 @@ export const RoleManager = {
         
         if(index === -1) {
             if(State.assignments.length >= 64) return App.alert("Max assignments reached.");
+            newAssignment.id = generateId('rid');
             State.assignments.push(newAssignment);
         } else {
+            newAssignment.id = State.assignments[index].id;
             State.assignments[index] = newAssignment;
         }
         
@@ -3212,8 +3280,10 @@ export const EventManager = {
         
         if(index === -1) {
             if(State.assignments.length >= 64) return App.alert("Max assignments reached.");
+            newAssignment.id = generateId('eid');
             State.assignments.push(newAssignment);
         } else {
+            newAssignment.id = State.assignments[index].id;
             State.assignments[index] = newAssignment;
         }
         
@@ -3238,6 +3308,7 @@ export const EventManager = {
             if(!name || !start || !end) return;
             
             const newEvent = {
+                id: generateId('eid'),
                 name: name,
                 description: desc || '',
                 class: 'Event',
@@ -3390,8 +3461,10 @@ export const TaskManager = {
         
         if(index === -1) {
             if(State.assignments.length >= 64) return App.alert("Max assignments reached.");
+            newAssignment.id = generateId('tid');
             State.assignments.push(newAssignment);
         } else {
+            newAssignment.id = State.assignments[index].id;
             State.assignments[index] = newAssignment;
         }
         
