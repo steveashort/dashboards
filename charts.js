@@ -586,117 +586,103 @@ export const Visuals = {
         const nameColWidth = 250;
         const colWidth = (width - nameColWidth) / 6;
         
-        // Rolling 6 periods logic
+        // Rolling 6 periods logic with Year awareness
         const getCurrentPeriod = () => {
             const d = new Date();
             const m = d.getMonth(); 
             return ((m + 11) % 12) + 1;
         };
-        const getPeriodLabelShort = (p) => {
+        const getFiscalYear = (date = new Date()) => {
+            const m = date.getMonth(); 
+            const y = date.getFullYear();
+            return m === 0 ? y - 1 : y;
+        };
+        const getPeriodLabelShort = (p, y) => {
             const monthNames = ["Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan"];
-            return `P${p.toString().padStart(2,'0')} ${monthNames[(p-1)%12]}`;
+            const yr = y ? ` ${y.toString().substring(2)}` : '';
+            return `P${p.toString().padStart(2,'0')}${yr}`;
         };
 
         const currentP = getCurrentPeriod();
-        const rollingPeriods = [];
+        const currentY = getFiscalYear();
+        const rollingTimeline = [];
         for(let i=0; i<6; i++) {
-            rollingPeriods.push(((currentP + i - 1) % 12) + 1);
+            let pRaw = currentP + i;
+            let p = ((pRaw - 1) % 12) + 1;
+            let yOffset = Math.floor((pRaw - 1) / 12);
+            let y = currentY + yOffset;
+            rollingTimeline.push({ p, y });
         }
 
-        // Calculate total height needed
+        // Calculate total height
         let totalRows = 0;
-        members.forEach(m => {
-            if (m.objectives && m.objectives.length > 0) {
-                totalRows += m.objectives.length;
-            }
-        });
+        members.forEach(m => { if (m.objectives && m.objectives.length > 0) totalRows += m.objectives.length; });
         const totalHeight = timelineHeaderHeight + (members.filter(m => m.objectives && m.objectives.length > 0).length * memberHeaderHeight) + (totalRows * rowHeight) + 40;
 
         let svg = `<svg width="100%" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="http://www.w3.org/2000/svg">`;
-        
-        // Background
         svg += `<rect x="0" y="0" width="${width}" height="${totalHeight}" fill="var(--card-bg)" rx="8"/>`;
 
         // Timeline Header
-        rollingPeriods.forEach((p, i) => {
+        rollingTimeline.forEach((item, i) => {
             const x = nameColWidth + (i * colWidth);
-            svg += `<text x="${x + colWidth/2}" y="${timelineHeaderHeight - 15}" fill="var(--text-main)" font-size="12" text-anchor="middle" font-weight="bold">${getPeriodLabelShort(p)}</text>`;
+            svg += `<text x="${x + colWidth/2}" y="${timelineHeaderHeight - 15}" fill="var(--text-main)" font-size="12" text-anchor="middle" font-weight="bold">${getPeriodLabelShort(item.p, item.y)}</text>`;
             svg += `<line x1="${x}" y1="${timelineHeaderHeight}" x2="${x}" y2="${totalHeight}" stroke="var(--border)" stroke-width="1"/>`;
         });
         svg += `<line x1="${width}" y1="${timelineHeaderHeight}" x2="${width}" y2="${totalHeight}" stroke="var(--border)" stroke-width="1"/>`;
         svg += `<line x1="0" y1="${timelineHeaderHeight}" x2="${width}" y2="${timelineHeaderHeight}" stroke="var(--border)" stroke-width="1"/>`;
 
-        // Content
-        let currentY = timelineHeaderHeight;
-
+        let currentYPos = timelineHeaderHeight;
         members.forEach(m => {
-            const activeObjectives = (m.objectives || []).filter(o => {
-                // Only show if it touches the rolling 6 periods
-                return rollingPeriods.includes(o.start) || rollingPeriods.includes(o.end) || 
-                       (o.start < rollingPeriods[0] && o.end > rollingPeriods[5]); // Spans across
+            const activeObjectives = (m.objectives || []).filter(obj => {
+                const startScore = (obj.startYear || currentY) * 100 + obj.start;
+                const endScore = (obj.endYear || currentY) * 100 + obj.end;
+                const timelineStartScore = rollingTimeline[0].y * 100 + rollingTimeline[0].p;
+                const timelineEndScore = rollingTimeline[5].y * 100 + rollingTimeline[5].p;
+                
+                return (startScore <= timelineEndScore && endScore >= timelineStartScore);
             });
 
             if (activeObjectives.length === 0) return;
 
-            // Member Header
-            svg += `<rect x="0" y="${currentY}" width="${width}" height="${memberHeaderHeight}" fill="rgba(255,255,255,0.05)" opacity="0.5"/>`;
-            svg += `<text x="15" y="${currentY + memberHeaderHeight/2 + 6}" fill="var(--accent)" font-size="14" font-weight="bold">${m.name}'s Portfolio & Resource Allocation</text>`;
-            
-            // Allocation Legend Style (Top Right of section)
-            svg += `<rect x="${width - 150}" y="${currentY + 15}" width="20" height="20" rx="10" fill="var(--accent)" opacity="0.8"/>`;
-            svg += `<text x="${width - 125}" y="${currentY + 30}" fill="var(--text-muted)" font-size="11">${m.name}</text>`;
-
-            currentY += memberHeaderHeight;
+            svg += `<rect x="0" y="${currentYPos}" width="${width}" height="${memberHeaderHeight}" fill="rgba(255,255,255,0.05)" opacity="0.5"/>`;
+            svg += `<text x="15" y="${currentYPos + memberHeaderHeight/2 + 6}" fill="var(--accent)" font-size="14" font-weight="bold">${m.name}'s Portfolio & Resource Allocation</text>`;
+            currentYPos += memberHeaderHeight;
 
             activeObjectives.forEach((obj, oi) => {
-                const y = currentY + (oi * rowHeight);
-                
-                // Assignment Name
+                const y = currentYPos + (oi * rowHeight);
                 svg += `<text x="15" y="${y + rowHeight/2 + 5}" fill="var(--text-main)" font-size="12" font-weight="500">${obj.assignment}</text>`;
 
-                // Robust period range detection (handling wrap-around)
+                const startScore = (obj.startYear || currentY) * 100 + obj.start;
+                const endScore = (obj.endYear || currentY) * 100 + obj.end;
+
                 const coveredIndices = [];
-                rollingPeriods.forEach((rp, ri) => {
-                    let inRange = false;
-                    if (obj.start <= obj.end) {
-                        if (rp >= obj.start && rp <= obj.end) inRange = true;
-                    } else {
-                        // Wraps around P12 -> P01
-                        if (rp >= obj.start || rp <= obj.end) inRange = true;
-                    }
-                    if (inRange) coveredIndices.push(ri);
+                rollingTimeline.forEach((rt, ri) => {
+                    const rtScore = rt.y * 100 + rt.p;
+                    if (rtScore >= startScore && rtScore <= endScore) coveredIndices.push(ri);
                 });
 
-                if (coveredIndices.length === 0) return;
+                if (coveredIndices.length > 0) {
+                    const startIdx = coveredIndices[0];
+                    const endIdx = coveredIndices[coveredIndices.length - 1];
+                    const barStart = nameColWidth + (startIdx * colWidth) + 5;
+                    const barEnd = nameColWidth + ((endIdx + 1) * colWidth) - 5;
+                    const barWidth = Math.max(20, barEnd - barStart);
+                    
+                    const assignmentDef = (allAssignments || []).find(a => a.name === obj.assignment);
+                    const barColor = assignmentDef ? assignmentDef.color : 'var(--accent)';
 
-                const startIdx = coveredIndices[0];
-                const endIdx = coveredIndices[coveredIndices.length - 1];
-
-                const barStart = nameColWidth + (startIdx * colWidth) + 5;
-                const barEnd = nameColWidth + ((endIdx + 1) * colWidth) - 5;
-                const barWidth = Math.max(20, barEnd - barStart);
-                const barY = y + 6;
-                const barHeight = rowHeight - 12;
-
-                // Pill Bar
-                const assignmentDef = (allAssignments || []).find(a => a.name === obj.assignment);
-                const barColor = assignmentDef ? assignmentDef.color : 'var(--accent)';
-
-                svg += `<rect x="${barStart}" y="${barY}" width="${barWidth}" height="${barHeight}" fill="${barColor}" rx="${barHeight/2}" opacity="0.8">
-                            <title>${m.name}: ${obj.assignment} (${obj.load}%)</title>
-                        </rect>`;
-                
-                // Percentage Text
-                svg += `<text x="${barStart + barWidth/2}" y="${barY + barHeight/2 + 4}" fill="#fff" font-size="11" text-anchor="middle" font-weight="bold" pointer-events="none">${obj.load}%</text>`;
-
-                // Subtle Row Line
+                    svg += `<rect x="${barStart}" y="${y + 6}" width="${barWidth}" height="${rowHeight - 12}" fill="${barColor}" rx="${(rowHeight - 12)/2}" opacity="0.8">
+                                <title>${m.name}: ${obj.assignment} (${obj.load}%)</title>
+                            </rect>`;
+                    svg += `<text x="${barStart + barWidth/2}" y="${y + rowHeight/2 + 4}" fill="#fff" font-size="11" text-anchor="middle" font-weight="bold" pointer-events="none">${obj.load}%</text>`;
+                }
                 svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="var(--border)" stroke-width="0.5" opacity="0.5"/>`;
             });
-
-            currentY += activeObjectives.length * rowHeight;
+            currentYPos += activeObjectives.length * rowHeight;
         });
 
         svg += `</svg>`;
         return svg;
+    }
     }
 };

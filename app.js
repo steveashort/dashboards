@@ -16,6 +16,7 @@ let State = {
     activeTabId: 'default',
     assignments: [],
     members: [],
+    planners: [],
     editingTrackerIndex: -1,
     currentTrackerType: 'gauge'
 };
@@ -50,22 +51,25 @@ const getRanges = () => {
     };
 };
 
-const getPeriodLabel = (p) => {
+const getPeriodLabel = (p, y) => {
     // P01 (Feb) ... P12 (Jan)
     const monthNames = ["Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan"];
     const idx = (p - 1) % 12;
     const name = monthNames[idx];
-    return `P${p.toString().padStart(2,'0')} (${name})`;
+    const yearSuffix = y ? ` ${y}` : '';
+    return `P${p.toString().padStart(2,'0')} (${name})${yearSuffix}`;
+};
+
+const getFiscalYear = (date = new Date()) => {
+    const m = date.getMonth(); // 0=Jan
+    const y = date.getFullYear();
+    // If Jan, it belongs to the previous year's fiscal cycle (Feb-Jan)
+    return m === 0 ? y - 1 : y;
 };
 
 const getCurrentPeriod = () => {
     const d = new Date();
     const m = d.getMonth(); // 0=Jan, 1=Feb
-    // If Jan (0), it's P12. If Feb (1), it's P01.
-    // Formula: (m + 11) % 12 + 1 ?
-    // 0 -> 11 % 12 + 1 = 12.
-    // 1 -> 12 % 12 + 1 = 1.
-    // 2 -> 13 % 12 + 1 = 2.
     return ((m + 11) % 12) + 1;
 };
 
@@ -523,6 +527,8 @@ export const renderBoard = () => {
         const svg = Visuals.createGanttChartSVG(State.members, State.assignments);
         const container = getEl('ganttContainer');
         if(container) container.innerHTML = svg;
+        
+        PlannerManager.renderPlanners();
     } else {
         if(viewTrackers) viewTrackers.style.display = 'block';
         if(viewTeam) viewTeam.style.display = 'none';
@@ -816,18 +822,21 @@ export const renderBoard = () => {
                                         const sorted = [...m.objectives].sort((a,b) => a.start - b.start);
                                         content += `<div style="padding: 10px 1.5rem; border-top: 1px solid var(--border); display:flex; flex-direction:column; gap:4px;">`;
                                         content += `<div style="font-size:0.75rem; color:var(--accent); text-transform:uppercase; font-weight:bold; margin-bottom:2px;">Long Term Objectives</div>`;
-                                        sorted.forEach(o => {
-                                            const assign = State.assignments.find(a => a.name === o.assignment);
-                                            const color = assign ? assign.color : '#03dac6'; // Default color
-                                            const pStart = getPeriodLabel(o.start).split(' ')[0]; // Just P01
-                                            const pEnd = getPeriodLabel(o.end).split(' ')[0];
-                                            content += `<div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;">
-                                                <span style="background:${color}; color:#fff; padding:1px 6px; border-radius:4px; font-size:0.7rem; min-width:60px; text-align:center;">${pStart} - ${pEnd}</span>
-                                                <span style="color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1;">${o.assignment}</span>
-                                                <span style="color:var(--text-muted); font-size:0.75rem; font-weight:bold;">${o.load}%</span>
-                                            </div>`;
-                                        });
-                                        content += `</div>`;
+                                                        sorted.forEach(o => {
+                                                            const assign = State.assignments.find(a => a.name === o.assignment);
+                                                            const color = assign ? assign.color : '#03dac6'; // Default color
+                                                            
+                                                            const startYShort = o.startYear ? o.startYear.toString().substring(2) : '';
+                                                            const endYShort = o.endYear ? o.endYear.toString().substring(2) : '';
+                                                            const pStart = `P${o.start.toString().padStart(2,'0')}${startYShort ? ' \''+startYShort : ''}`;
+                                                            const pEnd = `P${o.end.toString().padStart(2,'0')}${endYShort ? ' \''+endYShort : ''}`;
+                                        
+                                                            content += `<div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;">
+                                                                <span style="background:${color}; color:#fff; padding:1px 6px; border-radius:4px; font-size:0.7rem; min-width:75px; text-align:center;">${pStart} - ${pEnd}</span>
+                                                                <span style="color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1;">${o.assignment}</span>
+                                                                <span style="color:var(--text-muted); font-size:0.75rem; font-weight:bold;">${o.load}%</span>
+                                                            </div>`;
+                                                        });                                        content += `</div>`;
                                     }                        
                         c.innerHTML += content; teamGrid.appendChild(c);
         });
@@ -2322,6 +2331,25 @@ export const UserManager = {
         loadIn.style.textAlign = 'center';
         loadIn.value = data ? data.load : 100;
 
+        // Year Helpers
+        const createYearSel = (val) => {
+            const s = document.createElement('select');
+            s.style.width = '70px';
+            s.style.background = 'var(--input-bg)';
+            s.style.color = '#fff';
+            s.style.border = '1px solid var(--border)';
+            s.style.padding = '4px';
+            const fy = getFiscalYear();
+            for(let i=fy-1; i<=fy+2; i++) {
+                const opt = document.createElement('option');
+                opt.value = i; opt.innerText = i;
+                if(val && parseInt(val) === i) opt.selected = true;
+                else if(!val && i === fy) opt.selected = true;
+                s.appendChild(opt);
+            }
+            return s;
+        };
+
         // Period Selects
         const createPerSel = (val) => {
             const s = document.createElement('select');
@@ -2341,8 +2369,13 @@ export const UserManager = {
             return s;
         };
 
+        const startYearSel = createYearSel(data ? data.startYear : null);
+        startYearSel.classList.add('obj-start-year');
         const startSel = createPerSel(data ? data.start : getCurrentPeriod());
         startSel.classList.add('obj-start');
+
+        const endYearSel = createYearSel(data ? data.endYear : null);
+        endYearSel.classList.add('obj-end-year');
         const endSel = createPerSel(data ? data.end : getCurrentPeriod());
         endSel.classList.add('obj-end');
 
@@ -2356,7 +2389,10 @@ export const UserManager = {
 
         div.appendChild(assignSel);
         div.appendChild(loadIn);
+        div.appendChild(startYearSel);
         div.appendChild(startSel);
+        div.appendChild(document.createTextNode(' - '));
+        div.appendChild(endYearSel);
         div.appendChild(endSel);
         div.appendChild(delBtn);
         
@@ -2456,15 +2492,28 @@ export const UserManager = {
         // Scrape Objectives
         const objectives = [];
         const objContainer = getEl('objectivesContainer');
+        let dateError = false;
         if(objContainer) {
             objContainer.querySelectorAll('.objective-row').forEach(row => {
                 const assign = row.querySelector('.obj-assign').value;
                 const load = parseInt(row.querySelector('.obj-load').value) || 0;
+                const startYear = parseInt(row.querySelector('.obj-start-year').value);
                 const start = parseInt(row.querySelector('.obj-start').value);
+                const endYear = parseInt(row.querySelector('.obj-end-year').value);
                 const end = parseInt(row.querySelector('.obj-end').value);
-                if (assign) objectives.push({ assignment: assign, load, start, end });
+                
+                // Validate End >= Start
+                const startScore = startYear * 100 + start;
+                const endScore = endYear * 100 + end;
+                if (endScore < startScore) {
+                    dateError = true;
+                }
+
+                if (assign) objectives.push({ assignment: assign, load, start, startYear, end, endYear });
             });
         }
+
+        if (dateError) return App.alert("Error: End period must be after Start period.");
 
         const member = {
             name,
@@ -2698,6 +2747,134 @@ export const DataSaver = {
         a.download = `team_tracker_${new Date().toISOString().split('T')[0]}.json`;
         a.click();
         URL.revokeObjectURL(url);
+    }
+};
+
+export const PlannerManager = {
+    openModal: (index) => {
+        const isEdit = index > -1;
+        const titleEl = getEl('plannerModalTitle');
+        if (titleEl) titleEl.innerText = isEdit ? 'Edit Planner' : 'Add Planner';
+        
+        getEl('editPlannerIndex').value = index;
+        
+        if (isEdit) {
+            const p = State.planners[index];
+            getEl('plName').value = p.name;
+            getEl('plDesc').value = p.description;
+            
+            // Set radios
+            const rRange = document.querySelector(`input[name="plRange"][value="${p.range}"]`);
+            if(rRange) rRange.checked = true;
+            const rType = document.querySelector(`input[name="plType"][value="${p.type}"]`);
+            if(rType) rType.checked = true;
+            
+            getEl('btnDelPlanner').style.display = 'inline-block';
+        } else {
+            getEl('plName').value = '';
+            getEl('plDesc').value = '';
+            // Defaults
+            const rRange = document.querySelector(`input[name="plRange"][value="3"]`);
+            if(rRange) rRange.checked = true;
+            const rType = document.querySelector(`input[name="plType"][value="Role"]`);
+            if(rType) rType.checked = true;
+            
+            getEl('btnDelPlanner').style.display = 'none';
+        }
+        
+        ModalManager.openModal('plannerModal');
+    },
+    
+    submitPlanner: () => {
+        const name = getEl('plName').value.trim();
+        const desc = getEl('plDesc').value.trim();
+        const rRange = document.querySelector('input[name="plRange"]:checked');
+        const rType = document.querySelector('input[name="plType"]:checked');
+        
+        const range = rRange ? rRange.value : "3";
+        const type = rType ? rType.value : "Role";
+        
+        if (!name) return App.alert("Please enter a planner name.");
+        
+        const index = parseInt(getEl('editPlannerIndex').value);
+        
+        const planner = {
+            name: name,
+            description: desc,
+            range: parseInt(range),
+            type: type
+        };
+        
+        if (index > -1) {
+            State.planners[index] = planner;
+        } else {
+            if(!State.planners) State.planners = [];
+            State.planners.push(planner);
+        }
+        
+        ModalManager.closeModal('plannerModal');
+        renderBoard(); // Re-render to show new planner
+    },
+    
+    deletePlanner: () => {
+        const index = parseInt(getEl('editPlannerIndex').value);
+        if (index > -1) {
+            App.confirm("Delete this planner?", () => {
+                State.planners.splice(index, 1);
+                ModalManager.closeModal('plannerModal');
+                renderBoard();
+            });
+        }
+    },
+    
+    renderPlanners: () => {
+        const container = getEl('additionalPlannersContainer');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        if (!State.planners) State.planners = [];
+        
+        State.planners.forEach((p, i) => {
+            const div = document.createElement('div');
+            div.className = 'planner-instance';
+            div.style.background = 'var(--card-bg)';
+            div.style.border = '1px solid var(--border)';
+            div.style.borderRadius = '8px';
+            div.style.padding = '1rem';
+            div.style.marginBottom = '1rem';
+            
+            // Header
+            const header = document.createElement('div');
+            header.style.display = 'flex';
+            header.style.justifyContent = 'space-between';
+            header.style.alignItems = 'center';
+            header.style.marginBottom = '1rem';
+            
+            header.innerHTML = `
+                <div>
+                    <h4 style="color:var(--accent); font-weight:300; margin:0; font-size:1.1rem;">${p.name}</h4>
+                    <div style="font-size:0.8rem; color:var(--text-muted);">${p.description}</div>
+                    <div style="font-size:0.75rem; color:#666; margin-top:2px;">Range: ${p.range} Months | Type: ${p.type}</div>
+                </div>
+                <button class="btn btn-sm" onclick="PlannerManager.openModal(${i})">Edit</button>
+            `;
+            
+            div.appendChild(header);
+            
+            // Placeholder for visual content
+            const viz = document.createElement('div');
+            viz.style.height = '150px';
+            viz.style.background = 'rgba(0,0,0,0.1)';
+            viz.style.borderRadius = '4px';
+            viz.style.display = 'flex';
+            viz.style.alignItems = 'center';
+            viz.style.justifyContent = 'center';
+            viz.style.color = '#666';
+            viz.innerText = `[Planner Visualization for ${p.type} - ${p.range} Months]`;
+            
+            div.appendChild(viz);
+            container.appendChild(div);
+        });
     }
 };
 

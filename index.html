@@ -87,8 +87,10 @@
                 <div id="ganttSection" style="margin-bottom: 3rem;">
                     <div class="section-header">
                         <h3 style="color:var(--accent); font-weight:300;">Resource Planner</h3>
+                        <button class="btn" onclick="PlannerManager.openModal(-1)">+ Add Planner</button>
                     </div>
                     <div id="ganttContainer" style="background:var(--card-bg); border:1px solid var(--border); border-radius:8px; padding:1rem; overflow-x:auto;"></div>
+                    <div id="additionalPlannersContainer" style="margin-top: 2rem; display: flex; flex-direction: column; gap: 2rem;"></div>
                 </div>
 
                 <div class="section-header" id="teamSectionHeader">
@@ -691,6 +693,49 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="plannerModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="plannerModalTitle">Add Planner</h3>
+                <button class="btn" onclick="ModalManager.closeModal('plannerModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editPlannerIndex" value="-1">
+                <div class="input-group">
+                    <label>Planner Name</label>
+                    <input type="text" id="plName" placeholder="e.g. Q1 Roadmap">
+                </div>
+                <div class="input-group">
+                    <label>Description (Max 100 chars)</label>
+                    <textarea id="plDesc" maxlength="100" style="height: 60px; font-size: 0.85rem;" placeholder="Brief description..."></textarea>
+                </div>
+                <div class="input-group">
+                    <label>Range</label>
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:5px;">
+                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plRange" value="3" checked> 3 Months</label>
+                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plRange" value="6"> 6 Months</label>
+                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plRange" value="12"> 12 Months</label>
+                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plRange" value="18"> 18 Months</label>
+                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plRange" value="24"> 24 Months</label>
+                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plRange" value="36"> 36 Months</label>
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label>Tracking Type</label>
+                    <div style="display:flex; gap:15px; margin-top:5px;">
+                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plType" value="Role" checked> Role</label>
+                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plType" value="Task"> Task</label>
+                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plType" value="Event"> Event</label>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="PlannerManager.deletePlanner()" id="btnDelPlanner">Delete</button>
+                <button class="btn btn-primary" onclick="PlannerManager.submitPlanner()">Save Planner</button>
+            </div>
+        </div>
+    </div>
+
     <!-- LOAD SCRIPT LAST to ensure it's available -->
     <!-- Changed to type="module" and added an export to window -->
     <script type="module">
@@ -700,6 +745,7 @@
         window.App = AppModule.App;
         window.UserManager = AppModule.UserManager;
         window.AssignmentManager = AppModule.AssignmentManager;
+        window.PlannerManager = AppModule.PlannerManager;
         window.TrackerManager = AppModule.TrackerManager;
         window.OverviewManager = AppModule.OverviewManager;
         window.ModalManager = AppModule.ModalManager;
