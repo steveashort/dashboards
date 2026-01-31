@@ -281,6 +281,7 @@
                     <button id="typeCompletionBarBtn" class="type-option" onclick="TrackerManager.setType('completionBar')">Completion Bar</button>
                     <button id="typeDonutBtn" class="type-option" onclick="TrackerManager.setType('donut')">Donut Chart</button>
                     <button id="typeCountdownBtn" class="type-option" onclick="TrackerManager.setType('countdown')">Countdown</button>
+                    <button id="typePlannerBtn" class="type-option" onclick="TrackerManager.setType('planner')">Resource Planner</button>
                 </div>
                 <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
                     <div class="input-group" style="flex: 2;">
@@ -484,6 +485,32 @@
                                                                                                     </div>
                                                                                                 </div>
 
+                                    <div id="plannerInputs" style="display:none;">
+                                        <div class="input-group">
+                                            <label>Range</label>
+                                            <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:5px;">
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerRange" value="3" checked> 3 Months</label>
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerRange" value="6"> 6 Months</label>
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerRange" value="12"> 12 Months</label>
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerRange" value="18"> 18 Months</label>
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerRange" value="24"> 24 Months</label>
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerRange" value="36"> 36 Months</label>
+                                            </div>
+                                        </div>
+                                        <div class="input-group">
+                                            <label>Tracking Type</label>
+                                            <div style="display:flex; gap:15px; margin-top:5px;">
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerType" value="Role" checked> Role</label>
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerType" value="Task"> Task</label>
+                                                <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="tkPlannerType" value="Event"> Event</label>
+                                            </div>
+                                        </div>
+                                        <div class="input-group" style="margin-top: 1rem;">
+                                            <label>Notes for Published View (Max 200 chars)</label>
+                                            <textarea id="tkPlannerNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                                        </div>
+                                    </div>
+                
                 <div id="counterInputs" style="display:none;">
                     <div class="input-group">
                         <label>Counters (Max 6)</label>

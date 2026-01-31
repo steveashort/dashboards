@@ -740,6 +740,17 @@ export const renderBoard = () => {
                     visualHTML += '</div>';
                     statsHTML = '';
                 }
+            } else if (renderType === 'planner') {
+                // Filter assignments based on type
+                const pType = t.plannerType || 'Role';
+                const filteredAssignments = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
+                
+                // SVG generation - assuming createGanttChartSVG can handle it or we use a placeholder if it's too heavy
+                // For a card, a simplified view or just the standard one scaled might work.
+                // We'll try the standard one.
+                const svg = Visuals.createGanttChartSVG(State.members, filteredAssignments);
+                visualHTML = `<div style="width:100%; height:100%; overflow:hidden;">${svg}</div>`;
+                statsHTML = `<div class="tracker-stats">Planner: ${pType} (${t.range || 3} Months)</div>`;
             } else if (renderType === 'completionBar') {
                 const completed = t.active || 0;
                 const total = t.total || 100;
@@ -1147,7 +1158,7 @@ export const TrackerManager = {
         const titleEl = getEl('trackerModalTitle');
         if (titleEl) titleEl.innerText = isEdit ? 'Edit Card' : 'Add Card';
         
-        ['gauge','bar','line','counter','rag','waffle','countdown','completionBar'].forEach(type => {
+        ['gauge','bar','line','counter','rag','waffle','countdown','completionBar','planner'].forEach(type => {
             const div = getEl(`${type}Inputs`);
             if (div) div.style.display = 'none';
         });
@@ -1337,6 +1348,13 @@ export const TrackerManager = {
                 const ttIn = getEl('tkCompBarTotal'); if(ttIn) ttIn.value = '';
                 const taIn = getEl('tkCompBarActive'); if(taIn) taIn.value = '';
                 const tnIn = getEl('tkCompBarNotes'); if(tnIn) tnIn.value = '';
+            } else if (!isEdit && type === 'planner') {
+                const notesIn = getEl('tkPlannerNotes'); if(notesIn) notesIn.value = '';
+                // Default Range 3, Type Role
+                const rRange = document.querySelector(`input[name="tkPlannerRange"][value="3"]`);
+                if(rRange) rRange.checked = true;
+                const rType = document.querySelector(`input[name="tkPlannerType"][value="Role"]`);
+                if(rType) rType.checked = true;
             } else if (!isEdit && type === 'countdown') {
                 const notesIn = getEl('tkCountdownNotes');
                 if(notesIn) notesIn.value = '';
@@ -1441,6 +1459,18 @@ export const TrackerManager = {
                                         const orient = tracker ? (tracker.orientation || 'vertical') : 'vertical';
                                         const orientRad = document.querySelector(`input[name="tkCompBarOrient"][value="${orient}"]`);
                                         if(orientRad) orientRad.checked = true;
+                                    } else if (type === 'planner') {
+                                        const notesIn = getEl('tkPlannerNotes');
+                                        if (tracker && notesIn) notesIn.value = tracker.notes || '';
+                                        
+                                        const range = tracker ? (tracker.range || 3) : 3;
+                                        const pType = tracker ? (tracker.plannerType || 'Role') : 'Role';
+                                        
+                                        const rRange = document.querySelector(`input[name="tkPlannerRange"][value="${range}"]`);
+                                        if(rRange) rRange.checked = true;
+                                        
+                                        const rType = document.querySelector(`input[name="tkPlannerType"][value="${pType}"]`);
+                                        if(rType) rType.checked = true;
                                     }
                                 }        ModalManager.openModal('trackerModal');
     },
@@ -1454,6 +1484,7 @@ export const TrackerManager = {
         else if (inputType === 'donut') allowed = ['1x1', '2x2'];
         else if (inputType === 'completionBar') allowed = ['1x1', '2x1', '1x2'];
         else if (inputType === 'countdown') allowed = ['1x1', '2x1', '2x2'];
+        else if (inputType === 'planner') allowed = ['2x2', '3x2'];
         // Time Series (line/bar) and Note allow all sizes.
         // Waffle allows all for now.
 
@@ -1476,7 +1507,7 @@ export const TrackerManager = {
         State.currentTrackerType = type;
         // Map 'bar' to 'line' for input visibility
         const inputType = (type === 'bar') ? 'line' : type;
-        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar'].forEach(x => {
+        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar','Planner'].forEach(x => {
             const btn = getEl(`type${x}Btn`);
             if (btn) btn.className = (type.toLowerCase() === x.toLowerCase()) ? 'type-option active' : 'type-option';
             
@@ -1486,13 +1517,10 @@ export const TrackerManager = {
             if (div) {
                 const shouldShow = (inputType.toLowerCase() === x.toLowerCase());
                 div.style.display = shouldShow ? 'block' : 'none';
-                console.log(`Checking ${divId}: Show=${shouldShow}`); // Debug logging
-            } else {
-                console.warn(`Div not found: ${divId}`);
             }
         });
         
-        // Explicit fallback for Completion Bar
+        // Explicit fallback for Completion Bar (if ID casing mismatch)
         if (inputType === 'completionBar') {
             const cbDiv = getEl('completionbarInputs');
             if (cbDiv) cbDiv.style.display = 'block';
@@ -1500,12 +1528,6 @@ export const TrackerManager = {
 
         const sizeCont = getEl('sizeContainer');
         if(sizeCont) {
-            // Show size container for all types except maybe those that are strictly fixed? 
-            // Actually, prompt implies users can choose size for most, but limited options.
-            // If only 1 option exists, we could hide it, but better to show it for clarity.
-            // Counter wasn't in the list? "Note... Donut... Completion bar... Note... RAG... Countdowns... Time Series... Gauge"
-            // Counter is missing from prompt. I'll treat Counter as Gauge (1x1) or allow all? 
-            // In original code, Counter was forced to S (1x1). I'll default Counter to 1x1.
             sizeCont.style.display = 'block'; 
         }
         
@@ -2235,9 +2257,14 @@ export const TrackerManager = {
             newTracker.content = contentIn ? contentIn.value : '';
             const alignRad = document.querySelector('input[name="tkNoteAlign"]:checked');
             newTracker.align = alignRad ? alignRad.value : 'left';
-            newTracker.notes = ''; // No notes for Note Tracker
-                } else if (type === 'completionBar') {
-            const tmIn = getEl('tkCompBarMetric');
+                        newTracker.notes = ''; // No notes for Note Tracker
+                    } else if (type === 'planner') {
+                        const rRange = document.querySelector('input[name="tkPlannerRange"]:checked');
+                        const rType = document.querySelector('input[name="tkPlannerType"]:checked');
+                        newTracker.range = rRange ? parseInt(rRange.value) : 3;
+                        newTracker.plannerType = rType ? rType.value : 'Role';
+                        newTracker.notes = getEl('tkPlannerNotes').value.trim();
+                    } else if (type === 'completionBar') {            const tmIn = getEl('tkCompBarMetric');
             const ttIn = getEl('tkCompBarTotal');
             const taIn = getEl('tkCompBarActive');
             const tnIn = getEl('tkCompBarNotes');
