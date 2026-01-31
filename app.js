@@ -1176,8 +1176,6 @@ export const ZoomManager = {
 };
 
 export const TrackerManager = {
-        }    },
-
     renderPlannerMultiSelect: (selectedItems = []) => {
         const container = getEl('plannerMultiSelectContainer');
         if (!container) return;
