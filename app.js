@@ -207,6 +207,27 @@ export const initApp = () => {
         const drd = getEl('dateRangeDisplay');
         if (drd) drd.innerText = `Last: ${r.last} | Current: ${r.current} | Next: ${r.next}`;
         
+        // Calculate FY/Q/P for ranges
+        const today = new Date();
+        const d = today.getDay();
+        const diff = d === 0 ? -6 : 1 - d;
+        const cm = new Date(today); cm.setDate(today.getDate() + diff);
+        const nm = new Date(cm); nm.setDate(cm.getDate() + 7);
+        const lm = new Date(cm); lm.setDate(cm.getDate() - 7);
+        
+        const getFYQP = (date) => {
+            const m = date.getMonth();
+            const y = date.getFullYear();
+            const start = State.settings ? State.settings.fyStartMonth : 1;
+            let fy = m < start ? y - 1 : y;
+            let p = ((m - start + 12) % 12) + 1;
+            let q = Math.ceil(p / 3);
+            return `${fy} Q${q} P${p.toString().padStart(2,'0')}`;
+        };
+        
+        const fyp = getEl('fyPeriodDisplay');
+        if (fyp) fyp.innerText = `Last: ${getFYQP(lm)} | Current: ${getFYQP(cm)} | Next: ${getFYQP(nm)}`;
+        
         const otc = getEl('overviewTitleCurrent');
         if (otc) otc.innerHTML = `Top 5 Team Achievements <span class="date-suffix">${r.current}</span>`;
         
