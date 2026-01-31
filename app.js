@@ -73,6 +73,23 @@ const getCurrentPeriod = () => {
     return ((m + 11) % 12) + 1;
 };
 
+const setupDateValidation = (startId, endId) => {
+    const s = getEl(startId);
+    const e = getEl(endId);
+    if (!s || !e) return;
+    
+    s.addEventListener('change', () => {
+        e.min = s.value;
+        e.value = s.value;
+    });
+    
+    e.addEventListener('change', () => {
+        if (s.value && e.value < s.value) {
+            e.value = s.value;
+        }
+    });
+};
+
 // --- CORE FUNCTIONS ---
 export const initApp = () => {
     // Migration: Move legacy trackers to default tab
@@ -91,6 +108,12 @@ export const initApp = () => {
             { name: '2nd Line Support (Azure)', class: 'Role', priority: 'Med', color: '#bb86fc', description: 'Cloud infrastructure support.', startDate:'', endDate:'' }
         ];
     }
+
+    // Setup Date Validation
+    setupDateValidation('asStart', 'asEnd');
+    setupDateValidation('rlStart', 'rlEnd');
+    setupDateValidation('evStart', 'evEnd');
+    setupDateValidation('tskStart', 'tskEnd');
 
     const updateDateUI = () => {
         const r = getRanges();
