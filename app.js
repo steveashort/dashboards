@@ -508,16 +508,32 @@ export const renderBoard = () => {
         teamBtn.innerText = "Team Data";
         teamBtn.onclick = () => App.switchTrackerTab('team');
         navContainer.appendChild(teamBtn);
+
+        // Render Roles, Events, Tasks Tabs
+        ['Roles', 'Events', 'Tasks'].forEach(tabName => {
+            const id = tabName.toLowerCase();
+            const btn = document.createElement('button');
+            btn.className = `nav-item ${activeTabId === id ? 'active' : ''}`;
+            btn.innerText = tabName;
+            btn.onclick = () => App.switchTrackerTab(id);
+            navContainer.appendChild(btn);
+        });
     }
 
     // --- VIEW SWITCHING LOGIC ---
     const viewTrackers = getEl('viewTrackers');
     const viewTeam = getEl('viewTeamData');
+    const viewRoles = getEl('viewRoles');
+    const viewEvents = getEl('viewEvents');
+    const viewTasks = getEl('viewTasks');
+    
     const pageTitle = getEl('pageTitle');
     const isPub = document.body.classList.contains('publishing');
     
+    // Hide all views first
+    [viewTrackers, viewTeam, viewRoles, viewEvents, viewTasks].forEach(v => { if(v) v.style.display = 'none'; });
+
     if (State.activeTabId === 'team') {
-        if(viewTrackers) viewTrackers.style.display = 'none';
         if(viewTeam) viewTeam.style.display = 'block';
         if(pageTitle) pageTitle.innerText = "Team Portfolio & Resource Allocation";
         
@@ -529,9 +545,20 @@ export const renderBoard = () => {
         if(container) container.innerHTML = svg;
         
         PlannerManager.renderPlanners();
+    } else if (State.activeTabId === 'roles') {
+        if(viewRoles) viewRoles.style.display = 'block';
+        if(pageTitle) pageTitle.innerText = "Roles Management";
+        RoleManager.render();
+    } else if (State.activeTabId === 'events') {
+        if(viewEvents) viewEvents.style.display = 'block';
+        if(pageTitle) pageTitle.innerText = "Events Management";
+        EventManager.render();
+    } else if (State.activeTabId === 'tasks') {
+        if(viewTasks) viewTasks.style.display = 'block';
+        if(pageTitle) pageTitle.innerText = "Tasks Management";
+        TaskManager.render();
     } else {
         if(viewTrackers) viewTrackers.style.display = 'block';
-        if(viewTeam) viewTeam.style.display = 'none';
         const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
         if(pageTitle) {
             pageTitle.innerText = currentTab ? currentTab.name : "Cards";
@@ -560,7 +587,7 @@ export const renderBoard = () => {
 
     // --- TRACKER GRID RENDERING ---
     const tGrid = getEl('trackerGrid');
-    if (tGrid && State.activeTabId !== 'team') {
+    if (tGrid && !['team', 'roles', 'events', 'tasks'].includes(State.activeTabId)) {
         tGrid.innerHTML = '';
         const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
         const trackers = currentTab ? currentTab.trackers : [];
@@ -792,9 +819,6 @@ export const renderBoard = () => {
     if (aip) aip.innerHTML = parseMarkdown(State.additionalInfo) || "No additional info.";
 
     const teamGrid = getEl('teamGrid');
-    if (State.activeTabId === 'team') {
-        AssignmentManager.renderAssignments();
-    }
     if (teamGrid) {
         teamGrid.innerHTML = '';
         State.members.forEach((m, i) => {
@@ -2875,6 +2899,324 @@ export const PlannerManager = {
             div.appendChild(viz);
             container.appendChild(div);
         });
+    }
+};
+
+export const RoleManager = {
+    render: () => {
+        const grid = getEl('rolesGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        State.assignments.forEach((a, index) => {
+            if (a.class !== 'Role') return;
+            
+            const card = document.createElement('div');
+            card.className = 'assignment-card';
+            card.style.background = 'var(--card-bg)';
+            card.style.border = '1px solid var(--border)';
+            card.style.borderRadius = '8px';
+            card.style.padding = '1rem';
+            card.style.position = 'relative';
+            card.style.cursor = 'pointer';
+            card.style.borderLeft = `4px solid ${a.color || '#03dac6'}`;
+            card.onclick = () => RoleManager.openModal(index);
+
+            let html = `<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+                            <h4 style="margin:0; font-size:1rem; color:var(--text-main);">${a.name}</h4>
+                        </div>`;
+            
+            if (a.description) {
+                html += `<div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.8rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${a.description}</div>`;
+            }
+
+            html += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#888;">`;
+            
+            let dateText = "Ongoing";
+            if (a.startDate || a.endDate) {
+                dateText = `${a.startDate ? formatDate(new Date(a.startDate)) : '...'} - ${a.endDate ? formatDate(new Date(a.endDate)) : '...'}`;
+            }
+            html += `<span>${dateText}</span>`;
+            
+            const pColor = a.priority === 'High' ? '#ff1744' : (a.priority === 'Med' ? '#ffb300' : '#00e676');
+            html += `<span style="color:${pColor}; font-weight:bold;">${a.priority}</span>`;
+            
+            html += `</div>`;
+            
+            card.innerHTML = html;
+            grid.appendChild(card);
+        });
+    },
+    openModal: (index) => {
+        getEl('roleModalTitle').innerText = index === -1 ? 'Add Role' : 'Edit Role';
+        getEl('editRoleIndex').value = index;
+        
+        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#03dac6' };
+        
+        getEl('rlName').value = a.name;
+        getEl('rlDesc').value = a.description;
+        getEl('rlStart').value = a.startDate;
+        getEl('rlEnd').value = a.endDate;
+        
+        const colIn = getEl('rlColor');
+        colIn.value = a.color;
+        colIn.style.backgroundColor = a.color;
+        
+        const pRad = document.querySelector(`input[name="rlPriority"][value="${a.priority}"]`);
+        if(pRad) pRad.checked = true;
+        
+        getEl('btnDelRole').style.display = index === -1 ? 'none' : 'block';
+        
+        ModalManager.openModal('roleModal');
+    },
+    submitRole: () => {
+        const index = parseInt(getEl('editRoleIndex').value);
+        const name = getEl('rlName').value.trim();
+        if(!name) return App.alert("Role Name is required");
+        
+        const priorityRad = document.querySelector('input[name="rlPriority"]:checked');
+        
+        const newAssignment = {
+            name,
+            description: getEl('rlDesc').value.trim(),
+            class: 'Role',
+            priority: priorityRad ? priorityRad.value : 'Med',
+            startDate: getEl('rlStart').value,
+            endDate: getEl('rlEnd').value,
+            color: getEl('rlColor').value
+        };
+        
+        if(index === -1) {
+            if(State.assignments.length >= 64) return App.alert("Max assignments reached.");
+            State.assignments.push(newAssignment);
+        } else {
+            State.assignments[index] = newAssignment;
+        }
+        
+        ModalManager.closeModal('roleModal');
+        RoleManager.render();
+    },
+    deleteRole: () => {
+        const index = parseInt(getEl('editRoleIndex').value);
+        if(index > -1) {
+            App.confirm("Delete this role?", () => {
+                State.assignments.splice(index, 1);
+                ModalManager.closeModal('roleModal');
+                RoleManager.render();
+            });
+        }
+    }
+};
+
+export const EventManager = {
+    render: () => {
+        const grid = getEl('eventsGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        State.assignments.forEach((a, index) => {
+            if (a.class !== 'Event' && a.class !== 'Project') return; // Support legacy Project class as Event
+            
+            const card = document.createElement('div');
+            card.className = 'assignment-card';
+            card.style.background = 'var(--card-bg)';
+            card.style.border = '1px solid var(--border)';
+            card.style.borderRadius = '8px';
+            card.style.padding = '1rem';
+            card.style.position = 'relative';
+            card.style.cursor = 'pointer';
+            card.style.borderLeft = `4px solid ${a.color || '#bb86fc'}`;
+            card.onclick = () => EventManager.openModal(index);
+
+            let html = `<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+                            <h4 style="margin:0; font-size:1rem; color:var(--text-main);">${a.name}</h4>
+                        </div>`;
+            
+            if (a.description) {
+                html += `<div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.8rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${a.description}</div>`;
+            }
+
+            html += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#888;">`;
+            
+            let dateText = "Scheduled";
+            if (a.startDate || a.endDate) {
+                dateText = `${a.startDate ? formatDate(new Date(a.startDate)) : '...'} - ${a.endDate ? formatDate(new Date(a.endDate)) : '...'}`;
+            }
+            html += `<span>${dateText}</span>`;
+            
+            const pColor = a.priority === 'High' ? '#ff1744' : (a.priority === 'Med' ? '#ffb300' : '#00e676');
+            html += `<span style="color:${pColor}; font-weight:bold;">${a.priority}</span>`;
+            
+            html += `</div>`;
+            
+            card.innerHTML = html;
+            grid.appendChild(card);
+        });
+    },
+    openModal: (index) => {
+        getEl('eventModalTitle').innerText = index === -1 ? 'Add Event' : 'Edit Event';
+        getEl('editEventIndex').value = index;
+        
+        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#bb86fc' };
+        
+        getEl('evName').value = a.name;
+        getEl('evDesc').value = a.description;
+        getEl('evStart').value = a.startDate;
+        getEl('evEnd').value = a.endDate;
+        
+        const colIn = getEl('evColor');
+        colIn.value = a.color;
+        colIn.style.backgroundColor = a.color;
+        
+        const pRad = document.querySelector(`input[name="evPriority"][value="${a.priority}"]`);
+        if(pRad) pRad.checked = true;
+        
+        getEl('btnDelEvent').style.display = index === -1 ? 'none' : 'block';
+        
+        ModalManager.openModal('eventModal');
+    },
+    submitEvent: () => {
+        const index = parseInt(getEl('editEventIndex').value);
+        const name = getEl('evName').value.trim();
+        if(!name) return App.alert("Event Name is required");
+        
+        const priorityRad = document.querySelector('input[name="evPriority"]:checked');
+        
+        const newAssignment = {
+            name,
+            description: getEl('evDesc').value.trim(),
+            class: 'Event',
+            priority: priorityRad ? priorityRad.value : 'Med',
+            startDate: getEl('evStart').value,
+            endDate: getEl('evEnd').value,
+            color: getEl('evColor').value
+        };
+        
+        if(index === -1) {
+            if(State.assignments.length >= 64) return App.alert("Max assignments reached.");
+            State.assignments.push(newAssignment);
+        } else {
+            State.assignments[index] = newAssignment;
+        }
+        
+        ModalManager.closeModal('eventModal');
+        EventManager.render();
+    },
+    deleteEvent: () => {
+        const index = parseInt(getEl('editEventIndex').value);
+        if(index > -1) {
+            App.confirm("Delete this event?", () => {
+                State.assignments.splice(index, 1);
+                ModalManager.closeModal('eventModal');
+                EventManager.render();
+            });
+        }
+    }
+};
+
+export const TaskManager = {
+    render: () => {
+        const grid = getEl('tasksGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        State.assignments.forEach((a, index) => {
+            if (a.class !== 'Task') return;
+            
+            const card = document.createElement('div');
+            card.className = 'assignment-card';
+            card.style.background = 'var(--card-bg)';
+            card.style.border = '1px solid var(--border)';
+            card.style.borderRadius = '8px';
+            card.style.padding = '1rem';
+            card.style.position = 'relative';
+            card.style.cursor = 'pointer';
+            card.style.borderLeft = `4px solid ${a.color || '#00e676'}`;
+            card.onclick = () => TaskManager.openModal(index);
+
+            let html = `<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+                            <h4 style="margin:0; font-size:1rem; color:var(--text-main);">${a.name}</h4>
+                        </div>`;
+            
+            if (a.description) {
+                html += `<div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.8rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${a.description}</div>`;
+            }
+
+            html += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#888;">`;
+            
+            let dateText = "Active";
+            if (a.startDate || a.endDate) {
+                dateText = `${a.startDate ? formatDate(new Date(a.startDate)) : '...'} - ${a.endDate ? formatDate(new Date(a.endDate)) : '...'}`;
+            }
+            html += `<span>${dateText}</span>`;
+            
+            const pColor = a.priority === 'High' ? '#ff1744' : (a.priority === 'Med' ? '#ffb300' : '#00e676');
+            html += `<span style="color:${pColor}; font-weight:bold;">${a.priority}</span>`;
+            
+            html += `</div>`;
+            
+            card.innerHTML = html;
+            grid.appendChild(card);
+        });
+    },
+    openModal: (index) => {
+        getEl('taskModalTitle').innerText = index === -1 ? 'Add Task' : 'Edit Task';
+        getEl('editTaskIndex').value = index;
+        
+        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#00e676' };
+        
+        getEl('tskName').value = a.name;
+        getEl('tskDesc').value = a.description;
+        getEl('tskStart').value = a.startDate;
+        getEl('tskEnd').value = a.endDate;
+        
+        const colIn = getEl('tskColor');
+        colIn.value = a.color;
+        colIn.style.backgroundColor = a.color;
+        
+        const pRad = document.querySelector(`input[name="tskPriority"][value="${a.priority}"]`);
+        if(pRad) pRad.checked = true;
+        
+        getEl('btnDelTask').style.display = index === -1 ? 'none' : 'block';
+        
+        ModalManager.openModal('taskModal');
+    },
+    submitTask: () => {
+        const index = parseInt(getEl('editTaskIndex').value);
+        const name = getEl('tskName').value.trim();
+        if(!name) return App.alert("Task Name is required");
+        
+        const priorityRad = document.querySelector('input[name="tskPriority"]:checked');
+        
+        const newAssignment = {
+            name,
+            description: getEl('tskDesc').value.trim(),
+            class: 'Task',
+            priority: priorityRad ? priorityRad.value : 'Med',
+            startDate: getEl('tskStart').value,
+            endDate: getEl('tskEnd').value,
+            color: getEl('tskColor').value
+        };
+        
+        if(index === -1) {
+            if(State.assignments.length >= 64) return App.alert("Max assignments reached.");
+            State.assignments.push(newAssignment);
+        } else {
+            State.assignments[index] = newAssignment;
+        }
+        
+        ModalManager.closeModal('taskModal');
+        TaskManager.render();
+    },
+    deleteTask: () => {
+        const index = parseInt(getEl('editTaskIndex').value);
+        if(index > -1) {
+            App.confirm("Delete this task?", () => {
+                State.assignments.splice(index, 1);
+                ModalManager.closeModal('taskModal');
+                TaskManager.render();
+            });
+        }
     }
 };
 

@@ -99,6 +99,32 @@
                 </div>
                 <div class="team-grid" id="teamGrid"></div>
             </div>
+            <!-- ROLES VIEW -->
+            <div id="viewRoles" class="view-section" style="display:none;">
+                <div class="section-header first">
+                    <h3 style="color:var(--accent); font-weight:300;">Roles</h3>
+                    <button class="btn" onclick="RoleManager.openModal(-1)">+ Add Role</button>
+                </div>
+                <div id="rolesGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;"></div>
+            </div>
+
+            <!-- EVENTS VIEW -->
+            <div id="viewEvents" class="view-section" style="display:none;">
+                <div class="section-header first">
+                    <h3 style="color:var(--accent); font-weight:300;">Events</h3>
+                    <button class="btn" onclick="EventManager.openModal(-1)">+ Add Event</button>
+                </div>
+                <div id="eventsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;"></div>
+            </div>
+
+            <!-- TASKS VIEW -->
+            <div id="viewTasks" class="view-section" style="display:none;">
+                <div class="section-header first">
+                    <h3 style="color:var(--accent); font-weight:300;">Tasks</h3>
+                    <button class="btn" onclick="TaskManager.openModal(-1)">+ Add Task</button>
+                </div>
+                <div id="tasksGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;"></div>
+            </div>
         </main>
     </div>
 
@@ -693,45 +719,146 @@
         </div>
     </div>
 
-    <div class="modal-overlay" id="plannerModal">
+    <div class="modal-overlay" id="roleModal">
         <div class="modal-content">
             <div class="modal-header">
-                <h3 id="plannerModalTitle">Add Planner</h3>
-                <button class="btn" onclick="ModalManager.closeModal('plannerModal')">&times;</button>
+                <h3 id="roleModalTitle">Add Role</h3>
+                <button class="btn" onclick="ModalManager.closeModal('roleModal')">&times;</button>
             </div>
             <div class="modal-body">
-                <input type="hidden" id="editPlannerIndex" value="-1">
+                <input type="hidden" id="editRoleIndex" value="-1">
                 <div class="input-group">
-                    <label>Planner Name</label>
-                    <input type="text" id="plName" placeholder="e.g. Q1 Roadmap">
+                    <label>Role Name</label>
+                    <input type="text" id="rlName" placeholder="e.g. System Administrator">
                 </div>
                 <div class="input-group">
-                    <label>Description (Max 100 chars)</label>
-                    <textarea id="plDesc" maxlength="100" style="height: 60px; font-size: 0.85rem;" placeholder="Brief description..."></textarea>
+                    <label>Description</label>
+                    <textarea id="rlDesc" style="height: 60px; font-size: 0.85rem;" placeholder="Brief description..."></textarea>
                 </div>
-                <div class="input-group">
-                    <label>Range</label>
-                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:5px;">
-                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plRange" value="3" checked> 3 Months</label>
-                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plRange" value="6"> 6 Months</label>
-                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plRange" value="12"> 12 Months</label>
-                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plRange" value="18"> 18 Months</label>
-                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plRange" value="24"> 24 Months</label>
-                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plRange" value="36"> 36 Months</label>
+                <div class="form-row" style="gap: 1rem; margin-bottom: 1rem;">
+                    <div class="input-group">
+                        <label>Priority</label>
+                        <div style="display: flex; gap: 10px; margin-top: 8px;">
+                            <label style="font-size:0.85rem;"><input type="radio" name="rlPriority" value="High"> High</label>
+                            <label style="font-size:0.85rem;"><input type="radio" name="rlPriority" value="Med" checked> Med</label>
+                            <label style="font-size:0.85rem;"><input type="radio" name="rlPriority" value="Low"> Low</label>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Colour tag</label>
+                        <input type="text" readonly class="color-input" id="rlColor" value="#03dac6" style="cursor:pointer;">
                     </div>
                 </div>
-                <div class="input-group">
-                    <label>Tracking Type</label>
-                    <div style="display:flex; gap:15px; margin-top:5px;">
-                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plType" value="Role" checked> Role</label>
-                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plType" value="Task"> Task</label>
-                        <label style="display:inline-flex; align-items:center; gap:5px;"><input type="radio" name="plType" value="Event"> Event</label>
+                <div class="form-row" style="gap: 1rem; margin-bottom: 1rem;">
+                    <div class="input-group">
+                        <label>Start Date</label>
+                        <input type="date" id="rlStart" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                    </div>
+                    <div class="input-group">
+                        <label>End Date</label>
+                        <input type="date" id="rlEnd" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
-                <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="PlannerManager.deletePlanner()" id="btnDelPlanner">Delete</button>
-                <button class="btn btn-primary" onclick="PlannerManager.submitPlanner()">Save Planner</button>
+                <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="RoleManager.deleteRole()" id="btnDelRole">Delete</button>
+                <button class="btn btn-primary" onclick="RoleManager.submitRole()">Save Role</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="eventModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="eventModalTitle">Add Event</h3>
+                <button class="btn" onclick="ModalManager.closeModal('eventModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editEventIndex" value="-1">
+                <div class="input-group">
+                    <label>Event Name</label>
+                    <input type="text" id="evName" placeholder="e.g. Q4 Audit">
+                </div>
+                <div class="input-group">
+                    <label>Description</label>
+                    <textarea id="evDesc" style="height: 60px; font-size: 0.85rem;" placeholder="Brief description..."></textarea>
+                </div>
+                <div class="form-row" style="gap: 1rem; margin-bottom: 1rem;">
+                    <div class="input-group">
+                        <label>Priority</label>
+                        <div style="display: flex; gap: 10px; margin-top: 8px;">
+                            <label style="font-size:0.85rem;"><input type="radio" name="evPriority" value="High"> High</label>
+                            <label style="font-size:0.85rem;"><input type="radio" name="evPriority" value="Med" checked> Med</label>
+                            <label style="font-size:0.85rem;"><input type="radio" name="evPriority" value="Low"> Low</label>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Colour tag</label>
+                        <input type="text" readonly class="color-input" id="evColor" value="#bb86fc" style="cursor:pointer;">
+                    </div>
+                </div>
+                <div class="form-row" style="gap: 1rem; margin-bottom: 1rem;">
+                    <div class="input-group">
+                        <label>Start Date</label>
+                        <input type="date" id="evStart" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                    </div>
+                    <div class="input-group">
+                        <label>End Date</label>
+                        <input type="date" id="evEnd" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="EventManager.deleteEvent()" id="btnDelEvent">Delete</button>
+                <button class="btn btn-primary" onclick="EventManager.submitEvent()">Save Event</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="taskModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="taskModalTitle">Add Task</h3>
+                <button class="btn" onclick="ModalManager.closeModal('taskModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editTaskIndex" value="-1">
+                <div class="input-group">
+                    <label>Task Name</label>
+                    <input type="text" id="tskName" placeholder="e.g. Update Documentation">
+                </div>
+                <div class="input-group">
+                    <label>Description</label>
+                    <textarea id="tskDesc" style="height: 60px; font-size: 0.85rem;" placeholder="Brief description..."></textarea>
+                </div>
+                <div class="form-row" style="gap: 1rem; margin-bottom: 1rem;">
+                    <div class="input-group">
+                        <label>Priority</label>
+                        <div style="display: flex; gap: 10px; margin-top: 8px;">
+                            <label style="font-size:0.85rem;"><input type="radio" name="tskPriority" value="High"> High</label>
+                            <label style="font-size:0.85rem;"><input type="radio" name="tskPriority" value="Med" checked> Med</label>
+                            <label style="font-size:0.85rem;"><input type="radio" name="tskPriority" value="Low"> Low</label>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Colour tag</label>
+                        <input type="text" readonly class="color-input" id="tskColor" value="#00e676" style="cursor:pointer;">
+                    </div>
+                </div>
+                <div class="form-row" style="gap: 1rem; margin-bottom: 1rem;">
+                    <div class="input-group">
+                        <label>Start Date</label>
+                        <input type="date" id="tskStart" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                    </div>
+                    <div class="input-group">
+                        <label>End Date</label>
+                        <input type="date" id="tskEnd" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="TaskManager.deleteTask()" id="btnDelTask">Delete</button>
+                <button class="btn btn-primary" onclick="TaskManager.submitTask()">Save Task</button>
             </div>
         </div>
     </div>
@@ -745,6 +872,9 @@
         window.App = AppModule.App;
         window.UserManager = AppModule.UserManager;
         window.AssignmentManager = AppModule.AssignmentManager;
+        window.RoleManager = AppModule.RoleManager;
+        window.EventManager = AppModule.EventManager;
+        window.TaskManager = AppModule.TaskManager;
         window.PlannerManager = AppModule.PlannerManager;
         window.TrackerManager = AppModule.TrackerManager;
         window.OverviewManager = AppModule.OverviewManager;
