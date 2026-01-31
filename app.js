@@ -619,14 +619,14 @@ export const renderBoard = () => {
 
             card.onclick = () => {
                  if (document.body.classList.contains('publishing')) {
-                     const canZoom = ['line', 'bar', 'note', 'countdown', 'donut', 'waffle'].includes(t.type);
+                     const canZoom = ['line', 'bar', 'note', 'countdown', 'donut', 'waffle', 'planner'].includes(t.type);
                      if (canZoom) ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
                  }
             };
 
-            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'countdown', 'donut', 'waffle'].includes(t.type)) {
+            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'countdown', 'donut', 'waffle', 'planner'].includes(t.type)) {
                 card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
             }
 
@@ -1071,6 +1071,14 @@ export const ZoomManager = {
                 const cBg = t.colorBg || '#696969';
                 const orient = t.orientation || 'horizontal';
                 content = `<div style="width:100%; padding:40px;">${Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 300, orient)}</div>`;
+            } else if (renderType === 'planner') {
+                const pType = t.plannerType || 'Role';
+                let filteredAssignments = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
+                if (t.plannerItems && t.plannerItems.length > 0) {
+                    filteredAssignments = filteredAssignments.filter(a => t.plannerItems.includes(a.name));
+                }
+                const range = t.range || 3;
+                content = `<div style="width:100%; height:100%; overflow:auto; padding:20px;">${Visuals.createResourcePlannerSVG(filteredAssignments, range)}</div>`;
             }
     
             const bodyEl = getEl('zoomBody');
