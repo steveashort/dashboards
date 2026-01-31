@@ -37,6 +37,7 @@
                 <button class="btn btn-block" onclick="DataSaver.saveData()">Save JSON</button>
                 <button id="btnPublish" class="btn btn-block btn-primary" onclick="App.togglePublishMode()">Publish View</button>
                 <button class="btn btn-block" onclick="App.toggleTheme()">Day/Night Theme</button>
+                <button class="btn btn-block" onclick="SettingsManager.openModal()">⚙ Settings</button>
             </div>
         </aside>
         
@@ -264,10 +265,64 @@
                     <div id="objectivesContainer" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1); margin-top:5px; display:flex; flex-direction:column; gap:5px;"></div>
                 </div>
                 </div>
+                <div class="input-group" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                    <label>Import Users CSV (Name, #RID, Start, End)</label>
+                    <textarea id="userCsvInput" style="height: 60px; font-family: monospace; font-size: 0.8rem;" placeholder="John Doe, RID001, 2026-02-01,"></textarea>
+                    <button class="btn btn-sm" style="margin-top: 5px;" onclick="UserManager.importCSV()">Import Users</button>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="UserManager.deleteUser()" id="deleteBtn">Delete</button>
                 <button class="btn btn-primary" onclick="UserManager.submitUser()">Save User</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Settings</h3>
+                <button class="btn" onclick="ModalManager.closeModal('settingsModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>Financial Year Start Month</label>
+                    <select id="setFyStart" style="width:100%; padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border);">
+                        <option value="0">January</option>
+                        <option value="1">February</option>
+                        <option value="2">March</option>
+                        <option value="3">April</option>
+                        <option value="4">May</option>
+                        <option value="5">June</option>
+                        <option value="6">July</option>
+                        <option value="7">August</option>
+                        <option value="8">September</option>
+                        <option value="9">October</option>
+                        <option value="10">November</option>
+                        <option value="11">December</option>
+                    </select>
+                </div>
+                
+                <div class="input-group" style="margin-top: 1rem;">
+                    <label>Default Roles</label>
+                    <div id="setRolesList" style="border:1px solid var(--border); padding:10px; max-height:150px; overflow-y:auto; background:rgba(0,0,0,0.1); border-radius:4px;"></div>
+                    <div style="display:flex; gap:5px; margin-top:5px;">
+                        <input type="text" id="setNewRole" placeholder="New Role Name">
+                        <button class="btn btn-sm" onclick="SettingsManager.addRole()">Add</button>
+                    </div>
+                </div>
+
+                <div class="input-group" style="margin-top: 1rem;">
+                    <label>Default Absence Types</label>
+                    <div id="setAbsenceList" style="border:1px solid var(--border); padding:10px; max-height:150px; overflow-y:auto; background:rgba(0,0,0,0.1); border-radius:4px;"></div>
+                    <div style="display:flex; gap:5px; margin-top:5px;">
+                        <input type="text" id="setNewAbsence" placeholder="New Absence Type">
+                        <button class="btn btn-sm" onclick="SettingsManager.addAbsence()">Add</button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="SettingsManager.save()">Save Settings</button>
             </div>
         </div>
     </div>

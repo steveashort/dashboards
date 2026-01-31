@@ -18,6 +18,11 @@ let State = {
     members: [],
     planners: [],
     counters: { cid: 0, uid: 0, rid: 0, tid: 0, eid: 0, aid: 0 },
+    settings: {
+        fyStartMonth: 1, // Default Feb
+        roles: [],
+        absences: []
+    },
     editingTrackerIndex: -1,
     currentTrackerType: 'gauge'
 };
@@ -62,16 +67,20 @@ const getPeriodLabel = (p, y) => {
 };
 
 const getFiscalYear = (date = new Date()) => {
-    const m = date.getMonth(); // 0=Jan
+    const m = date.getMonth(); 
     const y = date.getFullYear();
-    // If Jan, it belongs to the previous year's fiscal cycle (Feb-Jan)
-    return m === 0 ? y - 1 : y;
+    const start = State.settings ? State.settings.fyStartMonth : 1;
+    // If current month is before start month, it's prev FY
+    return m < start ? y - 1 : y;
 };
 
 const getCurrentPeriod = () => {
     const d = new Date();
-    const m = d.getMonth(); // 0=Jan, 1=Feb
-    return ((m + 11) % 12) + 1;
+    const m = d.getMonth(); 
+    const start = State.settings ? State.settings.fyStartMonth : 1;
+    // e.g. Start=1 (Feb). m=1 (Feb) -> P01. m=0 (Jan) -> P12.
+    // Logic: ((m - start + 12) % 12) + 1
+    return ((m - start + 12) % 12) + 1;
 };
 
 const setupDateValidation = (startId, endId) => {
@@ -147,7 +156,28 @@ const syncIds = () => {
 
 // --- CORE FUNCTIONS ---
 export const initApp = () => {
-    syncIds(); // Ensure IDs are populated
+    syncIds(); 
+
+    // Init Settings
+    if (!State.settings) State.settings = { fyStartMonth: 1, roles: [], absences: [] };
+    
+    if (!State.settings.roles || State.settings.roles.length === 0) {
+        State.settings.roles = [
+            { id: 'RID001', name: 'Full Time Employee' },
+            { id: 'RID002', name: 'Partner Resource' },
+            { id: 'RID003', name: 'Contract Resource' }
+        ];
+        if(State.counters.rid < 3) State.counters.rid = 3;
+    }
+    
+    if (!State.settings.absences || State.settings.absences.length === 0) {
+        State.settings.absences = [
+            { id: 'AID001', name: 'Annual Leave' },
+            { id: 'AID002', name: 'Sick Leave' },
+            { id: 'AID003', name: 'Offsite Visit' }
+        ];
+        if(State.counters.aid < 3) State.counters.aid = 3;
+    }
 
     // Migration: Move legacy trackers to default tab
     if (State.trackers && State.trackers.length > 0) {
@@ -2750,6 +2780,57 @@ export const UserManager = {
         ModalManager.closeModal('userModal');
         renderBoard();
     },
+    importCSV: () => {
+        const text = getEl('userCsvInput').value.trim();
+        if (!text) return App.alert("Please paste CSV data.");
+        
+        const lines = text.split('\n');
+        let count = 0;
+        
+        const fyStart = State.settings.fyStartMonth;
+        const fyYear = getFiscalYear();
+        // Construct default date: 1st of Start Month of Fiscal Year
+        // Note: JS Date month is 0-11. fyStart is 0-11.
+        // If today is Jan 2026 (m=0), fyStart=1 (Feb). getFY -> 2025.
+        // Date(2025, 1, 1) -> Feb 1 2025. Correct.
+        const d = new Date(fyYear, fyStart, 1);
+        // Adjust for timezone offset to avoid previous day
+        const defDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        
+        lines.forEach(line => {
+            const parts = line.split(',').map(s => s.trim());
+            if (parts.length < 1) return;
+            
+            const name = parts[0];
+            if(!name) return;
+            
+            const rid = parts[1] || 'RID001';
+            const start = parts[2] || defDate;
+            const end = parts[3] || '';
+            
+            const newUser = {
+                id: generateId('uid'),
+                name: name,
+                roleId: rid,
+                startDate: start,
+                endDate: end,
+                lastWeek: { onCall: [], tasks: [] },
+                thisWeek: { load: [], onCall: [], tasks: [] },
+                nextWeek: { load: [], onCall: [], tasks: [] },
+                objectives: []
+            };
+            
+            State.members.push(newUser);
+            count++;
+        });
+        
+        if (count > 0) {
+            App.alert(`Imported ${count} users.`);
+            renderBoard();
+            ModalManager.closeModal('userModal');
+            getEl('userCsvInput').value = '';
+        }
+    },
     deleteUser: () => {
         const idx = parseInt(getEl('editIndex').value);
         App.confirm("Delete this user?", () => {
@@ -3480,6 +3561,64 @@ export const TaskManager = {
                 TaskManager.render();
             });
         }
+    }
+};
+
+export const SettingsManager = {
+    openModal: () => {
+        getEl('setFyStart').value = State.settings.fyStartMonth;
+        SettingsManager.renderLists();
+        ModalManager.openModal('settingsModal');
+    },
+    renderLists: () => {
+        const rList = getEl('setRolesList');
+        rList.innerHTML = '';
+        State.settings.roles.forEach(r => {
+            const div = document.createElement('div');
+            div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.marginBottom = '5px';
+            div.innerHTML = `<span><b>${r.id}</b>: ${r.name}</span> <span style="cursor:pointer;color:red;" onclick="SettingsManager.deleteRole('${r.id}')">&times;</span>`;
+            rList.appendChild(div);
+        });
+
+        const aList = getEl('setAbsenceList');
+        aList.innerHTML = '';
+        State.settings.absences.forEach(a => {
+            const div = document.createElement('div');
+            div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.marginBottom = '5px';
+            div.innerHTML = `<span><b>${a.id}</b>: ${a.name}</span> <span style="cursor:pointer;color:red;" onclick="SettingsManager.deleteAbsence('${a.id}')">&times;</span>`;
+            aList.appendChild(div);
+        });
+    },
+    addRole: () => {
+        const name = getEl('setNewRole').value.trim();
+        if(!name) return;
+        const id = generateId('rid');
+        State.settings.roles.push({ id, name });
+        getEl('setNewRole').value = '';
+        SettingsManager.renderLists();
+    },
+    deleteRole: (id) => {
+        State.settings.roles = State.settings.roles.filter(r => r.id !== id);
+        SettingsManager.renderLists();
+    },
+    addAbsence: () => {
+        const name = getEl('setNewAbsence').value.trim();
+        if(!name) return;
+        const id = generateId('aid');
+        State.settings.absences.push({ id, name });
+        getEl('setNewAbsence').value = '';
+        SettingsManager.renderLists();
+    },
+    deleteAbsence: (id) => {
+        State.settings.absences = State.settings.absences.filter(a => a.id !== id);
+        SettingsManager.renderLists();
+    },
+    save: () => {
+        State.settings.fyStartMonth = parseInt(getEl('setFyStart').value);
+        // Roles and Absences are updated in real-time in State, so just close
+        ModalManager.closeModal('settingsModal');
+        // Refresh UI if needed (dates might change)
+        renderBoard();
     }
 };
 
