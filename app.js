@@ -3147,8 +3147,34 @@ export const TaskManager = {
         if (!grid) return;
         grid.innerHTML = '';
         
-        State.assignments.forEach((a, index) => {
-            if (a.class !== 'Task') return;
+        // Prepare data with indices for sorting
+        let tasks = State.assignments
+            .map((a, i) => ({ item: a, index: i }))
+            .filter(obj => obj.item.class === 'Task');
+            
+        // Sorting Logic
+        const sortMode = getEl('taskSortSelect') ? getEl('taskSortSelect').value : 'default';
+        
+        if (sortMode === 'priority') {
+            const pMap = { 'High': 3, 'Med': 2, 'Low': 1 };
+            tasks.sort((a, b) => (pMap[b.item.priority] || 0) - (pMap[a.item.priority] || 0));
+        } else if (sortMode === 'start') {
+            tasks.sort((a, b) => {
+                const dA = a.item.startDate ? new Date(a.item.startDate) : new Date(8640000000000000); // Max date if null
+                const dB = b.item.startDate ? new Date(b.item.startDate) : new Date(8640000000000000);
+                return dA - dB;
+            });
+        } else if (sortMode === 'end') {
+            tasks.sort((a, b) => {
+                const dA = a.item.endDate ? new Date(a.item.endDate) : new Date(8640000000000000);
+                const dB = b.item.endDate ? new Date(b.item.endDate) : new Date(8640000000000000);
+                return dA - dB;
+            });
+        }
+        
+        tasks.forEach(obj => {
+            const a = obj.item;
+            const index = obj.index;
             
             const card = document.createElement('div');
             card.className = 'assignment-card';

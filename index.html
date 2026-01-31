@@ -121,7 +121,15 @@
             <div id="viewTasks" class="view-section" style="display:none;">
                 <div class="section-header first">
                     <h3 style="color:var(--accent); font-weight:300;">Tasks</h3>
-                    <button class="btn" onclick="TaskManager.openModal(-1)">+ Add Task</button>
+                    <div style="display: flex; gap: 10px; align-items: center;">
+                        <select id="taskSortSelect" onchange="TaskManager.render()" style="background:var(--card-bg); border:1px solid var(--border); color:var(--text-muted); padding:5px; border-radius:4px; width:auto; font-size:0.8rem;">
+                            <option value="default">Sort by: Default</option>
+                            <option value="priority">Sort by: Priority</option>
+                            <option value="start">Sort by: Start Date</option>
+                            <option value="end">Sort by: End Date</option>
+                        </select>
+                        <button class="btn" onclick="TaskManager.openModal(-1)">+ Add Task</button>
+                    </div>
                 </div>
                 <div id="tasksGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;"></div>
             </div>
