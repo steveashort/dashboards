@@ -35,7 +35,7 @@
                 <input type="file" id="fileInput" style="display: none;" accept=".json,.csv" onchange="DataLoader.loadFromFile(this)">
                 <button class="btn btn-block" onclick="document.getElementById('fileInput').click()">Load Data</button>
                 <button class="btn btn-block" onclick="DataSaver.saveData()">Save JSON</button>
-                <button class="btn btn-block btn-primary" onclick="App.togglePublishMode()">Publish View</button>
+                <button id="btnPublish" class="btn btn-block btn-primary" onclick="App.togglePublishMode()">Publish View</button>
                 <button class="btn btn-block" onclick="App.toggleTheme()">Day/Night Theme</button>
             </div>
         </aside>

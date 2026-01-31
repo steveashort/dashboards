@@ -405,20 +405,12 @@ export const App = {
         document.body.classList.toggle('publishing');
         const isPub = document.body.classList.contains('publishing');
         
-        // Hide sidebar controls in publish mode? 
-        // User said: "Publish (read-only) mode... Hides or disables any controls that change configuration".
-        // The buttons "Load", "Save" should probably be hidden or disabled.
-        // "Add Card" button should be hidden.
-        
         const sbBottom = document.querySelector('.sidebar-bottom');
         if(sbBottom) {
             Array.from(sbBottom.children).forEach(child => {
-                // Keep Theme Toggle and Publish button, hide others?
-                // The Publish button calls this function, so it must stay visible to toggle back.
-                // Or maybe change text?
-                if (child.innerText.includes('Publish')) {
+                if (child.id === 'btnPublish') {
                     child.innerText = isPub ? "Edit View" : "Publish View";
-                    child.classList.toggle('btn-primary', !isPub); // Toggle highlight
+                    child.classList.toggle('btn-primary', !isPub);
                 } else if (child.innerText.includes('Theme')) {
                     // Keep theme toggle
                 } else {
