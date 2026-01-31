@@ -728,8 +728,14 @@ export const Visuals = {
             // Horizontal Line
             svg += `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="var(--border)" stroke-width="0.5" opacity="0.3"/>`;
             
-            // Label
-            svg += `<text x="10" y="${y + rowHeight/2 + 4}" fill="var(--text-main)" font-size="11" font-weight="bold">${item.name.substring(0,25)}</text>`;
+            // Tooltip Content
+            const tooltip = `${item.name}<br/>${item.description || ''}<br/>${item.startDate ? new Date(item.startDate).toLocaleDateString() : 'No start'} - ${item.endDate ? new Date(item.endDate).toLocaleDateString() : 'No end'}<br/>Priority: ${item.priority || 'N/A'}`;
+            const safeTooltip = tooltip.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
+            // Label with Tooltip
+            svg += `<text x="10" y="${y + rowHeight/2 + 4}" fill="var(--text-main)" font-size="11" font-weight="bold" 
+                    onmousemove="Visuals.showTooltip(event, '${safeTooltip}')" 
+                    onmouseout="Visuals.hideTooltip()" style="cursor:pointer;">${item.name.substring(0,25)}</text>`;
             
             // Bar
             if (item.startDate && item.endDate) {
@@ -746,10 +752,6 @@ export const Visuals = {
                     const barW = (endPct - startPct) * timelineWidth;
                     const color = item.color || '#009688';
                     
-                    // Tooltip Content
-                    const tooltip = `${item.name}<br/>${item.description || ''}<br/>${new Date(item.startDate).toLocaleDateString()} - ${new Date(item.endDate).toLocaleDateString()}<br/>Priority: ${item.priority || 'N/A'}`;
-                    const safeTooltip = tooltip.replace(/'/g, "\\'").replace(/"/g, "&quot;");
-
                     svg += `<rect x="${barX}" y="${y + 8}" width="${Math.max(barW, 5)}" height="${rowHeight - 16}" fill="${color}" rx="6" 
                             onmousemove="Visuals.showTooltip(event, '${safeTooltip}')" 
                             onmouseout="Visuals.hideTooltip()"
