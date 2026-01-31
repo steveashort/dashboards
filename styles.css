@@ -228,6 +228,10 @@ body.theme-day .tracker-card, body.theme-day .member-card, body.theme-day .team-
 .tracker-card.size-1x2 { grid-column: span 1; grid-row: span 2; }
 .tracker-card.size-2x2 { grid-column: span 2; grid-row: span 2; }
 .tracker-card.size-3x2 { grid-column: span 3; grid-row: span 2; }
+.tracker-card.size-2x3 { grid-column: span 2; grid-row: span 3; }
+.tracker-card.size-2x4 { grid-column: span 2; grid-row: span 4; }
+.tracker-card.size-3x3 { grid-column: span 3; grid-row: span 3; }
+.tracker-card.size-4x4 { grid-column: span 4; grid-row: span 4; }
 
 /* Backward compatibility mapping if needed, or just remove */
 .tracker-card.size-S { grid-column: span 1; grid-row: span 1; }
