@@ -3170,6 +3170,9 @@ export const EventManager = {
         
         getEl('btnDelEvent').style.display = index === -1 ? 'none' : 'block';
         
+        const csvIn = getEl('evCsvInput');
+        if(csvIn) csvIn.value = '';
+        
         ModalManager.openModal('eventModal');
     },
     submitEvent: () => {
@@ -3198,6 +3201,46 @@ export const EventManager = {
         
         ModalManager.closeModal('eventModal');
         EventManager.render();
+    },
+    parseCSV: () => {
+        const text = getEl('evCsvInput').value.trim();
+        if (!text) return App.alert("Please paste CSV data.");
+        
+        const lines = text.split('\n');
+        let count = 0;
+        const colors = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3'];
+        
+        lines.forEach(line => {
+            // Basic CSV parsing (not handling quoted commas for now)
+            const parts = line.split(',').map(s => s.trim());
+            if (parts.length < 4) return;
+            
+            const [name, desc, start, end, prio, col] = parts;
+            
+            if(!name || !start || !end) return;
+            
+            const newEvent = {
+                name: name,
+                description: desc || '',
+                class: 'Event',
+                startDate: start,
+                endDate: end,
+                priority: (prio && ['High','Med','Low'].includes(prio)) ? prio : 'Med',
+                color: col || colors[Math.floor(Math.random() * colors.length)]
+            };
+            
+            State.assignments.push(newEvent);
+            count++;
+        });
+        
+        if (count > 0) {
+            App.alert(`Imported ${count} events.`);
+            EventManager.render();
+            ModalManager.closeModal('eventModal');
+            getEl('evCsvInput').value = ''; // Reset
+        } else {
+            App.alert("No valid events found. Ensure format is: Name, Desc, Start, End");
+        }
     },
     deleteEvent: () => {
         const index = parseInt(getEl('editEventIndex').value);

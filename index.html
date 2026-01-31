@@ -849,6 +849,15 @@
                         <input type="date" id="evEnd" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
                     </div>
                 </div>
+                
+                <div class="input-group" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+                        <label style="margin:0;">Import CSV</label>
+                        <span style="font-size:0.7rem; color:var(--text-muted);">Name, Desc, Start, End, [Priority], [Colour]</span>
+                    </div>
+                    <textarea id="evCsvInput" style="height: 60px; font-family: monospace; font-size: 0.8rem;" placeholder="Q1 Review, Reviewing Q1 perf, 2026-04-01, 2026-04-05"></textarea>
+                    <button class="btn btn-sm" style="margin-top: 5px;" onclick="EventManager.parseCSV()">Import Events</button>
+                </div>
             </div>
             <div class="modal-footer">
                 <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="EventManager.deleteEvent()" id="btnDelEvent">Delete</button>
