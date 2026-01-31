@@ -683,5 +683,81 @@ export const Visuals = {
 
         svg += `</svg>`;
         return svg;
+    },
+
+    createResourcePlannerSVG: (items, rangeMonths = 6) => {
+        const rowHeight = 40;
+        const headerHeight = 50;
+        const width = 800; 
+        const nameColWidth = 200;
+        const timelineWidth = width - nameColWidth;
+        
+        const today = new Date();
+        today.setDate(1); 
+        const endDate = new Date(today);
+        endDate.setMonth(today.getMonth() + rangeMonths);
+        
+        const totalMillis = endDate - today;
+        
+        const months = [];
+        let curr = new Date(today);
+        while (curr < endDate) {
+            months.push(new Date(curr));
+            curr.setMonth(curr.getMonth() + 1);
+        }
+        
+        const colWidth = timelineWidth / months.length;
+        const totalHeight = headerHeight + (items.length * rowHeight) + 20;
+        
+        let svg = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${totalHeight}" preserveAspectRatio="none">`;
+        svg += `<rect x="0" y="0" width="${width}" height="${totalHeight}" fill="var(--card-bg)" rx="8"/>`;
+        
+        // Vertical Grid & Headers
+        months.forEach((m, i) => {
+            const x = nameColWidth + (i * colWidth);
+            const label = m.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+            svg += `<text x="${x + colWidth/2}" y="${headerHeight/2}" fill="var(--text-muted)" font-size="10" text-anchor="middle">${label}</text>`;
+            svg += `<line x1="${x}" y1="${headerHeight}" x2="${x}" y2="${totalHeight}" stroke="var(--border)" stroke-dasharray="2,2" stroke-width="0.5"/>`;
+        });
+        
+        // Rows
+        items.forEach((item, i) => {
+            const y = headerHeight + (i * rowHeight);
+            
+            // Horizontal Line
+            svg += `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="var(--border)" stroke-width="0.5" opacity="0.3"/>`;
+            
+            // Label
+            svg += `<text x="10" y="${y + rowHeight/2 + 4}" fill="var(--text-main)" font-size="11" font-weight="bold">${item.name.substring(0,25)}</text>`;
+            
+            // Bar
+            if (item.startDate && item.endDate) {
+                const sDate = new Date(item.startDate);
+                const eDate = new Date(item.endDate);
+                const effStart = sDate < today ? today : sDate;
+                const effEnd = eDate > endDate ? endDate : eDate;
+                
+                if (effEnd > effStart) {
+                    const startPct = (effStart - today) / totalMillis;
+                    const endPct = (effEnd - today) / totalMillis;
+                    
+                    const barX = nameColWidth + (startPct * timelineWidth);
+                    const barW = (endPct - startPct) * timelineWidth;
+                    const color = item.color || '#009688';
+                    
+                    // Tooltip Content
+                    const tooltip = `${item.name}<br/>${item.description || ''}<br/>${new Date(item.startDate).toLocaleDateString()} - ${new Date(item.endDate).toLocaleDateString()}<br/>Priority: ${item.priority || 'N/A'}`;
+                    const safeTooltip = tooltip.replace(/'/g, "\\'").replace(/"/g, "&quot;");
+
+                    svg += `<rect x="${barX}" y="${y + 8}" width="${Math.max(barW, 5)}" height="${rowHeight - 16}" fill="${color}" rx="6" 
+                            onmousemove="Visuals.showTooltip(event, '${safeTooltip}')" 
+                            onmouseout="Visuals.hideTooltip()"
+                            style="cursor:pointer; filter: drop-shadow(0 2px 3px rgba(0,0,0,0.2));"/>`;
+                }
+            }
+        });
+        
+        svg += `</svg>`;
+        return svg;
     }
 };

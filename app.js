@@ -772,12 +772,11 @@ export const renderBoard = () => {
                     filteredAssignments = filteredAssignments.filter(a => t.plannerItems.includes(a.name));
                 }
                 
-                // SVG generation - assuming createGanttChartSVG can handle it or we use a placeholder if it's too heavy
-                // For a card, a simplified view or just the standard one scaled might work.
-                // We'll try the standard one.
-                const svg = Visuals.createGanttChartSVG(State.members, filteredAssignments);
+                // Use new renderer with custom style
+                const range = t.range || 3;
+                const svg = Visuals.createResourcePlannerSVG(filteredAssignments, range);
                 visualHTML = `<div style="width:100%; height:100%; overflow:hidden;">${svg}</div>`;
-                statsHTML = `<div class="tracker-stats">Planner: ${pType} (${t.range || 3} Months)</div>`;
+                statsHTML = `<div class="tracker-stats">Planner: ${pType} (${range} Months)</div>`;
             } else if (renderType === 'completionBar') {
                 const completed = t.active || 0;
                 const total = t.total || 100;
