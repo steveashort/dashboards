@@ -2799,8 +2799,14 @@ export const AssignmentManager = {
         getEl('asName').value = a.name;
         getEl('asDesc').value = a.description;
         getEl('asClass').value = a.class;
-        getEl('asStart').value = a.startDate;
-        getEl('asEnd').value = a.endDate;
+        const safeDate = (v) => {
+            if(!v) return '';
+            if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+            const d = new Date(v);
+            return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
+        };
+        getEl('asStart').value = safeDate(a.startDate);
+        getEl('asEnd').value = safeDate(a.endDate);
         const colIn = getEl('asColor');
         colIn.value = a.color;
         colIn.style.backgroundColor = a.color;
@@ -3052,8 +3058,14 @@ export const RoleManager = {
         
         getEl('rlName').value = a.name;
         getEl('rlDesc').value = a.description;
-        getEl('rlStart').value = a.startDate;
-        getEl('rlEnd').value = a.endDate;
+        const safeDate = (v) => {
+            if(!v) return '';
+            if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+            const d = new Date(v);
+            return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
+        };
+        getEl('rlStart').value = safeDate(a.startDate);
+        getEl('rlEnd').value = safeDate(a.endDate);
         
         const colIn = getEl('rlColor');
         colIn.value = a.color;
@@ -3158,8 +3170,14 @@ export const EventManager = {
         
         getEl('evName').value = a.name;
         getEl('evDesc').value = a.description;
-        getEl('evStart').value = a.startDate;
-        getEl('evEnd').value = a.endDate;
+        const safeDate = (v) => {
+            if(!v) return '';
+            if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+            const d = new Date(v);
+            return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
+        };
+        getEl('evStart').value = safeDate(a.startDate);
+        getEl('evEnd').value = safeDate(a.endDate);
         
         const colIn = getEl('evColor');
         colIn.value = a.color;
@@ -3333,8 +3351,14 @@ export const TaskManager = {
         
         getEl('tskName').value = a.name;
         getEl('tskDesc').value = a.description;
-        getEl('tskStart').value = a.startDate;
-        getEl('tskEnd').value = a.endDate;
+        const safeDate = (v) => {
+            if(!v) return '';
+            if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+            const d = new Date(v);
+            return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
+        };
+        getEl('tskStart').value = safeDate(a.startDate);
+        getEl('tskEnd').value = safeDate(a.endDate);
         
         const colIn = getEl('tskColor');
         colIn.value = a.color;
