@@ -581,7 +581,7 @@ export const Visuals = {
 
     createGanttChartSVG: (members, allAssignments) => {
         const rowHeight = 35;
-        const memberHeaderHeight = 50;
+        const groupHeaderHeight = 40;
         const timelineHeaderHeight = 40;
         const width = 1200;
         const nameColWidth = 250;
@@ -591,16 +591,27 @@ export const Visuals = {
         const getCurrentPeriod = () => {
             const d = new Date();
             const m = d.getMonth(); 
+            // Assuming default FY start of Feb (1) for now if settings not passed, 
+            // but ideally should match app logic. 
+            // App uses: ((m - start + 12) % 12) + 1. Default start=1.
+            // m=0 (Jan) -> (0-1+12)%12 + 1 = 12. Correct.
+            // m=1 (Feb) -> (1-1+12)%12 + 1 = 1. Correct.
+            // This local helper seems to assume Start=1 (Feb).
+            // ((m + 11) % 12) + 1:
+            // m=0 (Jan) -> 11%12+1 = 12.
+            // m=1 (Feb) -> 12%12+1 = 1.
             return ((m + 11) % 12) + 1;
         };
         const getFiscalYear = (date = new Date()) => {
             const m = date.getMonth(); 
             const y = date.getFullYear();
+            // Default Start=1. Jan is prev year.
             return m === 0 ? y - 1 : y;
         };
         const getPeriodLabelShort = (p, y) => {
             const monthNames = ["Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan"];
             const yr = y ? ` ${y.toString().substring(2)}` : '';
+            // p is 1-based. idx = p-1.
             return `P${p.toString().padStart(2,'0')}${yr}`;
         };
 
@@ -615,10 +626,33 @@ export const Visuals = {
             rollingTimeline.push({ p, y });
         }
 
+        // Data Aggregation: Group by Assignment
+        // Structure: { "AssignmentName": [ { memberName, obj } ] }
+        const groups = {};
+        const timelineStartScore = rollingTimeline[0].y * 100 + rollingTimeline[0].p;
+        const timelineEndScore = rollingTimeline[5].y * 100 + rollingTimeline[5].p;
+
+        members.forEach(m => {
+            if (m.objectives && m.objectives.length > 0) {
+                m.objectives.forEach(obj => {
+                    if (!obj.assignment) return;
+                    
+                    const startScore = (obj.startYear || currentY) * 100 + obj.start;
+                    const endScore = (obj.endYear || currentY) * 100 + obj.end;
+                    
+                    if (startScore <= timelineEndScore && endScore >= timelineStartScore) {
+                        if (!groups[obj.assignment]) groups[obj.assignment] = [];
+                        groups[obj.assignment].push({ memberName: m.name, obj: obj });
+                    }
+                });
+            }
+        });
+
         // Calculate total height
+        const groupKeys = Object.keys(groups).sort();
         let totalRows = 0;
-        members.forEach(m => { if (m.objectives && m.objectives.length > 0) totalRows += m.objectives.length; });
-        const totalHeight = timelineHeaderHeight + (members.filter(m => m.objectives && m.objectives.length > 0).length * memberHeaderHeight) + (totalRows * rowHeight) + 40;
+        groupKeys.forEach(k => totalRows += groups[k].length);
+        const totalHeight = timelineHeaderHeight + (groupKeys.length * groupHeaderHeight) + (totalRows * rowHeight) + 40;
 
         let svg = `<svg width="100%" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="http://www.w3.org/2000/svg">`;
         svg += `<rect x="0" y="0" width="${width}" height="${totalHeight}" fill="var(--card-bg)" rx="8"/>`;
@@ -633,33 +667,32 @@ export const Visuals = {
         svg += `<line x1="0" y1="${timelineHeaderHeight}" x2="${width}" y2="${timelineHeaderHeight}" stroke="var(--border)" stroke-width="1"/>`;
 
         let currentYPos = timelineHeaderHeight;
-        members.forEach(m => {
-            const activeObjectives = (m.objectives || []).filter(obj => {
-                const startScore = (obj.startYear || currentY) * 100 + obj.start;
-                const endScore = (obj.endYear || currentY) * 100 + obj.end;
-                const timelineStartScore = rollingTimeline[0].y * 100 + rollingTimeline[0].p;
-                const timelineEndScore = rollingTimeline[5].y * 100 + rollingTimeline[5].p;
-                
-                return (startScore <= timelineEndScore && endScore >= timelineStartScore);
-            });
+        
+        groupKeys.forEach(assignmentName => {
+            const rows = groups[assignmentName];
+            
+            // Group Header (Assignment Name)
+            svg += `<rect x="0" y="${currentYPos}" width="${width}" height="${groupHeaderHeight}" fill="rgba(255,255,255,0.05)" opacity="0.5"/>`;
+            // Get color for header text if possible
+            const assignmentDef = (allAssignments || []).find(a => a.name === assignmentName);
+            const headerColor = assignmentDef ? assignmentDef.color : 'var(--accent)';
+            
+            svg += `<text x="15" y="${currentYPos + groupHeaderHeight/2 + 6}" fill="${headerColor}" font-size="14" font-weight="bold">${assignmentName}</text>`;
+            currentYPos += groupHeaderHeight;
 
-            if (activeObjectives.length === 0) return;
+            rows.forEach((row, ri) => {
+                const y = currentYPos + (ri * rowHeight);
+                // Sub-heading (Member Name)
+                svg += `<text x="25" y="${y + rowHeight/2 + 5}" fill="var(--text-main)" font-size="12" font-weight="500">${row.memberName}</text>`;
 
-            svg += `<rect x="0" y="${currentYPos}" width="${width}" height="${memberHeaderHeight}" fill="rgba(255,255,255,0.05)" opacity="0.5"/>`;
-            svg += `<text x="15" y="${currentYPos + memberHeaderHeight/2 + 6}" fill="var(--accent)" font-size="14" font-weight="bold">${m.name}'s Portfolio & Resource Allocation</text>`;
-            currentYPos += memberHeaderHeight;
-
-            activeObjectives.forEach((obj, oi) => {
-                const y = currentYPos + (oi * rowHeight);
-                svg += `<text x="15" y="${y + rowHeight/2 + 5}" fill="var(--text-main)" font-size="12" font-weight="500">${obj.assignment}</text>`;
-
+                const obj = row.obj;
                 const startScore = (obj.startYear || currentY) * 100 + obj.start;
                 const endScore = (obj.endYear || currentY) * 100 + obj.end;
 
                 const coveredIndices = [];
-                rollingTimeline.forEach((rt, ri) => {
+                rollingTimeline.forEach((rt, rti) => {
                     const rtScore = rt.y * 100 + rt.p;
-                    if (rtScore >= startScore && rtScore <= endScore) coveredIndices.push(ri);
+                    if (rtScore >= startScore && rtScore <= endScore) coveredIndices.push(rti);
                 });
 
                 if (coveredIndices.length > 0) {
@@ -669,17 +702,17 @@ export const Visuals = {
                     const barEnd = nameColWidth + ((endIdx + 1) * colWidth) - 5;
                     const barWidth = Math.max(20, barEnd - barStart);
                     
-                    const assignmentDef = (allAssignments || []).find(a => a.name === obj.assignment);
-                    const barColor = assignmentDef ? assignmentDef.color : 'var(--accent)';
+                    // Bar color matches assignment color, or default
+                    const barColor = headerColor;
 
                     svg += `<rect x="${barStart}" y="${y + 6}" width="${barWidth}" height="${rowHeight - 12}" fill="${barColor}" rx="${(rowHeight - 12)/2}" opacity="0.8">
-                                <title>${m.name}: ${obj.assignment} (${obj.load}%)</title>
+                                <title>${row.memberName}: ${obj.load}%</title>
                             </rect>`;
                     svg += `<text x="${barStart + barWidth/2}" y="${y + rowHeight/2 + 4}" fill="#fff" font-size="11" text-anchor="middle" font-weight="bold" pointer-events="none">${obj.load}%</text>`;
                 }
                 svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="var(--border)" stroke-width="0.5" opacity="0.5"/>`;
             });
-            currentYPos += activeObjectives.length * rowHeight;
+            currentYPos += (rows.length * rowHeight);
         });
 
         svg += `</svg>`;
