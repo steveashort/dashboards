@@ -262,6 +262,14 @@
                     <textarea id="mNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="General notes, key updates..."></textarea>
                 </div>
 
+                <div class="input-group" style="margin-bottom: 1rem; border-top: 1px dashed var(--border); padding-top: 1rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label>Absences</label>
+                        <button class="btn btn-sm" onclick="UserManager.addAbsenceRow()">+ Add Absence</button>
+                    </div>
+                    <div id="mAbsencesContainer" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1); margin-top:5px; display:flex; flex-direction:column; gap:5px;"></div>
+                </div>
+
                 <!-- Weekly Plan Section -->
                 <div style="border-top:1px dashed var(--border); margin: 1rem 0; padding-top: 1rem; color: var(--accent); font-size: 0.9rem;">Weekly Plan</div>
 

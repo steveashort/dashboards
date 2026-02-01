@@ -214,9 +214,9 @@ export const initApp = () => {
     
     if (!State.settings.roles || State.settings.roles.length === 0) {
         State.settings.roles = [
-            { id: 'RID001', name: 'Full Time Employee' },
-            { id: 'RID002', name: 'Partner Resource' },
-            { id: 'RID003', name: 'Contract Resource' }
+            { id: 'RID001', name: 'Example Role 1' },
+            { id: 'RID002', name: 'Example Role 2' },
+            { id: 'RID003', name: 'Example Role 3' }
         ];
         if(State.counters.rid < 3) State.counters.rid = 3;
     }
@@ -2720,6 +2720,79 @@ export const UserManager = {
         container.appendChild(div);
     },
 
+    addAbsenceRow: (data = null) => {
+        const container = getEl('mAbsencesContainer');
+        if (!container) return;
+        
+        const div = document.createElement('div');
+        div.className = 'absence-row';
+        div.style.display = 'flex';
+        div.style.gap = '5px';
+        div.style.alignItems = 'center';
+        
+        const typeSel = document.createElement('select');
+        typeSel.className = 'abs-type';
+        typeSel.style.flex = '2';
+        typeSel.style.background = 'var(--input-bg)';
+        typeSel.style.color = '#fff';
+        typeSel.style.border = '1px solid var(--border)';
+        typeSel.style.padding = '4px';
+        
+        State.settings.absences.forEach(a => {
+            const opt = document.createElement('option');
+            opt.value = a.id;
+            opt.innerText = a.name;
+            if(data && data.type === a.id) opt.selected = true;
+            typeSel.appendChild(opt);
+        });
+        
+        const startIn = document.createElement('input');
+        startIn.type = 'date';
+        startIn.className = 'abs-start';
+        startIn.style.flex = '1';
+        startIn.style.background = 'var(--input-bg)';
+        startIn.style.color = '#fff';
+        startIn.style.colorScheme = 'dark';
+        startIn.style.border = '1px solid var(--border)';
+        startIn.style.padding = '4px';
+        startIn.value = data ? data.startDate : '';
+        
+        const endIn = document.createElement('input');
+        endIn.type = 'date';
+        endIn.className = 'abs-end';
+        endIn.style.flex = '1';
+        endIn.style.background = 'var(--input-bg)';
+        endIn.style.color = '#fff';
+        endIn.style.colorScheme = 'dark';
+        endIn.style.border = '1px solid var(--border)';
+        endIn.style.padding = '4px';
+        endIn.value = data ? data.endDate : '';
+        
+        // Date Validation: End >= Start
+        startIn.onchange = () => {
+            endIn.min = startIn.value;
+            if(endIn.value && endIn.value < startIn.value) endIn.value = startIn.value;
+        };
+        endIn.onchange = () => {
+            if(startIn.value && endIn.value < startIn.value) endIn.value = startIn.value;
+        };
+
+        const delBtn = document.createElement('button');
+        delBtn.innerHTML = '&times;';
+        delBtn.className = 'btn btn-sm';
+        delBtn.style.color = 'var(--g-red)';
+        delBtn.style.borderColor = 'var(--g-red)';
+        delBtn.style.padding = '0 8px';
+        delBtn.onclick = () => div.remove();
+        
+        div.appendChild(typeSel);
+        div.appendChild(startIn);
+        div.appendChild(endIn);
+        div.appendChild(delBtn);
+        
+        container.appendChild(div);
+    },
+
     openUserModal: (index = -1) => {
         const isEdit = index > -1;
         getEl('modalTitle').innerText = isEdit ? 'Edit Person' : 'Add Person';
@@ -2727,7 +2800,7 @@ export const UserManager = {
         
         const m = isEdit ? State.members[index] : {
             name: '', title: '', email: '', engagementType: '', startDate: '', endDate: '', skills: [],
-            notes: '',
+            notes: '', absences: [],
             lastWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}] },
             thisWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], load: ['N','N','N','N','N','X','X'] },
             nextWeek: { tasks: [{text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}], load: ['N','N','N','N','N','X','X'] },
@@ -2803,6 +2876,13 @@ export const UserManager = {
             m.objectives.forEach(o => UserManager.addObjectiveRow(o));
         }
 
+        // Absences
+        const absContainer = getEl('mAbsencesContainer');
+        if(absContainer) absContainer.innerHTML = '';
+        if(m.absences && m.absences.length > 0) {
+            m.absences.forEach(a => UserManager.addAbsenceRow(a));
+        }
+
         getEl('deleteBtn').style.display = isEdit ? 'block' : 'none';
         ModalManager.openModal('userModal');
     },
@@ -2872,6 +2952,22 @@ export const UserManager = {
 
         if (dateError) return App.alert("Error: End period must be after Start period.");
 
+        // Scrape Absences
+        const absences = [];
+        const absContainer = getEl('mAbsencesContainer');
+        if(absContainer) {
+            absContainer.querySelectorAll('.absence-row').forEach(row => {
+                const type = row.querySelector('.abs-type').value;
+                const startDate = row.querySelector('.abs-start').value;
+                const endDate = row.querySelector('.abs-end').value;
+                if(type && startDate) {
+                    // Basic validation: End >= Start (already enforced by UI but good to double check)
+                    if(endDate && endDate < startDate) return; // Skip invalid
+                    absences.push({ type, startDate, endDate });
+                }
+            });
+        }
+
         // Scrape Skills
         const selectedSkills = [];
         document.querySelectorAll('.user-skill-check:checked').forEach(cb => selectedSkills.push(cb.value));
@@ -2885,6 +2981,7 @@ export const UserManager = {
             endDate: getEl('mEndDate').value,
             skills: selectedSkills,
             notes: getEl('mNotes').value.trim(),
+            absences: absences,
             lastWeek: {
                 onCall: (idx > -1 && State.members[idx].lastWeek?.onCall) ? State.members[idx].lastWeek.onCall : [],
                 tasks: [
