@@ -83,7 +83,7 @@
                 <div id="assignmentsSection" style="margin-bottom: 3rem;">
                     <div class="section-header">
                         <h3 style="color:var(--accent); font-weight:300;">Assignments</h3>
-                        <button class="btn" onclick="AssignmentManager.openModal(-1)">+ Add Assignment</button>
+                        <button class="btn" onclick="AssignmentManager.openAssignModal()">+ Assign User</button>
                     </div>
                     <div id="assignmentsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;"></div>
                 </div>
@@ -1001,6 +1001,48 @@
             <div class="modal-footer">
                 <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="SkillManager.deleteSkill()" id="btnDelSkill">Delete</button>
                 <button class="btn btn-primary" onclick="SkillManager.submitSkill()">Save Skill</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="assignUserModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Assign User to Role</h3>
+                <button class="btn" onclick="ModalManager.closeModal('assignUserModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label>User</label>
+                    <select id="auUser" style="width:100%; padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border);"></select>
+                </div>
+                <div class="input-group" style="margin-top:1rem;">
+                    <label>Role / Task</label>
+                    <select id="auRole" style="width:100%; padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border);"></select>
+                </div>
+                <div class="form-row" style="margin-top:1rem; gap:1rem;">
+                    <div class="input-group">
+                        <label>Start Period</label>
+                        <div style="display:flex; gap:5px;">
+                            <select id="auStartYear" style="padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border); width:80px;"></select>
+                            <select id="auStartPeriod" style="padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border); flex:1;"></select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>End Period</label>
+                        <div style="display:flex; gap:5px;">
+                            <select id="auEndYear" style="padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border); width:80px;"></select>
+                            <select id="auEndPeriod" style="padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border); flex:1;"></select>
+                        </div>
+                    </div>
+                </div>
+                <div class="input-group" style="margin-top:1rem;">
+                    <label>Allocation (%)</label>
+                    <input type="number" id="auLoad" value="100" min="0" max="100">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="AssignmentManager.submitUserAssignment()">Assign</button>
             </div>
         </div>
     </div>

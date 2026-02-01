@@ -3033,6 +3033,132 @@ export const AssignmentManager = {
                 AssignmentManager.renderAssignments();
             });
         }
+    },
+    openAssignModal: () => {
+        // Populate Users
+        const userSel = getEl('auUser');
+        userSel.innerHTML = '<option value="">Select User...</option>';
+        State.members.forEach((m, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = m.name;
+            userSel.appendChild(opt);
+        });
+
+        // Populate Roles/Tasks
+        const roleSel = getEl('auRole');
+        roleSel.innerHTML = '<option value="">Select Assignment...</option>';
+        State.assignments.forEach((a, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = `${a.name} (${a.class})`;
+            roleSel.appendChild(opt);
+        });
+
+        // Populate Years
+        const fy = getFiscalYear();
+        const years = [fy-1, fy, fy+1, fy+2];
+        const sySel = getEl('auStartYear'); sySel.innerHTML = '';
+        const eySel = getEl('auEndYear'); eySel.innerHTML = '';
+        years.forEach(y => {
+            sySel.add(new Option(y, y, y===fy, y===fy));
+            eySel.add(new Option(y, y, y===fy, y===fy));
+        });
+
+        // Populate Periods
+        const spSel = getEl('auStartPeriod'); spSel.innerHTML = '';
+        const epSel = getEl('auEndPeriod'); epSel.innerHTML = '';
+        const cp = getCurrentPeriod();
+        for(let i=1; i<=12; i++) {
+            const label = getPeriodLabel(i).split(' ')[0];
+            spSel.add(new Option(label, i, i===cp, i===cp));
+            epSel.add(new Option(label, i, i===cp, i===cp));
+        }
+
+        ModalManager.openModal('assignUserModal');
+    },
+    submitUserAssignment: () => {
+        const uIdx = getEl('auUser').value;
+        const aIdx = getEl('auRole').value;
+        if(uIdx === '' || aIdx === '') return App.alert("Please select User and Assignment.");
+
+        const user = State.members[uIdx];
+        const assignment = State.assignments[aIdx];
+
+        const sYear = parseInt(getEl('auStartYear').value);
+        const sPer = parseInt(getEl('auStartPeriod').value);
+        const eYear = parseInt(getEl('auEndYear').value);
+        const ePer = parseInt(getEl('auEndPeriod').value);
+        const load = parseInt(getEl('auLoad').value) || 0;
+
+        // Date Logic Helper
+        const getDateFromPeriod = (y, p) => {
+            const startMonth = State.settings.fyStartMonth;
+            const monthIndex = (p - 1 + startMonth) % 12;
+            const calcYear = monthIndex < startMonth ? y + 1 : y;
+            return new Date(calcYear, monthIndex, 1);
+        };
+
+        const userStart = getDateFromPeriod(sYear, sPer);
+        const userEnd = getDateFromPeriod(eYear, ePer);
+        // Set userEnd to end of month for overlap check? 
+        // Logic says "Cannot exceed range defined by role".
+        // Role Start is YYYY-MM-DD.
+        // If Role Start is Jan 15, and User Start is Jan 1 (P12), User start is BEFORE Role start.
+        // Let's be strict: User Start Date must be >= Role Start Date.
+        // User End Date (1st of month) must be <= Role End Date. 
+        // Actually, if User Assigns "Jan", they mean the whole month.
+        // If Role ends "Jan 10", and User assigned "Jan", is that valid? Yes, but technically it exceeds.
+        // Let's check strict bounds of the *first day* of the period.
+
+        if (userEnd < userStart) return App.alert("End Period must be after Start Period.");
+
+        if (assignment.startDate) {
+            const rStart = new Date(assignment.startDate);
+            if (userStart < rStart) {
+                // Allow if in same month?
+                // If rStart is Jan 15, userStart is Jan 1.
+                // Strict check:
+                // return App.alert(`Assignment Start (${userStart.toLocaleDateString()}) is before Role Start (${assignment.startDate}).`);
+                // Let's just warn about the period.
+                const rStartPeriodYear = getFiscalYear(rStart);
+                // This is getting complex. Simple check:
+                if (userStart.getTime() < rStart.getTime()) {
+                     // If same month/year, maybe OK?
+                     if(userStart.getMonth() !== rStart.getMonth() || userStart.getFullYear() !== rStart.getFullYear()) {
+                         return App.alert(`Start Period is before Role Start Date (${assignment.startDate}).`);
+                     }
+                }
+            }
+        }
+
+        if (assignment.endDate) {
+            const rEnd = new Date(assignment.endDate);
+            // Check if User End (1st of month) is after Role End.
+            // Actually we should check end of User End Month.
+            const userEndMonthEnd = new Date(userEnd.getFullYear(), userEnd.getMonth() + 1, 0);
+            if (userEndMonthEnd > rEnd) {
+                 // Check if same month
+                 if(userEnd.getMonth() !== rEnd.getMonth() || userEnd.getFullYear() !== rEnd.getFullYear()) {
+                     return App.alert(`End Period is after Role End Date (${assignment.endDate}).`);
+                 }
+            }
+        }
+
+        // Add Objective
+        if (!user.objectives) user.objectives = [];
+        user.objectives.push({
+            assignment: assignment.name,
+            load: load,
+            start: sPer,
+            startYear: sYear,
+            end: ePer,
+            endYear: eYear
+        });
+
+        ModalManager.closeModal('assignUserModal');
+        AssignmentManager.renderAssignments(); // Update view to show the card if it was hidden
+        App.alert(`Assigned ${user.name} to ${assignment.name}.`);
     }
 };
 
