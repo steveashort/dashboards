@@ -3486,16 +3486,35 @@ export const PlannerManager = {
             
             div.appendChild(header);
             
-            // Placeholder for visual content
+            // Visual Content
             const viz = document.createElement('div');
-            viz.style.height = '150px';
+            viz.style.overflowX = 'auto';
             viz.style.background = 'rgba(0,0,0,0.1)';
             viz.style.borderRadius = '4px';
-            viz.style.display = 'flex';
-            viz.style.alignItems = 'center';
-            viz.style.justifyContent = 'center';
-            viz.style.color = '#666';
-            viz.innerText = `[Planner Visualization for ${p.type} - ${p.range} Months]`;
+            
+            if (p.type === 'Absence') {
+                // Filter members with absences
+                const membersWithAbsences = State.members
+                    .filter(m => m.absences && m.absences.length > 0)
+                    .map(m => ({
+                        ...m,
+                        objectives: [] // Clear objectives so only absences are rendered
+                    }));
+                
+                if (membersWithAbsences.length > 0) {
+                    viz.innerHTML = Visuals.createGanttChartSVG(membersWithAbsences, [], State.settings);
+                } else {
+                    viz.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No absences found.</div>';
+                }
+            } else {
+                // Placeholder for other types
+                viz.style.height = '150px';
+                viz.style.display = 'flex';
+                viz.style.alignItems = 'center';
+                viz.style.justifyContent = 'center';
+                viz.style.color = '#666';
+                viz.innerText = `[Planner Visualization for ${p.type} - ${p.range} Months]`;
+            }
             
             div.appendChild(viz);
             container.appendChild(div);
