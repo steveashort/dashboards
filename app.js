@@ -238,8 +238,25 @@ export const initApp = () => {
     }
 
     // Assignments defaults
-    if (!State.assignments || State.assignments.length === 0) {
-        State.assignments = [];
+    if (!State.assignments) State.assignments = [];
+    
+    // Ensure Settings Roles exist in Assignments
+    if (State.settings.roles && State.settings.roles.length > 0) {
+        State.settings.roles.forEach(r => {
+            const exists = State.assignments.some(a => a.id === r.id || a.name === r.name);
+            if (!exists) {
+                State.assignments.push({
+                    id: r.id,
+                    name: r.name,
+                    description: '',
+                    class: 'Role',
+                    priority: 'Med',
+                    color: '#03dac6',
+                    startDate: '',
+                    endDate: ''
+                });
+            }
+        });
     }
 
     // Setup Date Validation
