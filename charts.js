@@ -579,40 +579,38 @@ export const Visuals = {
         }
     },
 
-    createGanttChartSVG: (members, allAssignments) => {
+    createGanttChartSVG: (members, allAssignments, settings) => {
         const rowHeight = 35;
         const groupHeaderHeight = 40;
         const timelineHeaderHeight = 40;
         const width = 1200;
         const nameColWidth = 250;
         const colWidth = (width - nameColWidth) / 6;
+        const fyStart = (settings && settings.fyStartMonth !== undefined) ? settings.fyStartMonth : 1;
         
         // Rolling 6 periods logic with Year awareness
         const getCurrentPeriod = () => {
             const d = new Date();
             const m = d.getMonth(); 
-            // Assuming default FY start of Feb (1) for now if settings not passed, 
-            // but ideally should match app logic. 
-            // App uses: ((m - start + 12) % 12) + 1. Default start=1.
-            // m=0 (Jan) -> (0-1+12)%12 + 1 = 12. Correct.
-            // m=1 (Feb) -> (1-1+12)%12 + 1 = 1. Correct.
-            // This local helper seems to assume Start=1 (Feb).
-            // ((m + 11) % 12) + 1:
-            // m=0 (Jan) -> 11%12+1 = 12.
-            // m=1 (Feb) -> 12%12+1 = 1.
-            return ((m + 11) % 12) + 1;
+            return ((m - fyStart + 12) % 12) + 1;
         };
         const getFiscalYear = (date = new Date()) => {
             const m = date.getMonth(); 
             const y = date.getFullYear();
-            // Default Start=1. Jan is prev year.
-            return m === 0 ? y - 1 : y;
+            return m < fyStart ? y - 1 : y;
         };
         const getPeriodLabelShort = (p, y) => {
             const monthNames = ["Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan"];
+            // Shift month names based on fyStart? No, month names are fixed.
+            // P01 maps to fyStart month index.
+            // monthIndex = (p - 1 + fyStart) % 12
+            // Note: Standard array assumes Jan=0.
+            const standardMonths = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            const mIdx = (p - 1 + fyStart) % 12;
+            const name = standardMonths[mIdx];
+            
             const yr = y ? ` ${y.toString().substring(2)}` : '';
-            // p is 1-based. idx = p-1.
-            return `P${p.toString().padStart(2,'0')}${yr}`;
+            return `P${p.toString().padStart(2,'0')} (${name})${yr}`;
         };
 
         const currentP = getCurrentPeriod();
@@ -626,12 +624,25 @@ export const Visuals = {
             rollingTimeline.push({ p, y });
         }
 
+        // Helper to convert Date to Period Score
+        const getPeriodScore = (dateStr) => {
+            if(!dateStr) return 0;
+            const d = new Date(dateStr);
+            if(isNaN(d.getTime())) return 0;
+            const m = d.getMonth();
+            const y = d.getFullYear();
+            const fy = m < fyStart ? y - 1 : y;
+            const p = ((m - fyStart + 12) % 12) + 1;
+            return fy * 100 + p;
+        };
+
         // Data Aggregation: Group by Assignment
         // Structure: { "AssignmentName": [ { memberName, obj } ] }
         const groups = {};
         const timelineStartScore = rollingTimeline[0].y * 100 + rollingTimeline[0].p;
         const timelineEndScore = rollingTimeline[5].y * 100 + rollingTimeline[5].p;
 
+        // 1. Objectives
         members.forEach(m => {
             if (m.objectives && m.objectives.length > 0) {
                 m.objectives.forEach(obj => {
@@ -643,6 +654,35 @@ export const Visuals = {
                     if (startScore <= timelineEndScore && endScore >= timelineStartScore) {
                         if (!groups[obj.assignment]) groups[obj.assignment] = [];
                         groups[obj.assignment].push({ memberName: m.name, obj: obj });
+                    }
+                });
+            }
+        });
+
+        // 2. Absences
+        const absMap = new Map();
+        if (settings && settings.absences) settings.absences.forEach(a => absMap.set(a.id, a.name));
+        
+        members.forEach(m => {
+            if (m.absences && m.absences.length > 0) {
+                m.absences.forEach(abs => {
+                    const absName = absMap.get(abs.type) || 'Unknown Absence';
+                    
+                    const startScore = getPeriodScore(abs.startDate);
+                    const endScore = getPeriodScore(abs.endDate);
+                    
+                    if (startScore <= timelineEndScore && endScore >= timelineStartScore) {
+                        if (!groups[absName]) groups[absName] = [];
+                        
+                        // Create a synthetic object for rendering
+                        const obj = {
+                            startScore: startScore,
+                            endScore: endScore,
+                            load: 'ABS',
+                            isAbsence: true
+                        };
+                        
+                        groups[absName].push({ memberName: m.name, obj: obj });
                     }
                 });
             }
@@ -673,9 +713,19 @@ export const Visuals = {
             
             // Group Header (Assignment Name)
             svg += `<rect x="0" y="${currentYPos}" width="${width}" height="${groupHeaderHeight}" fill="rgba(255,255,255,0.05)" opacity="0.5"/>`;
-            // Get color for header text if possible
+            
+            // Determine Header Color
+            // Check if it's an assignment
+            let headerColor = 'var(--accent)';
             const assignmentDef = (allAssignments || []).find(a => a.name === assignmentName);
-            const headerColor = assignmentDef ? assignmentDef.color : 'var(--accent)';
+            if (assignmentDef) {
+                headerColor = assignmentDef.color;
+            } else {
+                // Check if it's an absence type (by name)
+                // Just use a distinct color for absences if identified
+                // We don't have isAbsence flag on the group key itself easily, but we can check the first row
+                if (rows.length > 0 && rows[0].obj.isAbsence) headerColor = '#ffb74d'; // Orange for absence header
+            }
             
             svg += `<text x="15" y="${currentYPos + groupHeaderHeight/2 + 6}" fill="${headerColor}" font-size="14" font-weight="bold">${assignmentName}</text>`;
             currentYPos += groupHeaderHeight;
@@ -686,8 +736,8 @@ export const Visuals = {
                 svg += `<text x="25" y="${y + rowHeight/2 + 5}" fill="var(--text-main)" font-size="12" font-weight="500">${row.memberName}</text>`;
 
                 const obj = row.obj;
-                const startScore = (obj.startYear || currentY) * 100 + obj.start;
-                const endScore = (obj.endYear || currentY) * 100 + obj.end;
+                const startScore = obj.startScore || ((obj.startYear || currentY) * 100 + obj.start);
+                const endScore = obj.endScore || ((obj.endYear || currentY) * 100 + obj.end);
 
                 const coveredIndices = [];
                 rollingTimeline.forEach((rt, rti) => {
@@ -702,11 +752,11 @@ export const Visuals = {
                     const barEnd = nameColWidth + ((endIdx + 1) * colWidth) - 5;
                     const barWidth = Math.max(20, barEnd - barStart);
                     
-                    // Bar color matches assignment color, or default
-                    const barColor = headerColor;
+                    let barColor = headerColor;
+                    if (obj.isAbsence) barColor = '#ef5350'; // Specific red/orange for absence bars themselves? Or match header. Let's make it slightly darker.
 
                     svg += `<rect x="${barStart}" y="${y + 6}" width="${barWidth}" height="${rowHeight - 12}" fill="${barColor}" rx="${(rowHeight - 12)/2}" opacity="0.8">
-                                <title>${row.memberName}: ${obj.load}%</title>
+                                <title>${row.memberName}: ${assignmentName} (${obj.load})</title>
                             </rect>`;
                     svg += `<text x="${barStart + barWidth/2}" y="${y + rowHeight/2 + 4}" fill="#fff" font-size="11" text-anchor="middle" font-weight="bold" pointer-events="none">${obj.load}%</text>`;
                 }

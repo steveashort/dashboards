@@ -749,7 +749,7 @@ export const renderBoard = () => {
         AssignmentManager.renderAssignments();
         
         // Render Resource Planner (Gantt)
-        const svg = Visuals.createGanttChartSVG(State.members, State.assignments);
+        const svg = Visuals.createGanttChartSVG(State.members, State.assignments, State.settings);
         const container = getEl('ganttContainer');
         if(container) container.innerHTML = svg;
         
@@ -1104,7 +1104,7 @@ export const ZoomManager = {
             titleEl.style.borderBottom = "none";
         }
         
-        const content = Visuals.createGanttChartSVG(State.members, State.assignments);
+        const content = Visuals.createGanttChartSVG(State.members, State.assignments, State.settings);
         
         const bodyEl = getEl('zoomBody');
         if (bodyEl) {
