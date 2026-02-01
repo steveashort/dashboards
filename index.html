@@ -409,6 +409,7 @@
                     <button id="typeDonutBtn" class="type-option" onclick="TrackerManager.setType('donut')">Donut Chart</button>
                     <button id="typeCountdownBtn" class="type-option" onclick="TrackerManager.setType('countdown')">Countdown</button>
                     <button id="typePlannerBtn" class="type-option" onclick="TrackerManager.setType('planner')">Resource Planner</button>
+                    <button id="typeAchievementsBtn" class="type-option" onclick="TrackerManager.setType('achievements')">Achievements</button>
                 </div>
                 <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
                     <div class="input-group" style="flex: 2;">
@@ -643,6 +644,30 @@
                                         <div class="input-group" style="margin-top: 1rem;">
                                             <label>Notes for Published View (Max 200 chars)</label>
                                             <textarea id="tkPlannerNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div id="achievementsInputs" style="display:none;">
+                                        <div class="input-group">
+                                            <label>Data Sources</label>
+                                            <div style="display:flex; flex-direction:column; gap:10px; margin-top:5px;">
+                                                <label style="display:inline-flex; align-items:center; gap:8px;">
+                                                    <input type="checkbox" id="tkAchLast" style="accent-color:var(--accent);"> 
+                                                    Last Week (Successes)
+                                                </label>
+                                                <label style="display:inline-flex; align-items:center; gap:8px;">
+                                                    <input type="checkbox" id="tkAchCurrent" style="accent-color:var(--accent);"> 
+                                                    Current Week (Priorities)
+                                                </label>
+                                                <label style="display:inline-flex; align-items:center; gap:8px;">
+                                                    <input type="checkbox" id="tkAchNext" style="accent-color:var(--accent);"> 
+                                                    Next Week (Planned Work)
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="input-group" style="margin-top: 1rem;">
+                                            <label>Notes for Published View (Max 200 chars)</label>
+                                            <textarea id="tkAchNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
                                         </div>
                                     </div>
                 

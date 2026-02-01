@@ -909,13 +909,37 @@ export const renderBoard = () => {
             } else if (renderType === 'note') {
                 visualHTML = `<div class="note-render-container" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
                 statsHTML = '';
-            } else if (renderType === 'donut') {
-                const labels = (t.dataPoints || []).map(dp => dp.label);
-                const values = (t.dataPoints || []).map(dp => dp.value);
-                const colors = (t.dataPoints || []).map(dp => dp.color);
-                const html = Visuals.createDonutChartSVG(labels, values, displaySize, colors);
-                visualHTML = `<div class="donut-chart">${html}</div>`;
+            } else if (renderType === 'achievements') {
+                const sources = t.sources || ['last','current','next'];
+                visualHTML = '<div style="overflow-y:auto; height:100%; padding:5px;">';
+                
+                let count = 0;
+                State.members.forEach(m => {
+                    const items = [];
+                    if(sources.includes('last') && m.lastWeek && m.lastWeek.tasks) {
+                        m.lastWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim()) items.push(task.text); });
+                    }
+                    if(sources.includes('current') && m.thisWeek && m.thisWeek.tasks) {
+                        m.thisWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim()) items.push(task.text); });
+                    }
+                    if(sources.includes('next') && m.nextWeek && m.nextWeek.tasks) {
+                        m.nextWeek.tasks.forEach(task => { if(task.isTeamActivity && task.text.trim()) items.push(task.text); });
+                    }
+                    
+                    if(items.length > 0) {
+                        count++;
+                        visualHTML += `<div style="margin-bottom:10px;">
+                            <div style="font-weight:bold; color:var(--accent); font-size:0.9rem; margin-bottom:2px;">${m.name}</div>
+                            <ul style="margin:0; padding-left:15px; font-size:0.8rem; color:var(--text-main);">`;
+                        items.forEach(it => visualHTML += `<li>${it}</li>`);
+                        visualHTML += `</ul></div>`;
+                    }
+                });
+                
+                if(count === 0) visualHTML += '<div style="color:var(--text-muted); font-style:italic;">No achievements found.</div>';
+                visualHTML += '</div>';
                 statsHTML = '';
+            } else if (renderType === 'donut') {
             } else if (renderType === 'countdown') {
                 const items = t.items || [];
                 items.sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -1286,6 +1310,31 @@ export const ZoomManager = {
                     });
                     content += '</div>';
                 }
+            } else if (renderType === 'achievements') {
+                const sources = t.sources || ['last','current','next'];
+                content = '<div style="padding:20px; overflow-y:auto; height:100%;">';
+                
+                State.members.forEach(m => {
+                    const items = [];
+                    if(sources.includes('last') && m.lastWeek && m.lastWeek.tasks) {
+                        m.lastWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim()) items.push(task.text); });
+                    }
+                    if(sources.includes('current') && m.thisWeek && m.thisWeek.tasks) {
+                        m.thisWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim()) items.push(task.text); });
+                    }
+                    if(sources.includes('next') && m.nextWeek && m.nextWeek.tasks) {
+                        m.nextWeek.tasks.forEach(task => { if(task.isTeamActivity && task.text.trim()) items.push(task.text); });
+                    }
+                    
+                    if(items.length > 0) {
+                        content += `<div style="margin-bottom:20px;">
+                            <div style="font-weight:bold; color:var(--accent); font-size:1.2rem; margin-bottom:10px;">${m.name}</div>
+                            <ul style="margin:0; padding-left:20px; font-size:1.1rem; color:var(--text-main); line-height:1.6;">`;
+                        items.forEach(it => content += `<li>${it}</li>`);
+                        content += `</ul></div>`;
+                    }
+                });
+                content += '</div>';
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
                 const values = (t.dataPoints || []).map(dp => dp.value);
@@ -1475,7 +1524,7 @@ export const TrackerManager = {
         const titleEl = getEl('trackerModalTitle');
         if (titleEl) titleEl.innerText = isEdit ? 'Edit Card' : 'Add Card';
         
-        ['gauge','bar','line','counter','rag','countdown','completionBar','planner'].forEach(type => {
+        ['gauge','bar','line','counter','rag','countdown','completionBar','planner','achievements'].forEach(type => {
             const div = getEl(`${type}Inputs`);
             if (div) div.style.display = 'none';
         });
@@ -1678,6 +1727,11 @@ export const TrackerManager = {
                 if(notesIn) notesIn.value = '';
                 const styleRad = document.querySelector('input[name="tkCountdownStyle"][value="list"]');
                 if(styleRad) styleRad.checked = true;
+            } else if (!isEdit && type === 'achievements') {
+                const notesIn = getEl('tkAchNotes'); if(notesIn) notesIn.value = '';
+                getEl('tkAchLast').checked = true;
+                getEl('tkAchCurrent').checked = true;
+                getEl('tkAchNext').checked = true;
             }
 
             if (type === 'gauge') {
@@ -2646,6 +2700,15 @@ export const TrackerManager = {
             const notesIn = getEl('tkCountdownNotes');
             newTracker.notes = notesIn ? notesIn.value : '';
             // Size is handled by radio
+        } else if (type === 'achievements') {
+            const sources = [];
+            if(getEl('tkAchLast').checked) sources.push('last');
+            if(getEl('tkAchCurrent').checked) sources.push('current');
+            if(getEl('tkAchNext').checked) sources.push('next');
+            
+            if (sources.length === 0) return App.alert("Select at least one data source.");
+            newTracker.sources = sources;
+            newTracker.notes = getEl('tkAchNotes').value.trim();
         }
 
         const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
