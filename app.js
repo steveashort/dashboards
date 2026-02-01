@@ -210,7 +210,7 @@ export const initApp = () => {
     syncIds(); 
 
     // Init Settings
-    if (!State.settings) State.settings = { fyStartMonth: 1, roles: [], absences: [] };
+    if (!State.settings) State.settings = { fyStartMonth: 1, roles: [], absences: [], skills: [] };
     
     if (!State.settings.roles || State.settings.roles.length === 0) {
         State.settings.roles = [
@@ -219,6 +219,14 @@ export const initApp = () => {
             { id: 'RID003', name: 'Contract Resource' }
         ];
         if(State.counters.rid < 3) State.counters.rid = 3;
+    }
+
+    if (!State.settings.skills || State.settings.skills.length === 0) {
+        State.settings.skills = [
+            { id: 'SID001', name: 'ITIL' },
+            { id: 'SID002', name: 'Microsoft 365' }
+        ];
+        if(State.counters.sid < 2) State.counters.sid = 2;
     }
     
     if (!State.settings.absences || State.settings.absences.length === 0) {
@@ -254,6 +262,21 @@ export const initApp = () => {
                     color: '#03dac6',
                     startDate: '',
                     endDate: ''
+                });
+            }
+        });
+    }
+
+    // Ensure Settings Skills exist in Skills
+    if (!State.skills) State.skills = [];
+    if (State.settings.skills && State.settings.skills.length > 0) {
+        State.settings.skills.forEach(s => {
+            const exists = State.skills.some(sk => sk.id === s.id || sk.name === s.name);
+            if (!exists) {
+                State.skills.push({
+                    id: s.id,
+                    name: s.name,
+                    description: ''
                 });
             }
         });
@@ -3376,7 +3399,7 @@ export const RoleManager = {
         getEl('roleModalTitle').innerText = index === -1 ? 'Add Role' : 'Edit Role';
         getEl('editRoleIndex').value = index;
         
-        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#03dac6', id: '' };
+        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#03dac6', id: '', skills: [] };
         
         const idContainer = getEl('rlIdContainer');
         const idInput = getEl('rlId');
@@ -3408,6 +3431,28 @@ export const RoleManager = {
         const pRad = document.querySelector(`input[name="rlPriority"][value="${a.priority}"]`);
         if(pRad) pRad.checked = true;
         
+        // Populate Skills
+        const skillsContainer = getEl('rlSkillsContainer');
+        if (skillsContainer) {
+            skillsContainer.innerHTML = '';
+            if (!State.skills || State.skills.length === 0) {
+                skillsContainer.innerHTML = '<span style="color:var(--text-muted); font-style:italic; font-size:0.8rem;">No skills defined.</span>';
+            } else {
+                const assignedSkills = a.skills || [];
+                State.skills.forEach(s => {
+                    const div = document.createElement('div');
+                    const isChecked = assignedSkills.includes(s.id);
+                    div.innerHTML = `
+                        <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.8rem; color:var(--text-main); cursor:pointer;">
+                            <input type="checkbox" class="role-skill-check" value="${s.id}" ${isChecked ? 'checked' : ''} style="accent-color:var(--accent);">
+                            ${s.name}
+                        </label>
+                    `;
+                    skillsContainer.appendChild(div);
+                });
+            }
+        }
+        
         getEl('btnDelRole').style.display = index === -1 ? 'none' : 'block';
         
         ModalManager.openModal('roleModal');
@@ -3419,6 +3464,10 @@ export const RoleManager = {
         
         const priorityRad = document.querySelector('input[name="rlPriority"]:checked');
         
+        // Scrape Skills
+        const selectedSkills = [];
+        document.querySelectorAll('.role-skill-check:checked').forEach(cb => selectedSkills.push(cb.value));
+
         const newAssignment = {
             name,
             description: getEl('rlDesc').value.trim(),
@@ -3426,7 +3475,8 @@ export const RoleManager = {
             priority: priorityRad ? priorityRad.value : 'Med',
             startDate: getEl('rlStart').value,
             endDate: getEl('rlEnd').value,
-            color: getEl('rlColor').value
+            color: getEl('rlColor').value,
+            skills: selectedSkills
         };
         
         if(index === -1) {
