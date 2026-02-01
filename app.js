@@ -240,20 +240,6 @@ export const initApp = () => {
     // Assignments defaults
     if (!State.assignments || State.assignments.length === 0) {
         State.assignments = [];
-        if (State.settings.roles && State.settings.roles.length > 0) {
-            State.settings.roles.forEach(r => {
-                State.assignments.push({
-                    id: r.id,
-                    name: r.name,
-                    description: '',
-                    class: 'Role',
-                    priority: 'Med',
-                    color: '#03dac6',
-                    startDate: '',
-                    endDate: ''
-                });
-            });
-        }
     }
 
     // Setup Date Validation
@@ -2930,7 +2916,19 @@ export const AssignmentManager = {
         if (!grid) return;
         grid.innerHTML = '';
         
+        // Find assignments that actually have users
+        const activeAssignmentNames = new Set();
+        State.members.forEach(m => {
+            if (m.objectives) {
+                m.objectives.forEach(o => {
+                    if (o.assignment) activeAssignmentNames.add(o.assignment);
+                });
+            }
+        });
+
         State.assignments.forEach((a, i) => {
+            if (!activeAssignmentNames.has(a.name)) return; // Skip if no user is assigned
+
             const card = document.createElement('div');
             card.className = 'assignment-card';
             card.style.background = 'var(--card-bg)';
