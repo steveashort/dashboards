@@ -4203,7 +4203,9 @@ export const DataLoader = {
         reader.onload = (e) => {
             try {
                 const data = JSON.parse(e.target.result);
-                if(data.trackers && data.members) {
+                console.log("Loaded keys:", Object.keys(data));
+                
+                if(data.trackers || data.members || data.settings) {
                     
                     // Migration Logic
                     const today = new Date();
