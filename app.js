@@ -954,18 +954,46 @@ export const renderBoard = () => {
                     statsHTML = '';
                 }
             } else if (renderType === 'planner') {
-                // Filter assignments based on type AND selected items (if any)
                 const pType = t.plannerType || 'Role';
-                let filteredAssignments = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
-                
-                if (t.plannerItems && t.plannerItems.length > 0) {
-                    filteredAssignments = filteredAssignments.filter(a => t.plannerItems.includes(a.name));
+                let itemsToRender = [];
+
+                if (pType === 'Absence') {
+                    const targetTypes = t.plannerItems || [];
+                    // Map Names to IDs
+                    const targetTypeIds = (State.settings.absences || [])
+                        .filter(a => targetTypes.includes(a.name))
+                        .map(a => a.id);
+
+                    State.members.forEach(m => {
+                        if (m.absences) {
+                            m.absences.forEach(abs => {
+                                if (targetTypeIds.includes(abs.type)) {
+                                    const absName = (State.settings.absences.find(x => x.id === abs.type) || {}).name || 'Absence';
+                                    itemsToRender.push({
+                                        name: m.name, // Just name, tooltip has details
+                                        description: absName, // Shows in tooltip
+                                        startDate: abs.startDate,
+                                        endDate: abs.endDate,
+                                        priority: 'High', // Default
+                                        color: '#ffb74d' // Orange for absence
+                                    });
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    // Filter assignments based on type AND selected items (if any)
+                    itemsToRender = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
+                    
+                    if (t.plannerItems && t.plannerItems.length > 0) {
+                        itemsToRender = itemsToRender.filter(a => t.plannerItems.includes(a.name));
+                    }
                 }
                 
                 // Use new renderer with custom style
                 const range = t.range || 3;
                 const size = t.size || '2x2';
-                const svg = Visuals.createResourcePlannerSVG(filteredAssignments, range, size);
+                const svg = Visuals.createResourcePlannerSVG(itemsToRender, range, size);
                 visualHTML = `<div style="width:100%; height:100%; overflow:hidden;">${svg}</div>`;
                 statsHTML = `<div class="tracker-stats">Planner: ${pType} (${range} Months)</div>`;
             } else if (renderType === 'completionBar') {
@@ -1272,12 +1300,39 @@ export const ZoomManager = {
                 content = `<div style="width:100%; padding:40px;">${Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 300, orient)}</div>`;
             } else if (renderType === 'planner') {
                 const pType = t.plannerType || 'Role';
-                let filteredAssignments = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
-                if (t.plannerItems && t.plannerItems.length > 0) {
-                    filteredAssignments = filteredAssignments.filter(a => t.plannerItems.includes(a.name));
+                let itemsToRender = [];
+
+                if (pType === 'Absence') {
+                    const targetTypes = t.plannerItems || [];
+                    const targetTypeIds = (State.settings.absences || [])
+                        .filter(a => targetTypes.includes(a.name))
+                        .map(a => a.id);
+
+                    State.members.forEach(m => {
+                        if (m.absences) {
+                            m.absences.forEach(abs => {
+                                if (targetTypeIds.includes(abs.type)) {
+                                    const absName = (State.settings.absences.find(x => x.id === abs.type) || {}).name || 'Absence';
+                                    itemsToRender.push({
+                                        name: m.name,
+                                        description: absName,
+                                        startDate: abs.startDate,
+                                        endDate: abs.endDate,
+                                        priority: 'High',
+                                        color: '#ffb74d'
+                                    });
+                                }
+                            });
+                        }
+                    });
+                } else {
+                    itemsToRender = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
+                    if (t.plannerItems && t.plannerItems.length > 0) {
+                        itemsToRender = itemsToRender.filter(a => t.plannerItems.includes(a.name));
+                    }
                 }
                 const range = t.range || 3;
-                content = `<div style="width:100%; height:100%; overflow:auto; padding:20px;">${Visuals.createResourcePlannerSVG(filteredAssignments, range, '4x4')}</div>`;
+                content = `<div style="width:100%; height:100%; overflow:auto; padding:20px;">${Visuals.createResourcePlannerSVG(itemsToRender, range, '4x4')}</div>`;
             }
     
             const bodyEl = getEl('zoomBody');
@@ -1382,12 +1437,17 @@ export const TrackerManager = {
         const typeRad = document.querySelector('input[name="tkPlannerType"]:checked');
         const type = typeRad ? typeRad.value : 'Role';
         
-        // Filter assignments by type
-        // Legacy: 'Project' class counts as 'Event'
-        const items = State.assignments.filter(a => a.class === type || (type === 'Event' && a.class === 'Project'));
+        let items = [];
+        if (type === 'Absence') {
+            // Use absence types from settings
+            items = State.settings.absences.map(a => ({ name: a.name }));
+        } else {
+            // Filter assignments by type
+            items = State.assignments.filter(a => a.class === type || (type === 'Event' && a.class === 'Project'));
+        }
         
         if (items.length === 0) {
-            container.innerHTML = `<div style="color:var(--text-muted); font-style:italic;">No ${type}s defined. Go to the ${type}s tab to add some.</div>`;
+            container.innerHTML = `<div style="color:var(--text-muted); font-style:italic;">No ${type}s defined. Go to Settings or the relevant tab to add some.</div>`;
             return;
         }
         
