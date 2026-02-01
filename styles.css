@@ -578,3 +578,5 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
     text-shadow: 0 0 0 transparent;
 }
 /* When input has a value, we can optionally show it, but for now we rely on background color */
+.tracker-card.type-achievements { text-align: left; }
+.tracker-card.type-achievements .tracker-viz-container { align-items: flex-start; justify-content: flex-start; overflow-y: auto; }

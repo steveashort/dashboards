@@ -912,37 +912,48 @@ export const renderBoard = () => {
             } else if (renderType === 'achievements') {
                 const sources = t.sources || ['last','current','next'];
                 const filters = t.filterItems || null;
+                const limit = t.limit || 5;
+                const showName = t.showName !== undefined ? t.showName : true;
+                
                 visualHTML = '<div style="overflow-y:auto; height:100%; padding:5px;">';
                 
-                let count = 0;
-                State.members.forEach(m => {
-                    const items = [];
+                let renderedCount = 0;
+                State.members.some(m => { // Use some to break early if efficient, but we need to check all if filtered? No, limit is global.
+                    if (renderedCount >= limit) return true; // Break loop
+                    
                     const checkFilter = (text) => {
                         if (!filters) return true;
                         return filters.includes(`${m.name}: ${text}`);
                     };
 
+                    const userCandidates = [];
                     if(sources.includes('last') && m.lastWeek && m.lastWeek.tasks) {
-                        m.lastWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim() && checkFilter(task.text)) items.push(task.text); });
+                        m.lastWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim() && checkFilter(task.text)) userCandidates.push(task.text); });
                     }
                     if(sources.includes('current') && m.thisWeek && m.thisWeek.tasks) {
-                        m.thisWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim() && checkFilter(task.text)) items.push(task.text); });
+                        m.thisWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim() && checkFilter(task.text)) userCandidates.push(task.text); });
                     }
                     if(sources.includes('next') && m.nextWeek && m.nextWeek.tasks) {
-                        m.nextWeek.tasks.forEach(task => { if(task.isTeamActivity && task.text.trim() && checkFilter(task.text)) items.push(task.text); });
+                        m.nextWeek.tasks.forEach(task => { if(task.isTeamActivity && task.text.trim() && checkFilter(task.text)) userCandidates.push(task.text); });
                     }
                     
-                    if(items.length > 0) {
-                        count++;
-                        visualHTML += `<div style="margin-bottom:10px;">
-                            <div style="font-weight:bold; color:var(--accent); font-size:0.9rem; margin-bottom:2px;">${m.name}</div>
-                            <ul style="margin:0; padding-left:15px; font-size:0.8rem; color:var(--text-main);">`;
-                        items.forEach(it => visualHTML += `<li>${it}</li>`);
+                    const remainingSlots = limit - renderedCount;
+                    const toAdd = userCandidates.slice(0, remainingSlots);
+                    
+                    if(toAdd.length > 0) {
+                        renderedCount += toAdd.length;
+                        visualHTML += `<div style="margin-bottom:10px;">`;
+                        if(showName) {
+                            visualHTML += `<div style="font-weight:bold; color:var(--accent); font-size:0.9rem; margin-bottom:2px;">${m.name}</div>`;
+                        }
+                        visualHTML += `<ul style="margin:0; padding-left:15px; font-size:0.8rem; color:var(--text-main);">`;
+                        toAdd.forEach(it => visualHTML += `<li>${it}</li>`);
                         visualHTML += `</ul></div>`;
                     }
+                    return false;
                 });
                 
-                if(count === 0) visualHTML += '<div style="color:var(--text-muted); font-style:italic;">No achievements found.</div>';
+                if(renderedCount === 0) visualHTML += '<div style="color:var(--text-muted); font-style:italic;">No achievements found.</div>';
                 visualHTML += '</div>';
                 statsHTML = '';
             } else if (renderType === 'donut') {
@@ -1319,15 +1330,17 @@ export const ZoomManager = {
             } else if (renderType === 'achievements') {
                 const sources = t.sources || ['last','current','next'];
                 const filters = t.filterItems || null;
+                const showName = t.showName !== undefined ? t.showName : true;
                 content = '<div style="padding:20px; overflow-y:auto; height:100%;">';
                 
+                let renderedCount = 0;
                 State.members.forEach(m => {
-                    const items = [];
                     const checkFilter = (text) => {
                         if (!filters) return true;
                         return filters.includes(`${m.name}: ${text}`);
                     };
 
+                    const items = [];
                     if(sources.includes('last') && m.lastWeek && m.lastWeek.tasks) {
                         m.lastWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim() && checkFilter(task.text)) items.push(task.text); });
                     }
@@ -1339,13 +1352,18 @@ export const ZoomManager = {
                     }
                     
                     if(items.length > 0) {
-                        content += `<div style="margin-bottom:20px;">
-                            <div style="font-weight:bold; color:var(--accent); font-size:1.2rem; margin-bottom:10px;">${m.name}</div>
-                            <ul style="margin:0; padding-left:20px; font-size:1.1rem; color:var(--text-main); line-height:1.6;">`;
+                        renderedCount++;
+                        content += `<div style="margin-bottom:20px;">`;
+                        if (showName) {
+                            content += `<div style="font-weight:bold; color:var(--accent); font-size:1.2rem; margin-bottom:10px;">${m.name}</div>`;
+                        }
+                        content += `<ul style="margin:0; padding-left:20px; font-size:1.1rem; color:var(--text-main); line-height:1.6;">`;
                         items.forEach(it => content += `<li>${it}</li>`);
                         content += `</ul></div>`;
                     }
                 });
+                
+                if (renderedCount === 0) content += '<div style="color:var(--text-muted); font-style:italic;">No achievements found.</div>';
                 content += '</div>';
             } else if (renderType === 'donut') {
                 const labels = (t.dataPoints || []).map(dp => dp.label);
@@ -1803,7 +1821,9 @@ export const TrackerManager = {
                 getEl('tkAchLast').checked = true;
                 getEl('tkAchCurrent').checked = true;
                 getEl('tkAchNext').checked = true;
-                this.populateAchLists(null); // Select all by default
+                getEl('tkAchShowName').checked = true;
+                getEl('tkAchLimit').value = 5;
+                this.populateAchLists(null); 
                 this.toggleAchList('last');
                 this.toggleAchList('current');
                 this.toggleAchList('next');
@@ -1914,6 +1934,9 @@ export const TrackerManager = {
                 getEl('tkAchLast').checked = sources.includes('last');
                 getEl('tkAchCurrent').checked = sources.includes('current');
                 getEl('tkAchNext').checked = sources.includes('next');
+                
+                getEl('tkAchShowName').checked = tracker && tracker.showName !== undefined ? tracker.showName : true;
+                getEl('tkAchLimit').value = tracker && tracker.limit ? tracker.limit : 5;
                 
                 this.populateAchLists(tracker ? (tracker.filterItems || null) : null);
                 this.toggleAchList('last');
@@ -2798,11 +2821,11 @@ export const TrackerManager = {
                 if (sources.length === 0) return App.alert("Select at least one data source.");
                 newTracker.sources = sources;
                 
+                newTracker.showName = getEl('tkAchShowName').checked;
+                newTracker.limit = parseInt(getEl('tkAchLimit').value) || 5;
+                
                 const filteredItems = [];
                 document.querySelectorAll('.ach-item-select:checked').forEach(cb => {
-                    // Only include if parent source is checked?
-                    // Yes, UI greys them out, but user might have unchecked source but left items checked.
-                    // We should only save items for ACTIVE sources.
                     const sourceType = cb.dataset.type;
                     if (sources.includes(sourceType)) {
                         filteredItems.push(cb.value);
