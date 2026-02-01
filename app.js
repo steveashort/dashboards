@@ -3002,18 +3002,21 @@ export const AssignmentManager = {
         if (!grid) return;
         grid.innerHTML = '';
         
-        // Find assignments that actually have users
-        const activeAssignmentNames = new Set();
+        // Map assignments to users
+        const assignmentUsers = {};
         State.members.forEach(m => {
             if (m.objectives) {
                 m.objectives.forEach(o => {
-                    if (o.assignment) activeAssignmentNames.add(o.assignment);
+                    if (o.assignment) {
+                        if(!assignmentUsers[o.assignment]) assignmentUsers[o.assignment] = [];
+                        assignmentUsers[o.assignment].push(m.name);
+                    }
                 });
             }
         });
 
         State.assignments.forEach((a, i) => {
-            if (!activeAssignmentNames.has(a.name)) return; // Skip if no user is assigned
+            if (!assignmentUsers[a.name] || assignmentUsers[a.name].length === 0) return; // Skip if no user is assigned
 
             const card = document.createElement('div');
             card.className = 'assignment-card';
@@ -3034,6 +3037,13 @@ export const AssignmentManager = {
             if (a.description) {
                 html += `<div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.8rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${a.description}</div>`;
             }
+
+            // List Users
+            const users = assignmentUsers[a.name];
+            html += `<div style="margin-bottom:0.8rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:5px;">
+                        <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:2px;">Assigned:</div>
+                        <div style="font-size:0.8rem; color:var(--text-main); line-height:1.2;">${users.join(', ')}</div>
+                     </div>`;
 
             html += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#888;">`;
             
