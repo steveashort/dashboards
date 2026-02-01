@@ -99,7 +99,10 @@
 
                 <div class="section-header" id="teamSectionHeader">
                     <h3 style="color:var(--accent); font-weight:300;">Team Members</h3>
-                    <button class="btn btn-primary" onclick="UserManager.openUserModal()">+ Add User</button>
+                    <div style="display:flex; gap:10px;">
+                        <button class="btn" onclick="TeamDataManager.openImportModal()">Import User Data</button>
+                        <button class="btn btn-primary" onclick="UserManager.openUserModal()">+ Add User</button>
+                    </div>
                 </div>
                 <div class="team-grid" id="teamGrid"></div>
             </div>
@@ -136,6 +139,14 @@
                     </div>
                 </div>
                 <div id="tasksGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;"></div>
+            </div>
+            <!-- SKILLS VIEW -->
+            <div id="viewSkills" class="view-section" style="display:none;">
+                <div class="section-header first">
+                    <h3 style="color:var(--accent); font-weight:300;">Skills</h3>
+                    <button class="btn" onclick="SkillManager.openModal(-1)">+ Add Skill</button>
+                </div>
+                <div id="skillsGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;"></div>
             </div>
         </main>
     </div>
@@ -266,12 +277,6 @@
                         <button class="btn btn-sm" onclick="UserManager.addObjectiveRow()">+ Add Objective</button>
                     </div>
                     <div id="objectivesContainer" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1); margin-top:5px; display:flex; flex-direction:column; gap:5px;"></div>
-                </div>
-                </div>
-                <div class="input-group" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
-                    <label>Import Users CSV (Name, #RID, Start, End)</label>
-                    <textarea id="userCsvInput" style="height: 60px; font-family: monospace; font-size: 0.8rem;" placeholder="John Doe, RID001, 2026-02-01,"></textarea>
-                    <button class="btn btn-sm" style="margin-top: 5px;" onclick="UserManager.importCSV()">Import Users</button>
                 </div>
             </div>
             <div class="modal-footer">
@@ -972,6 +977,46 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="skillModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="skillModalTitle">Add Skill</h3>
+                <button class="btn" onclick="ModalManager.closeModal('skillModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="editSkillIndex" value="-1">
+                <div class="input-group">
+                    <label>Skill Name</label>
+                    <input type="text" id="skName" placeholder="e.g. JavaScript">
+                </div>
+                <div class="input-group">
+                    <label>Description</label>
+                    <textarea id="skDesc" style="height: 60px; font-size: 0.85rem;" placeholder="Brief description..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="SkillManager.deleteSkill()" id="btnDelSkill">Delete</button>
+                <button class="btn btn-primary" onclick="SkillManager.submitSkill()">Save Skill</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="importTeamDataModal">
+        <div class="modal-content modal-mini">
+            <div class="modal-header">
+                <h3>Import User Data</h3>
+                <button class="btn" onclick="ModalManager.closeModal('importTeamDataModal')">&times;</button>
+            </div>
+            <div class="modal-body">
+                <input type="file" id="teamDataFileInput" accept=".json" style="width:100%;">
+                <p style="font-size:0.8rem; color:var(--text-muted); margin-top:10px;">Select a JSON file with roles, skills, users, and teams.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-primary" onclick="TeamDataManager.importJSON()">Import</button>
+            </div>
+        </div>
+    </div>
+
     <!-- LOAD SCRIPT LAST to ensure it's available -->
     <!-- Changed to type="module" and added an export to window -->
     <script type="module">
@@ -992,6 +1037,8 @@
         window.DataLoader = AppModule.DataLoader;
         window.DataExporter = AppModule.DataExporter;
         window.SettingsManager = AppModule.SettingsManager;
+        window.SkillManager = AppModule.SkillManager;
+        window.TeamDataManager = AppModule.TeamDataManager;
         window.Visuals = AppModule.Visuals;
 
         // When ready, remove loading overlay

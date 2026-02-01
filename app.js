@@ -17,7 +17,9 @@ let State = {
     assignments: [],
     members: [],
     planners: [],
-    counters: { cid: 0, uid: 0, rid: 0, tid: 0, eid: 0, aid: 0 },
+    skills: [],
+    teams: [],
+    counters: { cid: 0, uid: 0, rid: 0, tid: 0, eid: 0, aid: 0, sid: 0, tmid: 0 },
     settings: {
         fyStartMonth: 1, // Default Feb
         roles: [],
@@ -101,17 +103,19 @@ const setupDateValidation = (startId, endId) => {
 };
 
 const generateId = (type) => {
-    if (!State.counters) State.counters = { cid: 0, uid: 0, rid: 0, tid: 0, eid: 0, aid: 0 };
+    if (!State.counters) State.counters = { cid: 0, uid: 0, rid: 0, tid: 0, eid: 0, aid: 0, sid: 0, tmid: 0 };
+    if (State.counters[type] === undefined) State.counters[type] = 0;
     State.counters[type]++;
     const num = State.counters[type].toString().padStart(3, '0');
     return `${type.toUpperCase()}${num}`;
 };
 
 const syncIds = () => {
-    if (!State.counters) State.counters = { cid: 0, uid: 0, rid: 0, tid: 0, eid: 0, aid: 0 };
-    
-    // Trackers (Cards)
-    if (State.trackerTabs) {
+    if (!State.counters) State.counters = { cid: 0, uid: 0, rid: 0, tid: 0, eid: 0, aid: 0, sid: 0, tmid: 0 };
+    if (State.counters.sid === undefined) State.counters.sid = 0;
+    if (State.counters.tmid === undefined) State.counters.tmid = 0;
+
+    // Trackers (Cards)    if (State.trackerTabs) {
         State.trackerTabs.forEach(tab => {
             tab.trackers.forEach(t => {
                 if (!t.id) {
@@ -149,6 +153,52 @@ const syncIds = () => {
             } else {
                 const num = parseInt(a.id.substring(3));
                 if (!isNaN(num) && num > State.counters[type]) State.counters[type] = num;
+            }
+        });
+    }
+
+    // Skills
+    if (State.skills) {
+        State.skills.forEach(s => {
+            if (!s.id) {
+                s.id = generateId('sid');
+            } else {
+                const num = parseInt(s.id.substring(3));
+                if (!isNaN(num) && num > State.counters.sid) State.counters.sid = num;
+            }
+        });
+    }
+
+    // Teams
+    if (State.teams) {
+        State.teams.forEach(t => {
+            if (!t.id) {
+                t.id = generateId('tmid');
+            } else {
+                // TID is taken by Task (tid). User example uses TID001 for Team.
+                // I used 'tmid' counter. I should parse 'TID' prefix but update 'tmid' counter?
+                // Or user 'TMID'? User example says "TID001".
+                // My tasks use 'TID'. This is a conflict if I use same prefix.
+                // But `generateId` uses `type.toUpperCase()`.
+                // `generateId('tid')` -> TID...
+                // `generateId('tmid')` -> TMID...
+                // If import has TID001 for Team, and I have TID001 for Task.
+                // They are in different collections (`teams` vs `assignments`).
+                // It is fine as long as I don't mix them up in a global lookup.
+                // But `generateId('tid')` will conflict if I use it for both.
+                // I will use `TMID` for Teams internally generated, but respect `TID` from import?
+                // Or I should assume TID in import means Team ID.
+                // If I generate, I'll use `TMID` to distinguish.
+                // And for watermark, I'll check if ID starts with `TMID` or `TID`?
+                // If I import TID001, and I have task TID001.
+                // If I create new Team, `generateId('tmid')` -> TMID001. No conflict.
+                // If I create new Task, `generateId('tid')` -> TID002 (if 001 exists).
+                // So separate counters are fine.
+                // I just need to update `tmid` counter if I encounter `TMID`.
+                // If I encounter `TID` in teams, I shouldn't update `tmid` counter probably, or update `tmid` assuming it maps?
+                // I'll stick to `TMID` for new teams.
+                const num = parseInt(t.id.substring(4)); // TMID...
+                if (!isNaN(num) && num > State.counters.tmid) State.counters.tmid = num;
             }
         });
     }
@@ -631,8 +681,8 @@ export const renderBoard = () => {
         teamBtn.onclick = () => App.switchTrackerTab('team');
         navContainer.appendChild(teamBtn);
 
-        // Render Roles, Events, Tasks Tabs
-        ['Roles', 'Events', 'Tasks'].forEach(tabName => {
+        // Render Roles, Events, Tasks, Skills Tabs
+        ['Roles', 'Events', 'Tasks', 'Skills'].forEach(tabName => {
             const id = tabName.toLowerCase();
             const btn = document.createElement('button');
             btn.className = `nav-item ${activeTabId === id ? 'active' : ''}`;
@@ -648,12 +698,13 @@ export const renderBoard = () => {
     const viewRoles = getEl('viewRoles');
     const viewEvents = getEl('viewEvents');
     const viewTasks = getEl('viewTasks');
+    const viewSkills = getEl('viewSkills');
     
     const pageTitle = getEl('pageTitle');
     const isPub = document.body.classList.contains('publishing');
     
     // Hide all views first
-    [viewTrackers, viewTeam, viewRoles, viewEvents, viewTasks].forEach(v => { if(v) v.style.display = 'none'; });
+    [viewTrackers, viewTeam, viewRoles, viewEvents, viewTasks, viewSkills].forEach(v => { if(v) v.style.display = 'none'; });
 
     if (State.activeTabId === 'team') {
         if(viewTeam) viewTeam.style.display = 'block';
@@ -679,6 +730,10 @@ export const renderBoard = () => {
         if(viewTasks) viewTasks.style.display = 'block';
         if(pageTitle) pageTitle.innerText = "Tasks Management";
         TaskManager.render();
+    } else if (State.activeTabId === 'skills') {
+        if(viewSkills) viewSkills.style.display = 'block';
+        if(pageTitle) pageTitle.innerText = "Skills Management";
+        SkillManager.render();
     } else {
         if(viewTrackers) viewTrackers.style.display = 'block';
         const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
@@ -726,14 +781,14 @@ export const renderBoard = () => {
 
             card.onclick = () => {
                  if (document.body.classList.contains('publishing')) {
-                     const canZoom = ['line', 'bar', 'note', 'countdown', 'donut', 'waffle', 'planner'].includes(t.type);
+                     const canZoom = ['line', 'bar', 'note', 'countdown', 'donut', 'planner'].includes(t.type);
                      if (canZoom) ZoomManager.openChartModal(i);
                  } else {
                      TrackerManager.openModal(i);
                  }
             };
 
-            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'countdown', 'donut', 'waffle', 'planner'].includes(t.type)) {
+            if (document.body.classList.contains('publishing') && ['line', 'bar', 'note', 'countdown', 'donut', 'planner'].includes(t.type)) {
                 card.innerHTML += `<div class="zoom-icon" style="position:absolute; top:5px; right:5px; color:#666; font-size:14px; pointer-events:none;">&#128269;</div>`;
             }
 
@@ -1324,7 +1379,7 @@ export const TrackerManager = {
         const titleEl = getEl('trackerModalTitle');
         if (titleEl) titleEl.innerText = isEdit ? 'Edit Card' : 'Add Card';
         
-        ['gauge','bar','line','counter','rag','waffle','countdown','completionBar','planner'].forEach(type => {
+        ['gauge','bar','line','counter','rag','countdown','completionBar','planner'].forEach(type => {
             const div = getEl(`${type}Inputs`);
             if (div) div.style.display = 'none';
         });
@@ -2800,57 +2855,6 @@ export const UserManager = {
         ModalManager.closeModal('userModal');
         renderBoard();
     },
-    importCSV: () => {
-        const text = getEl('userCsvInput').value.trim();
-        if (!text) return App.alert("Please paste CSV data.");
-        
-        const lines = text.split('\n');
-        let count = 0;
-        
-        const fyStart = State.settings.fyStartMonth;
-        const fyYear = getFiscalYear();
-        // Construct default date: 1st of Start Month of Fiscal Year
-        // Note: JS Date month is 0-11. fyStart is 0-11.
-        // If today is Jan 2026 (m=0), fyStart=1 (Feb). getFY -> 2025.
-        // Date(2025, 1, 1) -> Feb 1 2025. Correct.
-        const d = new Date(fyYear, fyStart, 1);
-        // Adjust for timezone offset to avoid previous day
-        const defDate = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-        
-        lines.forEach(line => {
-            const parts = line.split(',').map(s => s.trim());
-            if (parts.length < 1) return;
-            
-            const name = parts[0];
-            if(!name) return;
-            
-            const rid = parts[1] || 'RID001';
-            const start = parts[2] || defDate;
-            const end = parts[3] || '';
-            
-            const newUser = {
-                id: generateId('uid'),
-                name: name,
-                roleId: rid,
-                startDate: start,
-                endDate: end,
-                lastWeek: { onCall: [], tasks: [] },
-                thisWeek: { load: [], onCall: [], tasks: [] },
-                nextWeek: { load: [], onCall: [], tasks: [] },
-                objectives: []
-            };
-            
-            State.members.push(newUser);
-            count++;
-        });
-        
-        if (count > 0) {
-            App.alert(`Imported ${count} users.`);
-            renderBoard();
-            ModalManager.closeModal('userModal');
-            getEl('userCsvInput').value = '';
-        }
-    },
     deleteUser: () => {
         const idx = parseInt(getEl('editIndex').value);
         App.confirm("Delete this user?", () => {
@@ -3640,6 +3644,188 @@ export const SettingsManager = {
         // Refresh UI if needed (dates might change)
         App.updateDateUI();
         renderBoard();
+    }
+};
+
+export const SkillManager = {
+    render: () => {
+        const grid = getEl('skillsGrid');
+        if (!grid) return;
+        grid.innerHTML = '';
+        
+        State.skills.forEach((s, index) => {
+            const card = document.createElement('div');
+            card.className = 'assignment-card';
+            card.style.background = 'var(--card-bg)';
+            card.style.border = '1px solid var(--border)';
+            card.style.borderRadius = '8px';
+            card.style.padding = '1rem';
+            card.style.position = 'relative';
+            card.style.cursor = 'pointer';
+            card.style.borderLeft = `4px solid #03a9f4`;
+            card.onclick = () => SkillManager.openModal(index);
+
+            let html = `<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+                            <h4 style="margin:0; font-size:1rem; color:var(--text-main);">${s.name}</h4>
+                        </div>`;
+            
+            if (s.description) {
+                html += `<div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:0.8rem; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;">${s.description}</div>`;
+            }
+            
+            card.innerHTML = html;
+            grid.appendChild(card);
+        });
+    },
+    openModal: (index) => {
+        getEl('skillModalTitle').innerText = index === -1 ? 'Add Skill' : 'Edit Skill';
+        getEl('editSkillIndex').value = index;
+        
+        const s = index > -1 ? State.skills[index] : { name: '', description: '' };
+        
+        getEl('skName').value = s.name;
+        getEl('skDesc').value = s.description;
+        
+        getEl('btnDelSkill').style.display = index === -1 ? 'none' : 'block';
+        ModalManager.openModal('skillModal');
+    },
+    submitSkill: () => {
+        const index = parseInt(getEl('editSkillIndex').value);
+        const name = getEl('skName').value.trim();
+        if(!name) return App.alert("Skill Name is required");
+        
+        const newSkill = {
+            name,
+            description: getEl('skDesc').value.trim()
+        };
+        
+        if(index === -1) {
+            newSkill.id = generateId('sid');
+            State.skills.push(newSkill);
+        } else {
+            newSkill.id = State.skills[index].id;
+            State.skills[index] = newSkill;
+        }
+        
+        ModalManager.closeModal('skillModal');
+        SkillManager.render();
+    },
+    deleteSkill: () => {
+        const index = parseInt(getEl('editSkillIndex').value);
+        if(index > -1) {
+            App.confirm("Delete this skill?", () => {
+                State.skills.splice(index, 1);
+                ModalManager.closeModal('skillModal');
+                SkillManager.render();
+            });
+        }
+    }
+};
+
+export const TeamDataManager = {
+    openImportModal: () => {
+        const fileIn = getEl('teamDataFileInput');
+        if(fileIn) fileIn.value = '';
+        ModalManager.openModal('importTeamDataModal');
+    },
+    importJSON: () => {
+        const fileIn = getEl('teamDataFileInput');
+        const file = fileIn.files[0];
+        if(!file) return App.alert("Please select a JSON file.");
+        
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            try {
+                const data = JSON.parse(e.target.result);
+                if(!data.roles && !data.skills && !data.users && !data.teams) {
+                    return App.alert("Invalid User Data JSON format.");
+                }
+                
+                let imported = { r:0, s:0, u:0, t:0 };
+                
+                // Roles
+                if(data.roles) {
+                    data.roles.forEach(r => {
+                        const exists = State.assignments.some(a => a.id === r.id);
+                        if(!exists) {
+                            State.assignments.push({
+                                id: r.id,
+                                name: r.name,
+                                description: r.description,
+                                class: 'Role',
+                                color: '#03dac6',
+                                priority: 'Med'
+                            });
+                            imported.r++;
+                            const num = parseInt(r.id.substring(3));
+                            if(!isNaN(num) && num > State.counters.rid) State.counters.rid = num;
+                        }
+                    });
+                }
+                
+                // Skills
+                if(data.skills) {
+                    data.skills.forEach(s => {
+                        const exists = State.skills.some(ex => ex.id === s.id);
+                        if(!exists) {
+                            State.skills.push({ id: s.id, name: s.name, description: s.description });
+                            imported.s++;
+                            const num = parseInt(s.id.substring(3));
+                            if(!isNaN(num) && num > State.counters.sid) State.counters.sid = num;
+                        }
+                    });
+                }
+                
+                // Users
+                if(data.users) {
+                    data.users.forEach(u => {
+                        const exists = State.members.some(m => m.id === u.id);
+                        if(!exists) {
+                            State.members.push({
+                                id: u.id,
+                                name: u.name,
+                                roleId: u.roleIds ? u.roleIds[0] : '',
+                                roleIds: u.roleIds,
+                                startDate: u.engagement?.startDate || '',
+                                endDate: u.engagement?.endDate || '',
+                                engagementType: u.engagement?.type || '',
+                                skills: u.skills,
+                                absences: u.absences,
+                                lastWeek: { onCall: [], tasks: [] },
+                                thisWeek: { load: [], onCall: [], tasks: [] },
+                                nextWeek: { load: [], onCall: [], tasks: [] },
+                                objectives: []
+                            });
+                            imported.u++;
+                            const num = parseInt(u.id.substring(3));
+                            if(!isNaN(num) && num > State.counters.uid) State.counters.uid = num;
+                        }
+                    });
+                }
+                
+                // Teams
+                if(data.teams) {
+                    data.teams.forEach(t => {
+                        const exists = State.teams.some(ex => ex.id === t.id);
+                        if(!exists) {
+                            State.teams.push(t);
+                            imported.t++;
+                            const num = parseInt(t.id.substring(4));
+                            if(!isNaN(num) && num > State.counters.tmid) State.counters.tmid = num;
+                        }
+                    });
+                }
+                
+                App.alert(`Imported: ${imported.r} Roles, ${imported.s} Skills, ${imported.u} Users, ${imported.t} Teams.`);
+                ModalManager.closeModal('importTeamDataModal');
+                renderBoard();
+                
+            } catch(err) {
+                console.error(err);
+                App.alert("Error parsing JSON.");
+            }
+        };
+        reader.readAsText(file);
     }
 };
 

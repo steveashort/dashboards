@@ -1,0 +1,102 @@
+{
+  "roles": [
+    {
+      "id": "RID001",
+      "name": "Windows Server Administrator",
+      "description": "Manages Windows Server instances, including patching, AD integration, and troubleshooting."
+    },
+    {
+      "id": "RID002",
+      "name": "Linux Server Administrator",
+      "description": "Maintains Linux servers, handles package updates, service configuration, and performance tuning."
+    }
+  ],
+  "skills": [
+    {
+      "id": "SID001",
+      "name": "Bash",
+      "description": "Bash programming"
+    },
+    {
+      "id": "SID002",
+      "name": "PowerShell",
+      "description": "PowerShell scripting for Windows automation"
+    },
+    {
+      "id": "SID003",
+      "name": "VMware",
+      "description": "Administering VMware vSphere environments"
+    },
+    {
+      "id": "SID004",
+      "name": "Linux",
+      "description": "Linux system administration"
+    }
+  ],
+  "users": [
+    {
+      "id": "UID001",
+      "name": "Alice Smith",
+      "roleIds": ["RID001"],
+      "engagement": {
+        "type": "full_time",
+        "startDate": "2024-01-01",
+        "endDate": null
+      },
+      "absences": [
+        {
+          "type": "annual_leave",
+          "startDate": "2025-08-01",
+          "endDate": "2025-08-10"
+        }
+      ],
+      "skills": [
+        {
+          "skillId": "SID001",
+          "level": "high"
+        },
+        {
+          "skillId": "SID002",
+          "level": "med"
+        }
+      ]
+    },
+    {
+      "id": "UID002",
+      "name": "Bob Jones",
+      "roleIds": ["RID001", "RID002"],
+      "engagement": {
+        "type": "partner",
+        "startDate": "2023-06-01",
+        "endDate": "2025-12-31"
+      },
+      "absences": [],
+      "skills": [
+        {
+          "skillId": "SID001",
+          "level": "med"
+        },
+        {
+          "skillId": "SID003",
+          "level": "high"
+        },
+        {
+          "skillId": "SID004",
+          "level": "low"
+        }
+      ]
+    }
+  ],
+  "teams": [
+    {
+      "id": "TID001",
+      "name": "Windows & VMware Team",
+      "userIds": ["UID001", "UID002"]
+    },
+    {
+      "id": "TID002",
+      "name": "Linux & AIX Team",
+      "userIds": ["UID002"]
+    }
+  ]
+}
