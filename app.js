@@ -239,12 +239,7 @@ export const initApp = () => {
 
     // Assignments defaults
     if (!State.assignments || State.assignments.length === 0) {
-        State.assignments = [
-            { name: 'Firewatch', class: 'Role', priority: 'High', color: '#ff1744', description: 'Monitoring critical alerts.', startDate:'', endDate:'' },
-            { name: '2nd Line Support (Windows Server)', class: 'Role', priority: 'Med', color: '#2979ff', description: 'Server maintenance and support.', startDate:'', endDate:'' },
-            { name: '2nd Line Support (Unix Server)', class: 'Role', priority: 'Med', color: '#00e676', description: 'Unix/Linux server support.', startDate:'', endDate:'' },
-            { name: '2nd Line Support (Azure)', class: 'Role', priority: 'Med', color: '#bb86fc', description: 'Cloud infrastructure support.', startDate:'', endDate:'' }
-        ];
+        State.assignments = [];
     }
 
     // Setup Date Validation
@@ -3226,8 +3221,20 @@ export const RoleManager = {
         getEl('roleModalTitle').innerText = index === -1 ? 'Add Role' : 'Edit Role';
         getEl('editRoleIndex').value = index;
         
-        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#03dac6' };
+        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#03dac6', id: '' };
         
+        const idContainer = getEl('rlIdContainer');
+        const idInput = getEl('rlId');
+        if (idContainer && idInput) {
+            if (index > -1 && a.id) {
+                idContainer.style.display = 'block';
+                idInput.value = a.id;
+            } else {
+                idContainer.style.display = 'none';
+                idInput.value = '';
+            }
+        }
+
         getEl('rlName').value = a.name;
         getEl('rlDesc').value = a.description;
         const safeDate = (v) => {
