@@ -2722,11 +2722,12 @@ export const UserManager = {
 
     openUserModal: (index = -1) => {
         const isEdit = index > -1;
-        getEl('modalTitle').innerText = isEdit ? 'Edit User' : 'Add User';
+        getEl('modalTitle').innerText = isEdit ? 'Edit Person' : 'Add Person';
         getEl('editIndex').value = index;
         
         const m = isEdit ? State.members[index] : {
-            name: '',
+            name: '', title: '', email: '', engagementType: '', startDate: '', endDate: '', skills: [],
+            notes: '',
             lastWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}] },
             thisWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], load: ['N','N','N','N','N','X','X'] },
             nextWeek: { tasks: [{text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}], load: ['N','N','N','N','N','X','X'] },
@@ -2734,6 +2735,41 @@ export const UserManager = {
         };
 
         getEl('mName').value = m.name || '';
+        getEl('mTitle').value = m.title || '';
+        getEl('mEmail').value = m.email || '';
+        getEl('mEngagement').value = m.engagementType || '';
+        
+        const safeDate = (v) => {
+            if(!v) return '';
+            if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
+            const d = new Date(v);
+            return !isNaN(d.getTime()) ? d.toISOString().split('T')[0] : '';
+        };
+        getEl('mStartDate').value = safeDate(m.startDate);
+        getEl('mEndDate').value = safeDate(m.endDate);
+
+        // Populate Skills
+        const skillsContainer = getEl('mSkillsContainer');
+        if (skillsContainer) {
+            skillsContainer.innerHTML = '';
+            if (!State.skills || State.skills.length === 0) {
+                skillsContainer.innerHTML = '<span style="color:var(--text-muted); font-style:italic; font-size:0.8rem;">No skills defined.</span>';
+            } else {
+                const assignedSkills = (m.skills || []).map(s => typeof s === 'object' ? s.skillId : s); // Handle legacy {skillId, level} format if needed, but simplistic check for now
+                State.skills.forEach(s => {
+                    const div = document.createElement('div');
+                    // Check if skill is assigned. Handle simple ID array or object array.
+                    const isChecked = assignedSkills.includes(s.id);
+                    div.innerHTML = `
+                        <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.8rem; color:var(--text-main); cursor:pointer;">
+                            <input type="checkbox" class="user-skill-check" value="${s.id}" ${isChecked ? 'checked' : ''} style="accent-color:var(--accent);">
+                            ${s.name}
+                        </label>
+                    `;
+                    skillsContainer.appendChild(div);
+                });
+            }
+        }
         
         // Populate tasks
         for(let i=1; i<=3; i++) {
@@ -2836,8 +2872,18 @@ export const UserManager = {
 
         if (dateError) return App.alert("Error: End period must be after Start period.");
 
+        // Scrape Skills
+        const selectedSkills = [];
+        document.querySelectorAll('.user-skill-check:checked').forEach(cb => selectedSkills.push(cb.value));
+
         const member = {
             name,
+            title: getEl('mTitle').value.trim(),
+            email: getEl('mEmail').value.trim(),
+            engagementType: getEl('mEngagement').value,
+            startDate: getEl('mStartDate').value,
+            endDate: getEl('mEndDate').value,
+            skills: selectedSkills,
             notes: getEl('mNotes').value.trim(),
             lastWeek: {
                 onCall: (idx > -1 && State.members[idx].lastWeek?.onCall) ? State.members[idx].lastWeek.onCall : [],

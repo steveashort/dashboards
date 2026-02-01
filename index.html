@@ -101,7 +101,7 @@
                     <h3 style="color:var(--accent); font-weight:300;">Team Members</h3>
                     <div style="display:flex; gap:10px;">
                         <button class="btn" onclick="TeamDataManager.openImportModal()">Import User Data</button>
-                        <button class="btn btn-primary" onclick="UserManager.openUserModal()">+ Add User</button>
+                        <button class="btn btn-primary" onclick="UserManager.openUserModal()">+ Add Person</button>
                     </div>
                 </div>
                 <div class="team-grid" id="teamGrid"></div>
@@ -202,17 +202,69 @@
     </div>
 
     <div class="modal-overlay" id="userModal">
-        <div class="modal-content">
+        <div class="modal-content" style="max-width: 900px;">
             <div class="modal-header">
-                <h3 id="modalTitle">Add User</h3>
+                <h3 id="modalTitle">Add Person</h3>
                 <button class="btn" onclick="ModalManager.closeModal('userModal')" style="padding: 0.2rem 0.6rem;">&times;</button>
             </div>
             <div class="modal-body">
                 <input type="hidden" id="editIndex" value="-1">
-                <div class="input-group">
-                    <label>Team Member Name <span class="help-icon" data-text="Enter full name of team member.">?</span></label>
-                    <input type="text" id="mName" placeholder="e.g. Alex Chen">
+                
+                <!-- Profile Section -->
+                <div class="form-row" style="gap:1rem; margin-bottom:1rem;">
+                    <div class="input-group" style="flex:1;">
+                        <label>Full Name</label>
+                        <input type="text" id="mName" placeholder="e.g. Alex Chen">
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label>Job Title</label>
+                        <input type="text" id="mTitle" placeholder="e.g. Senior Engineer">
+                    </div>
                 </div>
+                
+                <div class="form-row" style="gap:1rem; margin-bottom:1rem;">
+                    <div class="input-group" style="flex:1.5;">
+                        <label>Email</label>
+                        <input type="email" id="mEmail" placeholder="alex@example.com">
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label>Engagement Type</label>
+                        <select id="mEngagement" style="width:100%; padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border);">
+                            <option value="">Select Type...</option>
+                            <option value="full_time">Full Time</option>
+                            <option value="partner">Partner</option>
+                            <option value="contractor">Contractor</option>
+                            <option value="part_time">Part Time</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row" style="gap:1rem; margin-bottom:1rem;">
+                    <div class="input-group" style="flex:1;">
+                        <label>Start Date</label>
+                        <input type="date" id="mStartDate" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                    </div>
+                    <div class="input-group" style="flex:1;">
+                        <label>End Date</label>
+                        <input type="date" id="mEndDate" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
+                    </div>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <label>Skills</label>
+                    <div id="mSkillsContainer" style="max-height: 120px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1); display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 5px;">
+                        <!-- Checkboxes injected by JS -->
+                    </div>
+                </div>
+
+                <div class="input-group" style="margin-bottom: 1rem;">
+                    <label>Notes</label>
+                    <textarea id="mNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="General notes, key updates..."></textarea>
+                </div>
+
+                <!-- Weekly Plan Section -->
+                <div style="border-top:1px dashed var(--border); margin: 1rem 0; padding-top: 1rem; color: var(--accent); font-size: 0.9rem;">Weekly Plan</div>
+
                 <div class="form-row tri-form" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
                     <div class="col-form">
                         <div class="form-section-title" id="lastWeekTitle">Last Week</div>
@@ -265,10 +317,6 @@
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="input-group" style="margin-top: 1rem;">
-                    <label>Notes (Max 200 chars)</label>
-                    <textarea id="mNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="General notes, key updates..."></textarea>
                 </div>
                 
                 <div class="input-group" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
