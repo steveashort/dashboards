@@ -240,6 +240,20 @@ export const initApp = () => {
     // Assignments defaults
     if (!State.assignments || State.assignments.length === 0) {
         State.assignments = [];
+        if (State.settings.roles && State.settings.roles.length > 0) {
+            State.settings.roles.forEach(r => {
+                State.assignments.push({
+                    id: r.id,
+                    name: r.name,
+                    description: '',
+                    class: 'Role',
+                    priority: 'Med',
+                    color: '#03dac6',
+                    startDate: '',
+                    endDate: ''
+                });
+            });
+        }
     }
 
     // Setup Date Validation
