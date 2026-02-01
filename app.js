@@ -911,19 +911,25 @@ export const renderBoard = () => {
                 statsHTML = '';
             } else if (renderType === 'achievements') {
                 const sources = t.sources || ['last','current','next'];
+                const filters = t.filterItems || null;
                 visualHTML = '<div style="overflow-y:auto; height:100%; padding:5px;">';
                 
                 let count = 0;
                 State.members.forEach(m => {
                     const items = [];
+                    const checkFilter = (text) => {
+                        if (!filters) return true;
+                        return filters.includes(`${m.name}: ${text}`);
+                    };
+
                     if(sources.includes('last') && m.lastWeek && m.lastWeek.tasks) {
-                        m.lastWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim()) items.push(task.text); });
+                        m.lastWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim() && checkFilter(task.text)) items.push(task.text); });
                     }
                     if(sources.includes('current') && m.thisWeek && m.thisWeek.tasks) {
-                        m.thisWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim()) items.push(task.text); });
+                        m.thisWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim() && checkFilter(task.text)) items.push(task.text); });
                     }
                     if(sources.includes('next') && m.nextWeek && m.nextWeek.tasks) {
-                        m.nextWeek.tasks.forEach(task => { if(task.isTeamActivity && task.text.trim()) items.push(task.text); });
+                        m.nextWeek.tasks.forEach(task => { if(task.isTeamActivity && task.text.trim() && checkFilter(task.text)) items.push(task.text); });
                     }
                     
                     if(items.length > 0) {
@@ -1312,18 +1318,24 @@ export const ZoomManager = {
                 }
             } else if (renderType === 'achievements') {
                 const sources = t.sources || ['last','current','next'];
+                const filters = t.filterItems || null;
                 content = '<div style="padding:20px; overflow-y:auto; height:100%;">';
                 
                 State.members.forEach(m => {
                     const items = [];
+                    const checkFilter = (text) => {
+                        if (!filters) return true;
+                        return filters.includes(`${m.name}: ${text}`);
+                    };
+
                     if(sources.includes('last') && m.lastWeek && m.lastWeek.tasks) {
-                        m.lastWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim()) items.push(task.text); });
+                        m.lastWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim() && checkFilter(task.text)) items.push(task.text); });
                     }
                     if(sources.includes('current') && m.thisWeek && m.thisWeek.tasks) {
-                        m.thisWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim()) items.push(task.text); });
+                        m.thisWeek.tasks.forEach(task => { if(task.isTeamSuccess && task.text.trim() && checkFilter(task.text)) items.push(task.text); });
                     }
                     if(sources.includes('next') && m.nextWeek && m.nextWeek.tasks) {
-                        m.nextWeek.tasks.forEach(task => { if(task.isTeamActivity && task.text.trim()) items.push(task.text); });
+                        m.nextWeek.tasks.forEach(task => { if(task.isTeamActivity && task.text.trim() && checkFilter(task.text)) items.push(task.text); });
                     }
                     
                     if(items.length > 0) {
@@ -1478,6 +1490,65 @@ export const ZoomManager = {
 };
 
 export const TrackerManager = {
+    toggleAchList: (type) => {
+        const cb = getEl(type === 'last' ? 'tkAchLast' : (type === 'current' ? 'tkAchCurrent' : 'tkAchNext'));
+        const list = getEl(type === 'last' ? 'achListLast' : (type === 'current' ? 'achListCurrent' : 'achListNext'));
+        if (cb && list) {
+            if (cb.checked) {
+                list.style.opacity = '1';
+                list.style.pointerEvents = 'auto';
+            } else {
+                list.style.opacity = '0.5';
+                list.style.pointerEvents = 'none';
+            }
+        }
+    },
+
+    populateAchLists: (selectedItems = []) => { // selectedItems is array of unique strings "User: TaskText"
+        const types = ['last', 'current', 'next'];
+        
+        types.forEach(type => {
+            const container = getEl(type === 'last' ? 'achListLast' : (type === 'current' ? 'achListCurrent' : 'achListNext'));
+            if (!container) return;
+            container.innerHTML = '';
+            
+            const items = [];
+            State.members.forEach(m => {
+                let tasks = [];
+                if (type === 'last' && m.lastWeek && m.lastWeek.tasks) tasks = m.lastWeek.tasks.filter(t => t.isTeamSuccess && t.text.trim());
+                if (type === 'current' && m.thisWeek && m.thisWeek.tasks) tasks = m.thisWeek.tasks.filter(t => t.isTeamSuccess && t.text.trim());
+                if (type === 'next' && m.nextWeek && m.nextWeek.tasks) tasks = m.nextWeek.tasks.filter(t => t.isTeamActivity && t.text.trim());
+                
+                tasks.forEach(t => {
+                    const uniqueId = `${m.name}: ${t.text}`;
+                    items.push({ id: uniqueId, display: `${m.name}: ${t.text}` });
+                });
+            });
+
+            if (items.length === 0) {
+                container.innerHTML = '<div style="color:var(--text-muted); font-style:italic; font-size:0.8rem; padding:2px;">No items available.</div>';
+            } else {
+                items.forEach(item => {
+                    const div = document.createElement('div');
+                    // Check if selected. If selectedItems is empty/null (new card), maybe select all by default? 
+                    // User said "select the data". Usually implies manual selection.
+                    // But if editing, we need to respect saved state.
+                    // If creating new, maybe default to ALL checked?
+                    // Let's default to ALL checked if selectedItems is null (undefined).
+                    const isChecked = selectedItems === null || selectedItems.includes(item.id);
+                    
+                    div.innerHTML = `
+                        <label style="display:flex; align-items:start; gap:6px; cursor:pointer; font-size:0.8rem; margin-bottom:2px; color:var(--text-main);">
+                            <input type="checkbox" class="ach-item-select" data-type="${type}" value="${item.id}" ${isChecked ? 'checked' : ''} style="margin-top:3px; accent-color:var(--accent);">
+                            <span style="line-height:1.2;">${item.display}</span>
+                        </label>
+                    `;
+                    container.appendChild(div);
+                });
+            }
+        });
+    },
+
     renderPlannerMultiSelect: (selectedItems = []) => {
         const container = getEl('plannerMultiSelectContainer');
         if (!container) return;
@@ -1732,6 +1803,10 @@ export const TrackerManager = {
                 getEl('tkAchLast').checked = true;
                 getEl('tkAchCurrent').checked = true;
                 getEl('tkAchNext').checked = true;
+                this.populateAchLists(null); // Select all by default
+                this.toggleAchList('last');
+                this.toggleAchList('current');
+                this.toggleAchList('next');
             }
 
             if (type === 'gauge') {
@@ -1839,6 +1914,11 @@ export const TrackerManager = {
                 getEl('tkAchLast').checked = sources.includes('last');
                 getEl('tkAchCurrent').checked = sources.includes('current');
                 getEl('tkAchNext').checked = sources.includes('next');
+                
+                this.populateAchLists(tracker ? (tracker.filterItems || null) : null);
+                this.toggleAchList('last');
+                this.toggleAchList('current');
+                this.toggleAchList('next');
             } else if (type === 'planner') {
                                         const notesIn = getEl('tkPlannerNotes');
                                         if (tracker && notesIn) notesIn.value = tracker.notes || '';
@@ -2710,14 +2790,26 @@ export const TrackerManager = {
             newTracker.notes = notesIn ? notesIn.value : '';
             // Size is handled by radio
         } else if (type === 'achievements') {
-            const sources = [];
-            if(getEl('tkAchLast').checked) sources.push('last');
-            if(getEl('tkAchCurrent').checked) sources.push('current');
-            if(getEl('tkAchNext').checked) sources.push('next');
-            
-            if (sources.length === 0) return App.alert("Select at least one data source.");
-            newTracker.sources = sources;
-            newTracker.notes = getEl('tkAchNotes').value.trim();
+                const sources = [];
+                if(getEl('tkAchLast').checked) sources.push('last');
+                if(getEl('tkAchCurrent').checked) sources.push('current');
+                if(getEl('tkAchNext').checked) sources.push('next');
+                
+                if (sources.length === 0) return App.alert("Select at least one data source.");
+                newTracker.sources = sources;
+                
+                const filteredItems = [];
+                document.querySelectorAll('.ach-item-select:checked').forEach(cb => {
+                    // Only include if parent source is checked?
+                    // Yes, UI greys them out, but user might have unchecked source but left items checked.
+                    // We should only save items for ACTIVE sources.
+                    const sourceType = cb.dataset.type;
+                    if (sources.includes(sourceType)) {
+                        filteredItems.push(cb.value);
+                    }
+                });
+                newTracker.filterItems = filteredItems;
+                newTracker.notes = getEl('tkAchNotes').value.trim();
         }
 
         const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);

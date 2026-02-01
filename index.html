@@ -649,20 +649,42 @@
 
                                     <div id="achievementsInputs" style="display:none;">
                                         <div class="input-group">
-                                            <label>Data Sources</label>
-                                            <div style="display:flex; flex-direction:column; gap:10px; margin-top:5px;">
-                                                <label style="display:inline-flex; align-items:center; gap:8px;">
-                                                    <input type="checkbox" id="tkAchLast" style="accent-color:var(--accent);"> 
-                                                    Last Week (Successes)
-                                                </label>
-                                                <label style="display:inline-flex; align-items:center; gap:8px;">
-                                                    <input type="checkbox" id="tkAchCurrent" style="accent-color:var(--accent);"> 
-                                                    Current Week (Priorities)
-                                                </label>
-                                                <label style="display:inline-flex; align-items:center; gap:8px;">
-                                                    <input type="checkbox" id="tkAchNext" style="accent-color:var(--accent);"> 
-                                                    Next Week (Planned Work)
-                                                </label>
+                                            <label>Data Sources & Filters</label>
+                                            <div style="display:flex; flex-direction:column; gap:15px; margin-top:5px;">
+                                                
+                                                <!-- Last Week -->
+                                                <div class="ach-source-group">
+                                                    <label style="display:inline-flex; align-items:center; gap:8px; font-weight:bold; color:var(--accent);">
+                                                        <input type="checkbox" id="tkAchLast" style="accent-color:var(--accent);" onchange="TrackerManager.toggleAchList('last')"> 
+                                                        Last Week (Successes)
+                                                    </label>
+                                                    <div id="achListLast" class="ach-list-container" style="margin-top:5px; max-height:100px; overflow-y:auto; border:1px solid var(--border); padding:5px; border-radius:4px; background:rgba(0,0,0,0.1); opacity:0.5; pointer-events:none;">
+                                                        <!-- Items injected here -->
+                                                    </div>
+                                                </div>
+
+                                                <!-- Current Week -->
+                                                <div class="ach-source-group">
+                                                    <label style="display:inline-flex; align-items:center; gap:8px; font-weight:bold; color:var(--accent);">
+                                                        <input type="checkbox" id="tkAchCurrent" style="accent-color:var(--accent);" onchange="TrackerManager.toggleAchList('current')"> 
+                                                        Current Week (Priorities)
+                                                    </label>
+                                                    <div id="achListCurrent" class="ach-list-container" style="margin-top:5px; max-height:100px; overflow-y:auto; border:1px solid var(--border); padding:5px; border-radius:4px; background:rgba(0,0,0,0.1); opacity:0.5; pointer-events:none;">
+                                                        <!-- Items injected here -->
+                                                    </div>
+                                                </div>
+
+                                                <!-- Next Week -->
+                                                <div class="ach-source-group">
+                                                    <label style="display:inline-flex; align-items:center; gap:8px; font-weight:bold; color:var(--accent);">
+                                                        <input type="checkbox" id="tkAchNext" style="accent-color:var(--accent);" onchange="TrackerManager.toggleAchList('next')"> 
+                                                        Next Week (Planned Work)
+                                                    </label>
+                                                    <div id="achListNext" class="ach-list-container" style="margin-top:5px; max-height:100px; overflow-y:auto; border:1px solid var(--border); padding:5px; border-radius:4px; background:rgba(0,0,0,0.1); opacity:0.5; pointer-events:none;">
+                                                        <!-- Items injected here -->
+                                                    </div>
+                                                </div>
+
                                             </div>
                                         </div>
                                         <div class="input-group" style="margin-top: 1rem;">
