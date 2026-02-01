@@ -1831,7 +1831,15 @@ export const TrackerManager = {
                                         const orient = tracker ? (tracker.orientation || 'vertical') : 'vertical';
                                         const orientRad = document.querySelector(`input[name="tkCompBarOrient"][value="${orient}"]`);
                                         if(orientRad) orientRad.checked = true;
-                                    } else if (type === 'planner') {
+            } else if (type === 'achievements') {
+                const notesIn = getEl('tkAchNotes');
+                if (tracker && notesIn) notesIn.value = tracker.notes || '';
+                
+                const sources = tracker ? (tracker.sources || ['last', 'current', 'next']) : ['last', 'current', 'next'];
+                getEl('tkAchLast').checked = sources.includes('last');
+                getEl('tkAchCurrent').checked = sources.includes('current');
+                getEl('tkAchNext').checked = sources.includes('next');
+            } else if (type === 'planner') {
                                         const notesIn = getEl('tkPlannerNotes');
                                         if (tracker && notesIn) notesIn.value = tracker.notes || '';
                                         
@@ -1859,6 +1867,7 @@ export const TrackerManager = {
         else if (inputType === 'completionBar') allowed = ['1x1', '2x1', '1x2'];
         else if (inputType === 'countdown') allowed = ['1x1', '2x1', '2x2'];
         else if (inputType === 'planner') allowed = ['2x2', '3x2', '2x3', '2x4', '3x3', '4x4'];
+        else if (inputType === 'achievements') allowed = ['2x2', '3x2', '2x3', '2x4', '3x3', '4x4'];
         // Time Series (line/bar) and Note allow all sizes.
         // Waffle allows all for now.
 
@@ -1881,7 +1890,7 @@ export const TrackerManager = {
         State.currentTrackerType = type;
         // Map 'bar' to 'line' for input visibility
         const inputType = (type === 'bar') ? 'line' : type;
-        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar','Planner'].forEach(x => {
+        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar','Planner','Achievements'].forEach(x => {
             const btn = getEl(`type${x}Btn`);
             if (btn) btn.className = (type.toLowerCase() === x.toLowerCase()) ? 'type-option active' : 'type-option';
             
