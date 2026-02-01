@@ -585,10 +585,11 @@ export const Visuals = {
         const timelineHeaderHeight = 40;
         const width = 1200;
         const nameColWidth = 250;
-        const colWidth = (width - nameColWidth) / 6;
+        const chartWidth = width - nameColWidth;
+        const colWidth = chartWidth / 6;
         const fyStart = (settings && settings.fyStartMonth !== undefined) ? settings.fyStartMonth : 1;
         
-        // Rolling 6 periods logic with Year awareness
+        // --- 1. Timeline Calculation (Date-Based) ---
         const getCurrentPeriod = () => {
             const d = new Date();
             const m = d.getMonth(); 
@@ -599,22 +600,38 @@ export const Visuals = {
             const y = date.getFullYear();
             return m < fyStart ? y - 1 : y;
         };
-        const getPeriodLabelShort = (p, y) => {
-            const monthNames = ["Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan"];
-            // Shift month names based on fyStart? No, month names are fixed.
-            // P01 maps to fyStart month index.
+        
+        // Helper to get actual Date object for start of a Period/Year
+        const getDateFromPeriod = (p, fy) => {
+            // p=1, fy=2026, fyStart=1 (Feb) -> Feb 2026
             // monthIndex = (p - 1 + fyStart) % 12
-            // Note: Standard array assumes Jan=0.
-            const standardMonths = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            // if monthIndex < fyStart, year is fy + 1. 
+            // e.g. fyStart=1 (Feb). P12 (Jan). mIdx=0. 0 < 1. Year = 2027.
             const mIdx = (p - 1 + fyStart) % 12;
-            const name = standardMonths[mIdx];
-            
-            const yr = y ? ` ${y.toString().substring(2)}` : '';
-            return `P${p.toString().padStart(2,'0')} (${name})${yr}`;
+            const y = mIdx < fyStart ? fy + 1 : fy;
+            return new Date(y, mIdx, 1);
         };
 
         const currentP = getCurrentPeriod();
         const currentY = getFiscalYear();
+        
+        // Define Timeline Range
+        // Start: 1st day of Current Period
+        const timelineStart = getDateFromPeriod(currentP, currentY);
+        
+        // End: Last day of 6th Period
+        // Calculate start of 7th period, subtract 1 day
+        // 6th period index: (currentP + 5). 
+        // We want end of that. Easier to get start of (currentP + 6)
+        let endP_raw = currentP + 6;
+        let endP = ((endP_raw - 1) % 12) + 1;
+        let endY_offset = Math.floor((endP_raw - 1) / 12);
+        let endY = currentY + endY_offset;
+        const timelineEnd = getDateFromPeriod(endP, endY); // Exclusive end date (start of next)
+        
+        const totalDuration = timelineEnd.getTime() - timelineStart.getTime();
+
+        // Generate Grid Columns (Periods)
         const rollingTimeline = [];
         for(let i=0; i<6; i++) {
             let pRaw = currentP + i;
@@ -624,37 +641,66 @@ export const Visuals = {
             rollingTimeline.push({ p, y });
         }
 
-        // Helper to convert Date to Period Score
-        const getPeriodScore = (dateStr) => {
-            if(!dateStr) return 0;
-            const d = new Date(dateStr);
-            if(isNaN(d.getTime())) return 0;
-            const m = d.getMonth();
-            const y = d.getFullYear();
-            const fy = m < fyStart ? y - 1 : y;
-            const p = ((m - fyStart + 12) % 12) + 1;
-            return fy * 100 + p;
+        const getPeriodLabelShort = (p, y) => {
+            const standardMonths = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+            const mIdx = (p - 1 + fyStart) % 12;
+            const name = standardMonths[mIdx];
+            const yr = y ? ` ${y.toString().substring(2)}` : '';
+            return `P${p.toString().padStart(2,'0')} (${name})${yr}`;
         };
 
-        // Data Aggregation: Group by Assignment
-        // Structure: { "AssignmentName": [ { memberName, obj } ] }
+        // --- 2. Data Aggregation & Date Conversion ---
         const groups = {};
-        const timelineStartScore = rollingTimeline[0].y * 100 + rollingTimeline[0].p;
-        const timelineEndScore = rollingTimeline[5].y * 100 + rollingTimeline[5].p;
+
+        // Helper: Convert Obj/Absence to Start/End Dates
+        const getDatesForObj = (obj) => {
+            if (obj.isAbsence) {
+                // Absence has specific dates
+                return { start: new Date(obj.startDate), end: new Date(obj.endDate) };
+            } else {
+                // Objective uses Period/Year. Convert to Date range.
+                // Start: 1st of Start Period
+                const s = getDateFromPeriod(obj.start, obj.startYear || currentY);
+                // End: Last day of End Period
+                // Start of (End Period + 1)
+                let nextP_raw = obj.end + 1;
+                let nextP = ((nextP_raw - 1) % 12) + 1;
+                let nextY_offset = Math.floor((nextP_raw - 1) / 12);
+                let nextY = (obj.endYear || currentY) + nextY_offset;
+                const e = getDateFromPeriod(nextP, nextY); // Exclusive end
+                return { start: s, end: e };
+            }
+        };
+
+        const processItem = (item, memberName, assignmentName) => {
+            const dates = getDatesForObj(item);
+            // Check overlap with timeline
+            if (dates.end <= timelineStart || dates.start >= timelineEnd) return; // No overlap
+
+            // Clamp dates to visible timeline for rendering
+            const visibleStart = dates.start < timelineStart ? timelineStart : dates.start;
+            const visibleEnd = dates.end > timelineEnd ? timelineEnd : dates.end;
+            
+            if (!groups[assignmentName]) groups[assignmentName] = [];
+            
+            groups[assignmentName].push({
+                memberName: memberName,
+                obj: item,
+                render: {
+                    start: visibleStart,
+                    end: visibleEnd,
+                    originalStart: dates.start,
+                    originalEnd: dates.end
+                }
+            });
+        };
 
         // 1. Objectives
         members.forEach(m => {
             if (m.objectives && m.objectives.length > 0) {
                 m.objectives.forEach(obj => {
                     if (!obj.assignment) return;
-                    
-                    const startScore = (obj.startYear || currentY) * 100 + obj.start;
-                    const endScore = (obj.endYear || currentY) * 100 + obj.end;
-                    
-                    if (startScore <= timelineEndScore && endScore >= timelineStartScore) {
-                        if (!groups[obj.assignment]) groups[obj.assignment] = [];
-                        groups[obj.assignment].push({ memberName: m.name, obj: obj });
-                    }
+                    processItem(obj, m.name, obj.assignment);
                 });
             }
         });
@@ -667,28 +713,14 @@ export const Visuals = {
             if (m.absences && m.absences.length > 0) {
                 m.absences.forEach(abs => {
                     const absName = absMap.get(abs.type) || 'Unknown Absence';
-                    
-                    const startScore = getPeriodScore(abs.startDate);
-                    const endScore = getPeriodScore(abs.endDate);
-                    
-                    if (startScore <= timelineEndScore && endScore >= timelineStartScore) {
-                        if (!groups[absName]) groups[absName] = [];
-                        
-                        // Create a synthetic object for rendering
-                        const obj = {
-                            startScore: startScore,
-                            endScore: endScore,
-                            load: 'ABS',
-                            isAbsence: true
-                        };
-                        
-                        groups[absName].push({ memberName: m.name, obj: obj });
-                    }
+                    const item = { ...abs, isAbsence: true, load: 'ABS' };
+                    processItem(item, m.name, absName);
                 });
             }
         });
 
-        // Calculate total height
+        // --- 3. Rendering ---
+        
         const groupKeys = Object.keys(groups).sort();
         let totalRows = 0;
         groupKeys.forEach(k => totalRows += groups[k].length);
@@ -697,7 +729,7 @@ export const Visuals = {
         let svg = `<svg width="100%" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="http://www.w3.org/2000/svg">`;
         svg += `<rect x="0" y="0" width="${width}" height="${totalHeight}" fill="var(--card-bg)" rx="8"/>`;
 
-        // Timeline Header
+        // Timeline Header (Periods)
         rollingTimeline.forEach((item, i) => {
             const x = nameColWidth + (i * colWidth);
             svg += `<text x="${x + colWidth/2}" y="${timelineHeaderHeight - 15}" fill="var(--text-main)" font-size="12" text-anchor="middle" font-weight="bold">${getPeriodLabelShort(item.p, item.y)}</text>`;
@@ -711,20 +743,15 @@ export const Visuals = {
         groupKeys.forEach(assignmentName => {
             const rows = groups[assignmentName];
             
-            // Group Header (Assignment Name)
+            // Group Header
             svg += `<rect x="0" y="${currentYPos}" width="${width}" height="${groupHeaderHeight}" fill="rgba(255,255,255,0.05)" opacity="0.5"/>`;
             
-            // Determine Header Color
-            // Check if it's an assignment
             let headerColor = 'var(--accent)';
             const assignmentDef = (allAssignments || []).find(a => a.name === assignmentName);
             if (assignmentDef) {
                 headerColor = assignmentDef.color;
             } else {
-                // Check if it's an absence type (by name)
-                // Just use a distinct color for absences if identified
-                // We don't have isAbsence flag on the group key itself easily, but we can check the first row
-                if (rows.length > 0 && rows[0].obj.isAbsence) headerColor = '#ffb74d'; // Orange for absence header
+                if (rows.length > 0 && rows[0].obj.isAbsence) headerColor = '#ffb74d';
             }
             
             svg += `<text x="15" y="${currentYPos + groupHeaderHeight/2 + 6}" fill="${headerColor}" font-size="14" font-weight="bold">${assignmentName}</text>`;
@@ -735,31 +762,33 @@ export const Visuals = {
                 // Sub-heading (Member Name)
                 svg += `<text x="25" y="${y + rowHeight/2 + 5}" fill="var(--text-main)" font-size="12" font-weight="500">${row.memberName}</text>`;
 
-                const obj = row.obj;
-                const startScore = obj.startScore || ((obj.startYear || currentY) * 100 + obj.start);
-                const endScore = obj.endScore || ((obj.endYear || currentY) * 100 + obj.end);
+                // Calculate Bar Position using Exact Dates
+                const r = row.render;
+                const startOffsetMs = r.start.getTime() - timelineStart.getTime();
+                const durationMs = r.end.getTime() - r.start.getTime();
+                
+                const x = nameColWidth + (startOffsetMs / totalDuration) * chartWidth;
+                const w = (durationMs / totalDuration) * chartWidth;
+                
+                // Ensure min width for visibility
+                const barWidth = Math.max(2, w);
+                
+                let barColor = headerColor;
+                if (row.obj.isAbsence) barColor = '#ef5350';
 
-                const coveredIndices = [];
-                rollingTimeline.forEach((rt, rti) => {
-                    const rtScore = rt.y * 100 + rt.p;
-                    if (rtScore >= startScore && rtScore <= endScore) coveredIndices.push(rti);
-                });
+                // Format Tooltip Dates
+                const fmt = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                const dateRangeStr = `${fmt(r.originalStart)} - ${fmt(r.originalEnd)}`; // Use original dates for tooltip
 
-                if (coveredIndices.length > 0) {
-                    const startIdx = coveredIndices[0];
-                    const endIdx = coveredIndices[coveredIndices.length - 1];
-                    const barStart = nameColWidth + (startIdx * colWidth) + 5;
-                    const barEnd = nameColWidth + ((endIdx + 1) * colWidth) - 5;
-                    const barWidth = Math.max(20, barEnd - barStart);
-                    
-                    let barColor = headerColor;
-                    if (obj.isAbsence) barColor = '#ef5350'; // Specific red/orange for absence bars themselves? Or match header. Let's make it slightly darker.
-
-                    svg += `<rect x="${barStart}" y="${y + 6}" width="${barWidth}" height="${rowHeight - 12}" fill="${barColor}" rx="${(rowHeight - 12)/2}" opacity="0.8">
-                                <title>${row.memberName}: ${assignmentName} (${obj.load})</title>
-                            </rect>`;
-                    svg += `<text x="${barStart + barWidth/2}" y="${y + rowHeight/2 + 4}" fill="#fff" font-size="11" text-anchor="middle" font-weight="bold" pointer-events="none">${obj.load}%</text>`;
+                svg += `<rect x="${x}" y="${y + 6}" width="${barWidth}" height="${rowHeight - 12}" fill="${barColor}" rx="${(rowHeight - 12)/2}" opacity="0.8">
+                            <title>${row.memberName}: ${assignmentName} (${row.obj.load || 'Absence'})\n${dateRangeStr}</title>
+                        </rect>`;
+                
+                // Label (Load %) - Only if bar is wide enough
+                if (barWidth > 30) {
+                    svg += `<text x="${x + barWidth/2}" y="${y + rowHeight/2 + 4}" fill="#fff" font-size="11" text-anchor="middle" font-weight="bold" pointer-events="none">${row.obj.load}%</text>`;
                 }
+                
                 svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="var(--border)" stroke-width="0.5" opacity="0.5"/>`;
             });
             currentYPos += (rows.length * rowHeight);
