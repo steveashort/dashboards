@@ -115,7 +115,8 @@ const syncIds = () => {
     if (State.counters.sid === undefined) State.counters.sid = 0;
     if (State.counters.tmid === undefined) State.counters.tmid = 0;
 
-    // Trackers (Cards)    if (State.trackerTabs) {
+    // Trackers (Cards)
+    if (State.trackerTabs) {
         State.trackerTabs.forEach(tab => {
             tab.trackers.forEach(t => {
                 if (!t.id) {
