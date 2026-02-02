@@ -227,6 +227,7 @@ body.theme-day .tracker-card, body.theme-day .member-card, body.theme-day .team-
 .tracker-card.size-2x1 { grid-column: span 2; grid-row: span 1; }
 .tracker-card.size-1x2 { grid-column: span 1; grid-row: span 2; }
 .tracker-card.size-1x3 { grid-column: span 1; grid-row: span 3; }
+.tracker-card.size-1x4 { grid-column: span 1; grid-row: span 4; }
 .tracker-card.size-2x2 { grid-column: span 2; grid-row: span 2; }
 .tracker-card.size-3x2 { grid-column: span 3; grid-row: span 2; }
 .tracker-card.size-2x3 { grid-column: span 2; grid-row: span 3; }
@@ -247,6 +248,7 @@ body.theme-day .tracker-card, body.theme-day .member-card, body.theme-day .team-
     .tracker-card.size-2x1 { grid-column: span 2; }
     .tracker-card.size-1x2 { grid-column: span 1; grid-row: span 2; }
     .tracker-card.size-1x3 { grid-column: span 1; grid-row: span 3; }
+    .tracker-card.size-1x4 { grid-column: span 1; grid-row: span 4; }
     .tracker-card.size-2x2 { grid-column: span 2; grid-row: span 2; }
     .tracker-card.size-3x2 { grid-column: span 3; grid-row: span 2; }
     
@@ -259,7 +261,7 @@ body.theme-day .tracker-card, body.theme-day .member-card, body.theme-day .team-
 @media (max-width: 768px) {
     .tracker-grid { grid-template-columns: 1fr; }
     .tracker-card.size-1x1, .tracker-card.size-2x1, .tracker-card.size-1x2, 
-    .tracker-card.size-1x3, .tracker-card.size-2x2, .tracker-card.size-3x2,
+    .tracker-card.size-1x3, .tracker-card.size-1x4, .tracker-card.size-2x2, .tracker-card.size-3x2,
     .tracker-card.size-S, .tracker-card.size-M, .tracker-card.size-L, .tracker-card.size-XL {
         grid-column: span 1;
         grid-row: auto;
