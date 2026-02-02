@@ -2023,6 +2023,17 @@ export const TrackerManager = {
         if (inputType === 'line') {
              this.renderTimeTable();
         }
+        
+        if (inputType === 'planner') {
+            this.renderPlannerMultiSelect();
+        }
+        
+        if (inputType === 'achievements') {
+            this.populateAchLists();
+            this.toggleAchList('last');
+            this.toggleAchList('current');
+            this.toggleAchList('next');
+        }
     },
 
     getContext(typeOverride) {
