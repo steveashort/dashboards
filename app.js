@@ -1024,6 +1024,48 @@ export const renderBoard = () => {
                             });
                         }
                     });
+                } else if (pType === 'On Call') {
+                    const today = new Date();
+                    const day = today.getDay();
+                    const diff = day === 0 ? -6 : 1 - day;
+                    const monday = new Date(today);
+                    monday.setDate(today.getDate() + diff);
+                    monday.setHours(0,0,0,0);
+
+                    State.members.forEach(m => {
+                        if (m.thisWeek && m.thisWeek.onCall) {
+                            m.thisWeek.onCall.forEach((oc, idx) => {
+                                if (oc) {
+                                    const d = new Date(monday);
+                                    d.setDate(monday.getDate() + idx);
+                                    itemsToRender.push({
+                                        name: m.name,
+                                        startDate: d.toISOString().split('T')[0],
+                                        endDate: d.toISOString().split('T')[0],
+                                        description: 'On Call',
+                                        priority: 'Med',
+                                        color: 'var(--accent)'
+                                    });
+                                }
+                            });
+                        }
+                        if (m.nextWeek && m.nextWeek.onCall) {
+                            m.nextWeek.onCall.forEach((oc, idx) => {
+                                if (oc) {
+                                    const d = new Date(monday);
+                                    d.setDate(monday.getDate() + 7 + idx);
+                                    itemsToRender.push({
+                                        name: m.name,
+                                        startDate: d.toISOString().split('T')[0],
+                                        endDate: d.toISOString().split('T')[0],
+                                        description: 'On Call',
+                                        priority: 'Med',
+                                        color: 'var(--accent)'
+                                    });
+                                }
+                            });
+                        }
+                    });
                 } else {
                     // Filter assignments based on type AND selected items (if any)
                     itemsToRender = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
@@ -1406,6 +1448,48 @@ export const ZoomManager = {
                             });
                         }
                     });
+                } else if (pType === 'On Call') {
+                    const today = new Date();
+                    const day = today.getDay();
+                    const diff = day === 0 ? -6 : 1 - day;
+                    const monday = new Date(today);
+                    monday.setDate(today.getDate() + diff);
+                    monday.setHours(0,0,0,0);
+
+                    State.members.forEach(m => {
+                        if (m.thisWeek && m.thisWeek.onCall) {
+                            m.thisWeek.onCall.forEach((oc, idx) => {
+                                if (oc) {
+                                    const d = new Date(monday);
+                                    d.setDate(monday.getDate() + idx);
+                                    itemsToRender.push({
+                                        name: m.name,
+                                        startDate: d.toISOString().split('T')[0],
+                                        endDate: d.toISOString().split('T')[0],
+                                        description: 'On Call',
+                                        priority: 'Med',
+                                        color: 'var(--accent)'
+                                    });
+                                }
+                            });
+                        }
+                        if (m.nextWeek && m.nextWeek.onCall) {
+                            m.nextWeek.onCall.forEach((oc, idx) => {
+                                if (oc) {
+                                    const d = new Date(monday);
+                                    d.setDate(monday.getDate() + 7 + idx);
+                                    itemsToRender.push({
+                                        name: m.name,
+                                        startDate: d.toISOString().split('T')[0],
+                                        endDate: d.toISOString().split('T')[0],
+                                        description: 'On Call',
+                                        priority: 'Med',
+                                        color: 'var(--accent)'
+                                    });
+                                }
+                            });
+                        }
+                    });
                 } else {
                     itemsToRender = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
                     if (t.plannerItems && t.plannerItems.length > 0) {
@@ -1581,6 +1665,10 @@ export const TrackerManager = {
         if (type === 'Absence') {
             // Use absence types from settings
             items = State.settings.absences.map(a => ({ name: a.name }));
+        } else if (type === 'On Call') {
+            // "On Call" is fixed for now, no sub-filtering needed or just show "All"
+            container.innerHTML = '<div style="color:var(--text-muted); font-style:italic; font-size:0.8rem; padding:2px;">Showing all team members on call for the current and next week.</div>';
+            return;
         } else {
             // Filter assignments by type
             items = State.assignments.filter(a => a.class === type || (type === 'Event' && a.class === 'Project'));
@@ -3771,6 +3859,48 @@ export const PlannerManager = {
                     viz.innerHTML = Visuals.createGanttChartSVG(membersWithAbsences, [], State.settings);
                 } else {
                     viz.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No absences found.</div>';
+                }
+            } else if (p.type === 'On Call') {
+                // Calculate dates for current and next week
+                const today = new Date();
+                const day = today.getDay();
+                const diff = day === 0 ? -6 : 1 - day;
+                const monday = new Date(today);
+                monday.setDate(today.getDate() + diff);
+                monday.setHours(0,0,0,0);
+
+                const synthesizedMembers = State.members.map(m => {
+                    const abs = [];
+                    // This Week
+                    if (m.thisWeek && m.thisWeek.onCall) {
+                        m.thisWeek.onCall.forEach((oc, idx) => {
+                            if (oc) {
+                                const d = new Date(monday);
+                                d.setDate(monday.getDate() + idx);
+                                const dStr = d.toISOString().split('T')[0];
+                                abs.push({ type: 'ON_CALL', startDate: dStr, endDate: dStr });
+                            }
+                        });
+                    }
+                    // Next Week
+                    if (m.nextWeek && m.nextWeek.onCall) {
+                        m.nextWeek.onCall.forEach((oc, idx) => {
+                            if (oc) {
+                                const d = new Date(monday);
+                                d.setDate(monday.getDate() + 7 + idx);
+                                const dStr = d.toISOString().split('T')[0];
+                                abs.push({ type: 'ON_CALL', startDate: dStr, endDate: dStr });
+                            }
+                        });
+                    }
+                    return { ...m, objectives: [], absences: abs };
+                }).filter(m => m.absences.length > 0);
+
+                const settingsCopy = { ...State.settings, absences: [{ id: 'ON_CALL', name: 'On Call' }] };
+                if (synthesizedMembers.length > 0) {
+                    viz.innerHTML = Visuals.createGanttChartSVG(synthesizedMembers, [], settingsCopy);
+                } else {
+                    viz.innerHTML = '<div style="padding:20px; text-align:center; color:#666;">No one is on call for the next 2 weeks.</div>';
                 }
             } else {
                 // Placeholder for other types
