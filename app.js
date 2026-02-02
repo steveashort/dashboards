@@ -1038,10 +1038,12 @@ export const renderBoard = () => {
                                 if (oc) {
                                     const d = new Date(monday);
                                     d.setDate(monday.getDate() + idx);
+                                    const nextD = new Date(d);
+                                    nextD.setDate(d.getDate() + 1);
                                     itemsToRender.push({
                                         name: m.name,
                                         startDate: d.toISOString().split('T')[0],
-                                        endDate: d.toISOString().split('T')[0],
+                                        endDate: nextD.toISOString().split('T')[0],
                                         description: 'On Call',
                                         priority: 'Med',
                                         color: 'var(--accent)'
@@ -1054,10 +1056,12 @@ export const renderBoard = () => {
                                 if (oc) {
                                     const d = new Date(monday);
                                     d.setDate(monday.getDate() + 7 + idx);
+                                    const nextD = new Date(d);
+                                    nextD.setDate(d.getDate() + 1);
                                     itemsToRender.push({
                                         name: m.name,
                                         startDate: d.toISOString().split('T')[0],
-                                        endDate: d.toISOString().split('T')[0],
+                                        endDate: nextD.toISOString().split('T')[0],
                                         description: 'On Call',
                                         priority: 'Med',
                                         color: 'var(--accent)'
@@ -1462,10 +1466,12 @@ export const ZoomManager = {
                                 if (oc) {
                                     const d = new Date(monday);
                                     d.setDate(monday.getDate() + idx);
+                                    const nextD = new Date(d);
+                                    nextD.setDate(d.getDate() + 1);
                                     itemsToRender.push({
                                         name: m.name,
                                         startDate: d.toISOString().split('T')[0],
-                                        endDate: d.toISOString().split('T')[0],
+                                        endDate: nextD.toISOString().split('T')[0],
                                         description: 'On Call',
                                         priority: 'Med',
                                         color: 'var(--accent)'
@@ -1478,10 +1484,12 @@ export const ZoomManager = {
                                 if (oc) {
                                     const d = new Date(monday);
                                     d.setDate(monday.getDate() + 7 + idx);
+                                    const nextD = new Date(d);
+                                    nextD.setDate(d.getDate() + 1);
                                     itemsToRender.push({
                                         name: m.name,
                                         startDate: d.toISOString().split('T')[0],
-                                        endDate: d.toISOString().split('T')[0],
+                                        endDate: nextD.toISOString().split('T')[0],
                                         description: 'On Call',
                                         priority: 'Med',
                                         color: 'var(--accent)'
@@ -3878,7 +3886,10 @@ export const PlannerManager = {
                                 const d = new Date(monday);
                                 d.setDate(monday.getDate() + idx);
                                 const dStr = d.toISOString().split('T')[0];
-                                abs.push({ type: 'ON_CALL', startDate: dStr, endDate: dStr });
+                                const nextD = new Date(d);
+                                nextD.setDate(d.getDate() + 1);
+                                const nextDStr = nextD.toISOString().split('T')[0];
+                                abs.push({ type: 'ON_CALL', startDate: dStr, endDate: nextDStr });
                             }
                         });
                     }
@@ -3889,7 +3900,10 @@ export const PlannerManager = {
                                 const d = new Date(monday);
                                 d.setDate(monday.getDate() + 7 + idx);
                                 const dStr = d.toISOString().split('T')[0];
-                                abs.push({ type: 'ON_CALL', startDate: dStr, endDate: dStr });
+                                const nextD = new Date(d);
+                                nextD.setDate(d.getDate() + 1);
+                                const nextDStr = nextD.toISOString().split('T')[0];
+                                abs.push({ type: 'ON_CALL', startDate: dStr, endDate: nextDStr });
                             }
                         });
                     }
