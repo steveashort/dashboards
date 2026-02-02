@@ -92,7 +92,9 @@ const setupDateValidation = (startId, endId) => {
     
     s.addEventListener('change', () => {
         e.min = s.value;
-        e.value = s.value;
+        if (e.value && e.value < s.value) {
+            e.value = s.value;
+        }
     });
     
     e.addEventListener('change', () => {
@@ -3451,6 +3453,12 @@ export const AssignmentManager = {
         const name = getEl('asName').value.trim();
         if(!name) return App.alert("Name is required");
         
+        const start = getEl('asStart').value;
+        const end = getEl('asEnd').value;
+        if(start && end && end < start) {
+            return App.alert("End date must be greater than or equal to start date.");
+        }
+
         const priorityRad = document.querySelector('input[name="asPriority"]:checked');
         
         const newAssignment = {
@@ -3892,6 +3900,12 @@ export const RoleManager = {
         const name = getEl('rlName').value.trim();
         if(!name) return App.alert("Role Name is required");
         
+        const start = getEl('rlStart').value;
+        const end = getEl('rlEnd').value;
+        if(start && end && end < start) {
+            return App.alert("End date must be greater than or equal to start date.");
+        }
+
         const priorityRad = document.querySelector('input[name="rlPriority"]:checked');
         
         // Scrape Skills
@@ -4014,6 +4028,12 @@ export const EventManager = {
         const name = getEl('evName').value.trim();
         if(!name) return App.alert("Event Name is required");
         
+        const start = getEl('evStart').value;
+        const end = getEl('evEnd').value;
+        if(start && end && end < start) {
+            return App.alert("End date must be greater than or equal to start date.");
+        }
+
         const priorityRad = document.querySelector('input[name="evPriority"]:checked');
         
         const newAssignment = {
@@ -4195,6 +4215,12 @@ export const TaskManager = {
         const name = getEl('tskName').value.trim();
         if(!name) return App.alert("Task Name is required");
         
+        const start = getEl('tskStart').value;
+        const end = getEl('tskEnd').value;
+        if(start && end && end < start) {
+            return App.alert("End date must be greater than or equal to start date.");
+        }
+
         const priorityRad = document.querySelector('input[name="tskPriority"]:checked');
         
         const newAssignment = {
