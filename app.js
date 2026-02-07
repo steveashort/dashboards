@@ -1189,6 +1189,9 @@ export const renderBoard = () => {
                 const orient = t.orientation || 'horizontal';
                 visualHTML = Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 60, orient);
                 statsHTML = `<div class="tracker-stats">${completed} / ${total} ${t.metric || ''}</div>`;
+            } else if (renderType === 'webpage') {
+                visualHTML = `<iframe src="${t.url}" style="width:100%; height:100%; border:none; background:#fff;" sandbox="allow-scripts allow-same-origin"></iframe>`;
+                statsHTML = '';
             } else if (renderType === 'section') {
                 visualHTML = '';
                 statsHTML = '';
@@ -1567,6 +1570,8 @@ export const ZoomManager = {
                 const cBg = t.colorBg || '#696969';
                 const orient = t.orientation || 'horizontal';
                 content = `<div style="width:100%; padding:40px;">${Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 300, orient)}</div>`;
+            } else if (renderType === 'webpage') {
+                content = `<iframe src="${t.url}" style="width:100%; height:100%; border:none; background:#fff;" sandbox="allow-scripts allow-same-origin"></iframe>`;
             } else if (renderType === 'planner') {
                 const pType = t.plannerType || 'Role';
                 let itemsToRender = [];
@@ -1897,7 +1902,7 @@ export const TrackerManager = {
             tabSel.value = State.activeTabId;
         }
         
-        ['gauge','bar','line','counter','rag','countdown','completionBar','planner','achievements','textParser','section'].forEach(type => {
+        ['gauge','bar','line','counter','rag','countdown','completionBar','planner','achievements','textParser','section','webpage'].forEach(type => {
             const div = getEl(`${type}Inputs`);
             if (div) div.style.display = 'none';
         });
@@ -2116,6 +2121,8 @@ export const TrackerManager = {
                 const startIn = getEl('tkParserStart'); if(startIn) startIn.value = '';
                 const endIn = getEl('tkParserEnd'); if(endIn) endIn.value = '';
                 const headerIn = getEl('tkParserHeaders'); if(headerIn) headerIn.value = '';
+            } else if (!isEdit && type === 'webpage') {
+                const urlIn = getEl('tkWebpageUrl'); if(urlIn) urlIn.value = '';
             }
 
             if (type === 'gauge') {
@@ -2236,6 +2243,8 @@ export const TrackerManager = {
                 const startIn = getEl('tkParserStart'); if (startIn) startIn.value = tracker ? (tracker.startMarker || '') : '';
                 const endIn = getEl('tkParserEnd'); if (endIn) endIn.value = tracker ? (tracker.endMarker || '') : '';
                 const headerIn = getEl('tkParserHeaders'); if (headerIn) headerIn.value = tracker ? (tracker.headerMarkers ? tracker.headerMarkers.join('\n') : '') : '';
+            } else if (type === 'webpage') {
+                const urlIn = getEl('tkWebpageUrl'); if (urlIn) urlIn.value = tracker ? (tracker.url || '') : '';
             } else if (type === 'planner') {
                                         const notesIn = getEl('tkPlannerNotes');
                                         if (tracker && notesIn) notesIn.value = tracker.notes || '';
@@ -2268,6 +2277,7 @@ export const TrackerManager = {
         else if (inputType === 'textParser') allowed = ['2x1', '3x1', '4x1', '1x2', '1x3', '2x2', '3x2', '4x2', '2x3', '2x4', '3x3', '4x4'];
         else if (inputType === 'line') allowed = ['1x1', '2x1', '3x1', '4x1', '1x2', '2x2', '3x2', '4x2', '4x4'];
         else if (inputType === 'section') allowed = [];
+        else if (inputType === 'webpage') allowed = ['3x3', '4x4'];
         // Note allows all sizes.
         // Waffle allows all for now.
 
@@ -2290,7 +2300,7 @@ export const TrackerManager = {
         State.currentTrackerType = type;
         // Map 'bar' to 'line' for input visibility
         const inputType = (type === 'bar') ? 'line' : type;
-        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar','Planner','Achievements','TextParser','Section'].forEach(x => {
+        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar','Planner','Achievements','TextParser','Section','Webpage'].forEach(x => {
             const btn = getEl(`type${x}Btn`);
             if (btn) btn.className = (type.toLowerCase() === x.toLowerCase()) ? 'type-option active' : 'type-option';
             
@@ -3155,6 +3165,12 @@ export const TrackerManager = {
             newTracker.notes = ''; 
         } else if (type === 'section') {
             newTracker.size = 'full';
+            newTracker.notes = '';
+        } else if (type === 'webpage') {
+            let url = getEl('tkWebpageUrl').value.trim();
+            if (!url) return App.alert("URL is required.");
+            if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            newTracker.url = url;
             newTracker.notes = '';
         }
 

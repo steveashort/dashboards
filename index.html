@@ -349,6 +349,7 @@
                     <button id="typePlannerBtn" class="type-option" onclick="TrackerManager.setType('planner')">Resource Planner</button>
                     <button id="typeAchievementsBtn" class="type-option" onclick="TrackerManager.setType('achievements')">Achievements</button>
                     <button id="typeTextParserBtn" class="type-option" onclick="TrackerManager.setType('textParser')">Text Parser</button>
+                    <button id="typeWebpageBtn" class="type-option" onclick="TrackerManager.setType('webpage')">Web Page</button>
                 </div>
                 <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
                     <div class="input-group" style="flex: 2;">
@@ -681,6 +682,16 @@
                                         <div class="input-group">
                                             <p style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
                                                 A section header spans the full width of the grid to logically group cards. Use the "Card Title" field above for the header text.
+                                            </p>
+                                        </div>
+                                    </div>
+
+                                    <div id="webpageInputs" style="display:none;">
+                                        <div class="input-group">
+                                            <label>Page URL</label>
+                                            <input type="text" id="tkWebpageUrl" placeholder="https://example.com">
+                                            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px; font-style: italic;">
+                                                Note: Some websites block being embedded in other pages (X-Frame-Options).
                                             </p>
                                         </div>
                                     </div>
