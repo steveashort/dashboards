@@ -210,15 +210,16 @@
             <div class="modal-body">
                 <input type="hidden" id="editIndex" value="-1">
                 
-                <!-- Profile Section -->
                 <div class="form-row" style="gap:1rem; margin-bottom:1rem;">
                     <div class="input-group" style="flex:1;">
                         <label>Full Name</label>
                         <input type="text" id="mName" placeholder="e.g. Alex Chen">
                     </div>
                     <div class="input-group" style="flex:1;">
-                        <label>Job Title</label>
-                        <input type="text" id="mTitle" placeholder="e.g. Senior Engineer">
+                        <label>Role</label>
+                        <select id="mRole" style="width:100%; padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border);" onchange="UserManager.onRoleChange()">
+                            <option value="">Select Role...</option>
+                        </select>
                     </div>
                 </div>
                 
@@ -251,13 +252,6 @@
                 </div>
 
                 <div class="input-group" style="margin-bottom: 1rem;">
-                    <label>Skills</label>
-                    <div id="mSkillsContainer" style="max-height: 120px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1); display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 5px;">
-                        <!-- Checkboxes injected by JS -->
-                    </div>
-                </div>
-
-                <div class="input-group" style="margin-bottom: 1rem;">
                     <label>Notes</label>
                     <textarea id="mNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="General notes, key updates..."></textarea>
                 </div>
@@ -270,69 +264,12 @@
                     <div id="mAbsencesContainer" style="max-height: 150px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1); margin-top:5px; display:flex; flex-direction:column; gap:5px;"></div>
                 </div>
 
-                <!-- Weekly Plan Section -->
-                <div style="border-top:1px dashed var(--border); margin: 1rem 0; padding-top: 1rem; color: var(--accent); font-size: 0.9rem;">Weekly Plan</div>
-
-                <div class="form-row tri-form" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:1rem;">
-                    <div class="col-form">
-                        <div class="form-section-title" id="lastWeekTitle">Last Week</div>
-                        <div class="input-group">
-                            <label>Top 3 Successes</label>
-                            <input type="text" class="mb-2" id="lwTask1" placeholder="1. Project A...">
-                            <input type="text" class="mb-2" id="lwTask2" style="margin-top:5px" placeholder="2. Client Call...">
-                            <input type="text" class="mb-2" id="lwTask3" style="margin-top:5px" placeholder="3. Bug fix...">
-                        </div>
-                    </div>
-                    <div class="col-form">
-                        <div class="form-section-title" id="thisWeekTitle">Current Week</div>
-                        <div class="input-group">
-                            <label>Top 3 Priorities</label>
-                            <input type="text" class="mb-2" id="nwTask1" placeholder="1. Start Phase 2...">
-                            <input type="text" class="mb-2" id="nwTask2" style="margin-top:5px" placeholder="2. Planning...">
-                            <input type="text" class="mb-2" id="nwTask3" style="margin-top:5px" placeholder="3. Code Review...">
-                        </div>
-                        <div class="input-group">
-                            <label>Availability <span style="font-size:0.7rem; font-weight:normal; color:#888;">(Checkbox = On-Call)</span></label>
-                            <div class="load-select-row">
-                                <div class="ls-box"><label>M</label><input type="hidden" id="nw0" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(0,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(0,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(0,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(0,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc0" title="On Call"></div></div>
-                                <div class="ls-box"><label>T</label><input type="hidden" id="nw1" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(1,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(1,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(1,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(1,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc1" title="On Call"></div></div>
-                                <div class="ls-box"><label>W</label><input type="hidden" id="nw2" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(2,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(2,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(2,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(2,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc2" title="On Call"></div></div>
-                                <div class="ls-box"><label>T</label><input type="hidden" id="nw3" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(3,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(3,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(3,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(3,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc3" title="On Call"></div></div>
-                                <div class="ls-box"><label>F</label><input type="hidden" id="nw4" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(4,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(4,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(4,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(4,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc4" title="On Call"></div></div>
-                                <div class="ls-box"><label>S</label><input type="hidden" id="nw5" value="X"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(5,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(5,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(5,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(5,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc5" title="On Call"></div></div>
-                                <div class="ls-box"><label>S</label><input type="hidden" id="nw6" value="X"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setLoad(6,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setLoad(6,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setLoad(6,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setLoad(6,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="nwOc6" title="On Call"></div></div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-form">
-                        <div class="form-section-title" id="nextWeekTitle">Next Week</div>
-                        <div class="input-group">
-                            <label>Planned Work</label>
-                            <input type="text" class="mb-2" id="fwTask1" placeholder="1. Future Task...">
-                            <input type="text" class="mb-2" id="fwTask2" style="margin-top:5px" placeholder="2. Future Task...">
-                            <input type="text" class="mb-2" id="fwTask3" style="margin-top:5px" placeholder="3. Future Task...">
-                        </div>
-                        <div class="input-group">
-                            <label>Availability <span style="font-size:0.7rem; font-weight:normal; color:#888;">(Checkbox = On-Call)</span></label>
-                            <div class="load-select-row">
-                                <div class="ls-box"><label>M</label><input type="hidden" id="fw0" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(0,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(0,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(0,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(0,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc0" title="On Call"></div></div>
-                                <div class="ls-box"><label>T</label><input type="hidden" id="fw1" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(1,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(1,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(1,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(1,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc1" title="On Call"></div></div>
-                                <div class="ls-box"><label>W</label><input type="hidden" id="fw2" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(2,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(2,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(2,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(2,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc2" title="On Call"></div></div>
-                                <div class="ls-box"><label>T</label><input type="hidden" id="fw3" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(3,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(3,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(3,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(3,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc3" title="On Call"></div></div>
-                                <div class="ls-box"><label>F</label><input type="hidden" id="fw4" value="N"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(4,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(4,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(4,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(4,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc4" title="On Call"></div></div>
-                                <div class="ls-box"><label>S</label><input type="hidden" id="fw5" value="X"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(5,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(5,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(5,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(5,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc5" title="On Call"></div></div>
-                                <div class="ls-box"><label>S</label><input type="hidden" id="fw6" value="X"><div class="pill-group"><div class="w-pill wp-l" onclick="UserManager.setFutureLoad(6,'L')">L</div><div class="w-pill wp-n" onclick="UserManager.setFutureLoad(6,'N')">M</div><div class="w-pill wp-r" onclick="UserManager.setFutureLoad(6,'R')">H</div><div class="w-pill wp-x" onclick="UserManager.setFutureLoad(6,'X')">A</div></div><div style="margin-top:2px;"><input type="checkbox" id="fwOc6" title="On Call"></div></div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
                 <div class="input-group" style="margin-top: 1rem; border-top: 1px solid var(--border); padding-top: 1rem;">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <label>Long Term Objectives (Max 24)</label>
-                        <button class="btn btn-sm" onclick="UserManager.addObjectiveRow()">+ Add Objective</button>
+                        <label>Assignments (Max 24)</label>
+                        <button class="btn btn-sm" onclick="UserManager.addAssignmentRow()">+ Add Assignment</button>
                     </div>
-                    <div id="objectivesContainer" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1); margin-top:5px; display:flex; flex-direction:column; gap:5px;"></div>
+                    <div id="assignmentsContainer" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1); margin-top:5px; display:flex; flex-direction:column; gap:5px;"></div>
                 </div>
             </div>
             <div class="modal-footer">

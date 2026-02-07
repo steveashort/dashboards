@@ -1246,48 +1246,74 @@ export const renderBoard = () => {
     if (teamGrid) {
         teamGrid.innerHTML = '';
         State.members.forEach((m, i) => {
-            let lw = ''; if(m.lastWeek && m.lastWeek.tasks) { m.lastWeek.tasks.forEach((t,x) => { if(t.text.trim()) lw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleSuccess(${i},${x})"><span>${t.text}</span></li>`; }); }
-            let tw = ''; if(m.thisWeek && m.thisWeek.tasks) { m.thisWeek.tasks.forEach((t,x) => { if(t.text.trim()) tw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamSuccess?'checked':''} onchange="UserManager.toggleActivity(${i},${x})"><span>${t.text}</span></li>`; }); }
-            let nw = ''; if(m.nextWeek && m.nextWeek.tasks) { m.nextWeek.tasks.forEach((t,x) => { if(t.text.trim()) nw += `<li class="card-task-li" onclick="event.stopPropagation()"><input type="checkbox" ${t.isTeamActivity?'checked':''} onchange="UserManager.toggleFuture(${i},${x})"><span>${t.text}</span></li>`; }); }
-            const getAvgPill = (loadArr) => { let score = 0; let count = 0; (loadArr||[]).forEach(v => { if(v === 'L') { score += 1; count++; } else if(v === 'N') { score += 2; count++; } else if(v === 'R') { score += 3; count++; } else { count++; } }); const avg = count === 0 ? 0 : score / count; let text = 'Medium'; let cls = 'status-busy'; if(avg > 2.4) { text = 'High'; cls = 'status-over'; } else if(avg <= 1.4) { text = 'Low'; cls = 'status-under'; } return `<div class="status-pill ${cls}" style="font-size:0.75rem; padding:2px 8px; width:auto; display:inline-block;">${text}</div>`; };
-            const c = document.createElement('div'); c.className = 'member-card'; c.onclick = () => UserManager.openUserModal(i);
-            const mapDisplay = (v) => { if (v === 'R') return 'H'; if (v === 'N') return 'M'; if (v === 'L') return 'L'; if (v === 'X') return 'A'; return v; };
-            const thisLoadRaw = (m.thisWeek && m.thisWeek.load) ? m.thisWeek.load : ['N','N','N','N','N','X','X']; const thisLoad = thisLoadRaw.length === 5 ? [...thisLoadRaw, 'X', 'X'] : thisLoadRaw; const thisOc = (m.thisWeek && m.thisWeek.onCall) ? m.thisWeek.onCall : [false,false,false,false,false,false,false];
-            const mgThis = thisLoad.map((v,k) => { const isOc = thisOc[k] ? '<div style="font-size:0.5rem; position:absolute; bottom:1px; right:1px; color:#00FFFF;">☎</div>' : ''; return `<div class="dm-box" style="position:relative;"><span class="dm-day">${['M','T','W','T','F','S','S'][k]}</span><span class="dm-val val-${v}">${mapDisplay(v)}</span>${isOc}</div>`; }).join('');
-            const nextLoadRaw = (m.nextWeek && m.nextWeek.load) ? m.nextWeek.load : ['N','N','N','N','N','X','X']; const nextLoad = nextLoadRaw.length === 5 ? [...nextLoadRaw, 'X', 'X'] : nextLoadRaw; const nextOc = (m.nextWeek && m.nextWeek.onCall) ? m.nextWeek.onCall : [false,false,false,false,false,false,false];
-            const mgNext = nextLoad.map((v,k) => { const isOc = nextOc[k] ? '<div style="font-size:0.5rem; position:absolute; bottom:1px; right:1px; color:#00FFFF;">☎</div>' : ''; return `<div class="dm-box" style="position:relative;"><span class="dm-day">${['M','T','W','T','F','S','S'][k]}</span><span class="dm-val val-${v}">${mapDisplay(v)}</span>${isOc}</div>`; }).join('');
-            c.innerHTML = `<div class="member-header">${m.name}</div>`;
-            let content = `<div class="member-card-content">`; content += `<div class="card-col"><div class="col-header">Last Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().last.split(' - ')[0]})</span></div><ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${lw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul></div>`;
-            content += `<div class="card-col"><div class="col-header">Current Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().current.split(' - ')[0]})</span></div><div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.thisWeek ? m.thisWeek.load : [])}</div><ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${tw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul><div class="daily-mini-grid" style="margin-top:auto;">${mgThis}</div></div>`;
-            content += `<div class="card-col"><div class="col-header">Next Week <span style="font-weight:normal; font-size:0.65rem;">(${getRanges().next.split(' - ')[0]})</span></div><div style="text-align:center; margin-bottom:5px;">${getAvgPill(m.nextWeek ? m.nextWeek.load : [])}</div><ul class="card-task-list" style="padding-left:10px; font-size:0.8rem;">${nw || '<li style="list-style:none; opacity:0.5;">No items</li>'}</ul><div class="daily-mini-grid" style="margin-top:auto;">${mgNext}</div></div>`;
-            content += `</div>`;
-                        if (m.notes) {
-                            content += `<div style="padding: 10px 1.5rem; border-top: 1px solid #333; font-size: 0.85rem; color: #ccc;">${m.notes}</div>`;
-                        }
+            const c = document.createElement('div'); 
+            c.className = 'member-card'; 
+            c.onclick = () => UserManager.openUserModal(i);
             
-                                    if (m.objectives && m.objectives.length > 0) {
-                                        // Sort by Start Period (simple numeric sort for now)
-                                        const sorted = [...m.objectives].sort((a,b) => a.start - b.start);
-                                        content += `<div style="padding: 10px 1.5rem; border-top: 1px solid var(--border); display:flex; flex-direction:column; gap:4px;">`;
-                                        content += `<div style="font-size:0.75rem; color:var(--accent); text-transform:uppercase; font-weight:bold; margin-bottom:2px;">Long Term Objectives</div>`;
-                                                        sorted.forEach(o => {
-                                                            const assign = State.assignments.find(a => a.name === o.assignment);
-                                                            const color = assign ? assign.color : '#03dac6'; // Default color
-                                                            
-                                                            const startYShort = o.startYear ? o.startYear.toString().substring(2) : '';
-                                                            const endYShort = o.endYear ? o.endYear.toString().substring(2) : '';
-                                                            const pStart = `P${o.start.toString().padStart(2,'0')}${startYShort ? ' \''+startYShort : ''}`;
-                                                            const pEnd = `P${o.end.toString().padStart(2,'0')}${endYShort ? ' \''+endYShort : ''}`;
-                                        
-                                                            content += `<div style="display:flex; align-items:center; gap:8px; font-size:0.8rem;">
-                                                                <span style="background:${color}; color:#fff; padding:1px 6px; border-radius:4px; font-size:0.7rem; min-width:75px; text-align:center;">${pStart} - ${pEnd}</span>
-                                                                <span style="color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1;">${o.assignment}</span>
-                                                                <span style="color:var(--text-muted); font-size:0.75rem; font-weight:bold;">${o.load}%</span>
-                                                            </div>`;
-                                                        });                                        content += `</div>`;
-                                    }                        
-                        c.innerHTML += content; teamGrid.appendChild(c);
+            let roleName = 'No Role';
+            if (m.roleId) {
+                const role = State.assignments.find(r => r.id === m.roleId);
+                if (role) roleName = role.name;
+            }
+
+            c.innerHTML = `
+                <div class="member-header" style="display:flex; justify-content:space-between; align-items:center;">
+                    <span>${m.name}</span>
+                    <span style="font-size:0.75rem; color:var(--accent); font-weight:normal; text-transform:uppercase;">${roleName}</span>
+                </div>`;
+            
+            let content = `<div class="member-card-body" style="padding: 1rem;">`;
+            
+            // Absences Section (if any)
+            if (m.absences && m.absences.length > 0) {
+                content += `<div style="margin-bottom:1rem;">
+                    <div style="font-size:0.7rem; color:var(--accent); text-transform:uppercase; font-weight:bold; margin-bottom:5px;">Upcoming Absences</div>`;
+                m.absences.forEach(abs => {
+                    const absType = (State.settings.absences.find(x => x.id === abs.type) || {}).name || 'Absence';
+                    content += `<div style="font-size:0.8rem; color:var(--text-main); display:flex; justify-content:space-between;">
+                        <span>${absType}</span>
+                        <span style="color:var(--text-muted);">${formatDate(new Date(abs.startDate))} - ${formatDate(new Date(abs.endDate))}</span>
+                    </div>`;
+                });
+                content += `</div>`;
+            }
+
+            // Assignments Section
+            const userAss = m.assignments || m.objectives || [];
+            if (userAss.length > 0) {
+                content += `<div style="margin-bottom:1rem;">
+                    <div style="font-size:0.7rem; color:var(--accent); text-transform:uppercase; font-weight:bold; margin-bottom:5px;">Assignments</div>`;
+                
+                userAss.forEach(ass => {
+                    const taskId = ass.taskId || ass.assignment; 
+                    const task = State.assignments.find(a => a.id === taskId || a.name === taskId);
+                    const taskName = task ? task.name : taskId;
+                    const color = task ? task.color : 'var(--accent)';
+                    
+                    const startY = ass.startYear || ass.year || '';
+                    const startP = ass.start ? `P${ass.start.toString().padStart(2, '0')}` : '...';
+                    const endY = ass.endYear || ass.year || '';
+                    const endP = ass.end ? `P${ass.end.toString().padStart(2, '0')}` : '...';
+                    
+                    content += `
+                        <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; margin-bottom:4px;">
+                            <span style="background:${color}; color:#fff; padding:1px 6px; border-radius:4px; font-size:0.7rem; min-width:85px; text-align:center;">${startY} ${startP} - ${endY} ${endP}</span>
+                            <span style="color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1;">${taskName}</span>
+                            <span style="color:var(--text-muted); font-size:0.75rem; font-weight:bold;">${ass.load}%</span>
+                        </div>`;
+                });
+                content += `</div>`;
+            }
+
+            if (m.notes) {
+                content += `<div style="margin-top:0.5rem; padding-top:0.5rem; border-top:1px solid rgba(255,255,255,0.05); font-size:0.8rem; color:var(--text-muted); font-style:italic;">${m.notes}</div>`;
+            }
+
+            content += `</div>`;
+            c.innerHTML += content; 
+            teamGrid.appendChild(c);
         });
+    }
     }
 };
 export const ZoomManager = {
@@ -3108,43 +3134,35 @@ export const TrackerManager = {
 };
 
 export const UserManager = {
-    addObjectiveRow: (data = null) => {
-        const container = getEl('objectivesContainer');
+    addAssignmentRow: (data = null) => {
+        const container = getEl('assignmentsContainer');
         if (!container) return;
-        if (container.children.length >= 24) return App.alert("Max 24 objectives.");
+        if (container.children.length >= 24) return App.alert("Max 24 assignments.");
 
         const div = document.createElement('div');
-        div.className = 'objective-row';
+        div.className = 'assignment-row';
         div.style.display = 'flex';
         div.style.gap = '5px';
         div.style.alignItems = 'center';
+        div.style.marginBottom = '5px';
         
-        // Assignment Select
-        const assignSel = document.createElement('select');
-        assignSel.className = 'obj-assign';
-        assignSel.style.flex = '3';
-        assignSel.style.minWidth = '100px';
-        assignSel.style.background = 'var(--input-bg)';
-        assignSel.style.color = '#fff';
-        assignSel.style.border = '1px solid var(--border)';
-        assignSel.style.padding = '4px';
+        // Task Select (Filtered by Role)
+        const taskSel = document.createElement('select');
+        taskSel.className = 'assign-task';
+        taskSel.style.flex = '3';
+        taskSel.style.minWidth = '100px';
+        taskSel.style.background = 'var(--input-bg)';
+        taskSel.style.color = '#fff';
+        taskSel.style.border = '1px solid var(--border)';
+        taskSel.style.padding = '4px';
         
-        const defOpt = document.createElement('option');
-        defOpt.value = ""; defOpt.innerText = "Select Assignment...";
-        assignSel.appendChild(defOpt);
-        
-        State.assignments.forEach(a => {
-            const opt = document.createElement('option');
-            opt.value = a.name;
-            opt.innerText = a.name;
-            if(data && data.assignment === a.name) opt.selected = true;
-            assignSel.appendChild(opt);
-        });
+        // Initial populate based on current role selection
+        UserManager.populateTaskDropdown(taskSel, data ? data.taskId : null);
 
         // Allocation %
         const loadIn = document.createElement('input');
         loadIn.type = 'number';
-        loadIn.className = 'obj-load';
+        loadIn.className = 'assign-load';
         loadIn.placeholder = '%';
         loadIn.style.width = '50px';
         loadIn.style.background = 'var(--input-bg)';
@@ -3152,7 +3170,7 @@ export const UserManager = {
         loadIn.style.border = '1px solid var(--border)';
         loadIn.style.padding = '4px';
         loadIn.style.textAlign = 'center';
-        loadIn.value = data ? data.load : 100;
+        loadIn.value = data ? (data.load || 100) : 100;
 
         // Year Helpers
         const createYearSel = (val) => {
@@ -3163,44 +3181,45 @@ export const UserManager = {
             s.style.border = '1px solid var(--border)';
             s.style.padding = '4px';
             const fy = getFiscalYear();
-            for(let i=fy-1; i<=fy+2; i++) {
-                const opt = document.createElement('option');
-                opt.value = i; opt.innerText = i;
-                if(val && parseInt(val) === i) opt.selected = true;
-                else if(!val && i === fy) opt.selected = true;
-                s.appendChild(opt);
-            }
+            const years = [fy-1, fy, fy+1, fy+2];
+            years.forEach(y => {
+                const opt = new Option(y, y);
+                if(val && parseInt(val) === y) opt.selected = true;
+                else if(!val && y === fy) opt.selected = true;
+                s.add(opt);
+            });
             return s;
         };
 
         // Period Selects
         const createPerSel = (val) => {
             const s = document.createElement('select');
-            s.className = 'obj-period';
             s.style.flex = '1';
             s.style.background = 'var(--input-bg)';
             s.style.color = '#fff';
             s.style.border = '1px solid var(--border)';
             s.style.padding = '4px';
+            const cp = getCurrentPeriod();
             for(let i=1; i<=12; i++) {
                 const opt = document.createElement('option');
                 opt.value = i;
                 opt.innerText = getPeriodLabel(i).split(' ')[0]; // Just P01
                 if(val && parseInt(val) === i) opt.selected = true;
+                else if(!val && i === cp) opt.selected = true;
                 s.appendChild(opt);
             }
             return s;
         };
 
-        const startYearSel = createYearSel(data ? data.startYear : null);
-        startYearSel.classList.add('obj-start-year');
-        const startSel = createPerSel(data ? data.start : getCurrentPeriod());
-        startSel.classList.add('obj-start');
+        const startYearSel = createYearSel(data ? (data.startYear || data.year) : null);
+        startYearSel.classList.add('assign-start-year');
+        const startSel = createPerSel(data ? data.start : null);
+        startSel.classList.add('assign-start');
 
-        const endYearSel = createYearSel(data ? data.endYear : null);
-        endYearSel.classList.add('obj-end-year');
-        const endSel = createPerSel(data ? data.end : getCurrentPeriod());
-        endSel.classList.add('obj-end');
+        const endYearSel = createYearSel(data ? (data.endYear || data.year) : null);
+        endYearSel.classList.add('assign-end-year');
+        const endSel = createPerSel(data ? data.end : null);
+        endSel.classList.add('assign-end');
 
         const delBtn = document.createElement('button');
         delBtn.innerHTML = '&times;';
@@ -3210,7 +3229,7 @@ export const UserManager = {
         delBtn.style.padding = '0 8px';
         delBtn.onclick = () => div.remove();
 
-        div.appendChild(assignSel);
+        div.appendChild(taskSel);
         div.appendChild(loadIn);
         div.appendChild(startYearSel);
         div.appendChild(startSel);
@@ -3222,6 +3241,29 @@ export const UserManager = {
         container.appendChild(div);
     },
 
+    populateTaskDropdown: (selectEl, selectedTaskId = null) => {
+        const roleId = getEl('mRole').value;
+        selectEl.innerHTML = '<option value="">Select Task...</option>';
+        if (!roleId) return;
+
+        State.assignments.forEach(a => {
+            if (a.class === 'Task' && a.roleId === roleId) {
+                const opt = new Option(a.name, a.id);
+                if (a.id === selectedTaskId) opt.selected = true;
+                selectEl.add(opt);
+            }
+        });
+    },
+
+    onRoleChange: () => {
+        // When role changes, refresh all task dropdowns in assignments
+        const selects = document.querySelectorAll('.assign-task');
+        selects.forEach(sel => {
+            const currentVal = sel.value;
+            UserManager.populateTaskDropdown(sel, currentVal);
+        });
+    },
+
     addAbsenceRow: (data = null) => {
         const container = getEl('mAbsencesContainer');
         if (!container) return;
@@ -3231,6 +3273,7 @@ export const UserManager = {
         div.style.display = 'flex';
         div.style.gap = '5px';
         div.style.alignItems = 'center';
+        div.style.marginBottom = '5px';
         
         const typeSel = document.createElement('select');
         typeSel.className = 'abs-type';
@@ -3270,15 +3313,6 @@ export const UserManager = {
         endIn.style.padding = '4px';
         endIn.value = data ? data.endDate : '';
         
-        // Date Validation: End >= Start
-        startIn.onchange = () => {
-            endIn.min = startIn.value;
-            if(endIn.value && endIn.value < startIn.value) endIn.value = startIn.value;
-        };
-        endIn.onchange = () => {
-            if(startIn.value && endIn.value < startIn.value) endIn.value = startIn.value;
-        };
-
         const delBtn = document.createElement('button');
         delBtn.innerHTML = '&times;';
         delBtn.className = 'btn btn-sm';
@@ -3301,16 +3335,23 @@ export const UserManager = {
         getEl('editIndex').value = index;
         
         const m = isEdit ? State.members[index] : {
-            name: '', title: '', email: '', engagementType: '', startDate: '', endDate: '', skills: [],
-            notes: '', absences: [],
-            lastWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}] },
-            thisWeek: { tasks: [{text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}, {text:'', isTeamSuccess:false}], load: ['N','N','N','N','N','X','X'] },
-            nextWeek: { tasks: [{text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}, {text:'', isTeamActivity:false}], load: ['N','N','N','N','N','X','X'] },
-            objectives: []
+            name: '', roleId: '', email: '', engagementType: '', startDate: '', endDate: '',
+            notes: '', absences: [], assignments: []
         };
 
         getEl('mName').value = m.name || '';
-        getEl('mTitle').value = m.title || '';
+        
+        // Populate Roles from actual defined roles in assignments
+        const roleSel = getEl('mRole');
+        roleSel.innerHTML = '<option value="">Select Role...</option>';
+        State.assignments.forEach(a => {
+            if (a.class === 'Role') {
+                const opt = new Option(a.name, a.id);
+                if (a.id === m.roleId) opt.selected = true;
+                roleSel.add(opt);
+            }
+        });
+
         getEl('mEmail').value = m.email || '';
         getEl('mEngagement').value = m.engagementType || '';
         
@@ -3322,61 +3363,13 @@ export const UserManager = {
         };
         getEl('mStartDate').value = safeDate(m.startDate);
         getEl('mEndDate').value = safeDate(m.endDate);
-
-        // Populate Skills
-        const skillsContainer = getEl('mSkillsContainer');
-        if (skillsContainer) {
-            skillsContainer.innerHTML = '';
-            if (!State.skills || State.skills.length === 0) {
-                skillsContainer.innerHTML = '<span style="color:var(--text-muted); font-style:italic; font-size:0.8rem;">No skills defined.</span>';
-            } else {
-                const assignedSkills = (m.skills || []).map(s => typeof s === 'object' ? s.skillId : s); // Handle legacy {skillId, level} format if needed, but simplistic check for now
-                State.skills.forEach(s => {
-                    const div = document.createElement('div');
-                    // Check if skill is assigned. Handle simple ID array or object array.
-                    const isChecked = assignedSkills.includes(s.id);
-                    div.innerHTML = `
-                        <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.8rem; color:var(--text-main); cursor:pointer;">
-                            <input type="checkbox" class="user-skill-check" value="${s.id}" ${isChecked ? 'checked' : ''} style="accent-color:var(--accent);">
-                            ${s.name}
-                        </label>
-                    `;
-                    skillsContainer.appendChild(div);
-                });
-            }
-        }
-        
-        // Populate tasks
-        for(let i=1; i<=3; i++) {
-            getEl('lwTask'+i).value = m.lastWeek.tasks[i-1]?.text || '';
-            getEl('nwTask'+i).value = m.thisWeek.tasks[i-1]?.text || '';
-            getEl('fwTask'+i).value = m.nextWeek.tasks[i-1]?.text || '';
-        }
-
-        // Loads
-        const defaultLoad = ['N','N','N','N','N','X','X'];
-        const thisLoad = (m.thisWeek && m.thisWeek.load) ? [...m.thisWeek.load, ...defaultLoad.slice(m.thisWeek.load.length)] : defaultLoad;
-        const nextLoad = (m.nextWeek && m.nextWeek.load) ? [...m.nextWeek.load, ...defaultLoad.slice(m.nextWeek.load.length)] : defaultLoad;
-        
-        thisLoad.forEach((v, i) => UserManager.setLoad(i, v));
-        nextLoad.forEach((v, i) => UserManager.setFutureLoad(i, v));
-
-        // On Call
-        const defaultOnCall = [false, false, false, false, false, false, false];
-        const thisOnCall = (m.thisWeek && m.thisWeek.onCall) ? [...m.thisWeek.onCall, ...defaultOnCall.slice(m.thisWeek.onCall.length)] : defaultOnCall;
-        const nextOnCall = (m.nextWeek && m.nextWeek.onCall) ? [...m.nextWeek.onCall, ...defaultOnCall.slice(m.nextWeek.onCall.length)] : defaultOnCall;
-
-        thisOnCall.forEach((v, i) => { const el = getEl('nwOc'+i); if(el) el.checked = v; });
-        nextOnCall.forEach((v, i) => { const el = getEl('fwOc'+i); if(el) el.checked = v; });
-
         getEl('mNotes').value = m.notes || '';
 
-        // Objectives
-        const objContainer = getEl('objectivesContainer');
-        if(objContainer) objContainer.innerHTML = '';
-        if(m.objectives && m.objectives.length > 0) {
-            m.objectives.forEach(o => UserManager.addObjectiveRow(o));
-        }
+        // Assignments
+        const assContainer = getEl('assignmentsContainer');
+        if(assContainer) assContainer.innerHTML = '';
+        const userAss = m.assignments || m.objectives || []; 
+        userAss.forEach(a => UserManager.addAssignmentRow(a));
 
         // Absences
         const absContainer = getEl('mAbsencesContainer');
@@ -3388,185 +3381,82 @@ export const UserManager = {
         getEl('deleteBtn').style.display = isEdit ? 'block' : 'none';
         ModalManager.openModal('userModal');
     },
-    setStatus: (status) => {
-        getEl('lwStatus').value = status;
-        document.querySelectorAll('.status-option').forEach(el => {
-            el.classList.toggle('selected', el.classList.contains('so-' + status));
-        });
-    },
-    setLoad: (day, val) => {
-        getEl('nw' + day).value = val;
-        // Search globally for all load select rows
-        const rows = document.querySelectorAll('.load-select-row');
-        if (rows.length > 0) {
-            const boxes = rows[0].querySelectorAll('.ls-box');
-            if (boxes[day]) {
-                boxes[day].querySelectorAll('.w-pill').forEach(p => {
-                    const text = p.innerText;
-                    const expected = (val === 'N' ? 'M' : (val === 'L' ? 'L' : (val === 'R' ? 'H' : 'A')));
-                    p.classList.toggle('selected', text === expected);
-                });
-            }
-        }
-    },
-    setFutureLoad: (day, val) => {
-        getEl('fw' + day).value = val;
-        const rows = document.querySelectorAll('.load-select-row');
-        if (rows.length > 1) {
-            const boxes = rows[1].querySelectorAll('.ls-box');
-            if (boxes[day]) {
-                boxes[day].querySelectorAll('.w-pill').forEach(p => {
-                    const text = p.innerText;
-                    const expected = (val === 'N' ? 'M' : (val === 'L' ? 'L' : (val === 'R' ? 'H' : 'A')));
-                    p.classList.toggle('selected', text === expected);
-                });
-            }
-        }
-    },
+
     submitUser: () => {
-        const idx = parseInt(getEl('editIndex').value);
+        const index = parseInt(getEl('editIndex').value);
         const name = getEl('mName').value.trim();
-        if(!name) return App.alert("Name is required");
+        if (!name) return App.alert("Full Name is required.");
 
-        // Scrape Objectives
-        const objectives = [];
-        const objContainer = getEl('objectivesContainer');
-        let dateError = false;
-        if(objContainer) {
-            objContainer.querySelectorAll('.objective-row').forEach(row => {
-                const assign = row.querySelector('.obj-assign').value;
-                const load = parseInt(row.querySelector('.obj-load').value) || 0;
-                const startYear = parseInt(row.querySelector('.obj-start-year').value);
-                const start = parseInt(row.querySelector('.obj-start').value);
-                const endYear = parseInt(row.querySelector('.obj-end-year').value);
-                const end = parseInt(row.querySelector('.obj-end').value);
-                
-                // Validate End >= Start
-                const startScore = startYear * 100 + start;
-                const endScore = endYear * 100 + end;
-                if (endScore < startScore) {
-                    dateError = true;
-                }
+        const roleId = getEl('mRole').value;
+        if (!roleId) return App.alert("Please select a Role.");
 
-                if (assign) objectives.push({ assignment: assign, load, start, startYear, end, endYear });
-            });
-        }
-
-        if (dateError) return App.alert("Error: End period must be after Start period.");
-
-        // Scrape Absences
-        const absences = [];
-        const absContainer = getEl('mAbsencesContainer');
-        if(absContainer) {
-            absContainer.querySelectorAll('.absence-row').forEach(row => {
-                const type = row.querySelector('.abs-type').value;
-                const startDate = row.querySelector('.abs-start').value;
-                const endDate = row.querySelector('.abs-end').value;
-                if(type && startDate) {
-                    // Basic validation: End >= Start (already enforced by UI but good to double check)
-                    if(endDate && endDate < startDate) return; // Skip invalid
-                    absences.push({ type, startDate, endDate });
-                }
-            });
-        }
-
-        // Scrape Skills
-        const selectedSkills = [];
-        document.querySelectorAll('.user-skill-check:checked').forEach(cb => selectedSkills.push(cb.value));
-
-        const member = {
+        const newUser = {
+            id: index === -1 ? generateId('uid') : State.members[index].id,
             name,
-            title: getEl('mTitle').value.trim(),
+            roleId,
             email: getEl('mEmail').value.trim(),
             engagementType: getEl('mEngagement').value,
             startDate: getEl('mStartDate').value,
             endDate: getEl('mEndDate').value,
-            skills: selectedSkills,
             notes: getEl('mNotes').value.trim(),
-            absences: absences,
-            lastWeek: {
-                onCall: (idx > -1 && State.members[idx].lastWeek?.onCall) ? State.members[idx].lastWeek.onCall : [],
-                tasks: [
-                    { text: getEl('lwTask1').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[0]?.isTeamSuccess || false) : false },
-                    { text: getEl('lwTask2').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[1]?.isTeamSuccess || false) : false },
-                    { text: getEl('lwTask3').value, isTeamSuccess: idx > -1 ? (State.members[idx].lastWeek?.tasks[2]?.isTeamSuccess || false) : false }
-                ]
-            },
-            thisWeek: {
-                load: [
-                    getEl('nw0').value, getEl('nw1').value, getEl('nw2').value, getEl('nw3').value, getEl('nw4').value,
-                    getEl('nw5').value, getEl('nw6').value
-                ],
-                onCall: [
-                    getEl('nwOc0').checked, getEl('nwOc1').checked, getEl('nwOc2').checked, getEl('nwOc3').checked, getEl('nwOc4').checked,
-                    getEl('nwOc5').checked, getEl('nwOc6').checked
-                ],
-                tasks: [
-                    { text: getEl('nwTask1').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[0]?.isTeamSuccess || false) : false },
-                    { text: getEl('nwTask2').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[1]?.isTeamSuccess || false) : false },
-                    { text: getEl('nwTask3').value, isTeamSuccess: idx > -1 ? (State.members[idx].thisWeek?.tasks[2]?.isTeamSuccess || false) : false }
-                ]
-            },
-            nextWeek: {
-                load: [
-                    getEl('fw0').value, getEl('fw1').value, getEl('fw2').value, getEl('fw3').value, getEl('fw4').value,
-                    getEl('fw5').value, getEl('fw6').value
-                ],
-                onCall: [
-                    getEl('fwOc0').checked, getEl('fwOc1').checked, getEl('fwOc2').checked, getEl('fwOc3').checked, getEl('fwOc4').checked,
-                    getEl('fwOc5').checked, getEl('fwOc6').checked
-                ],
-                tasks: [
-                    { text: getEl('fwTask1').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[0]?.isTeamActivity || false) : false },
-                    { text: getEl('fwTask2').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[1]?.isTeamActivity || false) : false },
-                    { text: getEl('fwTask3').value, isTeamActivity: idx > -1 ? (State.members[idx].nextWeek?.tasks[2]?.isTeamActivity || false) : false }
-                ]
-            },
-            objectives: objectives
+            absences: [],
+            assignments: [],
+            // Keep legacy structures to prevent dashboard errors
+            skills: [],
+            lastWeek: { tasks: [] },
+            thisWeek: { tasks: [], load: ['N','N','N','N','N','X','X'] },
+            nextWeek: { tasks: [], load: ['N','N','N','N','N','X','X'] }
         };
 
-        if(idx === -1) {
-            member.id = generateId('uid');
-            State.members.push(member);
+        // Scrape Absences
+        document.querySelectorAll('.absence-row').forEach(row => {
+            const type = row.querySelector('.abs-type').value;
+            const startDate = row.querySelector('.abs-start').value;
+            const endDate = row.querySelector('.abs-end').value;
+            if (type) newUser.absences.push({ type, startDate, endDate });
+        });
+
+        // Scrape Assignments
+        document.querySelectorAll('.assignment-row').forEach(row => {
+            const taskId = row.querySelector('.assign-task').value;
+            const loadIn = row.querySelector('.assign-load');
+            const load = loadIn ? (parseInt(loadIn.value) || 0) : 0;
+            const startYear = parseInt(row.querySelector('.assign-start-year').value);
+            const start = parseInt(row.querySelector('.assign-start').value);
+            const endYear = parseInt(row.querySelector('.assign-end-year').value);
+            const end = parseInt(row.querySelector('.assign-end').value);
+            if (taskId) newUser.assignments.push({ taskId, load, startYear, start, endYear, end });
+        });
+
+        if (index === -1) {
+            State.members.push(newUser);
         } else {
-            member.id = State.members[idx].id;
-            State.members[idx] = member;
+            State.members[index] = newUser;
         }
 
         ModalManager.closeModal('userModal');
-        renderBoard();
+        App.renderMembers();
     },
+
     deleteUser: () => {
-        const idx = parseInt(getEl('editIndex').value);
-        App.confirm("Delete this user?", () => {
-            State.members.splice(idx, 1);
-            ModalManager.closeModal('userModal');
-            renderBoard();
-        });
+        const index = parseInt(getEl('editIndex').value);
+        if (index > -1) {
+            App.confirm(`Are you sure you want to delete ${State.members[index].name}?`, () => {
+                State.members.splice(index, 1);
+                ModalManager.closeModal('userModal');
+                App.renderMembers();
+            });
+        }
     },
-    toggleSuccess: (mIdx, tIdx) => {
-        State.members[mIdx].lastWeek.tasks[tIdx].isTeamSuccess = !State.members[mIdx].lastWeek.tasks[tIdx].isTeamSuccess;
-        renderBoard();
-    },
-    toggleActivity: (mIdx, tIdx) => {
-        State.members[mIdx].thisWeek.tasks[tIdx].isTeamSuccess = !State.members[mIdx].thisWeek.tasks[tIdx].isTeamSuccess;
-        renderBoard();
-    },
-    toggleFuture: (mIdx, tIdx) => {
-        State.members[mIdx].nextWeek.tasks[tIdx].isTeamActivity = !State.members[mIdx].nextWeek.tasks[tIdx].isTeamActivity;
-        renderBoard();
-    },
-    resetSelections: (type) => {
-        State.members.forEach(m => {
-            if(type === 'success') {
-                m.lastWeek.tasks.forEach(t => t.isTeamSuccess = false);
-                m.thisWeek.tasks.forEach(t => t.isTeamSuccess = false);
-            } else {
-                m.nextWeek.tasks.forEach(t => t.isTeamActivity = false);
-            }
-        });
-        renderBoard();
-    }
+
+    // Legacy/Dummy methods to prevent errors
+    setLoad: () => {},
+    setFutureLoad: () => {},
+    toggleSuccess: () => {},
+    toggleActivity: () => {},
+    toggleFuture: () => {},
+    resetSelections: () => {},
+    setStatus: () => {}
 };
 
 export const OverviewManager = {
