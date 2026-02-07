@@ -4504,13 +4504,15 @@ export const TaskManager = {
         getEl('tskName').value = a.name;
         getEl('tskDesc').value = a.description;
 
-        // Populate Roles
+        // Populate Roles from actual defined roles in assignments
         const roleSel = getEl('tskRole');
         roleSel.innerHTML = '<option value="">Select Role...</option>';
-        State.settings.roles.forEach(r => {
-            const opt = new Option(r.name, r.id);
-            if (r.id === a.roleId) opt.selected = true;
-            roleSel.add(opt);
+        State.assignments.forEach(r => {
+            if (r.class === 'Role') {
+                const opt = new Option(r.name, r.id);
+                if (r.id === a.roleId) opt.selected = true;
+                roleSel.add(opt);
+            }
         });
 
         // Date Mode
