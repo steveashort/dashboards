@@ -1191,7 +1191,7 @@ export const renderBoard = () => {
                 statsHTML = `<div class="tracker-stats">${completed} / ${total} ${t.metric || ''}</div>`;
             } else if (renderType === 'webpage') {
                 visualHTML = `<iframe src="${t.url}" style="width:100%; height:100%; border:none; background:#fff;" sandbox="allow-scripts allow-same-origin"></iframe>`;
-                statsHTML = '';
+                statsHTML = `<a href="${t.url}" target="_blank" style="color:var(--accent); font-size:0.75rem; text-decoration:none;">&#128279; Open in New Window</a>`;
             } else if (renderType === 'section') {
                 visualHTML = '';
                 statsHTML = '';
@@ -1571,7 +1571,14 @@ export const ZoomManager = {
                 const orient = t.orientation || 'horizontal';
                 content = `<div style="width:100%; padding:40px;">${Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 300, orient)}</div>`;
             } else if (renderType === 'webpage') {
-                content = `<iframe src="${t.url}" style="width:100%; height:100%; border:none; background:#fff;" sandbox="allow-scripts allow-same-origin"></iframe>`;
+                content = `
+                    <div style="display:flex; flex-direction:column; height:100%; width:100%;">
+                        <div style="padding:10px; background:rgba(0,0,0,0.2); border-bottom:1px solid #444; display:flex; justify-content:space-between; align-items:center;">
+                            <span style="font-size:0.8rem; color:#aaa;">Target: ${t.url}</span>
+                            <a href="${t.url}" target="_blank" class="btn btn-sm">Open in New Window</a>
+                        </div>
+                        <iframe src="${t.url}" style="flex-grow:1; border:none; background:#fff;" sandbox="allow-scripts allow-same-origin"></iframe>
+                    </div>`;
             } else if (renderType === 'planner') {
                 const pType = t.plannerType || 'Role';
                 let itemsToRender = [];
