@@ -1314,7 +1314,6 @@ export const renderBoard = () => {
             teamGrid.appendChild(c);
         });
     }
-    }
 };
 export const ZoomManager = {
     currentTrackerIndex: -1,
