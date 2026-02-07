@@ -3337,11 +3337,14 @@ export const UserManager = {
         if (!roleId) return;
 
         State.assignments.forEach(a => {
-            if (a.class === 'Task' && a.roleId === roleId) {
-                const label = a.onCall ? `${a.name} (On Call)` : a.name;
-                const opt = new Option(label, a.id);
-                if (a.id === selectedTaskId) opt.selected = true;
-                selectEl.add(opt);
+            if (a.class === 'Task') {
+                const currentRoleIds = a.roleIds || (a.roleId ? [a.roleId] : []);
+                if (currentRoleIds.includes(roleId)) {
+                    const label = a.onCall ? `${a.name} (On Call)` : a.name;
+                    const opt = new Option(label, a.id);
+                    if (a.id === selectedTaskId) opt.selected = true;
+                    selectEl.add(opt);
+                }
             }
         });
     },
@@ -4227,6 +4230,16 @@ export const RoleManager = {
                     }
                 });
 
+                // Remove role from all tasks that have it in roleIds
+                State.assignments.forEach(a => {
+                    if (a.class === 'Task' && a.roleIds) {
+                        a.roleIds = a.roleIds.filter(rid => rid !== role.id && rid !== role.name);
+                    }
+                    if (a.class === 'Task' && a.roleId === role.id) {
+                        a.roleId = ''; // Compatibility
+                    }
+                });
+
                 State.assignments.splice(index, 1);
                 ModalManager.closeModal('roleModal');
                 RoleManager.render();
@@ -4475,15 +4488,19 @@ export const TaskManager = {
             card.style.borderLeft = `4px solid ${a.color || '#00e676'}`;
             card.onclick = () => TaskManager.openModal(index);
 
-            let roleName = 'No Role';
-            if (a.roleId) {
-                const role = State.settings.roles.find(r => r.id === a.roleId);
-                if (role) roleName = role.name;
+            let roleNames = 'No Role';
+            const currentRoleIds = a.roleIds || (a.roleId ? [a.roleId] : []);
+            if (currentRoleIds.length > 0) {
+                const names = currentRoleIds.map(rid => {
+                    const role = State.assignments.find(r => r.id === rid);
+                    return role ? role.name : rid;
+                });
+                roleNames = names.join(', ');
             }
 
             let html = `<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
                             <h4 style="margin:0; font-size:1rem; color:var(--text-main);">${a.name}</h4>
-                            <span style="font-size:0.7rem; color:var(--accent); font-weight:bold; text-transform:uppercase;">${roleName}</span>
+                            <span style="font-size:0.7rem; color:var(--accent); font-weight:bold; text-transform:uppercase; text-align:right; margin-left:10px;">${roleNames}</span>
                         </div>`;
             
             if (a.description) {
@@ -4527,23 +4544,31 @@ export const TaskManager = {
         getEl('taskModalTitle').innerText = index === -1 ? 'Add Task' : 'Edit Task';
         getEl('editTaskIndex').value = index;
         
-        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#00e676', roleId: '', dateMode: 'date', onCall: false };
+        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#00e676', roleIds: [], dateMode: 'date', onCall: false };
         
         getEl('tskName').value = a.name;
-        getEl('tskRole').value = a.roleId;
         getEl('tskDesc').value = a.description;
         getEl('tskOnCall').checked = !!a.onCall;
 
         // Populate Roles from actual defined roles in assignments
-        const roleSel = getEl('tskRole');
-        roleSel.innerHTML = '<option value="">Select Role...</option>';
-        State.assignments.forEach(r => {
-            if (r.class === 'Role') {
-                const opt = new Option(r.name, r.id);
-                if (r.id === a.roleId) opt.selected = true;
-                roleSel.add(opt);
-            }
-        });
+        const rolesContainer = getEl('tskRolesContainer');
+        if (rolesContainer) {
+            rolesContainer.innerHTML = '';
+            const currentRoleIds = a.roleIds || (a.roleId ? [a.roleId] : []);
+            State.assignments.forEach(r => {
+                if (r.class === 'Role') {
+                    const div = document.createElement('div');
+                    const isChecked = currentRoleIds.includes(r.id);
+                    div.innerHTML = `
+                        <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.8rem; color:var(--text-main); cursor:pointer;">
+                            <input type="checkbox" class="task-role-check" value="${r.id}" ${isChecked ? 'checked' : ''} style="accent-color:var(--accent);">
+                            ${r.name}
+                        </label>
+                    `;
+                    rolesContainer.appendChild(div);
+                }
+            });
+        }
 
         // Date Mode
         const mode = a.dateMode || 'date';
@@ -4600,8 +4625,9 @@ export const TaskManager = {
         const name = getEl('tskName').value.trim();
         if(!name) return App.alert("Task Name is required");
         
-        const roleId = getEl('tskRole').value;
-        if(!roleId) return App.alert("Please select a Role for this task.");
+        const roleIds = [];
+        document.querySelectorAll('.task-role-check:checked').forEach(cb => roleIds.push(cb.value));
+        if(roleIds.length === 0) return App.alert("Please select at least one Role for this task.");
 
         const dateMode = document.querySelector('input[name="tskDateMode"]:checked').value;
         let startDate = '', endDate = '', startYear = null, startPeriod = null, endYear = null, endPeriod = null;
@@ -4642,7 +4668,7 @@ export const TaskManager = {
         
         const newAssignment = {
             name,
-            roleId,
+            roleIds,
             description: getEl('tskDesc').value.trim(),
             class: 'Task',
             priority: priorityRad ? priorityRad.value : 'Med',

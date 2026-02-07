@@ -1104,8 +1104,10 @@
                     <input type="text" id="tskName" placeholder="e.g. Update Documentation">
                 </div>
                 <div class="input-group">
-                    <label>Assigned Role</label>
-                    <select id="tskRole" style="width:100%; padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border);"></select>
+                    <label>Assigned Roles</label>
+                    <div id="tskRolesContainer" style="max-height: 120px; overflow-y: auto; border: 1px solid var(--border); padding: 10px; border-radius: 4px; background: rgba(0,0,0,0.1); display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 5px;">
+                        <!-- Role checkboxes injected by JS -->
+                    </div>
                 </div>
                 <div class="input-group">
                     <label>Description</label>
