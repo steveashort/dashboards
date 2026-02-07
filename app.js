@@ -1694,7 +1694,54 @@ export const ZoomManager = {
                     }
                 }
                 const range = t.range || 3;
-                content = `<div style="width:100%; height:100%; overflow:auto; padding:20px;">${Visuals.createResourcePlannerSVG(itemsToRender, range, '4x4')}</div>`;
+                content = '<div id="zoomChartContainer" style="width:100%; height:100%;"></div>';
+                renderAction = () => {
+                    const container = document.getElementById('zoomChartContainer');
+                    if (!container) return;
+
+                    const groups = new vis.DataSet();
+                    const items = new vis.DataSet();
+                    const groupNames = [...new Set(itemsToRender.map(item => item.name))].sort();
+                    
+                    groupNames.forEach((name, idx) => {
+                        groups.add({ id: idx, content: name });
+                    });
+
+                    itemsToRender.forEach((item, itemIdx) => {
+                        const groupId = groupNames.indexOf(item.name);
+                        const sDate = item.startDate ? new Date(item.startDate) : new Date();
+                        const eDate = item.endDate ? new Date(item.endDate) : new Date(sDate.getTime() + 30 * 24 * 60 * 60 * 1000);
+                        
+                        items.add({
+                            id: itemIdx,
+                            group: groupId,
+                            content: item.description || 'Assigned',
+                            start: sDate,
+                            end: eDate,
+                            title: `Priority: ${item.priority || 'N/A'}`,
+                            style: `background-color: ${item.color || '#009688'}; color: ${item.onCall ? '#000' : '#fff'}; border: none; font-size: 12px; font-weight: bold;`
+                        });
+                    });
+
+                    const today = new Date();
+                    const end = new Date(today);
+                    end.setMonth(today.getMonth() + range);
+
+                    const options = {
+                        start: today,
+                        end: end,
+                        stack: true,
+                        horizontalScroll: true,
+                        zoomKey: 'ctrlKey',
+                        orientation: 'top',
+                        margin: { item: 10, axis: 20 },
+                        template: function (item) {
+                            return `<div style="padding: 2px 5px;">${item.content}</div>`;
+                        }
+                    };
+
+                    new vis.Timeline(container, items, groups, options);
+                };
             }
     
             const bodyEl = getEl('zoomBody');
