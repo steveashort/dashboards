@@ -1349,7 +1349,13 @@ export const ZoomManager = {
                 if(el) {
                     const apexSeries = series.map(s => ({ name: s.name, data: s.values }));
                     const colors = series.map(s => s.color);
-                    renderChart(el, style, { labels, series: apexSeries }, { colors, chart: { toolbar: { show: true }, zoom: { enabled: true } } });
+                    renderChart(el, style, { labels, series: apexSeries }, { 
+                        colors, 
+                        chart: { 
+                            toolbar: { show: true, autoSelected: 'pan' }, 
+                            zoom: { enabled: true } 
+                        } 
+                    });
                 }
             };
         } else if (renderType === 'counter') {

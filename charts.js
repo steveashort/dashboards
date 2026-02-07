@@ -59,6 +59,7 @@ export const getApexConfig = (type, data, options = {}) => {
             type: type,
             background: 'transparent',
             toolbar: { show: false },
+            zoom: { enabled: false },
             animations: { enabled: false },
             height: '100%',
             width: '100%'
