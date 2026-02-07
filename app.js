@@ -3353,6 +3353,7 @@ export const UserManager = {
             notes: getEl('mNotes').value.trim(),
             absences: [],
             assignments: [],
+            objectives: [],
             // Keep legacy structures to prevent dashboard errors
             skills: [],
             lastWeek: { tasks: [] },
@@ -3442,18 +3443,18 @@ export const AssignmentManager = {
         // Map assignments to users
         const assignmentUsers = {};
         State.members.forEach(m => {
-            if (m.objectives) {
-                m.objectives.forEach(o => {
-                    if (o.assignment) {
-                        if(!assignmentUsers[o.assignment]) assignmentUsers[o.assignment] = [];
-                        assignmentUsers[o.assignment].push(m.name);
-                    }
-                });
-            }
+            const userAss = m.assignments || m.objectives || [];
+            userAss.forEach(o => {
+                const taskId = o.taskId || o.assignment;
+                if (taskId) {
+                    if(!assignmentUsers[taskId]) assignmentUsers[taskId] = [];
+                    assignmentUsers[taskId].push(m.name);
+                }
+            });
         });
 
         State.assignments.forEach((a, i) => {
-            if (!assignmentUsers[a.name] || assignmentUsers[a.name].length === 0) return; // Skip if no user is assigned
+            if (!assignmentUsers[a.id] && !assignmentUsers[a.name]) return; // Skip if no user is assigned
 
             const card = document.createElement('div');
             card.className = 'assignment-card';
@@ -3464,7 +3465,11 @@ export const AssignmentManager = {
             card.style.position = 'relative';
             card.style.cursor = 'pointer';
             card.style.borderLeft = `4px solid ${a.color || '#03dac6'}`;
-            card.onclick = () => AssignmentManager.openModal(i);
+            card.onclick = () => {
+                if (a.class === 'Role') RoleManager.openModal(i);
+                else if (a.class === 'Task') TaskManager.openModal(i);
+                else if (a.class === 'Event' || a.class === 'Project') EventManager.openModal(i);
+            };
 
             let html = `<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
                             <h4 style="margin:0; font-size:1rem; color:var(--text-main);">${a.name}</h4>
@@ -3476,7 +3481,7 @@ export const AssignmentManager = {
             }
 
             // List Users
-            const users = assignmentUsers[a.name];
+            const users = assignmentUsers[a.id] || assignmentUsers[a.name] || [];
             html += `<div style="margin-bottom:0.8rem; border-top:1px solid rgba(255,255,255,0.1); padding-top:5px;">
                         <div style="font-size:0.7rem; color:var(--text-muted); margin-bottom:2px;">Assigned:</div>
                         <div style="font-size:0.8rem; color:var(--text-main); line-height:1.2;">${users.join(', ')}</div>
@@ -3485,6 +3490,20 @@ export const AssignmentManager = {
             html += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#888;">`;
             
             let dateText = "Ongoing";
+            if (a.startDate || a.endDate) {
+                dateText = `${a.startDate ? formatDate(new Date(a.startDate)) : '...'} - ${a.endDate ? formatDate(new Date(a.endDate)) : '...'}`;
+            }
+            html += `<span>${dateText}</span>`;
+            
+            const pColor = a.priority === 'High' ? '#ff1744' : (a.priority === 'Med' ? '#ffb300' : '#00e676');
+            html += `<span style="color:${pColor}; font-weight:bold;">${a.priority}</span>`;
+            
+            html += `</div>`;
+            
+            card.innerHTML = html;
+            grid.appendChild(card);
+        });
+    },
             if (a.startDate || a.endDate) {
                 dateText = `${a.startDate ? formatDate(new Date(a.startDate)) : '...'} - ${a.endDate ? formatDate(new Date(a.endDate)) : '...'}`;
             }

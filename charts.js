@@ -655,25 +655,28 @@ export const Visuals = {
 
         // Helper: Convert Obj/Absence to Start/End Dates
         const getDatesForObj = (obj) => {
-            if (obj.isAbsence) {
-                // Absence has specific dates
-                return { start: new Date(obj.startDate), end: new Date(obj.endDate) };
+            if (obj.isAbsence || obj.startDate || obj.endDate) {
+                // Specific dates provided (Absence or Task-inherited)
+                const s = obj.startDate ? new Date(obj.startDate) : new Date(0);
+                const e = obj.endDate ? new Date(obj.endDate) : new Date(8640000000000000);
+                return { start: s, end: e };
             } else {
                 // Objective uses Period/Year. Convert to Date range.
                 // Start: 1st of Start Period
-                const s = getDateFromPeriod(obj.start, obj.startYear || currentY);
+                const s = getDateFromPeriod(obj.start || 1, obj.startYear || currentY);
                 // End: Last day of End Period
-                // Start of (End Period + 1)
-                let nextP_raw = obj.end + 1;
+                let endP = obj.end || 12;
+                let endY = obj.endYear || currentY;
+                let nextP_raw = endP + 1;
                 let nextP = ((nextP_raw - 1) % 12) + 1;
                 let nextY_offset = Math.floor((nextP_raw - 1) / 12);
-                let nextY = (obj.endYear || currentY) + nextY_offset;
+                let nextY = endY + nextY_offset;
                 const e = getDateFromPeriod(nextP, nextY); // Exclusive end
                 return { start: s, end: e };
             }
         };
 
-        const processItem = (item, memberName, assignmentName) => {
+        const processItem = (item, memberName, assignmentName, assignmentId = null) => {
             const dates = getDatesForObj(item);
             // Check overlap with timeline
             if (dates.end <= timelineStart || dates.start >= timelineEnd) return; // No overlap
@@ -696,14 +699,27 @@ export const Visuals = {
             });
         };
 
-        // 1. Objectives
+        // 1. Assignments (Tasks)
         members.forEach(m => {
-            if (m.objectives && m.objectives.length > 0) {
-                m.objectives.forEach(obj => {
-                    if (!obj.assignment) return;
-                    processItem(obj, m.name, obj.assignment);
-                });
-            }
+            const userAss = m.assignments || m.objectives || [];
+            userAss.forEach(ass => {
+                const taskId = ass.taskId || ass.assignment;
+                const task = (allAssignments || []).find(a => a.id === taskId || a.name === taskId);
+                if (task) {
+                    // Inject task dates into the assignment item for processing
+                    const itemWithDates = { 
+                        ...ass, 
+                        startDate: task.startDate, 
+                        endDate: task.endDate,
+                        dateMode: task.dateMode,
+                        start: task.startPeriod,
+                        startYear: task.startYear,
+                        end: task.endPeriod,
+                        endYear: task.endYear
+                    };
+                    processItem(itemWithDates, m.name, task.name);
+                }
+            });
         });
 
         // 2. Absences
