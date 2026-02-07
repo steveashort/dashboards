@@ -366,9 +366,12 @@ const parseTextToHeaders = (text, startMarker, headerMarkers, endMarker) => {
 
         if (trimmed === '') continue;
 
-        // Bullet
+        // Bullet or Sub-heading
+        const isSub = trimmed.endsWith(':');
+        const item = isSub ? { isSub: true, text: trimmed } : trimmed;
+
         if (currentHeader) {
-            currentHeader.bullets.push(trimmed);
+            currentHeader.bullets.push(item);
             state = 'IN_BULLETS';
         } else {
             currentHeader = { title: trimmed, bullets: [] };
@@ -1018,11 +1021,18 @@ export const renderBoard = () => {
                     parsed.forEach(h => {
                         visualHTML += `<div class="text-parser-header">${h.title}</div>`;
                         if (h.bullets && h.bullets.length > 0) {
-                            visualHTML += '<ul class="text-parser-bullets">';
+                            visualHTML += '<div class="text-parser-bullets-container" style="text-align: left; padding-left: 5px;">';
                             h.bullets.forEach(b => {
-                                visualHTML += `<li>${b}</li>`;
+                                if (typeof b === 'object' && b.isSub) {
+                                    visualHTML += `<div style="font-weight:bold; margin-top:8px; margin-bottom:3px; color:var(--accent); font-size:0.85rem;">${b.text}</div>`;
+                                } else {
+                                    visualHTML += `<div style="display:flex; align-items:flex-start; gap:8px; font-size:0.8rem; margin-bottom:2px; color:var(--text-main);">
+                                                        <span style="color:var(--accent); flex-shrink:0;">•</span>
+                                                        <span>${b}</span>
+                                                    </div>`;
+                                }
                             });
-                            visualHTML += '</ul>';
+                            visualHTML += '</div>';
                         }
                     });
                 }
