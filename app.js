@@ -1102,45 +1102,50 @@ export const renderBoard = () => {
                     monday.setDate(today.getDate() + diff);
                     monday.setHours(0,0,0,0);
 
+                    const selectedItems = t.plannerItems || [];
+                    const showAll = selectedItems.length === 0;
+
                     State.members.forEach(m => {
                         // 1. Check legacy daily on-call grid
-                        if (m.thisWeek && m.thisWeek.onCall) {
-                            m.thisWeek.onCall.forEach((oc, idx) => {
-                                if (oc) {
-                                    const d = new Date(monday);
-                                    d.setDate(monday.getDate() + idx);
-                                    const nextD = new Date(d);
-                                    nextD.setDate(d.getDate() + 1);
-                                    itemsToRender.push({
-                                        name: m.name,
-                                        startDate: d.toISOString().split('T')[0],
-                                        endDate: nextD.toISOString().split('T')[0],
-                                        description: 'Daily On Call',
-                                        priority: 'Med',
-                                        color: '#00FFFF',
-                                        onCall: true
-                                    });
-                                }
-                            });
-                        }
-                        if (m.nextWeek && m.nextWeek.onCall) {
-                            m.nextWeek.onCall.forEach((oc, idx) => {
-                                if (oc) {
-                                    const d = new Date(monday);
-                                    d.setDate(monday.getDate() + 7 + idx);
-                                    const nextD = new Date(d);
-                                    nextD.setDate(d.getDate() + 1);
-                                    itemsToRender.push({
-                                        name: m.name,
-                                        startDate: d.toISOString().split('T')[0],
-                                        endDate: nextD.toISOString().split('T')[0],
-                                        description: 'Daily On Call',
-                                        priority: 'Med',
-                                        color: '#00FFFF',
-                                        onCall: true
-                                    });
-                                }
-                            });
+                        if (showAll || selectedItems.includes('Daily Grid (Current/Next Week)')) {
+                            if (m.thisWeek && m.thisWeek.onCall) {
+                                m.thisWeek.onCall.forEach((oc, idx) => {
+                                    if (oc) {
+                                        const d = new Date(monday);
+                                        d.setDate(monday.getDate() + idx);
+                                        const nextD = new Date(d);
+                                        nextD.setDate(d.getDate() + 1);
+                                        itemsToRender.push({
+                                            name: m.name,
+                                            startDate: d.toISOString().split('T')[0],
+                                            endDate: nextD.toISOString().split('T')[0],
+                                            description: 'Daily On Call',
+                                            priority: 'Med',
+                                            color: '#00FFFF',
+                                            onCall: true
+                                        });
+                                    }
+                                });
+                            }
+                            if (m.nextWeek && m.nextWeek.onCall) {
+                                m.nextWeek.onCall.forEach((oc, idx) => {
+                                    if (oc) {
+                                        const d = new Date(monday);
+                                        d.setDate(monday.getDate() + 7 + idx);
+                                        const nextD = new Date(d);
+                                        nextD.setDate(d.getDate() + 1);
+                                        itemsToRender.push({
+                                            name: m.name,
+                                            startDate: d.toISOString().split('T')[0],
+                                            endDate: nextD.toISOString().split('T')[0],
+                                            description: 'Daily On Call',
+                                            priority: 'Med',
+                                            color: '#00FFFF',
+                                            onCall: true
+                                        });
+                                    }
+                                });
+                            }
                         }
 
                         // 2. Check Assignments for Tasks marked as onCall
@@ -1149,15 +1154,17 @@ export const renderBoard = () => {
                             const taskId = ass.taskId || ass.assignment;
                             const task = State.assignments.find(a => a.id === taskId || a.name === taskId);
                             if (task && task.onCall) {
-                                itemsToRender.push({
-                                    name: m.name,
-                                    startDate: task.startDate,
-                                    endDate: task.endDate,
-                                    description: task.name,
-                                    priority: task.priority || 'Med',
-                                    color: '#00FFFF',
-                                    onCall: true
-                                });
+                                if (showAll || selectedItems.includes(task.name)) {
+                                    itemsToRender.push({
+                                        name: m.name,
+                                        startDate: task.startDate,
+                                        endDate: task.endDate,
+                                        description: task.name,
+                                        priority: task.priority || 'Med',
+                                        color: '#00FFFF',
+                                        onCall: true
+                                    });
+                                }
                             }
                         });
                     });
@@ -1614,45 +1621,50 @@ export const ZoomManager = {
                     monday.setDate(today.getDate() + diff);
                     monday.setHours(0,0,0,0);
 
+                    const selectedItems = t.plannerItems || [];
+                    const showAll = selectedItems.length === 0;
+
                     State.members.forEach(m => {
                         // 1. Check legacy daily on-call grid
-                        if (m.thisWeek && m.thisWeek.onCall) {
-                            m.thisWeek.onCall.forEach((oc, idx) => {
-                                if (oc) {
-                                    const d = new Date(monday);
-                                    d.setDate(monday.getDate() + idx);
-                                    const nextD = new Date(d);
-                                    nextD.setDate(d.getDate() + 1);
-                                    itemsToRender.push({
-                                        name: m.name,
-                                        startDate: d.toISOString().split('T')[0],
-                                        endDate: nextD.toISOString().split('T')[0],
-                                        description: 'Daily On Call',
-                                        priority: 'Med',
-                                        color: '#00FFFF',
-                                        onCall: true
-                                    });
-                                }
-                            });
-                        }
-                        if (m.nextWeek && m.nextWeek.onCall) {
-                            m.nextWeek.onCall.forEach((oc, idx) => {
-                                if (oc) {
-                                    const d = new Date(monday);
-                                    d.setDate(monday.getDate() + 7 + idx);
-                                    const nextD = new Date(d);
-                                    nextD.setDate(d.getDate() + 1);
-                                    itemsToRender.push({
-                                        name: m.name,
-                                        startDate: d.toISOString().split('T')[0],
-                                        endDate: nextD.toISOString().split('T')[0],
-                                        description: 'Daily On Call',
-                                        priority: 'Med',
-                                        color: '#00FFFF',
-                                        onCall: true
-                                    });
-                                }
-                            });
+                        if (showAll || selectedItems.includes('Daily Grid (Current/Next Week)')) {
+                            if (m.thisWeek && m.thisWeek.onCall) {
+                                m.thisWeek.onCall.forEach((oc, idx) => {
+                                    if (oc) {
+                                        const d = new Date(monday);
+                                        d.setDate(monday.getDate() + idx);
+                                        const nextD = new Date(d);
+                                        nextD.setDate(d.getDate() + 1);
+                                        itemsToRender.push({
+                                            name: m.name,
+                                            startDate: d.toISOString().split('T')[0],
+                                            endDate: nextD.toISOString().split('T')[0],
+                                            description: 'Daily On Call',
+                                            priority: 'Med',
+                                            color: '#00FFFF',
+                                            onCall: true
+                                        });
+                                    }
+                                });
+                            }
+                            if (m.nextWeek && m.nextWeek.onCall) {
+                                m.nextWeek.onCall.forEach((oc, idx) => {
+                                    if (oc) {
+                                        const d = new Date(monday);
+                                        d.setDate(monday.getDate() + 7 + idx);
+                                        const nextD = new Date(d);
+                                        nextD.setDate(d.getDate() + 1);
+                                        itemsToRender.push({
+                                            name: m.name,
+                                            startDate: d.toISOString().split('T')[0],
+                                            endDate: nextD.toISOString().split('T')[0],
+                                            description: 'Daily On Call',
+                                            priority: 'Med',
+                                            color: '#00FFFF',
+                                            onCall: true
+                                        });
+                                    }
+                                });
+                            }
                         }
 
                         // 2. Check Assignments for Tasks marked as onCall
@@ -1661,15 +1673,17 @@ export const ZoomManager = {
                             const taskId = ass.taskId || ass.assignment;
                             const task = State.assignments.find(a => a.id === taskId || a.name === taskId);
                             if (task && task.onCall) {
-                                itemsToRender.push({
-                                    name: m.name,
-                                    startDate: task.startDate,
-                                    endDate: task.endDate,
-                                    description: task.name,
-                                    priority: task.priority || 'Med',
-                                    color: '#00FFFF',
-                                    onCall: true
-                                });
+                                if (showAll || selectedItems.includes(task.name)) {
+                                    itemsToRender.push({
+                                        name: m.name,
+                                        startDate: task.startDate,
+                                        endDate: task.endDate,
+                                        description: task.name,
+                                        priority: task.priority || 'Med',
+                                        color: '#00FFFF',
+                                        onCall: true
+                                    });
+                                }
                             }
                         });
                     });
@@ -1849,9 +1863,10 @@ export const TrackerManager = {
             // Use absence types from settings
             items = State.settings.absences.map(a => ({ name: a.name }));
         } else if (type === 'On Call') {
-            // "On Call" is fixed for now, no sub-filtering needed or just show "All"
-            container.innerHTML = '<div style="color:var(--text-muted); font-style:italic; font-size:0.8rem; padding:2px;">Showing all team members on call for the current and next week.</div>';
-            return;
+            // Include both the legacy daily grid option and specific tasks marked as On Call
+            items = [{ name: 'Daily Grid (Current/Next Week)' }];
+            const onCallTasks = State.assignments.filter(a => a.class === 'Task' && a.onCall);
+            onCallTasks.forEach(t => items.push({ name: t.name }));
         } else {
             // Filter assignments by type
             items = State.assignments.filter(a => a.class === type || (type === 'Event' && a.class === 'Project'));
