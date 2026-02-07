@@ -874,9 +874,9 @@ export const Visuals = {
                     onmouseout="Visuals.hideTooltip()" style="cursor:pointer;">${item.name.substring(0,25)}</text>`;
             
             // Bar
-            if (item.startDate && item.endDate) {
-                const sDate = new Date(item.startDate);
-                const eDate = new Date(item.endDate);
+            if (item.startDate || item.endDate) {
+                const sDate = item.startDate ? new Date(item.startDate) : today;
+                const eDate = item.endDate ? new Date(item.endDate) : endDate;
                 const effStart = sDate < today ? today : sDate;
                 const effEnd = eDate > endDate ? endDate : eDate;
                 

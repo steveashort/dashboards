@@ -3411,8 +3411,16 @@ export const UserManager = {
             // Keep legacy structures to prevent dashboard errors
             skills: [],
             lastWeek: { tasks: [] },
-            thisWeek: { tasks: [], load: ['N','N','N','N','N','X','X'] },
-            nextWeek: { tasks: [], load: ['N','N','N','N','N','X','X'] }
+            thisWeek: { 
+                tasks: [], 
+                load: ['N','N','N','N','N','X','X'],
+                onCall: (index > -1 && State.members[index].thisWeek?.onCall) ? State.members[index].thisWeek.onCall : [false,false,false,false,false,false,false]
+            },
+            nextWeek: { 
+                tasks: [], 
+                load: ['N','N','N','N','N','X','X'],
+                onCall: (index > -1 && State.members[index].nextWeek?.onCall) ? State.members[index].nextWeek.onCall : [false,false,false,false,false,false,false]
+            }
         };
 
         // Scrape Absences
