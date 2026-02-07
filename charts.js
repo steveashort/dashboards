@@ -93,7 +93,7 @@ export const calculateTrackerSize = (tracker) => {
     if (tracker.type === 'countdown') {
         return tracker.displayStyle === 'bar' ? 'M' : 'S';
     }
-    if (['line', 'bar', 'note'].includes(tracker.type)) return 'M'; 
+    if (['line', 'bar', 'note', 'textParser'].includes(tracker.type)) return 'M'; 
     return 'M';
 };
 

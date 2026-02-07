@@ -410,6 +410,7 @@
                     <button id="typeCountdownBtn" class="type-option" onclick="TrackerManager.setType('countdown')">Countdown</button>
                     <button id="typePlannerBtn" class="type-option" onclick="TrackerManager.setType('planner')">Resource Planner</button>
                     <button id="typeAchievementsBtn" class="type-option" onclick="TrackerManager.setType('achievements')">Achievements</button>
+                    <button id="typeTextParserBtn" class="type-option" onclick="TrackerManager.setType('textParser')">Text Parser</button>
                 </div>
                 <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
                     <div class="input-group" style="flex: 2;">
@@ -711,6 +712,27 @@
                                         <div class="input-group" style="margin-top: 1rem;">
                                             <label>Notes for Published View (Max 200 chars)</label>
                                             <textarea id="tkAchNotes" maxlength="200" style="height: 60px; font-size: 0.85rem;" placeholder="Enter details to display on hover..."></textarea>
+                                        </div>
+                                    </div>
+
+                                    <div id="textParserInputs" style="display:none;">
+                                        <div class="input-group">
+                                            <label>Raw Text</label>
+                                            <textarea id="tkParserText" style="height: 150px; font-size: 0.85rem; font-family: monospace;" placeholder="Paste text here..."></textarea>
+                                        </div>
+                                        <div class="form-row" style="margin-top:1rem; gap:1rem;">
+                                            <div class="input-group">
+                                                <label>Start Marker</label>
+                                                <input type="text" id="tkParserStart" placeholder="e.g. START_HERE">
+                                            </div>
+                                            <div class="input-group">
+                                                <label>End Marker</label>
+                                                <input type="text" id="tkParserEnd" placeholder="e.g. END_HERE">
+                                            </div>
+                                        </div>
+                                        <div class="input-group" style="margin-top:1rem;">
+                                            <label>Header Markers (one per line)</label>
+                                            <textarea id="tkParserHeaders" style="height: 80px; font-size: 0.85rem;" placeholder="Enter one marker per line..."></textarea>
                                         </div>
                                     </div>
                 

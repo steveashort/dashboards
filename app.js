@@ -328,6 +328,57 @@ const parseMarkdown = (t) => {
     return output;
 };
 
+const parseTextToHeaders = (text, startMarker, headerMarkers, endMarker) => {
+    if (!text) return [];
+    const lines = text.split('\n');
+    let state = startMarker ? 'BEFORE_START' : 'IN_HEADER';
+    const headers = [];
+    let currentHeader = null;
+
+    for (let line of lines) {
+        const trimmed = line.trim();
+        if (state === 'DONE') break;
+
+        // Check markers
+        if (endMarker && trimmed === endMarker) {
+            state = 'DONE';
+            continue;
+        }
+
+        if (state === 'BEFORE_START') {
+            if (startMarker && trimmed === startMarker) {
+                currentHeader = { title: trimmed, bullets: [] };
+                headers.push(currentHeader);
+                state = 'IN_HEADER';
+            }
+            continue;
+        }
+
+        // Is it a header marker?
+        const isHeader = headerMarkers.some(m => m === trimmed) || (startMarker && trimmed === startMarker);
+
+        if (isHeader) {
+            currentHeader = { title: trimmed, bullets: [] };
+            headers.push(currentHeader);
+            state = 'IN_HEADER';
+            continue;
+        }
+
+        if (trimmed === '') continue;
+
+        // Bullet
+        if (currentHeader) {
+            currentHeader.bullets.push(trimmed);
+            state = 'IN_BULLETS';
+        } else {
+            currentHeader = { title: trimmed, bullets: [] };
+            headers.push(currentHeader);
+            state = 'IN_HEADER';
+        }
+    }
+    return headers;
+};
+
 export const ColorManager = {
     // 140 Standard CSS Colors
     colors: {
@@ -956,6 +1007,25 @@ export const renderBoard = () => {
                 });
                 
                 if(renderedCount === 0) visualHTML += '<div style="color:var(--text-muted); font-style:italic;">No achievements found.</div>';
+                visualHTML += '</div>';
+                statsHTML = '';
+            } else if (renderType === 'textParser') {
+                const parsed = parseTextToHeaders(t.rawText, t.startMarker, t.headerMarkers || [], t.endMarker);
+                visualHTML = '<div class="text-parser-content" style="padding:5px;">';
+                if (parsed.length === 0) {
+                    visualHTML += '<div style="color:var(--text-muted); font-style:italic;">No content parsed. Check markers.</div>';
+                } else {
+                    parsed.forEach(h => {
+                        visualHTML += `<div class="text-parser-header">${h.title}</div>`;
+                        if (h.bullets && h.bullets.length > 0) {
+                            visualHTML += '<ul class="text-parser-bullets">';
+                            h.bullets.forEach(b => {
+                                visualHTML += `<li>${b}</li>`;
+                            });
+                            visualHTML += '</ul>';
+                        }
+                    });
+                }
                 visualHTML += '</div>';
                 statsHTML = '';
             } else if (renderType === 'donut') {
@@ -1728,7 +1798,7 @@ export const TrackerManager = {
             tabSel.value = State.activeTabId;
         }
         
-        ['gauge','bar','line','counter','rag','countdown','completionBar','planner','achievements'].forEach(type => {
+        ['gauge','bar','line','counter','rag','countdown','completionBar','planner','achievements','textParser'].forEach(type => {
             const div = getEl(`${type}Inputs`);
             if (div) div.style.display = 'none';
         });
@@ -1942,6 +2012,11 @@ export const TrackerManager = {
                 this.toggleAchList('last');
                 this.toggleAchList('current');
                 this.toggleAchList('next');
+            } else if (!isEdit && type === 'textParser') {
+                const textIn = getEl('tkParserText'); if(textIn) textIn.value = '';
+                const startIn = getEl('tkParserStart'); if(startIn) startIn.value = '';
+                const endIn = getEl('tkParserEnd'); if(endIn) endIn.value = '';
+                const headerIn = getEl('tkParserHeaders'); if(headerIn) headerIn.value = '';
             }
 
             if (type === 'gauge') {
@@ -2057,6 +2132,11 @@ export const TrackerManager = {
                 this.toggleAchList('last');
                 this.toggleAchList('current');
                 this.toggleAchList('next');
+            } else if (type === 'textParser') {
+                const textIn = getEl('tkParserText'); if (textIn) textIn.value = tracker ? (tracker.rawText || '') : '';
+                const startIn = getEl('tkParserStart'); if (startIn) startIn.value = tracker ? (tracker.startMarker || '') : '';
+                const endIn = getEl('tkParserEnd'); if (endIn) endIn.value = tracker ? (tracker.endMarker || '') : '';
+                const headerIn = getEl('tkParserHeaders'); if (headerIn) headerIn.value = tracker ? (tracker.headerMarkers ? tracker.headerMarkers.join('\n') : '') : '';
             } else if (type === 'planner') {
                                         const notesIn = getEl('tkPlannerNotes');
                                         if (tracker && notesIn) notesIn.value = tracker.notes || '';
@@ -2086,6 +2166,7 @@ export const TrackerManager = {
         else if (inputType === 'countdown') allowed = ['1x1', '2x1', '2x2'];
         else if (inputType === 'planner') allowed = ['1x2', '1x3', '1x4', '2x2', '3x2', '2x3', '2x4', '3x3', '4x4'];
         else if (inputType === 'achievements') allowed = ['1x2', '1x3', '2x2', '3x2', '2x3', '2x4', '3x3', '4x4'];
+        else if (inputType === 'textParser') allowed = ['1x2', '1x3', '2x2', '3x2', '2x3', '2x4', '3x3', '4x4'];
         // Time Series (line/bar) and Note allow all sizes.
         // Waffle allows all for now.
 
@@ -2108,7 +2189,7 @@ export const TrackerManager = {
         State.currentTrackerType = type;
         // Map 'bar' to 'line' for input visibility
         const inputType = (type === 'bar') ? 'line' : type;
-        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar','Planner','Achievements'].forEach(x => {
+        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar','Planner','Achievements','TextParser'].forEach(x => {
             const btn = getEl(`type${x}Btn`);
             if (btn) btn.className = (type.toLowerCase() === x.toLowerCase()) ? 'type-option active' : 'type-option';
             
@@ -2959,6 +3040,18 @@ export const TrackerManager = {
                 });
                 newTracker.filterItems = filteredItems;
                 newTracker.notes = getEl('tkAchNotes').value.trim();
+        } else if (type === 'textParser') {
+            const rawText = getEl('tkParserText').value;
+            const startMarker = getEl('tkParserStart').value.trim();
+            const endMarker = getEl('tkParserEnd').value.trim();
+            const headersRaw = getEl('tkParserHeaders').value;
+            const headerMarkers = headersRaw.split('\n').map(s => s.trim()).filter(s => s !== '');
+            
+            newTracker.rawText = rawText;
+            newTracker.startMarker = startMarker;
+            newTracker.endMarker = endMarker;
+            newTracker.headerMarkers = headerMarkers;
+            newTracker.notes = ''; 
         }
 
         const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
