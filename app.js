@@ -3504,20 +3504,6 @@ export const AssignmentManager = {
             grid.appendChild(card);
         });
     },
-            if (a.startDate || a.endDate) {
-                dateText = `${a.startDate ? formatDate(new Date(a.startDate)) : '...'} - ${a.endDate ? formatDate(new Date(a.endDate)) : '...'}`;
-            }
-            html += `<span>${dateText}</span>`;
-            
-            const pColor = a.priority === 'High' ? '#ff1744' : (a.priority === 'Med' ? '#ffb300' : '#00e676');
-            html += `<span style="color:${pColor}; font-weight:bold;">${a.priority}</span>`;
-            
-            html += `</div>`;
-            
-            card.innerHTML = html;
-            grid.appendChild(card);
-        });
-    },
     openModal: (index) => {
         if(document.body.classList.contains('publishing')) return;
         getEl('assignmentModalTitle').innerText = index === -1 ? 'Add Assignment' : 'Edit Assignment';
