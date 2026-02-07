@@ -1108,7 +1108,12 @@
                     </div>
                     <div class="input-group">
                         <label>Colour tag</label>
-                        <input type="text" readonly class="color-input" id="tskColor" value="#00e676" style="cursor:pointer;">
+                        <div style="display:flex; align-items:center; gap:15px;">
+                            <input type="text" readonly class="color-input" id="tskColor" value="#00e676" style="cursor:pointer; flex:1;">
+                            <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.85rem; cursor:pointer; white-space:nowrap;">
+                                <input type="checkbox" id="tskOnCall" style="accent-color:var(--accent);"> On Call
+                            </label>
+                        </div>
                     </div>
                 </div>
 

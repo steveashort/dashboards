@@ -1142,7 +1142,12 @@ export const renderBoard = () => {
                     });
                 } else {
                     // Filter assignments based on type AND selected items (if any)
-                    itemsToRender = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
+                    const filtered = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
+                    
+                    itemsToRender = filtered.map(a => ({
+                        ...a,
+                        onCall: !!a.onCall
+                    }));
                     
                     if (t.plannerItems && t.plannerItems.length > 0) {
                         itemsToRender = itemsToRender.filter(a => t.plannerItems.includes(a.name));
@@ -3200,7 +3205,8 @@ export const UserManager = {
 
         State.assignments.forEach(a => {
             if (a.class === 'Task' && a.roleId === roleId) {
-                const opt = new Option(a.name, a.id);
+                const label = a.onCall ? `${a.name} (On Call)` : a.name;
+                const opt = new Option(label, a.id);
                 if (a.id === selectedTaskId) opt.selected = true;
                 selectEl.add(opt);
             }
@@ -4363,10 +4369,12 @@ export const TaskManager = {
         getEl('taskModalTitle').innerText = index === -1 ? 'Add Task' : 'Edit Task';
         getEl('editTaskIndex').value = index;
         
-        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#00e676', roleId: '', dateMode: 'date' };
+        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#00e676', roleId: '', dateMode: 'date', onCall: false };
         
         getEl('tskName').value = a.name;
+        getEl('tskRole').value = a.roleId;
         getEl('tskDesc').value = a.description;
+        getEl('tskOnCall').checked = !!a.onCall;
 
         // Populate Roles from actual defined roles in assignments
         const roleSel = getEl('tskRole');
@@ -4485,7 +4493,8 @@ export const TaskManager = {
             startPeriod,
             endYear,
             endPeriod,
-            color: getEl('tskColor').value
+            color: getEl('tskColor').value,
+            onCall: getEl('tskOnCall').checked
         };
         
         if(index === -1) {

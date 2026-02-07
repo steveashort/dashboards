@@ -706,7 +706,7 @@ export const Visuals = {
                 const taskId = ass.taskId || ass.assignment;
                 const task = (allAssignments || []).find(a => a.id === taskId || a.name === taskId);
                 if (task) {
-                    // Inject task dates into the assignment item for processing
+                    // Inject task dates and onCall state into the assignment item for processing
                     const itemWithDates = { 
                         ...ass, 
                         startDate: task.startDate, 
@@ -715,7 +715,8 @@ export const Visuals = {
                         start: task.startPeriod,
                         startYear: task.startYear,
                         end: task.endPeriod,
-                        endYear: task.endYear
+                        endYear: task.endYear,
+                        onCall: !!task.onCall
                     };
                     processItem(itemWithDates, m.name, task.name);
                 }
@@ -792,18 +793,23 @@ export const Visuals = {
                 
                 let barColor = headerColor;
                 if (row.obj.isAbsence) barColor = '#ef5350';
+                if (row.obj.onCall) barColor = '#00FFFF';
 
                 // Format Tooltip Dates
                 const fmt = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
                 const dateRangeStr = `${fmt(r.originalStart)} - ${fmt(r.originalEnd)}`; // Use original dates for tooltip
 
+                const labelText = row.obj.onCall ? 'OC' : `${row.obj.load}%`;
+                const tooltipType = row.obj.onCall ? 'On Call' : (row.obj.load || 'Assigned');
+
                 svg += `<rect x="${x}" y="${y + 6}" width="${barWidth}" height="${rowHeight - 12}" fill="${barColor}" rx="${(rowHeight - 12)/2}" opacity="0.8">
-                            <title>${row.memberName}: ${assignmentName} (${row.obj.load || 'Absence'})\n${dateRangeStr}</title>
+                            <title>${row.memberName}: ${assignmentName} (${tooltipType})\n${dateRangeStr}</title>
                         </rect>`;
                 
-                // Label (Load %) - Only if bar is wide enough
-                if (barWidth > 30) {
-                    svg += `<text x="${x + barWidth/2}" y="${y + rowHeight/2 + 4}" fill="#fff" font-size="11" text-anchor="middle" font-weight="bold" pointer-events="none">${row.obj.load}%</text>`;
+                // Label (Load % or OC) - Only if bar is wide enough
+                if (barWidth > 25) {
+                    const textColor = row.obj.onCall ? '#000' : '#fff';
+                    svg += `<text x="${x + barWidth/2}" y="${y + rowHeight/2 + 4}" fill="${textColor}" font-size="11" text-anchor="middle" font-weight="bold" pointer-events="none">${labelText}</text>`;
                 }
                 
                 svg += `<line x1="0" y1="${y + rowHeight}" x2="${width}" y2="${y + rowHeight}" stroke="var(--border)" stroke-width="0.5" opacity="0.5"/>`;
@@ -858,7 +864,8 @@ export const Visuals = {
             svg += `<line x1="0" y1="${y}" x2="${width}" y2="${y}" stroke="var(--border)" stroke-width="0.5" opacity="0.3"/>`;
             
             // Tooltip Content
-            const tooltip = `${item.name}<br/>${item.description || ''}<br/>${item.startDate ? new Date(item.startDate).toLocaleDateString() : 'No start'} - ${item.endDate ? new Date(item.endDate).toLocaleDateString() : 'No end'}<br/>Priority: ${item.priority || 'N/A'}`;
+            const typeLabel = item.onCall ? ' (On Call)' : '';
+            const tooltip = `${item.name}${typeLabel}<br/>${item.description || ''}<br/>${item.startDate ? new Date(item.startDate).toLocaleDateString() : 'No start'} - ${item.endDate ? new Date(item.endDate).toLocaleDateString() : 'No end'}<br/>Priority: ${item.priority || 'N/A'}`;
             const safeTooltip = tooltip.replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
             // Label with Tooltip
@@ -879,7 +886,8 @@ export const Visuals = {
                     
                     const barX = nameColWidth + (startPct * timelineWidth);
                     const barW = (endPct - startPct) * timelineWidth;
-                    const color = item.color || '#009688';
+                    let color = item.color || '#009688';
+                    if (item.onCall) color = '#00FFFF';
                     
                     svg += `<rect x="${barX}" y="${y + 8}" width="${Math.max(barW, 5)}" height="${rowHeight - 16}" fill="${color}" rx="6" 
                             onmousemove="Visuals.showTooltip(event, '${safeTooltip}')" 
