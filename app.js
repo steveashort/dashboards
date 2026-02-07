@@ -1163,19 +1163,24 @@ export const renderBoard = () => {
                 const orient = t.orientation || 'horizontal';
                 visualHTML = Visuals.createCompletionBarSVG(completed, total, cVal, cBg, 60, orient);
                 statsHTML = `<div class="tracker-stats">${completed} / ${total} ${t.metric || ''}</div>`;
+            } else if (renderType === 'section') {
+                visualHTML = '';
+                statsHTML = '';
             }
 
-            card.innerHTML = timestampHTML;
+            if (renderType !== 'section') {
+                card.innerHTML = timestampHTML;
+            }
             card.innerHTML += `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
             
             const descEl = document.createElement('div');
-            descEl.className = 'tracker-desc';
+            descEl.className = renderType === 'section' ? 'tracker-section-header' : 'tracker-desc';
             descEl.innerText = t.desc;
             if (!document.body.classList.contains('publishing')) {
                 descEl.contentEditable = "true";
                 descEl.spellcheck = false;
                 descEl.style.cursor = "text";
-                descEl.style.borderBottom = "1px dashed #444";
+                if (renderType !== 'section') descEl.style.borderBottom = "1px dashed #444";
                 descEl.style.zIndex = "10";
                 descEl.style.position = "relative";
                 
@@ -1190,8 +1195,12 @@ export const renderBoard = () => {
             }
             card.appendChild(descEl);
 
-            card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
-            card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
+            if (renderType === 'section') {
+                card.innerHTML += '<div class="section-line"></div>';
+            } else {
+                card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
+                card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
+            }
             tGrid.appendChild(card);
         });
     }
@@ -1804,7 +1813,7 @@ export const TrackerManager = {
             tabSel.value = State.activeTabId;
         }
         
-        ['gauge','bar','line','counter','rag','countdown','completionBar','planner','achievements','textParser'].forEach(type => {
+        ['gauge','bar','line','counter','rag','countdown','completionBar','planner','achievements','textParser','section'].forEach(type => {
             const div = getEl(`${type}Inputs`);
             if (div) div.style.display = 'none';
         });
@@ -2174,6 +2183,7 @@ export const TrackerManager = {
         else if (inputType === 'achievements') allowed = ['2x1', '3x1', '4x1', '1x2', '1x3', '2x2', '3x2', '4x2', '2x3', '2x4', '3x3', '4x4'];
         else if (inputType === 'textParser') allowed = ['2x1', '3x1', '4x1', '1x2', '1x3', '2x2', '3x2', '4x2', '2x3', '2x4', '3x3', '4x4'];
         else if (inputType === 'line') allowed = ['1x1', '2x1', '3x1', '4x1', '1x2', '2x2', '3x2', '4x2', '4x4'];
+        else if (inputType === 'section') allowed = [];
         // Note allows all sizes.
         // Waffle allows all for now.
 
@@ -2196,7 +2206,7 @@ export const TrackerManager = {
         State.currentTrackerType = type;
         // Map 'bar' to 'line' for input visibility
         const inputType = (type === 'bar') ? 'line' : type;
-        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar','Planner','Achievements','TextParser'].forEach(x => {
+        ['Gauge','Bar','Line','Counter','Rag','Waffle','Note','Donut','Countdown','CompletionBar','Planner','Achievements','TextParser','Section'].forEach(x => {
             const btn = getEl(`type${x}Btn`);
             if (btn) btn.className = (type.toLowerCase() === x.toLowerCase()) ? 'type-option active' : 'type-option';
             
@@ -2217,7 +2227,7 @@ export const TrackerManager = {
 
         const sizeCont = getEl('sizeContainer');
         if(sizeCont) {
-            sizeCont.style.display = 'block'; 
+            sizeCont.style.display = (inputType === 'section') ? 'none' : 'block'; 
         }
         
         if (inputType === 'counter') this.updateSizeOptions('gauge'); // Treat as 1x1
@@ -3059,6 +3069,9 @@ export const TrackerManager = {
             newTracker.endMarker = endMarker;
             newTracker.headerMarkers = headerMarkers;
             newTracker.notes = ''; 
+        } else if (type === 'section') {
+            newTracker.size = 'full';
+            newTracker.notes = '';
         }
 
         const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);

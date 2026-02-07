@@ -237,6 +237,7 @@ body.theme-day .tracker-card, body.theme-day .member-card, body.theme-day .team-
 .tracker-card.size-2x4 { grid-column: span 2; grid-row: span 4; }
 .tracker-card.size-3x3 { grid-column: span 3; grid-row: span 3; }
 .tracker-card.size-4x4 { grid-column: span 4; grid-row: span 4; }
+.tracker-card.size-full { grid-column: 1 / -1; min-height: auto !important; }
 
 /* Backward compatibility mapping if needed, or just remove */
 .tracker-card.size-S { grid-column: span 1; grid-row: span 1; }
@@ -257,6 +258,7 @@ body.theme-day .tracker-card, body.theme-day .member-card, body.theme-day .team-
     .tracker-card.size-2x2 { grid-column: span 2; grid-row: span 2; }
     .tracker-card.size-3x2 { grid-column: span 3; grid-row: span 2; }
     .tracker-card.size-4x2 { grid-column: span 3; grid-row: span 2; }
+    .tracker-card.size-full { grid-column: 1 / -1; }
     
     /* Compat */
     .tracker-card.size-S { grid-column: span 1; }
@@ -267,7 +269,7 @@ body.theme-day .tracker-card, body.theme-day .member-card, body.theme-day .team-
 @media (max-width: 768px) {
     .tracker-grid { grid-template-columns: 1fr; }
     .tracker-card.size-1x1, .tracker-card.size-2x1, .tracker-card.size-3x1, .tracker-card.size-4x1, .tracker-card.size-1x2, 
-    .tracker-card.size-1x3, .tracker-card.size-1x4, .tracker-card.size-2x2, .tracker-card.size-3x2, .tracker-card.size-4x2,
+    .tracker-card.size-1x3, .tracker-card.size-1x4, .tracker-card.size-2x2, .tracker-card.size-3x2, .tracker-card.size-4x2, .tracker-card.size-full,
     .tracker-card.size-S, .tracker-card.size-M, .tracker-card.size-L, .tracker-card.size-XL {
         grid-column: span 1;
         grid-row: auto;
@@ -597,3 +599,34 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
 .text-parser-header { font-weight: bold; color: var(--accent); margin-top: 10px; border-bottom: 1px solid #444; padding-bottom: 2px; width: 100%; }
 .text-parser-bullets { margin: 5px 0; padding-left: 20px; list-style-type: disc; width: 100%; }
 .text-parser-bullets li { margin-bottom: 3px; color: var(--text-main); text-align: left; }
+
+/* Section Header Styles */
+.tracker-card.type-section {
+    background: transparent !important;
+    border: none !important;
+    box-shadow: none !important;
+    padding: 2rem 0 0.5rem 0 !important;
+    cursor: default !important;
+    height: auto !important;
+    display: block !important;
+}
+.tracker-card.type-section:hover { transform: none !important; }
+.tracker-card.type-section .btn-del-tracker { top: 2.2rem; right: 0; }
+
+.tracker-section-header {
+    font-size: 1.5rem !important;
+    font-weight: bold !important;
+    color: var(--accent) !important;
+    text-align: left !important;
+    margin-bottom: 0.5rem !important;
+    height: auto !important;
+    display: block !important;
+    justify-content: flex-start !important;
+}
+
+.section-line {
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, var(--accent) 0%, rgba(187, 134, 252, 0.1) 100%);
+    margin-top: 5px;
+}
