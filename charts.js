@@ -1,6 +1,7 @@
 /**
  * SERVER PLATFORMS TRACKER - VISUALIZATIONS MODULE
  */
+import { processTokens } from './app.js';
 
 const sizeMap = { 
     'S': 300, 'M': 600, 'L': 900, 'XL': 1200,
@@ -33,7 +34,7 @@ export const getApexConfig = (type, data, options = {}) => {
     const palette = ['#03dac6', '#ff4081', '#bb86fc', '#cf6679', '#00e676', '#ffb300', '#018786', '#3700b3', '#03a9f4', '#ffeb3b'];
     
     let xaxisConfig = {
-        categories: data.labels || [],
+        categories: (data.labels || []).map(l => processTokens(l)),
         labels: { style: { colors: '#aaa' } },
         axisBorder: { show: false },
         axisTicks: { show: false }
@@ -49,10 +50,15 @@ export const getApexConfig = (type, data, options = {}) => {
             labels: { style: { colors: '#aaa' } }
         };
         yaxisConfig = {
-            categories: data.series && data.series[0] && data.series[0].data ? data.series[0].data.map(d => d.x) : [],
+            categories: data.series && data.series[0] && data.series[0].data ? data.series[0].data.map(d => processTokens(d.x)) : [],
             labels: { style: { colors: '#aaa' } }
         };
     }
+
+    const processedSeries = (data.series || []).map(s => ({
+        ...s,
+        name: processTokens(s.name)
+    }));
 
     return {
         chart: {
@@ -74,7 +80,7 @@ export const getApexConfig = (type, data, options = {}) => {
         },
         xaxis: xaxisConfig,
         yaxis: yaxisConfig,
-        series: data.series || [],
+        series: processedSeries,
         legend: { labels: { colors: '#aaa' } },
         tooltip: { theme: 'dark' },
         ...options

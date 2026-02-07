@@ -85,6 +85,72 @@ const getCurrentPeriod = () => {
     return ((m - start + 12) % 12) + 1;
 };
 
+const getFirstMonday = (year, month) => {
+    let d = new Date(year, month, 1);
+    while (d.getDay() !== 1) d.setDate(d.getDate() + 1);
+    return d;
+};
+
+const getTokenMap = () => {
+    const startMonth = State.settings ? State.settings.fyStartMonth : 1;
+    const today = new Date();
+    
+    const getWeekData = (offsetWeeks) => {
+        const d = new Date();
+        const day = d.getDay();
+        const diff = (day === 0 ? -6 : 1 - day) + (offsetWeeks * 7);
+        const monday = new Date(d); monday.setDate(d.getDate() + diff); monday.setHours(0,0,0,0);
+        const sunday = new Date(monday); sunday.setDate(monday.getDate() + 6);
+        
+        const fy = monday.getMonth() < startMonth ? monday.getFullYear() - 1 : monday.getFullYear();
+        const fyStart = getFirstMonday(fy, startMonth);
+        const weekNum = Math.floor((monday - fyStart) / (7 * 24 * 3600 * 1000)) + 1;
+        const pNum = ((monday.getMonth() - startMonth + 12) % 12) + 1;
+        const qNum = Math.ceil(pNum / 3);
+        const shortY = fy.toString().substring(2);
+        
+        const mStr = monday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        const sStr = sunday.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        
+        return {
+            l: `${mStr} - ${sStr}`,
+            lyy: `${mStr} - ${sStr} ${shortY}`,
+            lyyyy: `${mStr} - ${sStr} ${fy}`,
+            w: `WK${weekNum.toString().padStart(2, '0')}`,
+            wyy: `${shortY}WK${weekNum.toString().padStart(2, '0')}`,
+            wyyyy: `${fy}WK${weekNum.toString().padStart(2, '0')}`,
+            wfy: `FY${shortY}WK${weekNum.toString().padStart(2, '0')}`,
+            p: `P${pNum.toString().padStart(2, '0')}`,
+            pyy: `${shortY}P${pNum.toString().padStart(2, '0')}`,
+            pyyyy: `${fy}P${pNum.toString().padStart(2, '0')}`,
+            pfy: `FY${shortY}P${pNum.toString().padStart(2, '0')}`,
+            q: `Q${qNum}`,
+            qyy: `${shortY}Q${qNum}`,
+            qyyyy: `${fy}Q${qNum}`,
+            qfy: `FY${shortY}Q${qNum}`
+        };
+    };
+
+    const cw = getWeekData(0);
+    const lw = getWeekData(-1);
+    const nw = getWeekData(1);
+    const map = {};
+    for (const k in cw) { map[`##CW${k.toUpperCase()}##`] = cw[k]; }
+    for (const k in lw) { map[`##LW${k.toUpperCase()}##`] = lw[k]; }
+    for (const k in nw) { map[`##NW${k.toUpperCase()}##`] = nw[k]; }
+    return map;
+};
+
+export const processTokens = (str) => {
+    if (!str || typeof str !== 'string' || !str.includes('##')) return str;
+    const map = getTokenMap();
+    let result = str;
+    for (const token in map) {
+        result = result.split(token).join(map[token]);
+    }
+    return result;
+};
+
 const setupDateValidation = (startId, endId) => {
     const s = getEl(startId);
     const e = getEl(endId);
@@ -1221,7 +1287,7 @@ export const renderBoard = () => {
             
             const descEl = document.createElement('div');
             descEl.className = renderType === 'section' ? 'tracker-section-header' : 'tracker-desc';
-            descEl.innerText = t.desc;
+            descEl.innerText = processTokens(t.desc);
             if (!document.body.classList.contains('publishing')) {
                 descEl.contentEditable = "true";
                 descEl.spellcheck = false;
@@ -1245,7 +1311,7 @@ export const renderBoard = () => {
                 card.innerHTML += '<div class="section-line"></div>';
             } else {
                 card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
-                card.innerHTML += `<div class="tracker-stats">${statsHTML}</div>`;
+                card.innerHTML += `<div class="tracker-stats">${processTokens(statsHTML)}</div>`;
             }
             tGrid.appendChild(card);
         });
