@@ -1121,15 +1121,15 @@
                             <label style="font-size:0.85rem;"><input type="radio" name="tskPriority" value="Med" checked> Med</label>
                             <label style="font-size:0.85rem;"><input type="radio" name="tskPriority" value="Low"> Low</label>
                         </div>
+                        <div style="margin-top: 10px;">
+                            <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.85rem; cursor:pointer; white-space:nowrap;">
+                                <input type="checkbox" id="tskOnCall" style="accent-color:var(--accent);"> Out of Hours
+                            </label>
+                        </div>
                     </div>
                     <div class="input-group">
                         <label>Colour tag</label>
-                        <div style="display:flex; align-items:center; gap:15px;">
-                            <input type="text" readonly class="color-input" id="tskColor" value="#00e676" style="cursor:pointer; flex:1;">
-                            <label style="display:inline-flex; align-items:center; gap:5px; font-size:0.85rem; cursor:pointer; white-space:nowrap;">
-                                <input type="checkbox" id="tskOnCall" style="accent-color:var(--accent);"> On Call
-                            </label>
-                        </div>
+                        <input type="text" readonly class="color-input" id="tskColor" value="#00e676" style="cursor:pointer;">
                     </div>
                 </div>
 
