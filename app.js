@@ -4071,10 +4071,19 @@ export const RoleManager = {
     deleteRole: () => {
         const index = parseInt(getEl('editRoleIndex').value);
         if(index > -1) {
+            const role = State.assignments[index];
             App.confirm("Delete this role?", () => {
+                // Clear role from all members who have it
+                State.members.forEach(m => {
+                    if (m.roleId === role.id || m.roleId === role.name) {
+                        m.roleId = '';
+                    }
+                });
+
                 State.assignments.splice(index, 1);
                 ModalManager.closeModal('roleModal');
                 RoleManager.render();
+                if (typeof App.renderMembers === 'function') App.renderMembers();
             });
         }
     }
@@ -4235,10 +4244,22 @@ export const EventManager = {
     deleteEvent: () => {
         const index = parseInt(getEl('editEventIndex').value);
         if(index > -1) {
+            const event = State.assignments[index];
             App.confirm("Delete this event?", () => {
+                // Remove event from all members
+                State.members.forEach(m => {
+                    if (m.assignments) {
+                        m.assignments = m.assignments.filter(a => a.taskId !== event.id && a.taskId !== event.name);
+                    }
+                    if (m.objectives) {
+                        m.objectives = m.objectives.filter(o => o.assignment !== event.id && o.assignment !== event.name);
+                    }
+                });
+
                 State.assignments.splice(index, 1);
                 ModalManager.closeModal('eventModal');
                 EventManager.render();
+                if (typeof App.renderMembers === 'function') App.renderMembers();
             });
         }
     }
@@ -4482,10 +4503,22 @@ export const TaskManager = {
     deleteTask: () => {
         const index = parseInt(getEl('editTaskIndex').value);
         if(index > -1) {
+            const task = State.assignments[index];
             App.confirm("Delete this task?", () => {
+                // Remove task from all members
+                State.members.forEach(m => {
+                    if (m.assignments) {
+                        m.assignments = m.assignments.filter(a => a.taskId !== task.id && a.taskId !== task.name);
+                    }
+                    if (m.objectives) {
+                        m.objectives = m.objectives.filter(o => o.assignment !== task.id && o.assignment !== task.name);
+                    }
+                });
+
                 State.assignments.splice(index, 1);
                 ModalManager.closeModal('taskModal');
                 TaskManager.render();
+                if (typeof App.renderMembers === 'function') App.renderMembers();
             });
         }
     }
