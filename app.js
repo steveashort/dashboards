@@ -1103,6 +1103,7 @@ export const renderBoard = () => {
                     monday.setHours(0,0,0,0);
 
                     State.members.forEach(m => {
+                        // 1. Check legacy daily on-call grid
                         if (m.thisWeek && m.thisWeek.onCall) {
                             m.thisWeek.onCall.forEach((oc, idx) => {
                                 if (oc) {
@@ -1114,9 +1115,10 @@ export const renderBoard = () => {
                                         name: m.name,
                                         startDate: d.toISOString().split('T')[0],
                                         endDate: nextD.toISOString().split('T')[0],
-                                        description: 'On Call',
+                                        description: 'Daily On Call',
                                         priority: 'Med',
-                                        color: 'var(--accent)'
+                                        color: '#00FFFF',
+                                        onCall: true
                                     });
                                 }
                             });
@@ -1132,13 +1134,32 @@ export const renderBoard = () => {
                                         name: m.name,
                                         startDate: d.toISOString().split('T')[0],
                                         endDate: nextD.toISOString().split('T')[0],
-                                        description: 'On Call',
+                                        description: 'Daily On Call',
                                         priority: 'Med',
-                                        color: 'var(--accent)'
+                                        color: '#00FFFF',
+                                        onCall: true
                                     });
                                 }
                             });
                         }
+
+                        // 2. Check Assignments for Tasks marked as onCall
+                        const userAss = m.assignments || m.objectives || [];
+                        userAss.forEach(ass => {
+                            const taskId = ass.taskId || ass.assignment;
+                            const task = State.assignments.find(a => a.id === taskId || a.name === taskId);
+                            if (task && task.onCall) {
+                                itemsToRender.push({
+                                    name: m.name,
+                                    startDate: task.startDate,
+                                    endDate: task.endDate,
+                                    description: task.name,
+                                    priority: task.priority || 'Med',
+                                    color: '#00FFFF',
+                                    onCall: true
+                                });
+                            }
+                        });
                     });
                 } else {
                     // Filter assignments based on type AND selected items (if any)
@@ -1582,6 +1603,7 @@ export const ZoomManager = {
                     monday.setHours(0,0,0,0);
 
                     State.members.forEach(m => {
+                        // 1. Check legacy daily on-call grid
                         if (m.thisWeek && m.thisWeek.onCall) {
                             m.thisWeek.onCall.forEach((oc, idx) => {
                                 if (oc) {
@@ -1593,9 +1615,10 @@ export const ZoomManager = {
                                         name: m.name,
                                         startDate: d.toISOString().split('T')[0],
                                         endDate: nextD.toISOString().split('T')[0],
-                                        description: 'On Call',
+                                        description: 'Daily On Call',
                                         priority: 'Med',
-                                        color: 'var(--accent)'
+                                        color: '#00FFFF',
+                                        onCall: true
                                     });
                                 }
                             });
@@ -1611,13 +1634,32 @@ export const ZoomManager = {
                                         name: m.name,
                                         startDate: d.toISOString().split('T')[0],
                                         endDate: nextD.toISOString().split('T')[0],
-                                        description: 'On Call',
+                                        description: 'Daily On Call',
                                         priority: 'Med',
-                                        color: 'var(--accent)'
+                                        color: '#00FFFF',
+                                        onCall: true
                                     });
                                 }
                             });
                         }
+
+                        // 2. Check Assignments for Tasks marked as onCall
+                        const userAss = m.assignments || m.objectives || [];
+                        userAss.forEach(ass => {
+                            const taskId = ass.taskId || ass.assignment;
+                            const task = State.assignments.find(a => a.id === taskId || a.name === taskId);
+                            if (task && task.onCall) {
+                                itemsToRender.push({
+                                    name: m.name,
+                                    startDate: task.startDate,
+                                    endDate: task.endDate,
+                                    description: task.name,
+                                    priority: task.priority || 'Med',
+                                    color: '#00FFFF',
+                                    onCall: true
+                                });
+                            }
+                        });
                     });
                 } else {
                     itemsToRender = State.assignments.filter(a => a.class === pType || (pType === 'Event' && a.class === 'Project'));
