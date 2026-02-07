@@ -1290,14 +1290,20 @@ export const renderBoard = () => {
                     const taskName = task ? task.name : taskId;
                     const color = task ? task.color : 'var(--accent)';
                     
-                    const startY = ass.startYear || ass.year || '';
-                    const startP = ass.start ? `P${ass.start.toString().padStart(2, '0')}` : '...';
-                    const endY = ass.endYear || ass.year || '';
-                    const endP = ass.end ? `P${ass.end.toString().padStart(2, '0')}` : '...';
+                    let dateText = "Ongoing";
+                    if (task && (task.startDate || task.endDate)) {
+                        if (task.dateMode === 'period') {
+                            const startP = task.startPeriod ? `P${task.startPeriod.toString().padStart(2, '0')}` : '...';
+                            const endP = task.endPeriod ? `P${task.endPeriod.toString().padStart(2, '0')}` : '...';
+                            dateText = `${task.startYear || ''} ${startP} - ${task.endYear || ''} ${endP}`;
+                        } else {
+                            dateText = `${task.startDate ? formatDate(new Date(task.startDate)) : '...'} - ${task.endDate ? formatDate(new Date(task.endDate)) : '...'}`;
+                        }
+                    }
                     
                     content += `
                         <div style="display:flex; align-items:center; gap:8px; font-size:0.8rem; margin-bottom:4px;">
-                            <span style="background:${color}; color:#fff; padding:1px 6px; border-radius:4px; font-size:0.7rem; min-width:85px; text-align:center;">${startY} ${startP} - ${endY} ${endP}</span>
+                            <span style="background:${color}; color:#fff; padding:1px 6px; border-radius:4px; font-size:0.7rem; min-width:85px; text-align:center;">${dateText}</span>
                             <span style="color:var(--text-main); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; flex-grow:1;">${taskName}</span>
                             <span style="color:var(--text-muted); font-size:0.75rem; font-weight:bold;">${ass.load}%</span>
                         </div>`;
@@ -3141,19 +3147,19 @@ export const UserManager = {
         const div = document.createElement('div');
         div.className = 'assignment-row';
         div.style.display = 'flex';
-        div.style.gap = '5px';
+        div.style.gap = '10px';
         div.style.alignItems = 'center';
-        div.style.marginBottom = '5px';
+        div.style.marginBottom = '8px';
         
         // Task Select (Filtered by Role)
         const taskSel = document.createElement('select');
         taskSel.className = 'assign-task';
         taskSel.style.flex = '3';
-        taskSel.style.minWidth = '100px';
+        taskSel.style.minWidth = '150px';
         taskSel.style.background = 'var(--input-bg)';
         taskSel.style.color = '#fff';
         taskSel.style.border = '1px solid var(--border)';
-        taskSel.style.padding = '4px';
+        taskSel.style.padding = '6px';
         
         // Initial populate based on current role selection
         UserManager.populateTaskDropdown(taskSel, data ? data.taskId : null);
@@ -3163,78 +3169,25 @@ export const UserManager = {
         loadIn.type = 'number';
         loadIn.className = 'assign-load';
         loadIn.placeholder = '%';
-        loadIn.style.width = '50px';
+        loadIn.style.width = '70px';
         loadIn.style.background = 'var(--input-bg)';
         loadIn.style.color = '#fff';
         loadIn.style.border = '1px solid var(--border)';
-        loadIn.style.padding = '4px';
+        loadIn.style.padding = '6px';
         loadIn.style.textAlign = 'center';
         loadIn.value = data ? (data.load || 100) : 100;
-
-        // Year Helpers
-        const createYearSel = (val) => {
-            const s = document.createElement('select');
-            s.style.width = '70px';
-            s.style.background = 'var(--input-bg)';
-            s.style.color = '#fff';
-            s.style.border = '1px solid var(--border)';
-            s.style.padding = '4px';
-            const fy = getFiscalYear();
-            const years = [fy-1, fy, fy+1, fy+2];
-            years.forEach(y => {
-                const opt = new Option(y, y);
-                if(val && parseInt(val) === y) opt.selected = true;
-                else if(!val && y === fy) opt.selected = true;
-                s.add(opt);
-            });
-            return s;
-        };
-
-        // Period Selects
-        const createPerSel = (val) => {
-            const s = document.createElement('select');
-            s.style.flex = '1';
-            s.style.background = 'var(--input-bg)';
-            s.style.color = '#fff';
-            s.style.border = '1px solid var(--border)';
-            s.style.padding = '4px';
-            const cp = getCurrentPeriod();
-            for(let i=1; i<=12; i++) {
-                const opt = document.createElement('option');
-                opt.value = i;
-                opt.innerText = getPeriodLabel(i).split(' ')[0]; // Just P01
-                if(val && parseInt(val) === i) opt.selected = true;
-                else if(!val && i === cp) opt.selected = true;
-                s.appendChild(opt);
-            }
-            return s;
-        };
-
-        const startYearSel = createYearSel(data ? (data.startYear || data.year) : null);
-        startYearSel.classList.add('assign-start-year');
-        const startSel = createPerSel(data ? data.start : null);
-        startSel.classList.add('assign-start');
-
-        const endYearSel = createYearSel(data ? (data.endYear || data.year) : null);
-        endYearSel.classList.add('assign-end-year');
-        const endSel = createPerSel(data ? data.end : null);
-        endSel.classList.add('assign-end');
 
         const delBtn = document.createElement('button');
         delBtn.innerHTML = '&times;';
         delBtn.className = 'btn btn-sm';
         delBtn.style.color = 'var(--g-red)';
         delBtn.style.borderColor = 'var(--g-red)';
-        delBtn.style.padding = '0 8px';
+        delBtn.style.padding = '0 12px';
+        delBtn.style.height = '34px';
         delBtn.onclick = () => div.remove();
 
         div.appendChild(taskSel);
         div.appendChild(loadIn);
-        div.appendChild(startYearSel);
-        div.appendChild(startSel);
-        div.appendChild(document.createTextNode(' - '));
-        div.appendChild(endYearSel);
-        div.appendChild(endSel);
         div.appendChild(delBtn);
         
         container.appendChild(div);
@@ -3420,11 +3373,7 @@ export const UserManager = {
             const taskId = row.querySelector('.assign-task').value;
             const loadIn = row.querySelector('.assign-load');
             const load = loadIn ? (parseInt(loadIn.value) || 0) : 0;
-            const startYear = parseInt(row.querySelector('.assign-start-year').value);
-            const start = parseInt(row.querySelector('.assign-start').value);
-            const endYear = parseInt(row.querySelector('.assign-end-year').value);
-            const end = parseInt(row.querySelector('.assign-end').value);
-            if (taskId) newUser.assignments.push({ taskId, load, startYear, start, endYear, end });
+            if (taskId) newUser.assignments.push({ taskId, load });
         });
 
         if (index === -1) {
