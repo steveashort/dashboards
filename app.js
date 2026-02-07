@@ -3484,7 +3484,7 @@ export const UserManager = {
         }
 
         ModalManager.closeModal('userModal');
-        App.renderMembers();
+        renderBoard();
     },
 
     deleteUser: () => {
@@ -3493,7 +3493,7 @@ export const UserManager = {
             App.confirm(`Are you sure you want to delete ${State.members[index].name}?`, () => {
                 State.members.splice(index, 1);
                 ModalManager.closeModal('userModal');
-                App.renderMembers();
+                renderBoard();
             });
         }
     },
@@ -4183,7 +4183,7 @@ export const RoleManager = {
                 State.assignments.splice(index, 1);
                 ModalManager.closeModal('roleModal');
                 RoleManager.render();
-                if (typeof App.renderMembers === 'function') App.renderMembers();
+                renderBoard();
             });
         }
     }
@@ -4361,7 +4361,7 @@ export const EventManager = {
                 State.assignments.splice(index, 1);
                 ModalManager.closeModal('eventModal');
                 EventManager.render();
-                if (typeof App.renderMembers === 'function') App.renderMembers();
+                renderBoard();
             });
         }
     },
@@ -4640,7 +4640,7 @@ export const TaskManager = {
                 State.assignments.splice(index, 1);
                 ModalManager.closeModal('taskModal');
                 TaskManager.render();
-                if (typeof App.renderMembers === 'function') App.renderMembers();
+                renderBoard();
             });
         }
     },
