@@ -1082,6 +1082,7 @@
                 </div>
             </div>
             <div class="modal-footer">
+                <button class="btn" style="margin-right:auto;" onclick="EventManager.duplicateEvent()" id="btnDuplicateEvent">Duplicate</button>
                 <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="EventManager.deleteEvent()" id="btnDelEvent">Delete</button>
                 <button class="btn btn-primary" onclick="EventManager.submitEvent()">Save Event</button>
             </div>
@@ -1166,6 +1167,7 @@
                 <button class="btn btn-sm" style="margin-bottom: 1rem; width: 100%;" onclick="TaskManager.clearDates()">Clear Dates (Set to Ongoing)</button>
             </div>
             <div class="modal-footer">
+                <button class="btn" style="margin-right:auto;" onclick="TaskManager.duplicateTask()" id="btnDuplicateTask">Duplicate</button>
                 <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="TaskManager.deleteTask()" id="btnDelTask">Delete</button>
                 <button class="btn btn-primary" onclick="TaskManager.submitTask()">Save Task</button>
             </div>

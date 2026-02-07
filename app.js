@@ -4258,7 +4258,9 @@ export const EventManager = {
         const pRad = document.querySelector(`input[name="evPriority"][value="${a.priority}"]`);
         if(pRad) pRad.checked = true;
         
-        getEl('btnDelEvent').style.display = index === -1 ? 'none' : 'block';
+        const isEdit = index > -1;
+        getEl('btnDelEvent').style.display = isEdit ? 'block' : 'none';
+        getEl('btnDuplicateEvent').style.display = isEdit ? 'block' : 'none';
         
         const csvIn = getEl('evCsvInput');
         if(csvIn) csvIn.value = '';
@@ -4361,6 +4363,21 @@ export const EventManager = {
                 EventManager.render();
                 if (typeof App.renderMembers === 'function') App.renderMembers();
             });
+        }
+    },
+    duplicateEvent: () => {
+        const index = parseInt(getEl('editEventIndex').value);
+        if (index > -1) {
+            const event = State.assignments[index];
+            const newEvent = { 
+                ...event, 
+                id: generateId('eid'), 
+                name: "Copy of " + event.name 
+            };
+            State.assignments.push(newEvent);
+            ModalManager.closeModal('eventModal');
+            EventManager.render();
+            App.alert(`Duplicated event: ${event.name}`);
         }
     }
 };
@@ -4525,7 +4542,9 @@ export const TaskManager = {
         const pRad = document.querySelector(`input[name="tskPriority"][value="${a.priority}"]`);
         if(pRad) pRad.checked = true;
         
-        getEl('btnDelTask').style.display = index === -1 ? 'none' : 'block';
+        const isEdit = index > -1;
+        getEl('btnDelTask').style.display = isEdit ? 'block' : 'none';
+        getEl('btnDuplicateTask').style.display = isEdit ? 'block' : 'none';
         
         ModalManager.openModal('taskModal');
     },
@@ -4623,6 +4642,21 @@ export const TaskManager = {
                 TaskManager.render();
                 if (typeof App.renderMembers === 'function') App.renderMembers();
             });
+        }
+    },
+    duplicateTask: () => {
+        const index = parseInt(getEl('editTaskIndex').value);
+        if (index > -1) {
+            const task = State.assignments[index];
+            const newTask = { 
+                ...task, 
+                id: generateId('tid'), 
+                name: "Copy of " + task.name 
+            };
+            State.assignments.push(newTask);
+            ModalManager.closeModal('taskModal');
+            TaskManager.render();
+            App.alert(`Duplicated task: ${task.name}`);
         }
     }
 };
