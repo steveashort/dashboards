@@ -1823,6 +1823,12 @@ export const TrackerManager = {
         });
     },
 
+    openSectionModal() {
+        this.openModal(-1);
+        this.setType('section');
+        getEl('trackerModalTitle').innerText = 'Add Section Header';
+    },
+
     openModal(index) {
         console.log("Opening Tracker Modal for index:", index);
         if (document.body.classList.contains('publishing')) return;

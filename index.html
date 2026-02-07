@@ -52,8 +52,9 @@
             
             <!-- TRACKERS VIEW -->
             <div id="viewTrackers" class="view-section">
-                <div class="section-header first" style="justify-content: flex-end;">
+                <div class="section-header first" style="justify-content: flex-end; gap: 10px;">
                     <button class="btn" onclick="TrackerManager.openModal(-1)">+ Add Card</button>
+                    <button class="btn" onclick="TrackerManager.openSectionModal()">+ Add Section</button>
                 </div>
                 <div class="tracker-grid" id="trackerGrid"></div>
             </div>
@@ -348,7 +349,6 @@
                     <button id="typePlannerBtn" class="type-option" onclick="TrackerManager.setType('planner')">Resource Planner</button>
                     <button id="typeAchievementsBtn" class="type-option" onclick="TrackerManager.setType('achievements')">Achievements</button>
                     <button id="typeTextParserBtn" class="type-option" onclick="TrackerManager.setType('textParser')">Text Parser</button>
-                    <button id="typeSectionBtn" class="type-option" onclick="TrackerManager.setType('section')">Section Header</button>
                 </div>
                 <div class="form-row" style="margin-bottom: 1rem; gap: 1rem;">
                     <div class="input-group" style="flex: 2;">
