@@ -4447,8 +4447,15 @@ export const TaskManager = {
             card.style.borderLeft = `4px solid ${a.color || '#00e676'}`;
             card.onclick = () => TaskManager.openModal(index);
 
+            let roleName = 'No Role';
+            if (a.roleId) {
+                const role = State.settings.roles.find(r => r.id === a.roleId);
+                if (role) roleName = role.name;
+            }
+
             let html = `<div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
                             <h4 style="margin:0; font-size:1rem; color:var(--text-main);">${a.name}</h4>
+                            <span style="font-size:0.7rem; color:var(--accent); font-weight:bold; text-transform:uppercase;">${roleName}</span>
                         </div>`;
             
             if (a.description) {
@@ -4457,9 +4464,15 @@ export const TaskManager = {
 
             html += `<div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; color:#888;">`;
             
-            let dateText = "Active";
+            let dateText = "Ongoing";
             if (a.startDate || a.endDate) {
-                dateText = `${a.startDate ? formatDate(new Date(a.startDate)) : '...'} - ${a.endDate ? formatDate(new Date(a.endDate)) : '...'}`;
+                if (a.dateMode === 'period') {
+                    const startP = a.startPeriod ? `P${a.startPeriod.toString().padStart(2, '0')}` : '...';
+                    const endP = a.endPeriod ? `P${a.endPeriod.toString().padStart(2, '0')}` : '...';
+                    dateText = `${a.startYear || ''} ${startP} - ${a.endYear || ''} ${endP}`;
+                } else {
+                    dateText = `${a.startDate ? formatDate(new Date(a.startDate)) : '...'} - ${a.endDate ? formatDate(new Date(a.endDate)) : '...'}`;
+                }
             }
             html += `<span>${dateText}</span>`;
             
@@ -4472,14 +4485,40 @@ export const TaskManager = {
             grid.appendChild(card);
         });
     },
+    toggleDateMode: () => {
+        const mode = document.querySelector('input[name="tskDateMode"]:checked').value;
+        getEl('tskDateRow').style.display = mode === 'date' ? 'grid' : 'none';
+        getEl('tskPeriodRow').style.display = mode === 'period' ? 'grid' : 'none';
+    },
+    clearDates: () => {
+        getEl('tskStart').value = '';
+        getEl('tskEnd').value = '';
+        // Also reset period selects to a neutral state if possible, but empty string for dates is the key for "ongoing"
+    },
     openModal: (index) => {
         getEl('taskModalTitle').innerText = index === -1 ? 'Add Task' : 'Edit Task';
         getEl('editTaskIndex').value = index;
         
-        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#00e676' };
+        const a = index > -1 ? State.assignments[index] : { name: '', description: '', priority: 'Med', startDate: '', endDate: '', color: '#00e676', roleId: '', dateMode: 'date' };
         
         getEl('tskName').value = a.name;
         getEl('tskDesc').value = a.description;
+
+        // Populate Roles
+        const roleSel = getEl('tskRole');
+        roleSel.innerHTML = '<option value="">Select Role...</option>';
+        State.settings.roles.forEach(r => {
+            const opt = new Option(r.name, r.id);
+            if (r.id === a.roleId) opt.selected = true;
+            roleSel.add(opt);
+        });
+
+        // Date Mode
+        const mode = a.dateMode || 'date';
+        const modeRad = document.querySelector(`input[name="tskDateMode"][value="${mode}"]`);
+        if(modeRad) modeRad.checked = true;
+        TaskManager.toggleDateMode();
+
         const safeDate = (v) => {
             if(!v) return '';
             if(/^\d{4}-\d{2}-\d{2}$/.test(v)) return v;
@@ -4489,6 +4528,28 @@ export const TaskManager = {
         getEl('tskStart').value = safeDate(a.startDate);
         getEl('tskEnd').value = safeDate(a.endDate);
         
+        // Populate Period Dropdowns
+        const fy = getFiscalYear();
+        const years = [fy-1, fy, fy+1, fy+2];
+        const sySel = getEl('tskStartYear'); sySel.innerHTML = '<option value="">Year...</option>';
+        const eySel = getEl('tskEndYear'); eySel.innerHTML = '<option value="">Year...</option>';
+        years.forEach(y => {
+            sySel.add(new Option(y, y));
+            eySel.add(new Option(y, y));
+        });
+        if (a.startYear) sySel.value = a.startYear;
+        if (a.endYear) eySel.value = a.endYear;
+
+        const spSel = getEl('tskStartPeriod'); spSel.innerHTML = '<option value="">Period...</option>';
+        const epSel = getEl('tskEndPeriod'); epSel.innerHTML = '<option value="">Period...</option>';
+        for(let i=1; i<=12; i++) {
+            const label = getPeriodLabel(i).split(' ')[0];
+            spSel.add(new Option(label, i));
+            epSel.add(new Option(label, i));
+        }
+        if (a.startPeriod) spSel.value = a.startPeriod;
+        if (a.endPeriod) epSel.value = a.endPeriod;
+
         const colIn = getEl('tskColor');
         colIn.value = a.color;
         colIn.style.backgroundColor = a.color;
@@ -4505,21 +4566,59 @@ export const TaskManager = {
         const name = getEl('tskName').value.trim();
         if(!name) return App.alert("Task Name is required");
         
-        const start = getEl('tskStart').value;
-        const end = getEl('tskEnd').value;
-        if(start && end && end < start) {
-            return App.alert("End date must be greater than or equal to start date.");
+        const roleId = getEl('tskRole').value;
+        if(!roleId) return App.alert("Please select a Role for this task.");
+
+        const dateMode = document.querySelector('input[name="tskDateMode"]:checked').value;
+        let startDate = '', endDate = '', startYear = null, startPeriod = null, endYear = null, endPeriod = null;
+
+        if (dateMode === 'date') {
+            startDate = getEl('tskStart').value;
+            endDate = getEl('tskEnd').value;
+        } else {
+            startYear = getEl('tskStartYear').value ? parseInt(getEl('tskStartYear').value) : null;
+            startPeriod = getEl('tskStartPeriod').value ? parseInt(getEl('tskStartPeriod').value) : null;
+            endYear = getEl('tskEndYear').value ? parseInt(getEl('tskEndYear').value) : null;
+            endPeriod = getEl('tskEndPeriod').value ? parseInt(getEl('tskEndPeriod').value) : null;
+
+            const getDateFromPeriod = (y, p) => {
+                if (!y || !p) return null;
+                const startMonth = State.settings.fyStartMonth;
+                const monthIndex = (p - 1 + startMonth) % 12;
+                const calcYear = monthIndex < startMonth ? y + 1 : y;
+                return new Date(calcYear, monthIndex, 1);
+            };
+
+            const dS = getDateFromPeriod(startYear, startPeriod);
+            const dE = getDateFromPeriod(endYear, endPeriod);
+            
+            if (dS) startDate = dS.toISOString().split('T')[0];
+            if (dE) {
+                // Set to last day of month
+                const dE_end = new Date(dE.getFullYear(), dE.getMonth() + 1, 0);
+                endDate = dE_end.toISOString().split('T')[0];
+            }
+        }
+
+        if(startDate && endDate && endDate < startDate) {
+            return App.alert("End date/period must be greater than or equal to start date/period.");
         }
 
         const priorityRad = document.querySelector('input[name="tskPriority"]:checked');
         
         const newAssignment = {
             name,
+            roleId,
             description: getEl('tskDesc').value.trim(),
             class: 'Task',
             priority: priorityRad ? priorityRad.value : 'Med',
-            startDate: getEl('tskStart').value,
-            endDate: getEl('tskEnd').value,
+            startDate,
+            endDate,
+            dateMode,
+            startYear,
+            startPeriod,
+            endYear,
+            endPeriod,
             color: getEl('tskColor').value
         };
         

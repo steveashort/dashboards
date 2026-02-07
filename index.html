@@ -1153,6 +1153,10 @@
                     <input type="text" id="tskName" placeholder="e.g. Update Documentation">
                 </div>
                 <div class="input-group">
+                    <label>Assigned Role</label>
+                    <select id="tskRole" style="width:100%; padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border);"></select>
+                </div>
+                <div class="input-group">
                     <label>Description</label>
                     <textarea id="tskDesc" style="height: 60px; font-size: 0.85rem;" placeholder="Brief description..."></textarea>
                 </div>
@@ -1170,7 +1174,16 @@
                         <input type="text" readonly class="color-input" id="tskColor" value="#00e676" style="cursor:pointer;">
                     </div>
                 </div>
-                <div class="form-row" style="gap: 1rem; margin-bottom: 1rem;">
+
+                <div class="input-group">
+                    <label>Date Entry Mode</label>
+                    <div style="display: flex; gap: 15px; margin-top: 5px; margin-bottom: 10px;">
+                        <label style="font-size:0.85rem;"><input type="radio" name="tskDateMode" value="date" checked onchange="TaskManager.toggleDateMode()"> Actual Dates</label>
+                        <label style="font-size:0.85rem;"><input type="radio" name="tskDateMode" value="period" onchange="TaskManager.toggleDateMode()"> Business Period</label>
+                    </div>
+                </div>
+
+                <div id="tskDateRow" class="form-row" style="gap: 1rem; margin-bottom: 1rem;">
                     <div class="input-group">
                         <label>Start Date</label>
                         <input type="date" id="tskStart" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
@@ -1180,6 +1193,24 @@
                         <input type="date" id="tskEnd" style="background:var(--input-bg); color:#fff; color-scheme:dark;">
                     </div>
                 </div>
+
+                <div id="tskPeriodRow" class="form-row" style="gap: 1rem; margin-bottom: 1rem; display:none;">
+                    <div class="input-group">
+                        <label>Start Period</label>
+                        <div style="display:flex; gap:5px;">
+                            <select id="tskStartYear" style="padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border); width:80px;"></select>
+                            <select id="tskStartPeriod" style="padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border); flex:1;"></select>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>End Period</label>
+                        <div style="display:flex; gap:5px;">
+                            <select id="tskEndYear" style="padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border); width:80px;"></select>
+                            <select id="tskEndPeriod" style="padding:8px; background:var(--input-bg); color:#fff; border:1px solid var(--border); flex:1;"></select>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-sm" style="margin-bottom: 1rem; width: 100%;" onclick="TaskManager.clearDates()">Clear Dates (Set to Ongoing)</button>
             </div>
             <div class="modal-footer">
                 <button class="btn" style="color: var(--g-red); border-color:var(--g-red);" onclick="TaskManager.deleteTask()" id="btnDelTask">Delete</button>
