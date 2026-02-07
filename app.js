@@ -1710,6 +1710,23 @@ export const TrackerManager = {
         const isEdit = index > -1;
         const titleEl = getEl('trackerModalTitle');
         if (titleEl) titleEl.innerText = isEdit ? 'Edit Card' : 'Add Card';
+
+        // Toggle Type Selector visibility (Hide when editing as requested)
+        const typeSelector = getEl('trackerTypeSelector');
+        if (typeSelector) typeSelector.style.display = isEdit ? 'none' : 'flex';
+
+        // Populate Tab Dropdown
+        const tabSel = getEl('tkTabId');
+        if (tabSel) {
+            tabSel.innerHTML = '';
+            State.trackerTabs.forEach(tab => {
+                const opt = document.createElement('option');
+                opt.value = tab.id;
+                opt.innerText = tab.name;
+                tabSel.appendChild(opt);
+            });
+            tabSel.value = State.activeTabId;
+        }
         
         ['gauge','bar','line','counter','rag','countdown','completionBar','planner','achievements'].forEach(type => {
             const div = getEl(`${type}Inputs`);
@@ -2947,12 +2964,28 @@ export const TrackerManager = {
         const currentTab = State.trackerTabs.find(t => t.id === State.activeTabId);
         if (!currentTab) return App.alert("No active tab selected.");
 
+        const targetTabId = getEl('tkTabId').value;
+        const isMove = targetTabId !== State.activeTabId;
+
         if(index === -1) {
             newTracker.id = generateId('cid');
-            currentTab.trackers.push(newTracker);
+            const targetTab = State.trackerTabs.find(t => t.id === targetTabId) || currentTab;
+            targetTab.trackers.push(newTracker);
+            if (isMove) State.activeTabId = targetTabId;
         } else {
             newTracker.id = currentTab.trackers[index].id; // Preserve existing ID
-            currentTab.trackers[index] = newTracker;
+            if (isMove) {
+                // Remove from current
+                currentTab.trackers.splice(index, 1);
+                // Add to new
+                const targetTab = State.trackerTabs.find(t => t.id === targetTabId);
+                if (targetTab) {
+                    targetTab.trackers.push(newTracker);
+                    State.activeTabId = targetTabId; // Switch to the new tab to see the moved card
+                }
+            } else {
+                currentTab.trackers[index] = newTracker;
+            }
         }
 
         ModalManager.closeModal('trackerModal');
