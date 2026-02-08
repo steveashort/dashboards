@@ -213,7 +213,7 @@ body.theme-day .tracker-card, body.theme-day .member-card, body.theme-day .team-
 .tracker-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    grid-auto-rows: minmax(280px, auto);
+    grid-auto-rows: auto;
     gap: 1rem;
     margin-bottom: 1.5rem;
 }
@@ -620,6 +620,7 @@ body.publishing #additionalInfoPreview { pointer-events: auto; }
     padding: 2rem 0 0.5rem 0 !important;
     cursor: default !important;
     height: auto !important;
+    min-height: 0 !important;
     display: block !important;
 }
 .tracker-card.type-section:hover { transform: none !important; }
