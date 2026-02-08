@@ -213,7 +213,7 @@ body.theme-day .tracker-card, body.theme-day .member-card, body.theme-day .team-
 .tracker-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
-    grid-auto-rows: auto;
+    grid-auto-rows: minmax(280px, auto);
     gap: 1.5rem;
     margin-bottom: 3rem;
 }
@@ -237,6 +237,8 @@ body.theme-day .tracker-card, body.theme-day .member-card, body.theme-day .team-
 .tracker-card.size-2x3 { grid-column: span 2; grid-row: span 3; }
 .tracker-card.size-2x4 { grid-column: span 2; grid-row: span 4; }
 .tracker-card.size-3x3 { grid-column: span 3; grid-row: span 3; }
+.tracker-card.size-3x4 { grid-column: span 3; grid-row: span 4; }
+.tracker-card.size-4x3 { grid-column: span 4; grid-row: span 3; }
 .tracker-card.size-4x4 { grid-column: span 4; grid-row: span 4; }
 .tracker-card.size-full { grid-column: 1 / -1; min-height: auto !important; }
 
@@ -257,8 +259,14 @@ body.theme-day .tracker-card, body.theme-day .member-card, body.theme-day .team-
     .tracker-card.size-1x3 { grid-column: span 1; grid-row: span 3; }
     .tracker-card.size-1x4 { grid-column: span 1; grid-row: span 4; }
     .tracker-card.size-2x2 { grid-column: span 2; grid-row: span 2; }
+    .tracker-card.size-2x3 { grid-column: span 2; grid-row: span 3; }
+    .tracker-card.size-2x4 { grid-column: span 2; grid-row: span 4; }
     .tracker-card.size-3x2 { grid-column: span 3; grid-row: span 2; }
+    .tracker-card.size-3x3 { grid-column: span 3; grid-row: span 3; }
+    .tracker-card.size-3x4 { grid-column: span 3; grid-row: span 4; }
     .tracker-card.size-4x2 { grid-column: span 3; grid-row: span 2; }
+    .tracker-card.size-4x3 { grid-column: span 3; grid-row: span 3; }
+    .tracker-card.size-4x4 { grid-column: span 3; grid-row: span 4; }
     .tracker-card.size-full { grid-column: 1 / -1; }
     
     /* Compat */
@@ -269,9 +277,11 @@ body.theme-day .tracker-card, body.theme-day .member-card, body.theme-day .team-
 }
 @media (max-width: 768px) {
     .tracker-grid { grid-template-columns: 1fr; }
-    .tracker-card.size-1x1, .tracker-card.size-2x1, .tracker-card.size-3x1, .tracker-card.size-4x1, .tracker-card.size-1x2, 
-    .tracker-card.size-1x3, .tracker-card.size-1x4, .tracker-card.size-2x2, .tracker-card.size-3x2, .tracker-card.size-4x2, .tracker-card.size-full,
-    .tracker-card.size-S, .tracker-card.size-M, .tracker-card.size-L, .tracker-card.size-XL {
+    .tracker-card.size-1x1, .tracker-card.size-1x2, .tracker-card.size-1x3, .tracker-card.size-1x4,
+    .tracker-card.size-2x1, .tracker-card.size-2x2, .tracker-card.size-2x3, .tracker-card.size-2x4,
+    .tracker-card.size-3x1, .tracker-card.size-3x2, .tracker-card.size-3x3, .tracker-card.size-3x4,
+    .tracker-card.size-4x1, .tracker-card.size-4x2, .tracker-card.size-4x3, .tracker-card.size-4x4,
+    .tracker-card.size-full, .tracker-card.size-S, .tracker-card.size-M, .tracker-card.size-L, .tracker-card.size-XL {
         grid-column: span 1;
         grid-row: auto;
     }

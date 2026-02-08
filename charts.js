@@ -5,8 +5,11 @@ import { processTokens } from './app.js';
 
 const sizeMap = { 
     'S': 300, 'M': 600, 'L': 900, 'XL': 1200,
-    '1x1': 300, '2x1': 600, '3x1': 900, '4x1': 1200, '1x2': 300, '2x2': 600, '3x2': 900, '4x2': 1200,
-    '2x3': 600, '2x4': 600, '3x3': 900, '4x4': 1200, 'full': 1200
+    '1x1': 300, '1x2': 300, '1x3': 300, '1x4': 300,
+    '2x1': 600, '2x2': 600, '2x3': 600, '2x4': 600,
+    '3x1': 900, '3x2': 900, '3x3': 900, '3x4': 900,
+    '4x1': 1200, '4x2': 1200, '4x3': 1200, '4x4': 1200,
+    'full': 1200
 };
 const getWidth = (s) => sizeMap[s] || 600;
 
@@ -96,12 +99,12 @@ export const renderChart = (el, type, data, options) => {
 
 export const calculateTrackerSize = (tracker) => {
     if (tracker.size) return tracker.size;
-    if (['gauge', 'rag', 'counter', 'ryg', 'donut', 'completionBar'].includes(tracker.type)) return 'S';
+    if (['gauge', 'rag', 'counter', 'ryg', 'donut', 'completionBar'].includes(tracker.type)) return '1x2';
     if (tracker.type === 'countdown') {
-        return tracker.displayStyle === 'bar' ? 'M' : 'S';
+        return tracker.displayStyle === 'bar' ? '2x2' : '1x2';
     }
-    if (['line', 'bar', 'note', 'textParser'].includes(tracker.type)) return 'M'; 
-    return 'M';
+    if (['line', 'bar', 'note', 'textParser'].includes(tracker.type)) return '2x2'; 
+    return '2x2';
 };
 
 

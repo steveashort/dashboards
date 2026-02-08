@@ -3,18 +3,15 @@ import { calculateTrackerSize } from '../charts.js';
 
 console.log('Running Sizing Logic Tests...');
 
-// Waffle sizing - Logic currently defaults to M
-assert.strictEqual(calculateTrackerSize({ type: 'waffle', total: 50 }), 'M', 'Waffle < 100 should be M (Default)');
-// assert.strictEqual(calculateTrackerSize({ type: 'waffle', total: 150 }), 'M', 'Waffle 150 should be M');
-// assert.strictEqual(calculateTrackerSize({ type: 'waffle', total: 500 }), 'L', 'Waffle 500 should be L');
-// assert.strictEqual(calculateTrackerSize({ type: 'waffle', total: 2000 }), 'XL', 'Waffle 2000 should be XL');
+// Waffle sizing - Logic currently defaults to 2x2
+assert.strictEqual(calculateTrackerSize({ type: 'waffle', total: 50 }), '2x2', 'Waffle < 100 should be 2x2 (Default)');
 
 // Other types defaults
-assert.strictEqual(calculateTrackerSize({ type: 'gauge' }), 'S', 'Gauge should be S');
-assert.strictEqual(calculateTrackerSize({ type: 'rag' }), 'S', 'RAG should be S');
-assert.strictEqual(calculateTrackerSize({ type: 'counter' }), 'S', 'Counter should be S');
-assert.strictEqual(calculateTrackerSize({ type: 'line' }), 'M', 'Line should be M');
-assert.strictEqual(calculateTrackerSize({ type: 'bar' }), 'M', 'Bar should be M');
+assert.strictEqual(calculateTrackerSize({ type: 'gauge' }), '1x2', 'Gauge should be 1x2');
+assert.strictEqual(calculateTrackerSize({ type: 'rag' }), '1x2', 'RAG should be 1x2');
+assert.strictEqual(calculateTrackerSize({ type: 'counter' }), '1x2', 'Counter should be 1x2');
+assert.strictEqual(calculateTrackerSize({ type: 'line' }), '2x2', 'Line should be 2x2');
+assert.strictEqual(calculateTrackerSize({ type: 'bar' }), '2x2', 'Bar should be 2x2');
 
 console.log('Sizing Logic Tests Passed');
 

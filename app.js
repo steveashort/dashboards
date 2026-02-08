@@ -2093,12 +2093,12 @@ export const TrackerManager = {
         const descIn = getEl('tkDesc');
         if (descIn) descIn.value = tracker ? tracker.desc : '';
         
-        // Default Size: completionBar defaults to 1x1, others to 2x1
-        let sizeVal = tracker ? (tracker.size || '2x1') : (type === 'completionBar' ? '1x1' : '2x1');
+        // Default Size: completionBar defaults to 1x2, others to 2x1
+        let sizeVal = tracker ? (tracker.size || '2x1') : (type === 'completionBar' ? '1x2' : '2x1');
         // Map Legacy Sizes
-        if (sizeVal === 'S') sizeVal = '1x1';
+        if (sizeVal === 'S' || sizeVal === '1x1') sizeVal = '1x2';
         if (sizeVal === 'M') sizeVal = '2x1';
-        if (sizeVal === 'L') sizeVal = '3x2'; // Map L to 3x2 as best fit
+        if (sizeVal === 'L') sizeVal = '3x2'; 
         if (sizeVal === 'XL') sizeVal = '3x2';
 
         const sizeRadio = document.querySelector(`input[name="tkSize"][value="${sizeVal}"]`);
@@ -2410,21 +2410,10 @@ export const TrackerManager = {
 
     updateSizeOptions(type) {
         const inputType = (type === 'bar') ? 'line' : type;
-        const allSizes = ['1x1', '2x1', '3x1', '4x1', '1x2', '1x3', '1x4', '2x2', '3x2', '4x2', '2x3', '2x4', '3x3', '4x4'];
+        const allSizes = ['1x2', '1x3', '1x4', '2x1', '2x2', '2x3', '2x4', '3x1', '3x2', '3x3', '3x4', '4x1', '4x2', '4x3', '4x4'];
         let allowed = allSizes;
 
-        if (['gauge', 'rag'].includes(inputType)) allowed = ['1x1'];
-        else if (inputType === 'donut') allowed = ['1x1', '2x2'];
-        else if (inputType === 'completionBar') allowed = ['1x1', '2x1', '3x1', '4x1', '1x2', '2x2', '3x2', '4x2'];
-        else if (inputType === 'countdown') allowed = ['1x1', '2x1', '3x1', '4x1', '2x2', '3x2', '4x2'];
-        else if (inputType === 'planner') allowed = ['2x1', '3x1', '4x1', '1x2', '1x3', '1x4', '2x2', '3x2', '4x2', '2x3', '2x4', '3x3', '4x4'];
-        else if (inputType === 'achievements') allowed = ['2x1', '3x1', '4x1', '1x2', '1x3', '2x2', '3x2', '4x2', '2x3', '2x4', '3x3', '4x4'];
-        else if (inputType === 'textParser') allowed = ['2x1', '3x1', '4x1', '1x2', '1x3', '2x2', '3x2', '4x2', '2x3', '2x4', '3x3', '4x4'];
-        else if (inputType === 'line') allowed = ['1x1', '2x1', '3x1', '4x1', '1x2', '2x2', '3x2', '4x2', '4x4'];
-        else if (inputType === 'section') allowed = [];
-        else if (inputType === 'webpage') allowed = ['3x3', '4x4'];
-        // Note allows all sizes.
-        // Waffle allows all for now.
+        if (inputType === 'section') allowed = [];
 
         allSizes.forEach(s => {
             const lbl = getEl(`lblSize${s}`);
