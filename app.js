@@ -2093,13 +2093,17 @@ export const TrackerManager = {
         const descIn = getEl('tkDesc');
         if (descIn) descIn.value = tracker ? tracker.desc : '';
         
-        // Default Size: completionBar defaults to 1x2, others to 2x1
-        let sizeVal = tracker ? (tracker.size || '2x1') : (type === 'completionBar' ? '1x2' : '2x1');
-        // Map Legacy Sizes
-        if (sizeVal === 'S' || sizeVal === '1x1') sizeVal = '1x2';
-        if (sizeVal === 'M') sizeVal = '2x1';
-        if (sizeVal === 'L') sizeVal = '3x2'; 
-        if (sizeVal === 'XL') sizeVal = '3x2';
+        // Default Size: gauge/rag/counter defaults to 1x1, completionBar to 1x2, others to 2x1
+        let sizeVal = tracker ? (tracker.size || '2x1') : (['gauge', 'rag', 'counter'].includes(type) ? '1x1' : (type === 'completionBar' ? '1x2' : '2x1'));
+        // Map Legacy and Restricted Sizes
+        if (['gauge', 'rag', 'counter'].includes(type)) {
+            sizeVal = '1x1'; // Force 1x1 for these types
+        } else {
+            if (sizeVal === 'S' || sizeVal === '1x1') sizeVal = '1x2';
+            if (sizeVal === 'M') sizeVal = '2x1';
+            if (sizeVal === 'L') sizeVal = '3x2'; 
+            if (sizeVal === 'XL') sizeVal = '3x2';
+        }
 
         const sizeRadio = document.querySelector(`input[name="tkSize"][value="${sizeVal}"]`);
         if (sizeRadio) sizeRadio.checked = true;
@@ -2410,10 +2414,11 @@ export const TrackerManager = {
 
     updateSizeOptions(type) {
         const inputType = (type === 'bar') ? 'line' : type;
-        const allSizes = ['1x2', '1x3', '1x4', '2x1', '2x2', '2x3', '2x4', '3x1', '3x2', '3x3', '3x4', '4x1', '4x2', '4x3', '4x4'];
+        const allSizes = ['1x1', '1x2', '1x3', '1x4', '2x1', '2x2', '2x3', '2x4', '3x1', '3x2', '3x3', '3x4', '4x1', '4x2', '4x3', '4x4'];
         let allowed = allSizes;
 
-        if (inputType === 'section') allowed = [];
+        if (['gauge', 'rag', 'counter'].includes(inputType)) allowed = ['1x1'];
+        else if (inputType === 'section') allowed = [];
 
         allSizes.forEach(s => {
             const lbl = getEl(`lblSize${s}`);
