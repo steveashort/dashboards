@@ -38,23 +38,23 @@ export const getApexConfig = (type, data, options = {}) => {
     
     let xaxisConfig = {
         categories: (data.labels || []).map(l => processTokens(l)),
-        labels: { style: { colors: '#aaa' } },
+        labels: { style: { colors: '#aaa', fontSize: '11px' } },
         axisBorder: { show: false },
         axisTicks: { show: false }
     };
     let yaxisConfig = {
-        labels: { style: { colors: '#aaa' } }
+        labels: { style: { colors: '#aaa', fontSize: '11px' } }
     };
 
     // Special handling for rangeBar
     if (type === 'rangeBar') {
         xaxisConfig = {
             type: 'numeric',
-            labels: { style: { colors: '#aaa' } }
+            labels: { style: { colors: '#aaa', fontSize: '11px' } }
         };
         yaxisConfig = {
             categories: data.series && data.series[0] && data.series[0].data ? data.series[0].data.map(d => processTokens(d.x)) : [],
-            labels: { style: { colors: '#aaa' } }
+            labels: { style: { colors: '#aaa', fontSize: '11px' } }
         };
     }
 
@@ -71,7 +71,8 @@ export const getApexConfig = (type, data, options = {}) => {
             zoom: { enabled: false },
             animations: { enabled: false },
             height: '100%',
-            width: '100%'
+            width: '100%',
+            fontFamily: "'Segoe UI', Tahoma, sans-serif"
         },
         theme: { mode: 'dark' },
         colors: palette,
@@ -227,7 +228,7 @@ export const Visuals = {
         [0, 0.25, 0.5, 0.75, 1].forEach(p => {
             const y = h - pBot - (p * uh);
             const val = Math.round(max * p);
-            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="#333" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="9">${val}</text>`;
+            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="#333" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="11">${val}</text>`;
         });
 
         let paths = '';
@@ -266,7 +267,7 @@ export const Visuals = {
             if (i % skip !== 0) return;
             const x = pSide + (i*gw);
             const txt = fmt(l);
-            lbls += `<text transform="translate(${x}, ${h-35}) rotate(45)" text-anchor="start" fill="#aaa" font-size="9">${txt}</text>`;
+            lbls += `<text transform="translate(${x}, ${h-35}) rotate(45)" text-anchor="start" fill="#aaa" font-size="11">${txt}</text>`;
         });
 
         let legHTML = '';
@@ -277,12 +278,12 @@ export const Visuals = {
 
         series.forEach((s, i) => {
             const lx = startX + (i * legItemW);
-            legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
+            legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="10" text-anchor="start">${s.name.substring(0,8)}</text>`;
         });
         
-        const yAxisLabel = yLabel ? `<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>` : '';
+        const yAxisLabel = yLabel ? `<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="12">${yLabel}</text>` : '';
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yGrid}${yAxisLabel}${paths}${points}${lbls}${legHTML}</svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="font-family: 'Segoe UI', Tahoma, sans-serif;">${yGrid}${yAxisLabel}${paths}${points}${lbls}${legHTML}<line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/></svg>`;
     },
 
     createMultiBarChartSVG: (labels, series, yLabel, size = 'M') => {
@@ -299,7 +300,7 @@ export const Visuals = {
         [0, 0.25, 0.5, 0.75, 1].forEach(p => {
             const y = h - pBot - (p * uh);
             const val = Math.round(max * p);
-            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="#333" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="9">${val}</text>`;
+            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="#333" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="11">${val}</text>`;
         });
 
         let rects = '';
@@ -318,9 +319,9 @@ export const Visuals = {
         labels.forEach((l, i) => {
             const x = pSide + (i * groupWidth) + (groupWidth/2);
             if (rotate) {
-                lbls += `<text transform="translate(${x}, ${h-35}) rotate(45)" text-anchor="start" fill="#aaa" font-size="9">${l.substring(0,8)}</text>`;
+                lbls += `<text transform="translate(${x}, ${h-35}) rotate(45)" text-anchor="start" fill="#aaa" font-size="11">${l.substring(0,8)}</text>`;
             } else {
-                lbls += `<text x="${x}" y="${h-25}" text-anchor="middle" fill="#aaa" font-size="9">${l.substring(0,5)}</text>`;
+                lbls += `<text x="${x}" y="${h-25}" text-anchor="middle" fill="#aaa" font-size="11">${l.substring(0,5)}</text>`;
             }
         });
 
@@ -332,12 +333,12 @@ export const Visuals = {
 
         series.forEach((s, i) => {
             const lx = startX + (i * legItemW);
-            legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="8" text-anchor="start">${s.name.substring(0,8)}</text>`;
+            legHTML += `<circle cx="${lx}" cy="${legY}" r="3" fill="${s.color}"/><text x="${lx+10}" y="${legY+3}" fill="#aaa" font-size="10" text-anchor="start">${s.name.substring(0,8)}</text>`;
         });
 
-        const yAxisLabel = yLabel ? `<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>` : '';
+        const yAxisLabel = yLabel ? `<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="12">${yLabel}</text>` : '';
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yGrid}${yAxisLabel}${rects}${lbls}${legHTML}</svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="font-family: 'Segoe UI', Tahoma, sans-serif;">${yGrid}${yAxisLabel}${rects}${lbls}${legHTML}<line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/></svg>`;
     },
 
     createBarChartSVG: (data, yLabel, color, size = 'M') => {
@@ -351,7 +352,7 @@ export const Visuals = {
         [0, 0.25, 0.5, 0.75, 1].forEach(p => {
             const y = h - pBot - (p * uh);
             const val = Math.round(max * p);
-            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="#333" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="9">${val}</text>`;
+            yGrid += `<line x1="${pSide}" y1="${y}" x2="${w-pSide}" y2="${y}" stroke="#333" stroke-dasharray="2,2" /><text x="${pSide-5}" y="${y+3}" text-anchor="end" fill="#666" font-size="11">${val}</text>`;
         });
 
         let bars='';
@@ -361,16 +362,16 @@ export const Visuals = {
             const x=pSide+(i*bw)+5; 
             const y=h-pBot-bh;
             const tooltipText = `${d.label}: ${d.val}`;
-            bars+=`<rect x="${x}" y="${y}" width="${bw-10}" height="${bh}" fill="${fill}" rx="2" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></rect><text x="${x+(bw-10)/2}" y="${y-5}" text-anchor="middle" fill="#fff" font-size="10">${d.val}</text>`;
+            bars+=`<rect x="${x}" y="${y}" width="${bw-10}" height="${bh}" fill="${fill}" rx="2" style="cursor:pointer;" onmousemove="Visuals.showTooltip(event, '${tooltipText}')" onmouseout="Visuals.hideTooltip()"></rect><text x="${x+(bw-10)/2}" y="${y-5}" text-anchor="middle" fill="#fff" font-size="12">${d.val}</text>`;
             
             const rotate = d.label.length > 4;
             if (rotate) {
-                bars+=`<text transform="translate(${x+(bw-10)/2}, ${h-35}) rotate(45)" text-anchor="start" fill="#aaa" font-size="10">${d.label.substring(0,8)}</text>`;
+                bars+=`<text transform="translate(${x+(bw-10)/2}, ${h-35}) rotate(45)" text-anchor="start" fill="#aaa" font-size="11">${d.label.substring(0,8)}</text>`;
             } else {
-                bars+=`<text x="${x+(bw-10)/2}" y="${h-15}" text-anchor="middle" fill="#aaa" font-size="10">${d.label.substring(0,5)}</text>`;
+                bars+=`<text x="${x+(bw-10)/2}" y="${h-15}" text-anchor="middle" fill="#aaa" font-size="11">${d.label.substring(0,5)}</text>`;
             }
         });
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/>${yGrid}<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="10">${yLabel}</text>${bars}</svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none" style="font-family: 'Segoe UI', Tahoma, sans-serif;">${yGrid}<text transform="rotate(-90 10,${h/2})" x="10" y="${h/2}" text-anchor="middle" fill="#aaa" font-size="12">${yLabel}</text>${bars}<line x1="${pSide}" y1="${h-pBot}" x2="${w-pSide}" y2="${h-pBot}" stroke="#444"/></svg>`;
     },
 
     createRAGIconHTML: (status) => {
@@ -413,7 +414,7 @@ export const Visuals = {
         const rEnd = radius + 15;
 
         const total = values.reduce((a, b) => a + b, 0);
-        if (total === 0) return `<svg width="${w}" height="${h}"><circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="none" stroke="#333" stroke-width="${thickness}"/><text x="${centerX}" y="${centerY}" text-anchor="middle" dominant-baseline="middle" fill="#666" font-size="12">No Data</text></svg>`;
+        if (total === 0) return `<svg width="${w}" height="${h}" style="font-family: 'Segoe UI', Tahoma, sans-serif;"><circle cx="${centerX}" cy="${centerY}" r="${radius}" fill="none" stroke="#333" stroke-width="${thickness}"/><text x="${centerX}" y="${centerY}" text-anchor="middle" dominant-baseline="middle" fill="#666" font-size="12">No Data</text></svg>`;
 
         let startAngle = 0;
         let paths = '';
@@ -468,7 +469,7 @@ export const Visuals = {
                 const tx = isLeft ? lx3 - 4 : lx3 + 4;
                 const anchor = isLeft ? 'end' : 'start';
 
-                annotations += `<text x="${tx}" y="${ly2}" dy="3" text-anchor="${anchor}" fill="#eee" font-size="10" font-weight="bold">${labels[i]}</text>`;
+                annotations += `<text x="${tx}" y="${ly2}" dy="3" text-anchor="${anchor}" fill="#eee" font-size="11" font-weight="bold">${labels[i]}</text>`;
             }
 
             startAngle = endAngle;
@@ -476,7 +477,7 @@ export const Visuals = {
 
         const totalText = `<text x="${centerX}" y="${centerY}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="24" font-weight="bold">${total}</text>`;
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">${paths}${annotations}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/>${totalText}</svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet" style="font-family: 'Segoe UI', Tahoma, sans-serif;">${paths}${annotations}<circle cx="${centerX}" cy="${centerY}" r="${innerRadius}" fill="transparent"/>${totalText}</svg>`;
     },
 
     createDonutChartWithCalloutsSVG: (labels, values, customColors = []) => {
@@ -490,7 +491,7 @@ export const Visuals = {
         const rEnd = r + 60;
 
         const total = values.reduce((a, b) => a + b, 0);
-        if (total === 0) return `<svg width="${w}" height="${h}"><text x="${cx}" y="${cy}" text-anchor="middle" fill="#aaa">No Data</text></svg>`;
+        if (total === 0) return `<svg width="${w}" height="${h}" style="font-family: 'Segoe UI', Tahoma, sans-serif;"><text x="${cx}" y="${cy}" text-anchor="middle" fill="#aaa">No Data</text></svg>`;
 
         let startAngle = 0;
         let paths = '';
@@ -551,7 +552,7 @@ export const Visuals = {
 
         const totalText = `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" fill="#fff" font-size="24" font-weight="bold">${total}</text>`;
 
-        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}">${paths}${annotations}<circle cx="${cx}" cy="${cy}" r="${r - thickness}" fill="transparent"/>${totalText}</svg>`;
+        return `<svg width="100%" height="100%" viewBox="0 0 ${w} ${h}" style="font-family: 'Segoe UI', Tahoma, sans-serif;">${paths}${annotations}<circle cx="${cx}" cy="${cy}" r="${r - thickness}" fill="transparent"/>${totalText}</svg>`;
     },
 
     createCompletionBarSVG: (completed, total, activeColor, remainingColor, height = 40, orientation = 'horizontal') => {
@@ -560,8 +561,8 @@ export const Visuals = {
         const remPct = 100 - pct;
         
         // Consistent Font Styles
-        const valStyle = 'font-size:16px; font-weight:bold; color:#fff; line-height:1.1;';
-        const labelStyle = 'font-size:10px; font-weight:normal; color:rgba(255,255,255,0.9); text-transform:uppercase; letter-spacing:0.5px;';
+        const valStyle = 'font-size:16px; font-weight:bold; color:#fff; line-height:1.1; font-family: "Segoe UI", Tahoma, sans-serif;';
+        const labelStyle = 'font-size:10px; font-weight:normal; color:rgba(255,255,255,0.9); text-transform:uppercase; letter-spacing:0.5px; font-family: "Segoe UI", Tahoma, sans-serif;';
         const containerStyle = 'display:flex; flex-direction:column; align-items:center; justify-content:center; text-shadow:0 1px 2px rgba(0,0,0,0.8); overflow:hidden;';
         
         if (orientation === 'vertical') {
@@ -753,7 +754,7 @@ export const Visuals = {
         groupKeys.forEach(k => totalRows += groups[k].length);
         const totalHeight = timelineHeaderHeight + (groupKeys.length * groupHeaderHeight) + (totalRows * rowHeight) + 40;
 
-        let svg = `<svg width="100%" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="http://www.w3.org/2000/svg">`;
+        let svg = `<svg width="100%" height="${totalHeight}" viewBox="0 0 ${width} ${totalHeight}" xmlns="http://www.w3.org/2000/svg" style="font-family: 'Segoe UI', Tahoma, sans-serif;">`;
         svg += `<rect x="0" y="0" width="${width}" height="${totalHeight}" fill="var(--card-bg)" rx="8"/>`;
 
         // Timeline Header (Periods)
@@ -787,7 +788,7 @@ export const Visuals = {
             rows.forEach((row, ri) => {
                 const y = currentYPos + (ri * rowHeight);
                 // Sub-heading (Member Name)
-                svg += `<text x="25" y="${y + rowHeight/2 + 5}" fill="var(--text-main)" font-size="12" font-weight="500">${row.memberName}</text>`;
+                svg += `<text x="25" y="${y + rowHeight/2 + 5}" fill="var(--text-main)" font-size="13.5" font-weight="500">${row.memberName}</text>`;
 
                 // Calculate Bar Position using Exact Dates
                 const r = row.render;
@@ -854,14 +855,14 @@ export const Visuals = {
         const colWidth = timelineWidth / months.length;
         const totalHeight = headerHeight + (items.length * rowHeight) + 20;
         
-        let svg = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${totalHeight}" preserveAspectRatio="xMinYMin meet">`;
+        let svg = `<svg width="100%" height="100%" viewBox="0 0 ${width} ${totalHeight}" preserveAspectRatio="xMinYMin meet" style="font-family: 'Segoe UI', Tahoma, sans-serif;">`;
         svg += `<rect x="0" y="0" width="${width}" height="${totalHeight}" fill="var(--card-bg)" rx="8"/>`;
         
         // Vertical Grid & Headers
         months.forEach((m, i) => {
             const x = nameColWidth + (i * colWidth);
             const label = m.toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
-            svg += `<text x="${x + colWidth/2}" y="${headerHeight/2}" fill="var(--text-muted)" font-size="10" text-anchor="middle">${label}</text>`;
+            svg += `<text x="${x + colWidth/2}" y="${headerHeight/2}" fill="var(--text-muted)" font-size="12" text-anchor="middle">${label}</text>`;
             svg += `<line x1="${x}" y1="${headerHeight}" x2="${x}" y2="${totalHeight}" stroke="var(--border)" stroke-dasharray="2,2" stroke-width="0.5"/>`;
         });
         
@@ -878,7 +879,7 @@ export const Visuals = {
             const safeTooltip = tooltip.replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
             // Label with Tooltip
-            svg += `<text x="10" y="${y + rowHeight/2 + 4}" fill="var(--text-main)" font-size="11" font-weight="bold" 
+            svg += `<text x="10" y="${y + rowHeight/2 + 4}" fill="var(--text-main)" font-size="13.5" font-weight="bold" 
                     onmousemove="Visuals.showTooltip(event, '${safeTooltip}')" 
                     onmouseout="Visuals.hideTooltip()" style="cursor:pointer;">${item.name.substring(0,25)}</text>`;
             

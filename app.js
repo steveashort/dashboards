@@ -1137,7 +1137,7 @@ export const renderBoard = () => {
                     visualHTML = '<div class="countdown-list" style="width:100%; height:100%; overflow-y:auto; padding:5px;">';
                     items.forEach(item => {
                         const f = formatCountdown(item.date);
-                        visualHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:2px;"><span style="font-size:0.9rem; color:#e0e0e0;"><span class="${f.flashClass}" style="margin-right:5px;">${f.icon}</span>${item.label}</span><span style="font-size:0.9rem; font-weight:bold; color:${f.color};">${f.text}</span></div>`;
+                        visualHTML += `<div style="display:flex; justify-content:space-between; margin-bottom:5px; border-bottom:1px solid #333; padding-bottom:2px;"><span style="font-size:0.85rem; color:#e0e0e0;"><span class="${f.flashClass}" style="margin-right:5px;">${f.icon}</span>${item.label}</span><span style="font-size:0.85rem; font-weight:bold; color:${f.color};">${f.text}</span></div>`;
                     });
                     visualHTML += '</div>';
                     statsHTML = '';
