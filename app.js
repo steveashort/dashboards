@@ -1283,7 +1283,7 @@ export const renderBoard = () => {
             if (renderType !== 'section') {
                 card.innerHTML = timestampHTML;
             }
-            card.innerHTML += `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`;
+            card.insertAdjacentHTML('beforeend', `<button class="btn-del-tracker" onclick="event.stopPropagation(); TrackerManager.deleteTracker(${i})">&times;</button>`);
             
             const descEl = document.createElement('div');
             descEl.className = renderType === 'section' ? 'tracker-section-header' : 'tracker-desc';
@@ -1308,10 +1308,10 @@ export const renderBoard = () => {
             card.appendChild(descEl);
 
             if (renderType === 'section') {
-                card.innerHTML += '<div class="section-line"></div>';
+                card.insertAdjacentHTML('beforeend', '<div class="section-line"></div>');
             } else {
-                card.innerHTML += `<div class="tracker-viz-container">${visualHTML}</div>`;
-                card.innerHTML += `<div class="tracker-stats">${processTokens(statsHTML)}</div>`;
+                card.insertAdjacentHTML('beforeend', `<div class="tracker-viz-container">${visualHTML}</div>`);
+                card.insertAdjacentHTML('beforeend', `<div class="tracker-stats">${processTokens(statsHTML)}</div>`);
             }
             tGrid.appendChild(card);
         });
