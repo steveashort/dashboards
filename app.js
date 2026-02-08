@@ -138,6 +138,14 @@ const getTokenMap = () => {
     for (const k in cw) { map[`##CW${k.toUpperCase()}##`] = cw[k]; }
     for (const k in lw) { map[`##LW${k.toUpperCase()}##`] = lw[k]; }
     for (const k in nw) { map[`##NW${k.toUpperCase()}##`] = nw[k]; }
+
+    // Add Custom Tokens
+    if (State.settings && State.settings.customTokens) {
+        State.settings.customTokens.forEach(t => {
+            if (t.key && t.value) map[t.key] = t.value;
+        });
+    }
+
     return map;
 };
 
@@ -4886,6 +4894,18 @@ export const SettingsManager = {
             div.innerHTML = `<span><b>${a.id}</b>: ${a.name}</span> <span style="cursor:pointer;color:red;" onclick="SettingsManager.deleteAbsence('${a.id}')">&times;</span>`;
             aList.appendChild(div);
         });
+
+        const tList = getEl('setTokenList');
+        if (tList) {
+            tList.innerHTML = '';
+            if (!State.settings.customTokens) State.settings.customTokens = [];
+            State.settings.customTokens.forEach((t, idx) => {
+                const div = document.createElement('div');
+                div.style.display = 'flex'; div.style.justifyContent = 'space-between'; div.style.marginBottom = '5px';
+                div.innerHTML = `<span><b>${t.key}</b>: ${t.value}</span> <span style="cursor:pointer;color:red;" onclick="SettingsManager.deleteToken(${idx})">&times;</span>`;
+                tList.appendChild(div);
+            });
+        }
     },
     addRole: () => {
         const name = getEl('setNewRole').value.trim();
@@ -4909,6 +4929,21 @@ export const SettingsManager = {
     },
     deleteAbsence: (id) => {
         State.settings.absences = State.settings.absences.filter(a => a.id !== id);
+        SettingsManager.renderLists();
+    },
+    addToken: () => {
+        const key = getEl('setNewTokenKey').value.trim();
+        const value = getEl('setNewTokenVal').value.trim();
+        if(!key || !value) return;
+        if (!State.settings.customTokens) State.settings.customTokens = [];
+        State.settings.customTokens.push({ key, value });
+        getEl('setNewTokenKey').value = '';
+        getEl('setNewTokenVal').value = '';
+        SettingsManager.renderLists();
+    },
+    deleteToken: (index) => {
+        if (!State.settings.customTokens) return;
+        State.settings.customTokens.splice(index, 1);
         SettingsManager.renderLists();
     },
     save: () => {
