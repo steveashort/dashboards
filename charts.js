@@ -58,12 +58,16 @@ export const getApexConfig = (type, data, options = {}) => {
         };
     }
 
-    const processedSeries = (data.series || []).map(s => ({
-        ...s,
-        name: processTokens(s.name)
-    }));
+    const isPieOrDonut = ['pie', 'donut'].includes(type);
 
-    return {
+    const processedSeries = isPieOrDonut 
+        ? (data.series || []) 
+        : (data.series || []).map(s => ({
+            ...s,
+            name: processTokens(s.name)
+        }));
+
+    const config = {
         chart: {
             type: type,
             background: 'transparent',
@@ -76,19 +80,26 @@ export const getApexConfig = (type, data, options = {}) => {
         },
         theme: { mode: 'dark' },
         colors: palette,
-        stroke: { curve: 'smooth', width: 2 },
+        stroke: { curve: 'smooth', width: isPieOrDonut ? 1 : 2 },
         dataLabels: { enabled: false },
-        grid: {
-            borderColor: '#333',
-            strokeDashArray: 2,
-        },
-        xaxis: xaxisConfig,
-        yaxis: yaxisConfig,
         series: processedSeries,
         legend: { labels: { colors: '#aaa' } },
         tooltip: { theme: 'dark' },
         ...options
     };
+
+    if (isPieOrDonut) {
+        config.labels = (data.labels || []).map(l => processTokens(l));
+    } else {
+        config.grid = {
+            borderColor: '#333',
+            strokeDashArray: 2,
+        };
+        config.xaxis = xaxisConfig;
+        config.yaxis = yaxisConfig;
+    }
+
+    return config;
 };
 
 export const renderChart = (el, type, data, options) => {

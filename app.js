@@ -1105,6 +1105,36 @@ export const renderBoard = () => {
                 visualHTML += '</div>';
                 statsHTML = '';
             } else if (renderType === 'donut') {
+                const chartId = `donut-viz-${i}`;
+                visualHTML = `<div id="${chartId}" style="width:100%; height:100%; min-height:150px;"></div>`;
+                const dataPoints = t.dataPoints || [];
+                setTimeout(() => {
+                    const el = document.getElementById(chartId);
+                    if(el && dataPoints.length > 0) {
+                        const labels = dataPoints.map(dp => dp.label);
+                        const series = dataPoints.map(dp => dp.value);
+                        const colors = dataPoints.map(dp => dp.color);
+                        renderChart(el, 'donut', { labels, series }, { 
+                            colors,
+                            stroke: { show: false },
+                            plotOptions: {
+                                pie: {
+                                    donut: {
+                                        labels: {
+                                            show: true,
+                                            name: { show: true, color: '#aaa', fontSize: '12px' },
+                                            value: { show: true, color: '#fff', fontSize: '16px' },
+                                            total: { show: true, label: 'Total', color: '#aaa', fontSize: '12px', formatter: function(w) { return w.globals.seriesTotals.reduce((a, b) => a + b, 0); } }
+                                        }
+                                    }
+                                }
+                            }
+                        });
+                    } else if (el) {
+                        el.innerHTML = '<div style="color:var(--text-muted); text-align:center; padding:20px;">No data points defined.</div>';
+                    }
+                }, 0);
+                statsHTML = '';
             } else if (renderType === 'countdown') {
                 const items = t.items || [];
                 items.sort((a,b) => new Date(a.date) - new Date(b.date));
@@ -1530,6 +1560,34 @@ export const ZoomManager = {
             const status = t.status || 'grey';
             const icon = status === 'red' ? 'CRITICAL' : (status === 'amber' ? 'WARNING' : (status === 'green' ? 'GOOD' : 'UNKNOWN'));
             content = `<div class="ryg-indicator ryg-${status}" style="background:${t.color1}; width:200px; height:200px; font-size:2rem;">${icon}</div><div style="margin-top:2rem; font-size:1.5rem;">${t.message || ''}</div>`;
+        } else if (renderType === 'donut') {
+            const dataPoints = t.dataPoints || [];
+            content = '<div id="zoomChartContainer" style="width:100%; height:100%;"></div>';
+            renderAction = () => {
+                const el = document.getElementById('zoomChartContainer');
+                if(el && dataPoints.length > 0) {
+                    const labels = dataPoints.map(dp => dp.label);
+                    const series = dataPoints.map(dp => dp.value);
+                    const colors = dataPoints.map(dp => dp.color);
+                    renderChart(el, 'donut', { labels, series }, { 
+                        colors,
+                        stroke: { show: false },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    labels: {
+                                        show: true,
+                                        name: { show: true, color: '#aaa', fontSize: '20px' },
+                                        value: { show: true, color: '#fff', fontSize: '32px' },
+                                        total: { show: true, label: 'Total', color: '#aaa', fontSize: '20px', formatter: function(w) { return w.globals.seriesTotals.reduce((a, b) => a + b, 0); } }
+                                    }
+                                }
+                            }
+                        },
+                        legend: { show: true, position: 'bottom', fontSize: '16px', labels: { colors: '#aaa' } }
+                    });
+                }
+            };
         } else if (renderType === 'note') {
             content = `<div class="note-render-container zoomed-note" style="text-align:${t.align || 'left'}">${parseMarkdown(t.content || '')}</div>`;
         } else if (renderType === 'countdown') {
